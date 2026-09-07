@@ -1,0 +1,990 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SalesGiveaways.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">cas-sales</a> &gt; <a href="index.source.html" class="el_package">ph.com.guanzongroup.cas.sales</a> &gt; <span class="el_source">SalesGiveaways.java</span></div><h1>SalesGiveaways.java</h1><pre class="source lang-java linenums">/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package ph.com.guanzongroup.cas.sales;
+
+import org.guanzon.appdriver.agent.ShowDialogFX;
+import org.guanzon.appdriver.agent.services.Model;
+import org.guanzon.appdriver.agent.services.Transaction;
+import org.guanzon.appdriver.base.GuanzonException;
+import org.guanzon.appdriver.base.MiscUtil;
+import org.guanzon.appdriver.base.SQLUtil;
+import org.guanzon.appdriver.constant.EditMode;
+import org.guanzon.appdriver.constant.RecordStatus;
+import org.guanzon.appdriver.constant.UserRight;
+import org.guanzon.cas.parameter.*;
+import org.guanzon.cas.parameter.services.ParamControllers;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.ParseException;
+import ph.com.guanzongroup.cas.sales.model.Model_Sales_Giveaways_Item;
+import ph.com.guanzongroup.cas.sales.model.Model_Sales_Giveaways_Master;
+import ph.com.guanzongroup.cas.sales.services.SalesModels;
+import ph.com.guanzongroup.cas.sales.status.SalesGiveawaysStatus;
+
+import javax.sql.rowset.CachedRowSet;
+import javax.sql.rowset.RowSetFactory;
+import javax.sql.rowset.RowSetProvider;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+/**
+ *
+ * @author Arsiela 07-17-2026
+ */
+<span class="fc" id="L45">public class SalesGiveaways extends Transaction {</span>
+<span class="fc" id="L46">    private String psIndustryId = &quot;&quot;;</span>
+<span class="fc" id="L47">    private String psCategorCd = &quot;&quot;;</span>
+    
+    public JSONObject InitTransaction() {
+<span class="fc" id="L50">        SOURCE_CODE = &quot;Slgw&quot;;</span>
+
+<span class="fc" id="L52">        poMaster = new SalesModels(poGRider).SalesGiveawaysMaster();</span>
+<span class="fc" id="L53">        poDetail = new SalesModels(poGRider).SalesGiveawaysItem();</span>
+
+<span class="fc" id="L55">        paDetail = new ArrayList&lt;&gt;();</span>
+
+<span class="fc" id="L57">        return initialize();</span>
+    }
+
+      public JSONObject NewTransaction() throws CloneNotSupportedException {
+<span class="fc" id="L61">        return super.newTransaction();</span>
+    }
+
+    public JSONObject SaveTransaction() throws SQLException, GuanzonException, CloneNotSupportedException {
+<span class="fc" id="L65">        return super.saveTransaction();</span>
+    }
+
+    public JSONObject OpenTransaction(String transactionNo) throws CloneNotSupportedException, SQLException, GuanzonException {
+<span class="fc" id="L69">        return super.openTransaction(transactionNo);</span>
+    }
+
+    public JSONObject UpdateTransaction() {
+<span class="nc" id="L73">        return super.updateTransaction();</span>
+    }
+
+    public String getStatus(String fsStatus) {
+<span class="fc bfc" id="L77" title="All 5 branches covered.">        switch (fsStatus){</span>
+            case SalesGiveawaysStatus.OPEN:
+<span class="fc" id="L79">                return &quot;OPEN&quot;;</span>
+            case SalesGiveawaysStatus.ACTIVE:
+<span class="fc" id="L81">                return &quot;ACTIVE&quot;;</span>
+            case SalesGiveawaysStatus.DEACTIVATE:
+<span class="fc" id="L83">                return &quot;INACTIVE&quot;;</span>
+            case SalesGiveawaysStatus.DISAPPROVE:
+<span class="fc" id="L85">                return &quot;DISAPPROVE&quot;;</span>
+            default:
+<span class="fc" id="L87">                return &quot;UNKNOWN&quot;;</span>
+        }
+    }
+
+    /**
+     * Requests approval if the current user lacks sufficient rights and
+     * validates the approving officer.
+     *
+     * @return result as a {@link JSONObject}
+     */
+    public JSONObject callApproval(){
+<span class="nc" id="L98">        poJSON = new JSONObject();</span>
+<span class="nc bnc" id="L99" title="All 2 branches missed.">        if (poGRider.getUserLevel() &lt;= UserRight.ENCODER) {</span>
+<span class="nc" id="L100">            poJSON = ShowDialogFX.getUserApproval(poGRider);</span>
+<span class="nc bnc" id="L101" title="All 2 branches missed.">            if (&quot;error&quot;.equals((String) poJSON.get(&quot;result&quot;))) {</span>
+<span class="nc" id="L102">                return poJSON;</span>
+            }
+<span class="nc bnc" id="L104" title="All 2 branches missed.">            if (Integer.parseInt(poJSON.get(&quot;nUserLevl&quot;).toString()) &lt;= UserRight.ENCODER) {</span>
+<span class="nc" id="L105">                poJSON = setJSON(&quot;error&quot;, &quot;User is not an authorized approving officer.&quot;);</span>
+<span class="nc" id="L106">                return poJSON;</span>
+            }
+<span class="nc" id="L108">            setApproving((String) poJSON.get(&quot;sUserIDxx&quot;));</span>
+        }
+
+<span class="nc" id="L111">        poJSON.put(&quot;result&quot;, &quot;success&quot;);</span>
+<span class="nc" id="L112">        poJSON.put(&quot;message&quot;, &quot;success&quot;);</span>
+<span class="nc" id="L113">        return poJSON;</span>
+    }
+
+    /**
+     * Confirm the transaction
+     * @param remarks
+     * @return JSONObject success or error
+     * @throws ParseException
+     * @throws SQLException
+     * @throws GuanzonException
+     * @throws CloneNotSupportedException 
+     */
+    public JSONObject ActivateTransaction(String remarks)
+            throws ParseException,
+            SQLException,
+            GuanzonException,
+            CloneNotSupportedException {
+<span class="fc" id="L130">        poJSON = new JSONObject();</span>
+
+<span class="fc" id="L132">        String lsStatus = SalesGiveawaysStatus.ACTIVE;</span>
+
+<span class="pc bpc" id="L134" title="1 of 2 branches missed.">        if (getEditMode() != EditMode.READY) {</span>
+<span class="nc" id="L135">            poJSON = setJSON(&quot;error&quot;,  &quot;No transacton was loaded.&quot;);</span>
+<span class="nc" id="L136">            return poJSON;</span>
+        }
+
+<span class="pc bpc" id="L139" title="1 of 2 branches missed.">        if (lsStatus.equals((String) poMaster.getValue(&quot;cTranStat&quot;))) {</span>
+<span class="fc" id="L140">            poJSON = setJSON(&quot;error&quot;, &quot;Record was already active.&quot;);</span>
+<span class="fc" id="L141">            return poJSON;</span>
+        }
+
+        //validator
+<span class="nc" id="L145">        poJSON = isEntryOkay(lsStatus);</span>
+<span class="nc bnc" id="L146" title="All 2 branches missed.">        if (!&quot;success&quot;.equals((String) poJSON.get(&quot;result&quot;))) {</span>
+<span class="nc" id="L147">            return poJSON;</span>
+        }
+
+<span class="nc" id="L150">        poJSON = validateRecordStatus(lsStatus);</span>
+<span class="nc bnc" id="L151" title="All 2 branches missed.">        if (!&quot;success&quot;.equals(poJSON.get(&quot;result&quot;))) {</span>
+<span class="nc" id="L152">            return poJSON;</span>
+        }
+
+<span class="nc" id="L155">        poJSON = callApproval();</span>
+<span class="nc bnc" id="L156" title="All 2 branches missed.">        if (!&quot;success&quot;.equals((String) poJSON.get(&quot;result&quot;))) {</span>
+<span class="nc" id="L157">            return poJSON;</span>
+        }
+        
+        //change status
+<span class="nc" id="L161">        poJSON = statusChange(poMaster.getTable(), (String) poMaster.getValue(&quot;sGAWayCde&quot;), remarks, lsStatus, false);</span>
+<span class="nc bnc" id="L162" title="All 2 branches missed.">        if (!&quot;success&quot;.equals((String) poJSON.get(&quot;result&quot;))) {</span>
+<span class="nc" id="L163">            return poJSON;</span>
+        }
+
+<span class="nc" id="L166">        poJSON = new JSONObject();</span>
+<span class="nc" id="L167">        poJSON = setJSON(&quot;success&quot;, &quot;Record confirmed successfully.&quot;);</span>
+<span class="nc" id="L168">        return poJSON;</span>
+    }
+
+    /**
+     * Cancel the transaction
+     * @param remarks
+     * @return JSONObject success or error
+     * @throws ParseException
+     * @throws SQLException
+     * @throws GuanzonException
+     * @throws CloneNotSupportedException 
+     */
+    public JSONObject DeactiveTransaction(String remarks)
+            throws ParseException,
+            SQLException,
+            GuanzonException,
+            CloneNotSupportedException {
+<span class="fc" id="L185">        poJSON = new JSONObject();</span>
+
+<span class="fc" id="L187">        String lsStatus = SalesGiveawaysStatus.DEACTIVATE;</span>
+
+<span class="pc bpc" id="L189" title="1 of 2 branches missed.">        if (getEditMode() != EditMode.READY) {</span>
+<span class="nc" id="L190">            poJSON = setJSON(&quot;error&quot;,  &quot;No transacton was loaded.&quot;);</span>
+<span class="nc" id="L191">            return poJSON;</span>
+        }
+
+<span class="pc bpc" id="L194" title="1 of 2 branches missed.">        if (lsStatus.equals((String) poMaster.getValue(&quot;cTranStat&quot;))) {</span>
+<span class="fc" id="L195">            poJSON = setJSON(&quot;error&quot;, &quot;Record was already deactivated.&quot;);</span>
+<span class="fc" id="L196">            return poJSON;</span>
+        }
+
+        //validator
+<span class="nc" id="L200">        poJSON = isEntryOkay(lsStatus);</span>
+<span class="nc bnc" id="L201" title="All 2 branches missed.">        if (!&quot;success&quot;.equals((String) poJSON.get(&quot;result&quot;))) {</span>
+<span class="nc" id="L202">            return poJSON;</span>
+        }
+
+<span class="nc" id="L205">        poJSON = validateRecordStatus(lsStatus);</span>
+<span class="nc bnc" id="L206" title="All 2 branches missed.">        if (!&quot;success&quot;.equals(poJSON.get(&quot;result&quot;))) {</span>
+<span class="nc" id="L207">            return poJSON;</span>
+        }
+
+<span class="nc" id="L210">        poJSON = callApproval();</span>
+<span class="nc bnc" id="L211" title="All 2 branches missed.">        if (!&quot;success&quot;.equals((String) poJSON.get(&quot;result&quot;))) {</span>
+<span class="nc" id="L212">            return poJSON;</span>
+        }
+
+        //change status
+<span class="nc" id="L216">        poJSON = statusChange(poMaster.getTable(), (String) poMaster.getValue(&quot;sGAWayCde&quot;), remarks, lsStatus, false);</span>
+<span class="nc bnc" id="L217" title="All 2 branches missed.">        if (!&quot;success&quot;.equals((String) poJSON.get(&quot;result&quot;))) {</span>
+<span class="nc" id="L218">            return poJSON;</span>
+        }
+
+<span class="nc" id="L221">        poJSON = new JSONObject();</span>
+<span class="nc" id="L222">        poJSON = setJSON(&quot;success&quot;, &quot;Record deactive successfully.&quot;);</span>
+<span class="nc" id="L223">        return poJSON;</span>
+    }
+    
+    /**
+     * Void the transaction
+     * @param remarks
+     * @return JSONObject success or error
+     * @throws ParseException
+     * @throws SQLException
+     * @throws GuanzonException
+     * @throws CloneNotSupportedException 
+     */
+    public JSONObject DisapproveTransaction(String remarks)
+            throws ParseException,
+            SQLException,
+            GuanzonException,
+            CloneNotSupportedException {
+<span class="fc" id="L240">        poJSON = new JSONObject();</span>
+
+<span class="fc" id="L242">        String lsStatus = SalesGiveawaysStatus.DISAPPROVE;</span>
+
+<span class="pc bpc" id="L244" title="1 of 2 branches missed.">        if (getEditMode() != EditMode.READY) {</span>
+<span class="nc" id="L245">            poJSON = setJSON(&quot;error&quot;,  &quot;No transacton was loaded.&quot;);</span>
+<span class="nc" id="L246">            return poJSON;</span>
+        }
+
+<span class="pc bpc" id="L249" title="1 of 2 branches missed.">        if (lsStatus.equals((String) poMaster.getValue(&quot;cTranStat&quot;))) {</span>
+<span class="fc" id="L250">            poJSON = setJSON(&quot;error&quot;, &quot;Record was already voided.&quot;);</span>
+<span class="fc" id="L251">            return poJSON;</span>
+        }
+
+        //validator
+<span class="nc" id="L255">        poJSON = isEntryOkay(lsStatus);</span>
+<span class="nc bnc" id="L256" title="All 2 branches missed.">        if (!&quot;success&quot;.equals((String) poJSON.get(&quot;result&quot;))) {</span>
+<span class="nc" id="L257">            return poJSON;</span>
+        }
+
+<span class="nc" id="L260">        poJSON = validateRecordStatus(lsStatus);</span>
+<span class="nc bnc" id="L261" title="All 2 branches missed.">        if (!&quot;success&quot;.equals(poJSON.get(&quot;result&quot;))) {</span>
+<span class="nc" id="L262">            return poJSON;</span>
+        }
+
+        //change status
+<span class="nc" id="L266">        poJSON = statusChange(poMaster.getTable(), (String) poMaster.getValue(&quot;sGAWayCde&quot;), remarks, lsStatus, false);</span>
+<span class="nc bnc" id="L267" title="All 2 branches missed.">        if (!&quot;success&quot;.equals((String) poJSON.get(&quot;result&quot;))) {</span>
+<span class="nc" id="L268">            return poJSON;</span>
+        }
+
+<span class="nc" id="L271">        poJSON = new JSONObject();</span>
+<span class="nc" id="L272">        poJSON = setJSON(&quot;success&quot;, &quot;Record voided successfully.&quot;);</span>
+<span class="nc" id="L273">        return poJSON;</span>
+    }
+
+    /**
+     * Search Record
+     * @return
+     * @throws CloneNotSupportedException
+     * @throws SQLException
+     * @throws GuanzonException 
+     */
+    public JSONObject searchRecord()
+            throws CloneNotSupportedException,
+            SQLException,
+            GuanzonException {
+<span class="nc" id="L287">        poJSON = new JSONObject();</span>
+<span class="nc" id="L288">        String lsTransStat = &quot;&quot;;</span>
+<span class="nc bnc" id="L289" title="All 2 branches missed.">        if (psTranStat != null) {</span>
+<span class="nc bnc" id="L290" title="All 2 branches missed.">            if (psTranStat.length() &gt; 1) {</span>
+<span class="nc bnc" id="L291" title="All 2 branches missed.">                for (int lnCtr = 0; lnCtr &lt;= psTranStat.length() - 1; lnCtr++) {</span>
+<span class="nc" id="L292">                    lsTransStat += &quot;, &quot; + SQLUtil.toSQL(Character.toString(psTranStat.charAt(lnCtr)));</span>
+                }
+<span class="nc" id="L294">                lsTransStat = &quot; AND a.cTranStat IN (&quot; + lsTransStat.substring(2) + &quot;)&quot;;</span>
+            } else {
+<span class="nc" id="L296">                lsTransStat = &quot; AND a.cTranStat = &quot; + SQLUtil.toSQL(psTranStat);</span>
+            }
+        }
+
+<span class="nc" id="L300">        initSQL();</span>
+<span class="nc" id="L301">        String lsSQL = MiscUtil.addCondition(SQL_BROWSE, &quot; a.sIndstCdx = &quot; + SQLUtil.toSQL(psIndustryId));</span>
+//                                            + &quot; AND a.sCategrCd = &quot; + SQLUtil.toSQL(psCategorCd));
+
+<span class="nc bnc" id="L304" title="All 4 branches missed.">        if (lsTransStat != null &amp;&amp; !&quot;&quot;.equals(lsTransStat)) {</span>
+<span class="nc" id="L305">            lsSQL = lsSQL + lsTransStat;</span>
+        }
+
+<span class="nc" id="L308">        System.out.println(&quot;Executing SQL: &quot; + lsSQL);</span>
+<span class="nc" id="L309">        poJSON = ShowDialogFX.Browse(poGRider,</span>
+                lsSQL,
+                &quot;&quot;,
+                &quot;Giveaway Code»Description»From Date»Thru Date&quot;,
+                &quot;sGAWayCde»sGAWayDsc»dFromDate»dThruDate&quot;,
+                &quot;a.sGAWayCde»a.sGAWayDsc»a.dFromDate»a.dThruDate&quot;,
+                0);
+
+<span class="nc bnc" id="L317" title="All 2 branches missed.">        if (poJSON != null) {</span>
+<span class="nc" id="L318">            return OpenTransaction((String) poJSON.get(&quot;sGAWayCde&quot;));</span>
+        } else {
+<span class="nc" id="L320">            poJSON = new JSONObject();</span>
+<span class="nc" id="L321">            poJSON = setJSON(&quot;error&quot;, &quot;No record loaded.&quot;);</span>
+<span class="nc" id="L322">            return poJSON;</span>
+        }
+    }
+
+    /**
+     * Search Record
+     * @return
+     * @throws CloneNotSupportedException
+     * @throws SQLException
+     * @throws GuanzonException
+     */
+    public JSONObject searchRecord(String value, boolean byCode)
+            throws CloneNotSupportedException,
+            SQLException,
+            GuanzonException {
+<span class="nc" id="L337">        poJSON = new JSONObject();</span>
+<span class="nc" id="L338">        String lsTransStat = &quot;&quot;;</span>
+<span class="nc bnc" id="L339" title="All 2 branches missed.">        if (psTranStat != null) {</span>
+<span class="nc bnc" id="L340" title="All 2 branches missed.">            if (psTranStat.length() &gt; 1) {</span>
+<span class="nc bnc" id="L341" title="All 2 branches missed.">                for (int lnCtr = 0; lnCtr &lt;= psTranStat.length() - 1; lnCtr++) {</span>
+<span class="nc" id="L342">                    lsTransStat += &quot;, &quot; + SQLUtil.toSQL(Character.toString(psTranStat.charAt(lnCtr)));</span>
+                }
+<span class="nc" id="L344">                lsTransStat = &quot; AND a.cTranStat IN (&quot; + lsTransStat.substring(2) + &quot;)&quot;;</span>
+            } else {
+<span class="nc" id="L346">                lsTransStat = &quot; AND a.cTranStat = &quot; + SQLUtil.toSQL(psTranStat);</span>
+            }
+        }
+
+<span class="nc" id="L350">        initSQL();</span>
+<span class="nc" id="L351">        String lsSQL = MiscUtil.addCondition(SQL_BROWSE, &quot; a.sIndstCdx = &quot; + SQLUtil.toSQL(psIndustryId));</span>
+//                + &quot; AND a.sCategrCd = &quot; + SQLUtil.toSQL(psCategorCd));
+
+<span class="nc bnc" id="L354" title="All 4 branches missed.">        if (lsTransStat != null &amp;&amp; !&quot;&quot;.equals(lsTransStat)) {</span>
+<span class="nc" id="L355">            lsSQL = lsSQL + lsTransStat;</span>
+        }
+
+<span class="nc" id="L358">        System.out.println(&quot;Executing SQL: &quot; + lsSQL);</span>
+<span class="nc bnc" id="L359" title="All 2 branches missed.">        poJSON = ShowDialogFX.Browse(poGRider,</span>
+                lsSQL,
+                &quot;&quot;,
+                &quot;Giveaway Code»Description»From Date»Thru Date&quot;,
+                &quot;sGAWayCde»sGAWayDsc»dFromDate»dThruDate&quot;,
+                &quot;a.sGAWayCde»a.sGAWayDsc»a.dFromDate»a.dThruDate&quot;,
+                byCode ? 0 : 1);
+
+<span class="nc bnc" id="L367" title="All 2 branches missed.">        if (poJSON != null) {</span>
+<span class="nc" id="L368">            return OpenTransaction((String) poJSON.get(&quot;sGAWayCde&quot;));</span>
+        } else {
+<span class="nc" id="L370">            poJSON = new JSONObject();</span>
+<span class="nc" id="L371">            poJSON = setJSON(&quot;error&quot;, &quot;No record loaded.&quot;);</span>
+<span class="nc" id="L372">            return poJSON;</span>
+        }
+    }
+
+    public JSONObject SearchCategory(String value, boolean byCode ) throws SQLException, GuanzonException {
+<span class="nc" id="L377">        poJSON = new JSONObject();</span>
+<span class="nc" id="L378">        Category object = new ParamControllers(poGRider, logwrapr).Category();</span>
+<span class="nc" id="L379">        object.setRecordStatus(RecordStatus.ACTIVE);</span>
+
+<span class="nc" id="L381">        poJSON = object.searchRecord(value, byCode);</span>
+<span class="nc bnc" id="L382" title="All 2 branches missed.">        if (&quot;success&quot;.equals((String) poJSON.get(&quot;result&quot;))) {</span>
+<span class="nc" id="L383">            System.out.println(&quot;Category ID: &quot; + object.getModel().getCategoryId());</span>
+<span class="nc" id="L384">            System.out.println(&quot;Description &quot; + object.getModel().getDescription());</span>
+<span class="nc" id="L385">            Master().setCategoryCode(object.getModel().getCategoryId());</span>
+        }
+
+<span class="nc" id="L388">        poJSON.put(&quot;result&quot;, &quot;success&quot;);</span>
+<span class="nc" id="L389">        return poJSON;</span>
+    }
+    /**
+     * Search Inventory
+     * @param value
+     * @param byCode
+     * @param row
+     * @return JSONObject success or error
+     * @throws SQLException
+     * @throws GuanzonException 
+     */
+    public JSONObject SearchInventory(String value, boolean byCode, int row) throws SQLException, GuanzonException {
+<span class="nc" id="L401">        poJSON = new JSONObject();</span>
+<span class="nc bnc" id="L402" title="All 4 branches missed.">        if(Master().getCategoryCode()== null || &quot;&quot;.equals(Master().getCategoryCode())){</span>
+<span class="nc" id="L403">            poJSON.put(&quot;result&quot;, &quot;error&quot;);</span>
+<span class="nc" id="L404">            poJSON.put(&quot;row&quot;, row);</span>
+<span class="nc" id="L405">            poJSON.put(&quot;message&quot;, &quot;Category is not set.&quot;);</span>
+<span class="nc" id="L406">            return poJSON;</span>
+        }
+<span class="nc" id="L408">        String lsSQL = &quot;SELECT  a.sStockIDx, a.sBarCodex, a.sDescript, a.sBriefDsc, a.sAltBarCd, a.sCategCd1, a.sCategCd2, a.sCategCd3, a.sCategCd4, a.sBrandIDx, a.sModelIDx, a.sColorIDx, a.sVrntIDxx, a.sMeasurID, a.sInvTypCd, a.sIndstCdx, a.nUnitPrce, a.nSelPrice, a.nDiscLev1, a.nDiscLev2, a.nDiscLev3, a.nDealrDsc, a.nMinLevel, a.nMaxLevel, a.cComboInv, a.cWthPromo, a.cSerialze, a.cUnitType, a.cInvStatx, a.nShlfLife, a.sSupersed, a.cRecdStat, a.sModified, a.dModified, IFNULL(b.sDescript, '') xBrandNme, IFNULL(c.sDescript, '') xModelNme, IFNULL(d.sDescript, '') xColorNme, IFNULL(e.sDescript, '') xMeasurNm, TRIM(CONCAT(IFNULL(f.sDescript, ''), ' ', IFNULL(f.nYearMdlx, ''))) xVrntName, IFNULL(c.sModelCde, '') xModelCde FROM Inventory a LEFT JOIN Brand b ON a.sBrandIDx = b.sBrandIDx AND a.sIndstCdx = b.sIndstCdx LEFT JOIN Model c ON a.sModelIDx = c.sModelIDx AND a.sIndstCdx = c.sIndstCdx LEFT JOIN Color d ON a.sColorIDx = d.sColorIDx LEFT JOIN Measure e ON a.sMeasurID = e.sMeasurID LEFT JOIN Model_Variant f ON a.sVrntIDxx = f.sVrntIDxx LEFT JOIN Inv_Supplier g ON a.sStockIDx = g.sStockIDx AND a.sIndstCdx = g.sIndstCdx&quot;;</span>
+<span class="nc" id="L409">        lsSQL = MiscUtil.addCondition(lsSQL,</span>
+<span class="nc" id="L410">                                             &quot; a.cRecdStat = &quot; + SQLUtil.toSQL(RecordStatus.ACTIVE)</span>
+<span class="nc" id="L411">                                            + &quot; AND a.sCategCd1 = &quot; + SQLUtil.toSQL(Master().getCategoryCode())</span>
+<span class="nc" id="L412">                                            + &quot; AND a.sIndstCdx = &quot; + SQLUtil.toSQL(Master().getIndustryId())</span>
+                                            );
+<span class="nc" id="L414">        lsSQL = lsSQL + &quot; GROUP BY a.sStockIDx &quot;;</span>
+<span class="nc" id="L415">        System.out.println(&quot;Executing SQL: &quot; + lsSQL);</span>
+<span class="nc bnc" id="L416" title="All 2 branches missed.">        poJSON = ShowDialogFX.Browse(poGRider,</span>
+                lsSQL,
+                value,
+                &quot;Barcode»Description»Brand»Model»Variant»UOM&quot;,
+                &quot;sBarCodex»sDescript»xBrandNme»xModelNme»xVrntName»xMeasurNm&quot;,
+                &quot;a.sBarCodex»a.sDescript»IFNULL(b.sDescript, '')»IFNULL(c.sDescript, '')»IFNULL(f.sDescript, '')»IFNULL(e.sDescript, '')&quot;,
+                byCode ? 0 : 1);
+
+<span class="nc bnc" id="L424" title="All 2 branches missed.">        if (poJSON != null) {</span>
+<span class="nc" id="L425">            String lsStockId = (String) poJSON.get(&quot;sStockIDx&quot;);</span>
+<span class="nc" id="L426">            poJSON = checkExistingDetail(row,lsStockId);</span>
+<span class="nc bnc" id="L427" title="All 4 branches missed.">            if (&quot;error&quot;.equals((String) poJSON.get(&quot;result&quot;)) || (boolean) poJSON.get(&quot;continue&quot;)) {</span>
+<span class="nc" id="L428">                return poJSON;</span>
+            }
+
+<span class="nc" id="L431">            Detail(row).setStockId(lsStockId);</span>
+<span class="nc" id="L432">            System.out.println(&quot;Barcode : &quot; + Detail(row).Inventory().getBarCode());</span>
+<span class="nc" id="L433">            System.out.println(&quot;Description : &quot; + Detail(row).Inventory().getDescription());</span>
+            
+<span class="nc" id="L435">        } else {</span>
+<span class="nc" id="L436">            poJSON = new JSONObject();</span>
+<span class="nc" id="L437">            poJSON.put(&quot;result&quot;, &quot;error&quot;);</span>
+<span class="nc" id="L438">            poJSON.put(&quot;row&quot;, row);</span>
+<span class="nc" id="L439">            poJSON.put(&quot;message&quot;, &quot;No record loaded.&quot;);</span>
+        }
+
+<span class="nc" id="L442">        poJSON.put(&quot;result&quot;, &quot;success&quot;);</span>
+<span class="nc" id="L443">        poJSON.put(&quot;row&quot;, row);</span>
+<span class="nc" id="L444">        return poJSON;</span>
+    }
+
+    /**
+     * Check Existing product in detail
+     * @param row
+     * @param stockId
+     * @return 
+     */
+    private JSONObject checkExistingDetail(int row, String stockId){
+<span class="fc" id="L454">        poJSON = new JSONObject();</span>
+<span class="fc" id="L455">        poJSON.put(&quot;row&quot;, row);</span>
+
+<span class="pc bpc" id="L457" title="1 of 2 branches missed.">        stockId = (stockId == null) ? &quot;&quot; : stockId;</span>
+        
+<span class="pc bpc" id="L459" title="1 of 2 branches missed.">        for (int lnCtr = 0; lnCtr &lt;= getDetailCount()- 1; lnCtr++) {</span>
+<span class="pc bpc" id="L460" title="1 of 2 branches missed.">            if (lnCtr != row) {</span>
+                //Check Existing Stock ID
+<span class="pc bpc" id="L462" title="1 of 2 branches missed.">                if(!&quot;&quot;.equals(stockId)){</span>
+<span class="pc bpc" id="L463" title="1 of 2 branches missed.">                    if(stockId.equals(Detail(lnCtr).getStockId())){</span>
+<span class="pc bpc" id="L464" title="1 of 2 branches missed.">                        if(Detail(lnCtr).isReversed()) {</span>
+<span class="fc" id="L465">                            poJSON.put(&quot;result&quot;, &quot;error&quot;);</span>
+<span class="fc" id="L466">                            poJSON.put(&quot;message&quot;, &quot;Item Description already exists in the transaction detail at row &quot; + (lnCtr + 1) + &quot;.&quot;);</span>
+<span class="fc" id="L467">                            poJSON.put(&quot;row&quot;, lnCtr);</span>
+<span class="fc" id="L468">                            poJSON.put(&quot;continue&quot;, true);</span>
+<span class="fc" id="L469">                            return poJSON;</span>
+                        } else {
+<span class="nc" id="L471">                            Detail(lnCtr).setReversed(true);</span>
+<span class="nc" id="L472">                            poJSON.put(&quot;row&quot;, lnCtr);</span>
+<span class="nc" id="L473">                            poJSON.put(&quot;result&quot;, &quot;success&quot;);</span>
+<span class="nc" id="L474">                            poJSON.put(&quot;continue&quot;, true);</span>
+<span class="nc" id="L475">                            return poJSON;</span>
+                        }
+                    }
+                }
+            }
+        }
+        
+<span class="nc" id="L482">        poJSON.put(&quot;result&quot;, &quot;success&quot;);</span>
+<span class="nc" id="L483">        poJSON.put(&quot;continue&quot;, false);</span>
+<span class="nc" id="L484">        return poJSON;</span>
+    }
+
+    /*Convert Date to String*/
+    private static String xsDateShort(Date fdValue) {
+<span class="fc" id="L489">        SimpleDateFormat sdf = new SimpleDateFormat(&quot;yyyy-MM-dd&quot;);</span>
+<span class="fc" id="L490">        String date = sdf.format(fdValue);</span>
+<span class="fc" id="L491">        return date;</span>
+    }
+
+    private LocalDate strToDate(String val) {
+<span class="fc" id="L495">        DateTimeFormatter date_formatter = DateTimeFormatter.ofPattern(&quot;yyyy-MM-dd&quot;);</span>
+<span class="fc" id="L496">        LocalDate localDate = LocalDate.parse(val, date_formatter);</span>
+<span class="fc" id="L497">        return localDate;</span>
+    }
+
+    public void setIndustryId(String industryId) {
+<span class="fc" id="L501">        psIndustryId = industryId;</span>
+<span class="fc" id="L502">    }</span>
+
+    public void setCategoryId(String categoryId) {
+<span class="fc" id="L505">        psCategorCd = categoryId;</span>
+<span class="fc" id="L506">    }</span>
+
+    @Override
+    public String getSourceCode() {
+<span class="fc" id="L510">        return SOURCE_CODE;</span>
+    }
+
+    @Override
+    public Model_Sales_Giveaways_Master Master() {
+<span class="fc" id="L515">        return (Model_Sales_Giveaways_Master) poMaster;</span>
+    }
+
+    @Override
+    public Model_Sales_Giveaways_Item Detail(int row) {
+<span class="fc" id="L520">        return (Model_Sales_Giveaways_Item) paDetail.get(row);</span>
+    }
+
+    public Model_Sales_Giveaways_Item getDetail() {
+<span class="fc" id="L524">        return (Model_Sales_Giveaways_Item) poDetail;</span>
+    }
+
+    @Override
+    public int getDetailCount() {
+<span class="pc bpc" id="L529" title="1 of 2 branches missed.">        if (paDetail == null) {</span>
+<span class="nc" id="L530">            paDetail = new ArrayList&lt;&gt;();</span>
+        }
+
+<span class="fc" id="L533">        return paDetail.size();</span>
+    }
+
+    public JSONObject AddDetail()
+            throws CloneNotSupportedException {
+<span class="fc" id="L538">        poJSON = new JSONObject();</span>
+
+<span class="fc bfc" id="L540" title="All 2 branches covered.">        if (getDetailCount() &gt; 0) {</span>
+<span class="pc bpc" id="L541" title="1 of 2 branches missed.">            if (Detail(getDetailCount() - 1).getStockId() != null) {</span>
+<span class="fc bfc" id="L542" title="All 2 branches covered.">                if (Detail(getDetailCount() - 1).getStockId().isEmpty()) {</span>
+<span class="fc" id="L543">                    poJSON = setJSON(&quot;error&quot;, &quot;Last row has empty item.&quot;);</span>
+<span class="fc" id="L544">                    return poJSON;</span>
+                }
+            }
+        }
+
+<span class="fc" id="L549">        return addDetail();</span>
+    }
+
+    public void resetMaster() {
+<span class="nc" id="L553">        poMaster = new SalesModels(poGRider).SalesGiveawaysMaster();</span>
+<span class="nc" id="L554">    }</span>
+    /**
+     * Reload Detail for adding or deleting detail
+     * @throws CloneNotSupportedException
+     */
+    public void ReloadDetail() throws CloneNotSupportedException, SQLException{
+<span class="fc" id="L560">        int lnCtr = getDetailCount() - 1;</span>
+<span class="fc bfc" id="L561" title="All 2 branches covered.">        while (lnCtr &gt;= 0) {</span>
+<span class="pc bpc" id="L562" title="3 of 4 branches missed.">            if ((Detail(lnCtr).getStockId() == null || &quot;&quot;.equals(Detail(lnCtr).getStockId()))) {</span>
+<span class="fc" id="L563">                Detail().remove(lnCtr);</span>
+            }
+<span class="fc" id="L565">            lnCtr--;</span>
+        }
+
+<span class="pc bpc" id="L568" title="1 of 2 branches missed.">        if ((getDetailCount() - 1) &gt;= 0) {</span>
+<span class="nc bnc" id="L569" title="All 4 branches missed.">            if (Detail(getDetailCount() - 1).getStockId() != null &amp;&amp; !&quot;&quot;.equals(Detail(getDetailCount() - 1).getStockId())</span>
+<span class="nc bnc" id="L570" title="All 2 branches missed.">                &amp;&amp; Detail(getDetailCount() - 1).getQuantity() &gt; 0) {</span>
+<span class="nc" id="L571">                AddDetail();</span>
+            }
+        }
+
+<span class="pc bpc" id="L575" title="1 of 2 branches missed.">        if ((getDetailCount() - 1) &lt; 0) {</span>
+<span class="fc" id="L576">            AddDetail();</span>
+        }
+<span class="fc" id="L578">    }</span>
+
+    @Override
+    public JSONObject willSave()
+            throws SQLException,
+            GuanzonException,
+            CloneNotSupportedException {
+        /*Put system validations and other assignments here*/
+<span class="fc" id="L586">        poJSON = new JSONObject();</span>
+
+<span class="pc bpc" id="L588" title="1 of 2 branches missed.">        if(Master().getEditMode() == EditMode.ADDNEW){</span>
+<span class="fc" id="L589">            System.out.println(&quot;Will Save : &quot; + Master().getNextCode());</span>
+<span class="fc" id="L590">            Master().setGiveawayCode(Master().getNextCode());</span>
+<span class="fc" id="L591">            Master().setEntryBy(poGRider.Encrypt(poGRider.getUserID()));</span>
+<span class="fc" id="L592">            Master().setEntryDate(poGRider.getServerDate());</span>
+        }
+
+<span class="fc" id="L595">        Master().setModifyingId(poGRider.Encrypt(poGRider.getUserID()));</span>
+<span class="fc" id="L596">        Master().setModifiedDate(poGRider.getServerDate());</span>
+
+<span class="pc bpc" id="L598" title="1 of 2 branches missed.">        if(SalesGiveawaysStatus.ACTIVE.equals(Master().getTransactionStatus())) {</span>
+<span class="nc" id="L599">            poJSON = callApproval();</span>
+<span class="nc bnc" id="L600" title="All 2 branches missed.">            if (!&quot;success&quot;.equals((String) poJSON.get(&quot;result&quot;))) {</span>
+<span class="nc" id="L601">                return poJSON;</span>
+            }
+        }
+
+<span class="fc" id="L605">        boolean lbCheckActive = false;</span>
+<span class="fc" id="L606">        Iterator&lt;Model&gt; detail = Detail().iterator();</span>
+<span class="fc bfc" id="L607" title="All 2 branches covered.">        while (detail.hasNext()) {</span>
+<span class="fc" id="L608">            Model item = detail.next();</span>
+<span class="pc bpc" id="L609" title="1 of 4 branches missed.">            if (item.getValue(&quot;sStockIDx&quot;) == null || &quot;&quot;.equals(item.getValue(&quot;sStockIDx&quot;))) {</span>
+<span class="fc" id="L610">                detail.remove();</span>
+            } else {
+<span class="pc bpc" id="L612" title="1 of 2 branches missed.">                if(item.getValue(&quot;cReversex&quot;) == &quot;+&quot;){</span>
+<span class="pc bpc" id="L613" title="1 of 2 branches missed.">                   if(!lbCheckActive){</span>
+<span class="fc" id="L614">                       lbCheckActive = true;</span>
+                   }
+                }
+            }
+<span class="fc" id="L618">        }</span>
+
+        //Validate detail after removing all zero qty and empty stock Id
+<span class="pc bpc" id="L621" title="1 of 4 branches missed.">        if (getDetailCount() &lt;= 0 || !lbCheckActive) {</span>
+<span class="fc" id="L622">            poJSON = setJSON(&quot;error&quot;,&quot;No transaction detail to be save.&quot;);</span>
+<span class="fc" id="L623">            return poJSON;</span>
+        }
+
+<span class="fc" id="L626">        int lnRow = 0;</span>
+<span class="fc bfc" id="L627" title="All 2 branches covered.">        for (int lnCtr = 0; lnCtr &lt;= getDetailCount() - 1; lnCtr++) {</span>
+<span class="pc bpc" id="L628" title="1 of 2 branches missed.">            if(Detail(lnCtr).isReversed()){</span>
+<span class="fc" id="L629">                lnRow++;</span>
+            }
+<span class="fc bfc" id="L631" title="All 2 branches covered.">            if(Detail(lnCtr).getQuantity() &lt;= 0 ){</span>
+<span class="fc" id="L632">                poJSON = setJSON(&quot;error&quot;,&quot;Invalid quantity at row &quot;+lnRow+&quot;.&quot;);</span>
+<span class="fc" id="L633">                return poJSON;</span>
+            }
+<span class="fc" id="L635">            Detail(lnCtr).setGiveawayCode(Master().getGiveawayCode());</span>
+<span class="fc" id="L636">            Detail(lnCtr).setEntryNo(lnCtr + 1);</span>
+        }
+        
+<span class="fc" id="L639">        poJSON.put(&quot;result&quot;, &quot;success&quot;);</span>
+<span class="fc" id="L640">        return poJSON;</span>
+    }
+    
+    @Override
+    public JSONObject save() {
+        /*Put saving business rules here*/
+<span class="fc" id="L646">        return isEntryOkay(SalesGiveawaysStatus.OPEN);</span>
+    }
+    
+    @Override
+    public void saveComplete() {
+        /*This procedure was called when saving was complete*/
+<span class="nc" id="L652">        System.out.println(&quot;Record saved successfully.&quot;);</span>
+<span class="nc" id="L653">    }</span>
+
+    @Override
+    public JSONObject initFields() {
+        try {
+            /*Put initial model values here*/
+<span class="fc" id="L659">            poJSON = new JSONObject();</span>
+<span class="fc" id="L660">            System.out.println(&quot;Dept ID : &quot; + poGRider.getDepartment());</span>
+<span class="fc" id="L661">            System.out.println(&quot;Current User : &quot; + poGRider.getUserID());</span>
+<span class="fc" id="L662">            Master().setIndustryId(psIndustryId);</span>
+<span class="fc" id="L663">            Master().setCategoryCode(psCategorCd);</span>
+<span class="fc" id="L664">            Master().setTransactionStatus(SalesGiveawaysStatus.OPEN);</span>
+            
+<span class="fc" id="L666">            LocalDate currentDate = strToDate(xsDateShort(poGRider.getServerDate())).plusMonths(1);</span>
+<span class="fc" id="L667">            String formattedDate = currentDate.format(DateTimeFormatter.ofPattern(SQLUtil.FORMAT_SHORT_DATE));</span>
+<span class="fc" id="L668">            Master().setFromDate(SQLUtil.toDate(formattedDate, SQLUtil.FORMAT_SHORT_DATE));</span>
+<span class="fc" id="L669">            Master().setThruDate(SQLUtil.toDate(formattedDate, SQLUtil.FORMAT_SHORT_DATE));</span>
+<span class="nc" id="L670">        } catch (SQLException ex) {</span>
+<span class="nc" id="L671">            Logger.getLogger(getClass().getName()).log(Level.SEVERE, MiscUtil.getException(ex), ex);</span>
+<span class="nc" id="L672">            poJSON = setJSON(&quot;error&quot;, MiscUtil.getException(ex));</span>
+<span class="nc" id="L673">            return poJSON;</span>
+<span class="fc" id="L674">        }</span>
+
+<span class="fc" id="L676">        poJSON.put(&quot;result&quot;, &quot;success&quot;);</span>
+<span class="fc" id="L677">        return poJSON;</span>
+    }
+    
+    @Override
+    protected JSONObject isEntryOkay(String status) {
+<span class="fc" id="L682">        poJSON = new JSONObject();</span>
+        try{
+<span class="pc bpc" id="L684" title="1 of 4 branches missed.">            if (Master().getGiveawayCode() == null || &quot;&quot;.equals(Master().getGiveawayCode())) {</span>
+<span class="fc" id="L685">                poJSON = setJSON(&quot;error&quot;,&quot;Giveaway code must not be empty.&quot;);</span>
+<span class="fc" id="L686">                return poJSON;</span>
+            }
+
+<span class="pc bpc" id="L689" title="1 of 4 branches missed.">            if (Master().getDescription() == null || &quot;&quot;.equals(Master().getDescription())) {</span>
+<span class="fc" id="L690">                poJSON = setJSON(&quot;error&quot;,&quot;Description must not be empty.&quot;);</span>
+<span class="fc" id="L691">                return poJSON;</span>
+            }
+<span class="pc bpc" id="L693" title="1 of 4 branches missed.">            if (Master().getIndustryId() == null || &quot;&quot;.equals(Master().getIndustryId())) {</span>
+<span class="fc" id="L694">                poJSON = setJSON(&quot;error&quot;,&quot;Industry must not be empty.&quot;);</span>
+<span class="fc" id="L695">                return poJSON;</span>
+            }
+<span class="pc bpc" id="L697" title="2 of 4 branches missed.">            if (Master().getCategoryCode() == null || &quot;&quot;.equals(Master().getCategoryCode())) {</span>
+<span class="fc" id="L698">                poJSON = setJSON(&quot;error&quot;, &quot;Category must not be empty.&quot;);</span>
+<span class="fc" id="L699">                return poJSON;</span>
+            }
+
+<span class="nc" id="L702">            Date loFromDate = Master().getFromDate();</span>
+<span class="nc" id="L703">            Date loThruDate = Master().getThruDate();</span>
+<span class="nc bnc" id="L704" title="All 2 branches missed.">            if (loFromDate == null) {</span>
+<span class="nc" id="L705">                poJSON = setJSON(&quot;error&quot;,  &quot;Invalid From Date.&quot;);</span>
+<span class="nc" id="L706">                return poJSON;</span>
+            }
+<span class="nc bnc" id="L708" title="All 2 branches missed.">            if (loThruDate == null) {</span>
+<span class="nc" id="L709">                poJSON = setJSON(&quot;error&quot;,  &quot;Invalid Thru Date.&quot;);</span>
+<span class="nc" id="L710">                return poJSON;</span>
+            }
+<span class="nc bnc" id="L712" title="All 2 branches missed.">            if (&quot;1900-01-01&quot;.equals(xsDateShort(loFromDate))) {</span>
+<span class="nc" id="L713">                poJSON = setJSON(&quot;error&quot;,  &quot;Invalid From Date.&quot;);</span>
+<span class="nc" id="L714">                return poJSON;</span>
+            }
+<span class="nc bnc" id="L716" title="All 2 branches missed.">            if (&quot;1900-01-01&quot;.equals(xsDateShort(loFromDate))) {</span>
+<span class="nc" id="L717">                poJSON = setJSON(&quot;error&quot;,  &quot;Invalid Thru Date.&quot;);</span>
+<span class="nc" id="L718">                return poJSON;</span>
+            }
+
+<span class="nc" id="L721">            LocalDate ldFromDate = strToDate(xsDateShort(Master().getFromDate()));</span>
+<span class="nc" id="L722">            LocalDate ldThruDate = strToDate(xsDateShort(Master().getThruDate()));</span>
+<span class="nc" id="L723">            LocalDate serverDate = strToDate(xsDateShort(poGRider.getServerDate()));</span>
+<span class="nc bnc" id="L724" title="All 2 branches missed.">            if (ldThruDate.isBefore(ldFromDate)) {</span>
+<span class="nc" id="L725">                poJSON = setJSON(&quot;error&quot;,  &quot;Thru date cannot be before the from date.&quot;);</span>
+<span class="nc" id="L726">                return poJSON;</span>
+            }
+<span class="nc bnc" id="L728" title="All 2 branches missed.">            if (ldFromDate.isBefore(serverDate)) {</span>
+<span class="nc" id="L729">                poJSON = setJSON(&quot;error&quot;,  &quot;From date cannot be before the current date.&quot;);</span>
+<span class="nc" id="L730">                return poJSON;</span>
+            }
+
+<span class="nc" id="L733">        } catch (SQLException ex) {</span>
+<span class="nc" id="L734">            Logger.getLogger(getClass().getName()).log(Level.SEVERE, MiscUtil.getException(ex), ex);</span>
+<span class="nc" id="L735">            poJSON = setJSON(&quot;error&quot;, MiscUtil.getException(ex));</span>
+<span class="nc" id="L736">            return poJSON;</span>
+<span class="nc" id="L737">        }</span>
+<span class="nc" id="L738">        poJSON.put(&quot;result&quot;, &quot;success&quot;);</span>
+<span class="nc" id="L739">        return poJSON;</span>
+    }
+
+    private JSONObject validateRecordStatus(String fsStatus){
+<span class="fc" id="L743">        poJSON = new JSONObject();</span>
+
+        try {
+<span class="fc" id="L746">            Model_Sales_Giveaways_Master loObject = new SalesModels(poGRider).SalesGiveawaysMaster();</span>
+<span class="fc" id="L747">            loObject.initialize();</span>
+<span class="fc" id="L748">            poJSON = loObject.openRecord(Master().getGiveawayCode());</span>
+<span class="pc bpc" id="L749" title="1 of 2 branches missed.">            if (&quot;error&quot;.equals((String) poJSON.get(&quot;result&quot;))) {</span>
+<span class="nc" id="L750">                poJSON = setJSON(&quot;error&quot;,  (String) poJSON.get(&quot;message&quot;));</span>
+<span class="nc" id="L751">                return poJSON;</span>
+            }
+
+<span class="pc bpc" id="L754" title="1 of 2 branches missed.">            if (Master().getTransactionStatus().equals(fsStatus)) {</span>
+<span class="nc" id="L755">                poJSON = setJSON(&quot;error&quot;, &quot;Record is already in &quot; + getStatus(fsStatus) + &quot; status.&quot;);</span>
+<span class="nc" id="L756">                return poJSON;</span>
+            }
+
+<span class="fc bfc" id="L759" title="All 2 branches covered.">            if (Master().getTransactionStatus().equals(SalesGiveawaysStatus.DISAPPROVE)) {</span>
+<span class="fc" id="L760">                poJSON = setJSON(&quot;error&quot;, &quot;Record is already in &quot; + getStatus(Master().getTransactionStatus()) + &quot; status.&quot;);</span>
+<span class="fc" id="L761">                return poJSON;</span>
+            }
+
+<span class="pc bpc" id="L764" title="1 of 4 branches missed.">            if (Master().getTransactionStatus().equals(SalesGiveawaysStatus.OPEN) &amp;&amp; fsStatus.equals(SalesGiveawaysStatus.DEACTIVATE)) {</span>
+<span class="fc" id="L765">                poJSON = setJSON(&quot;error&quot;,  &quot;OPEN record status cannot be deactivated.&quot;);</span>
+<span class="fc" id="L766">                return poJSON;</span>
+            }
+
+<span class="pc bpc" id="L769" title="2 of 4 branches missed.">            if (Master().getTransactionStatus().equals(SalesGiveawaysStatus.ACTIVE) &amp;&amp; fsStatus.equals(SalesGiveawaysStatus.DISAPPROVE)) {</span>
+<span class="fc" id="L770">                poJSON = setJSON(&quot;error&quot;,  &quot;ACTIVE record status cannot be disapprove.&quot;);</span>
+<span class="fc" id="L771">                return poJSON;</span>
+            }
+<span class="nc" id="L773">        } catch (SQLException | GuanzonException ex) {</span>
+<span class="nc" id="L774">            Logger.getLogger(getClass().getName()).log(Level.SEVERE, MiscUtil.getException(ex), ex);</span>
+<span class="nc" id="L775">            poJSON = setJSON(&quot;error&quot;, MiscUtil.getException(ex));</span>
+<span class="nc" id="L776">            return poJSON;</span>
+<span class="nc" id="L777">        }</span>
+
+<span class="nc" id="L779">        poJSON.put(&quot;result&quot;, &quot;success&quot;);</span>
+<span class="nc" id="L780">        return poJSON;</span>
+
+    }
+
+    @Override
+    public void initSQL() {
+<span class="fc" id="L786">        SQL_BROWSE =  &quot;SELECT &quot; +</span>
+                    &quot;  a.sGAWayCde, &quot; +
+                    &quot;  a.sGAWayDsc, &quot; +
+                    &quot;  a.sIndstCdx, &quot; +
+                    &quot;  a.sCategrCd, &quot; +
+                    &quot;  a.sRemarksx, &quot; +
+                    &quot;  a.dFromDate, &quot; +
+                    &quot;  a.dThruDate, &quot; +
+                    &quot;  a.cTranStat, &quot; +
+                    &quot;  a.sEntryByx, &quot; +
+                    &quot;  a.dEntryDte, &quot; +
+                    &quot;  a.sModified, &quot; +
+                    &quot;  a.dModified, &quot; +
+                    &quot;  b.sDescript as Industry, &quot; +
+                    &quot;  c.sDescript AS Category &quot; +
+                    &quot;FROM Sales_Giveaways_Master a &quot; +
+                    &quot;LEFT JOIN Industry b ON b.sIndstCdx = a.sIndstCdx &quot; +
+                    &quot;LEFT JOIN Category c ON c.sCategrCd = a.sCategrCd &quot;;
+        
+<span class="fc" id="L805">    }</span>
+
+
+    protected CachedRowSet getStatusHistory() throws SQLException {
+<span class="nc" id="L809">        String lsSQL = &quot;SELECT  a.sTableNme, a.sSourceNo, a.sRemarksx, a.cRefrStat cTranStat, IFNULL(c.sCompnyNm, '-') xModified, IFNULL(e.sCompnyNm, '-') xApproved, a.dModified, a.dApproved, a.sModified, a.sApproved &quot; +</span>
+                &quot; FROM GCASys_DBF.Transaction_Status_History a &quot; +
+                &quot;LEFT JOIN GCASys_DBF.xxxSysUser b ON b.sUserIDxx = AES_DECRYPT(UNHEX(a.sModified), '08220326') &quot; +
+                &quot;LEFT JOIN GGC_ISysDBF.Client_Master c ON b.sEmployNo = c.sClientID &quot; +
+                &quot;LEFT JOIN GCASys_DBF.xxxSysUser d ON d.sUserIDxx = AES_DECRYPT(UNHEX(a.sApproved), '08220326') &quot; +
+                &quot;LEFT JOIN GGC_ISysDBF.Client_Master e ON d.sEmployNo = e.sClientID &quot; +
+<span class="nc" id="L815">                &quot; WHERE a.sSourceNo = &quot; + SQLUtil.toSQL(Master().getGiveawayCode()) +</span>
+<span class="nc" id="L816">                &quot; AND a.sTableNme = &quot; + SQLUtil.toSQL(Master().getTable()) + &quot; ORDER BY a.dModified&quot;;</span>
+<span class="nc" id="L817">        System.out.println(&quot;STATUS HISTORY : &quot; + lsSQL);</span>
+<span class="nc" id="L818">        ResultSet loRS = this.poGRider.executeQuery(lsSQL);</span>
+<span class="nc" id="L819">        RowSetFactory factory = RowSetProvider.newFactory();</span>
+<span class="nc" id="L820">        CachedRowSet rowset = factory.createCachedRowSet();</span>
+<span class="nc" id="L821">        rowset.populate(loRS);</span>
+<span class="nc" id="L822">        MiscUtil.close(loRS);</span>
+<span class="nc" id="L823">        return rowset;</span>
+    }
+
+    /**
+     * Displays the status history of a Cash Advance transaction.
+     *
+     * Retrieves status records, maps status codes to readable text, and
+     * shows them in the UI along with entry details.
+     *
+     * @throws SQLException if a database error occurs
+     * @throws GuanzonException if application-specific error occurs
+     * @throws Exception for other unexpected errors
+     */
+    public void ShowStatusHistory() throws SQLException, GuanzonException, Exception {
+<span class="nc" id="L837">        CachedRowSet crs = getStatusHistory();</span>
+
+<span class="nc" id="L839">        crs.beforeFirst();</span>
+
+<span class="nc bnc" id="L841" title="All 2 branches missed.">        while(crs.next()){</span>
+<span class="nc bnc" id="L842" title="All 6 branches missed.">            switch (crs.getString(&quot;cRefrStat&quot;)){</span>
+                case &quot;&quot;:
+<span class="nc" id="L844">                    crs.updateString(&quot;cRefrStat&quot;, &quot;-&quot;);</span>
+<span class="nc" id="L845">                    break;</span>
+                case SalesGiveawaysStatus.OPEN:
+<span class="nc" id="L847">                    crs.updateString(&quot;cRefrStat&quot;, &quot;OPEN&quot;);</span>
+<span class="nc" id="L848">                    break;</span>
+                case SalesGiveawaysStatus.DISAPPROVE:
+<span class="nc" id="L850">                    crs.updateString(&quot;cRefrStat&quot;, &quot;DISAPPROVED&quot;);</span>
+<span class="nc" id="L851">                    break;</span>
+                case SalesGiveawaysStatus.ACTIVE:
+<span class="nc" id="L853">                    crs.updateString(&quot;cRefrStat&quot;, &quot;ACTIVE&quot;);</span>
+<span class="nc" id="L854">                    break;</span>
+                case SalesGiveawaysStatus.DEACTIVATE:
+<span class="nc" id="L856">                    crs.updateString(&quot;cRefrStat&quot;, &quot;INACTIVE&quot;);</span>
+<span class="nc" id="L857">                    break;</span>
+                default:
+<span class="nc" id="L859">                    char ch = crs.getString(&quot;cRefrStat&quot;).charAt(0);</span>
+<span class="nc" id="L860">                    String stat = String.valueOf((int) ch - 64);</span>
+
+<span class="nc bnc" id="L862" title="All 5 branches missed.">                    switch (stat){</span>
+                        case SalesGiveawaysStatus.OPEN:
+<span class="nc" id="L864">                            crs.updateString(&quot;cRefrStat&quot;, &quot;OPEN&quot;);</span>
+<span class="nc" id="L865">                            break;</span>
+                        case SalesGiveawaysStatus.DISAPPROVE:
+<span class="nc" id="L867">                            crs.updateString(&quot;cRefrStat&quot;, &quot;DISAPPROVED&quot;);</span>
+<span class="nc" id="L868">                            break;</span>
+                        case SalesGiveawaysStatus.ACTIVE:
+<span class="nc" id="L870">                            crs.updateString(&quot;cRefrStat&quot;, &quot;ACTIVE&quot;);</span>
+<span class="nc" id="L871">                            break;</span>
+                        case SalesGiveawaysStatus.DEACTIVATE:
+<span class="nc" id="L873">                            crs.updateString(&quot;cRefrStat&quot;, &quot;INACTIVE&quot;);</span>
+                            break;
+                    }
+            }
+<span class="nc" id="L877">            crs.updateRow();</span>
+        }
+
+<span class="nc" id="L880">        JSONObject loJSON = getEntryBy();</span>
+<span class="nc" id="L881">        String entryBy = &quot;&quot;;</span>
+<span class="nc" id="L882">        String entryDate = &quot;&quot;;</span>
+
+<span class="nc bnc" id="L884" title="All 2 branches missed.">        if (isJSONSuccess(loJSON)) {</span>
+<span class="nc" id="L885">            entryBy = (String) loJSON.get(&quot;sCompnyNm&quot;);</span>
+<span class="nc" id="L886">            entryDate = (String) loJSON.get(&quot;sEntryDte&quot;);</span>
+        }
+
+<span class="nc" id="L889">        showStatusHistoryUI(&quot;Sales Giveaways&quot;, (String) poMaster.getValue(&quot;sGAWayCde&quot;), entryBy, entryDate, crs);</span>
+<span class="nc" id="L890">    }</span>
+    /**
+     * Retrieves the user and timestamp of who created the current transaction.
+     *
+     * @return JSONObject containing &quot;sCompnyNm&quot; (user) and &quot;sEntryDte&quot; (timestamp)
+     * @throws SQLException if a database error occurs
+     * @throws GuanzonException if application-specific error occurs
+     */
+    public JSONObject getEntryBy() throws SQLException, GuanzonException {
+<span class="nc" id="L899">        poJSON = new JSONObject();</span>
+<span class="nc" id="L900">        String lsEntry = &quot;&quot;;</span>
+<span class="nc" id="L901">        String lsEntryDate = &quot;&quot;;</span>
+<span class="nc" id="L902">        String lsSQL = &quot; SELECT b.sModified, b.dModified &quot;</span>
+<span class="nc" id="L903">                + &quot; FROM &quot;+Master().getTable()+&quot; a &quot;</span>
+<span class="nc" id="L904">                + &quot; LEFT JOIN xxxAuditLogMaster b ON b.sSourceNo = a.sGAWayCde AND b.sEventNme LIKE 'ADD%NEW' AND b.sRemarksx = &quot; + SQLUtil.toSQL(Master().getTable());</span>
+<span class="nc" id="L905">        lsSQL = MiscUtil.addCondition(lsSQL, &quot; a.sGAWayCde =  &quot; + SQLUtil.toSQL(Master().getGiveawayCode()));</span>
+<span class="nc" id="L906">        lsSQL = lsSQL + &quot; ORDER BY b.dModified DESC &quot;;</span>
+<span class="nc" id="L907">        System.out.println(&quot;Execute SQL : &quot; + lsSQL);</span>
+<span class="nc" id="L908">        ResultSet loRS = poGRider.executeQuery(lsSQL);</span>
+        try {
+<span class="nc bnc" id="L910" title="All 2 branches missed.">            if (MiscUtil.RecordCount(loRS) &gt; 0L) {</span>
+<span class="nc bnc" id="L911" title="All 2 branches missed.">                if (loRS.next()) {</span>
+<span class="nc bnc" id="L912" title="All 4 branches missed.">                    if (loRS.getString(&quot;sModified&quot;) != null &amp;&amp; !&quot;&quot;.equals(loRS.getString(&quot;sModified&quot;))) {</span>
+<span class="nc bnc" id="L913" title="All 2 branches missed.">                        if (loRS.getString(&quot;sModified&quot;).length() &gt; 10) {</span>
+<span class="nc" id="L914">                            lsEntry = getSysUser(poGRider.Decrypt(loRS.getString(&quot;sModified&quot;)));</span>
+                        } else {
+<span class="nc" id="L916">                            lsEntry = getSysUser(loRS.getString(&quot;sModified&quot;));</span>
+                        }
+                        // Get the LocalDateTime from your result set
+<span class="nc" id="L919">                        LocalDateTime dModified = loRS.getObject(&quot;dModified&quot;, LocalDateTime.class);</span>
+<span class="nc" id="L920">                        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(&quot;MM-dd-yyyy HH:mm:ss&quot;);</span>
+<span class="nc" id="L921">                        lsEntryDate = dModified.format(formatter);</span>
+                    }
+                }
+            }
+<span class="nc" id="L925">            MiscUtil.close(loRS);</span>
+<span class="nc" id="L926">        } catch (SQLException e) {</span>
+<span class="nc" id="L927">            poJSON = setJSON(&quot;error&quot;, e.getMessage());</span>
+<span class="nc" id="L928">            return poJSON;</span>
+<span class="nc" id="L929">        }</span>
+
+<span class="nc" id="L931">        poJSON.put(&quot;result&quot;, &quot;success&quot;);</span>
+<span class="nc" id="L932">        poJSON.put(&quot;sCompnyNm&quot;, lsEntry);</span>
+<span class="nc" id="L933">        poJSON.put(&quot;sEntryDte&quot;, lsEntryDate);</span>
+<span class="nc" id="L934">        return poJSON;</span>
+    }
+    /**
+     * Retrieves the company name of a system user based on user ID.
+     *
+     * @param fsId User ID to lookup
+     * @return Company name of the user
+     * @throws SQLException if a database error occurs
+     * @throws GuanzonException if application-specific error occurs
+     */
+    public String getSysUser(String fsId) throws SQLException, GuanzonException {
+<span class="nc" id="L945">        String lsEntry = &quot;&quot;;</span>
+<span class="nc" id="L946">        String lsSQL = &quot; SELECT b.sCompnyNm from xxxSysUser a &quot;</span>
+                + &quot; LEFT JOIN Client_Master b ON b.sClientID = a.sEmployNo &quot;;
+<span class="nc" id="L948">        lsSQL = MiscUtil.addCondition(lsSQL, &quot; a.sUserIDxx =  &quot; + SQLUtil.toSQL(fsId));</span>
+<span class="nc" id="L949">        System.out.println(&quot;Execute SQL : &quot; + lsSQL);</span>
+<span class="nc" id="L950">        ResultSet loRS = poGRider.executeQuery(lsSQL);</span>
+        try {
+<span class="nc bnc" id="L952" title="All 2 branches missed.">            if (MiscUtil.RecordCount(loRS) &gt; 0L) {</span>
+<span class="nc bnc" id="L953" title="All 2 branches missed.">                if (loRS.next()) {</span>
+<span class="nc" id="L954">                    lsEntry = loRS.getString(&quot;sCompnyNm&quot;);</span>
+                }
+            }
+<span class="nc" id="L957">            MiscUtil.close(loRS);</span>
+<span class="nc" id="L958">        } catch (SQLException e) {</span>
+<span class="nc" id="L959">            poJSON = setJSON(&quot;error&quot;, e.getMessage());</span>
+<span class="nc" id="L960">        }</span>
+<span class="nc" id="L961">        return lsEntry;</span>
+    }
+
+    /**
+     * Creates a JSONObject with &quot;result&quot; and &quot;message&quot; fields.
+     *
+     * @param fsResult  The result value (e.g., &quot;success&quot;, &quot;error&quot;)
+     * @param fsMessage The message describing the result
+     * @return JSONObject containing the result and message
+     */
+    private JSONObject setJSON(String fsResult, String fsMessage) {
+<span class="fc" id="L972">        JSONObject loJSON = new JSONObject();</span>
+<span class="fc" id="L973">        loJSON.put(&quot;result&quot;, fsResult);</span>
+<span class="fc" id="L974">        loJSON.put(&quot;message&quot;, fsMessage);</span>
+<span class="fc" id="L975">        return loJSON;</span>
+    }
+
+    /**
+     * Checks whether a JSONObject indicates a successful result.
+     *
+     * Returns true if the &quot;result&quot; field equals &quot;success&quot; or is not &quot;error&quot;.
+     *
+     * @param foJSON The JSONObject to check
+     * @return true if successful, false otherwise
+     */
+    public boolean isJSONSuccess(JSONObject foJSON) {
+<span class="fc bfc" id="L987" title="All 4 branches covered.">        return (&quot;success&quot;.equals((String) foJSON.get(&quot;result&quot;)) || !&quot;error&quot;.equals((String) foJSON.get(&quot;result&quot;)));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

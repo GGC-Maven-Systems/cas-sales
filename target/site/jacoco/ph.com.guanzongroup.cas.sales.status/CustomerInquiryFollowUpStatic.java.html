@@ -1,0 +1,374 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CustomerInquiryFollowUpStatic.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">cas-sales</a> &gt; <a href="index.source.html" class="el_package">ph.com.guanzongroup.cas.sales.status</a> &gt; <span class="el_source">CustomerInquiryFollowUpStatic.java</span></div><h1>CustomerInquiryFollowUpStatic.java</h1><pre class="source lang-java linenums">/*
+ * -----------------------------------------------------------------------------
+ * Project       : CAS Sales
+ * Module        : Customer Inquiry Follow Up
+ * Class Name    : CustomerInquiryFollowUpStatic
+ *
+ * Description   :
+ * Contains static constants used by the Customer Inquiry Follow Up module,
+ * including follow-up status and inquiry type identifiers.
+ *
+ * Author        : TEEJEI DE CELIS
+ * Date Created  : July 25, 2026
+ * -----------------------------------------------------------------------------
+ */
+package ph.com.guanzongroup.cas.sales.status;
+
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+
+/**
+ * Static constants for the Customer Inquiry Follow Up module.
+ *
+ * &lt;p&gt;
+ * This class contains predefined constant values used throughout the
+ * Customer Inquiry Follow Up transactions to avoid the use of hard-coded
+ * values in the application.
+ * &lt;/p&gt;
+ *
+ * &lt;h3&gt;Follow-Up Status&lt;/h3&gt;
+ * &lt;ul&gt;
+ *     &lt;li&gt;{@link #FOLLOWED_UP} - Customer has already been followed up.&lt;/li&gt;
+ *     &lt;li&gt;{@link #PENDING} - Customer is still pending for follow-up.&lt;/li&gt;
+ * &lt;/ul&gt;
+ *
+ * &lt;h3&gt;Inquiry Types&lt;/h3&gt;
+ * &lt;ul&gt;
+ *     &lt;li&gt;{@link InquiryType#ALL} - Retrieve all inquiries.&lt;/li&gt;
+ *     &lt;li&gt;{@link InquiryType#NEW_SALES_INQUIRY} - Newly created sales inquiries.&lt;/li&gt;
+ *     &lt;li&gt;{@link InquiryType#SCHEDULED_TODAY} - Follow-ups scheduled for today.&lt;/li&gt;
+ *     &lt;li&gt;{@link InquiryType#OVER_DUE_SCHEDULED} - Overdue scheduled follow-ups.&lt;/li&gt;
+ * &lt;/ul&gt;
+ *
+ * @author TEEJEI DE CELIS
+ * @date July 25, 2026
+ * @module Customer Inquiry Follow Up
+ * @since 1.0
+ */
+public final class CustomerInquiryFollowUpStatic {
+
+    /**
+     * Prevents instantiation of this utility class.
+     */
+<span class="nc" id="L53">    private CustomerInquiryFollowUpStatic() {</span>
+<span class="nc" id="L54">        throw new UnsupportedOperationException(&quot;Utility class cannot be instantiated.&quot;);</span>
+    }
+
+    // -------------------------------------------------------------------------
+    // Follow-Up Status
+    // -------------------------------------------------------------------------
+
+    /**
+     * Indicates that the customer inquiry has already been followed up.
+     */
+    public static final String FOLLOWED_UP = &quot;0&quot;;
+
+    /**
+     * Indicates that the customer inquiry is still pending for follow-up.
+     */
+    public static final String PENDING = &quot;1&quot;;
+
+    // -------------------------------------------------------------------------
+    // Inquiry Types
+    // -------------------------------------------------------------------------
+
+    /**
+     * Inquiry type identifiers used by the Customer Inquiry Follow Up module.
+     */
+    public static final class InquiryType {
+
+        /**
+         * Prevents instantiation.
+         */
+<span class="nc" id="L83">        private InquiryType() {</span>
+<span class="nc" id="L84">            throw new UnsupportedOperationException(&quot;Utility class cannot be instantiated.&quot;);</span>
+        }
+
+        /**
+         * Retrieve all customer inquiries.
+         */
+        public static final String ALL = &quot;0&quot;;
+
+        /**
+         * Retrieve newly created sales inquiries.
+         */
+        public static final String NEW_SALES_INQUIRY = &quot;1&quot;;
+
+        /**
+         * Retrieve customer inquiries scheduled for follow-up today.
+         */
+        public static final String SCHEDULED_TODAY = &quot;2&quot;;
+
+        /**
+         * Retrieve customer inquiries with overdue follow-up schedules.
+         */
+        public static final String OVER_DUE_SCHEDULED = &quot;3&quot;;
+    }
+<span class="fc" id="L107">    public static final ObservableList&lt;String&gt; INQUIRY_FILTER =</span>
+<span class="fc" id="L108">            FXCollections.observableArrayList(</span>
+                    &quot;All&quot;,
+                    &quot;New Sales Inquiry&quot;,
+                    &quot;Scheduled Today&quot;,
+                    &quot;Over Due Scheduled&quot;
+            );
+<span class="fc" id="L114">    public static final String[] INQUIRY_FILTER_CODE = {</span>
+            &quot;0&quot;,
+            &quot;1&quot;,
+            &quot;2&quot;,
+            &quot;3&quot;
+    };
+
+
+    /**
+     * Inquiry status descriptions.
+     * &lt;p&gt;
+     * The list index corresponds to the values in
+     * {@link #INQUIRY_STATUS_CODE}.
+     * &lt;/p&gt;
+     *
+     * &lt;pre&gt;
+     * FOLLOWED-UP - Customer inquiry has already been followed up.
+     * PENDING     - Customer inquiry is still pending for follow-up.
+     * &lt;/pre&gt;
+     */
+<span class="fc" id="L134">    public static final ObservableList&lt;String&gt; INQUIRY_STATUS =</span>
+<span class="fc" id="L135">            FXCollections.observableArrayList(</span>
+                    &quot;FOLLOWED-UP&quot;,
+                    &quot;PENDING&quot;,
+                    &quot;&quot;
+            );
+
+    /**
+     * Inquiry status codes.
+     * &lt;p&gt;
+     * The array index corresponds to the values in
+     * {@link #INQUIRY_STATUS}.
+     * &lt;/p&gt;
+     *
+     * &lt;pre&gt;
+     * 0 - FOLLOWED-UP
+     * 1 - PENDING
+     * &lt;/pre&gt;
+     */
+<span class="fc" id="L153">    public static final String[] INQUIRY_STATUS_CODE = {</span>
+            &quot;0&quot;,
+            &quot;1&quot;,
+            null
+    };
+    /**
+     * Returns the inquiry status description based on its code.
+     *
+     * @param code Inquiry status code.
+     * @return Inquiry status description.
+     */
+    public static String getInquiryStatusDescription(String code) {
+<span class="pc bpc" id="L165" title="1 of 2 branches missed.">        if (code == null) {</span>
+<span class="nc" id="L166">            return &quot;&quot;;</span>
+        }
+
+<span class="pc bpc" id="L169" title="1 of 2 branches missed.">        for (int i = 0; i &lt; INQUIRY_STATUS_CODE.length; i++) {</span>
+<span class="pc bpc" id="L170" title="1 of 2 branches missed.">            if (INQUIRY_STATUS_CODE[i].equalsIgnoreCase(code)) {</span>
+<span class="fc" id="L171">                return INQUIRY_STATUS.get(i);</span>
+            }
+        }
+
+<span class="nc" id="L175">        return code;</span>
+    }
+
+    /**
+     * Returns the inquiry status code based on its description.
+     *
+     * @param description Inquiry status description.
+     * @return Inquiry status code.
+     */
+    public static String getInquiryStatusCode(String description) {
+<span class="nc bnc" id="L185" title="All 2 branches missed.">        if (description == null) {</span>
+<span class="nc" id="L186">            return &quot;&quot;;</span>
+        }
+
+<span class="nc bnc" id="L189" title="All 2 branches missed.">        for (int i = 0; i &lt; INQUIRY_STATUS.size(); i++) {</span>
+<span class="nc bnc" id="L190" title="All 2 branches missed.">            if (INQUIRY_STATUS.get(i).equalsIgnoreCase(description)) {</span>
+<span class="nc" id="L191">                return INQUIRY_STATUS_CODE[i];</span>
+            }
+        }
+
+<span class="nc" id="L195">        return &quot;&quot;;</span>
+    }
+
+    /**
+     * Supported Social Media platforms.
+     * &lt;p&gt;
+     * Used to populate the Social Media ComboBox in the Customer Inquiry
+     * Follow-Up module.
+     */
+<span class="fc" id="L204">    public static final ObservableList&lt;String&gt; SOCIAL_MEDIA =</span>
+<span class="fc" id="L205">            FXCollections.observableArrayList(</span>
+                    &quot;Facebook&quot;,
+                    &quot;Messenger&quot;,
+                    &quot;Instagram&quot;,
+                    &quot;TikTok&quot;,
+                    &quot;Viber&quot;,
+                    &quot;WhatsApp&quot;,
+                    &quot;&quot;
+            );
+
+    /**
+     * Social Media platform codes.
+     * &lt;p&gt;
+     * The array index corresponds to the {@link #SOCIAL_MEDIA} list.
+     *
+     * &lt;pre&gt;
+     * FBK - Facebook
+     * MSG - Messenger
+     * INS - Instagram
+     * TTK - TikTok
+     * VBR - Viber
+     * WAP - WhatsApp
+     * &lt;/pre&gt;
+     */
+<span class="fc" id="L229">    public static final String[] SOCIAL_MEDIA_CODE = {</span>
+            &quot;FBK&quot;,
+            &quot;MSG&quot;,
+            &quot;INS&quot;,
+            &quot;TTK&quot;,
+            &quot;VBR&quot;,
+            &quot;WAP&quot;,
+            null
+    };
+
+    /**
+     * Supported communication methods.
+     * &lt;p&gt;
+     * Used to populate the Communication Method ComboBox.
+     */
+<span class="fc" id="L244">    public static final ObservableList&lt;String&gt; COMMUNICATION_METHOD =</span>
+<span class="fc" id="L245">            FXCollections.observableArrayList(</span>
+                    &quot;SMS&quot;,
+                    &quot;CALL&quot;,
+                    &quot;SOCIAL MEDIA&quot;,
+                    &quot;EMAIL&quot;,
+                    &quot;VIBER&quot;,
+                    &quot;&quot;
+            );
+
+    /**
+     * Communication method codes.
+     * &lt;p&gt;
+     * The array index corresponds to the {@link #COMMUNICATION_METHOD} list.
+     *
+     * &lt;pre&gt;
+     * SMS - SMS
+     * CAL - Call
+     * SOC - Social Media
+     * EML - Email
+     * VBR - Viber
+     * &lt;/pre&gt;
+     */
+<span class="fc" id="L267">    public static final String[] COMM_METHOD_CODE = {</span>
+            &quot;SMS&quot;,
+            &quot;CAL&quot;,
+            &quot;SOC&quot;,
+            &quot;EML&quot;,
+            &quot;VBR&quot;,
+            null
+    };
+
+    /**
+     * Supported customer responses during follow-up.
+     * &lt;p&gt;
+     * Used to populate the Customer Response ComboBox.
+     */
+    public static final String RESPONSE_POSITIVE = &quot;POS&quot;;
+    public static final String RESPONSE_NEGATIVE = &quot;NEG&quot;;
+    public static final String RESPONSE_LOST_SALE = &quot;LOS&quot;;
+    public static final String RESPONSE_UNDECIDED = &quot;UND&quot;;
+    public static final String RESPONSE_NO_RESPONSE = &quot;NOR&quot;;
+    public static final String RESPONSE_HANGED_UP = &quot;HNG&quot;;
+
+<span class="fc" id="L288">    public static final ObservableList&lt;String&gt; CUSTOMER_RESPONSE =</span>
+<span class="fc" id="L289">            FXCollections.observableArrayList(</span>
+                    &quot;Positive Response&quot;,
+                    &quot;Negative Response&quot;,
+                    &quot;Negative Response - Lost Sale&quot;,
+                    &quot;Undecided Response&quot;,
+                    &quot;No Response&quot;,
+                    &quot;Hanged Up&quot;,
+                    &quot;&quot;
+            );
+
+    /**
+     * Customer response codes.
+     * &lt;p&gt;
+     * The array index corresponds to the {@link #CUSTOMER_RESPONSE} list.
+     *
+     * &lt;pre&gt;
+     * POS - Positive Response
+     * NEG - Negative Response
+     * LOS - Negative Response - Lost Sale
+     * UND - Undecided Response
+     * NOR - No Response
+     * HNG - Hanged Up
+     * &lt;/pre&gt;
+     */
+<span class="fc" id="L313">    public static final String[] CUSTOMER_RESPONSE_CODE = {</span>
+            &quot;POS&quot;,
+            &quot;NEG&quot;,
+            &quot;LOS&quot;,
+            &quot;UND&quot;,
+            &quot;NOR&quot;,
+            &quot;HNG&quot;,
+            null
+    };
+    /**
+     * Returns the customer response description based on the response code.
+     *
+     * @param code Customer response code.
+     * @return Customer response description.
+     */
+    public static String getCustomerResponseDescription(String code) {
+<span class="pc bpc" id="L329" title="1 of 2 branches missed.">        if (code == null) {</span>
+<span class="nc" id="L330">            return &quot;&quot;;</span>
+        }
+
+<span class="pc bpc" id="L333" title="1 of 2 branches missed.">        for (int i = 0; i &lt; CUSTOMER_RESPONSE_CODE.length; i++) {</span>
+<span class="fc bfc" id="L334" title="All 2 branches covered.">            if (CUSTOMER_RESPONSE_CODE[i].equalsIgnoreCase(code)) {</span>
+<span class="fc" id="L335">                return CUSTOMER_RESPONSE.get(i);</span>
+            }
+        }
+
+<span class="nc" id="L339">        return code;</span>
+    }
+
+    /**
+     * Returns the customer response code based on the description.
+     *
+     * @param description Customer response description.
+     * @return Customer response code.
+     */
+    public static String getCustomerResponseCode(String description) {
+<span class="nc bnc" id="L349" title="All 2 branches missed.">        if (description == null) {</span>
+<span class="nc" id="L350">            return &quot;&quot;;</span>
+        }
+
+<span class="nc bnc" id="L353" title="All 2 branches missed.">        for (int i = 0; i &lt; CUSTOMER_RESPONSE.size(); i++) {</span>
+<span class="nc bnc" id="L354" title="All 2 branches missed.">            if (CUSTOMER_RESPONSE.get(i).equalsIgnoreCase(description)) {</span>
+<span class="nc" id="L355">                return CUSTOMER_RESPONSE_CODE[i];</span>
+            }
+        }
+
+<span class="nc" id="L359">        return &quot;&quot;;</span>
+    }
+
+<span class="fc" id="L362">    public static final ObservableList&lt;String&gt; COM_VHICLE_COND =</span>
+<span class="fc" id="L363">            FXCollections.observableArrayList(</span>
+                    &quot;Brand New&quot;,
+                    &quot;Pre-Owned&quot;,
+                    &quot;&quot;
+            );
+<span class="fc" id="L368">    public static final String[] COM_VHICLE_COND_CODE = {</span>
+            &quot;0&quot;,
+            &quot;1&quot;,
+            null
+    };
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

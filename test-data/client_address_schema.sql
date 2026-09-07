@@ -1,6 +1,6 @@
-DROP TABLE IF EXISTS `client_address`;
+DROP TABLE IF EXISTS `Client_Address`;
 
-CREATE TABLE `client_address` (
+CREATE TABLE `Client_Address` (
   `sAddrssID` char(12) NOT NULL,
   `sClientID` char(12) DEFAULT NULL,
   `sHouseNox` varchar(5) DEFAULT NULL,

@@ -1,0 +1,780 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Model_Vsp_Master.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">cas-sales</a> &gt; <a href="index.source.html" class="el_package">ph.com.guanzongroup.cas.sales.model</a> &gt; <span class="el_source">Model_Vsp_Master.java</span></div><h1>Model_Vsp_Master.java</h1><pre class="source lang-java linenums">/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package ph.com.guanzongroup.cas.sales.model;
+
+import org.guanzon.appdriver.agent.services.Model;
+import org.guanzon.appdriver.base.GuanzonException;
+import org.guanzon.appdriver.base.MiscUtil;
+import org.guanzon.appdriver.constant.EditMode;
+import org.guanzon.cas.client.model.Model_Client_Address;
+import org.guanzon.cas.client.model.Model_Client_Master;
+import org.guanzon.cas.client.model.Model_Client_Mobile;
+import org.guanzon.cas.client.model.Model_Client_Social_Media;
+import org.guanzon.cas.client.services.ClientModels;
+import org.guanzon.cas.parameter.model.Model_Branch;
+import org.guanzon.cas.parameter.model.Model_Company;
+import org.guanzon.cas.parameter.model.Model_Industry;
+import org.guanzon.cas.parameter.services.ParamModels;
+import org.json.simple.JSONObject;
+
+import java.sql.SQLException;
+import java.util.Date;
+
+/**
+ * Model class for the VSP Master transaction.
+ *
+ * &lt;p&gt;
+ * This class represents the master record of a VSP transaction
+ * within the CAS Sales module. It encapsulates transaction information
+ * including transaction details, branch, industry, company, client,
+ * vehicle, pricing, discounts, payment information, and transaction status.
+ * &lt;/p&gt;
+ *
+ * &lt;p&gt;
+ * In addition to maintaining the VSP Master record, this model provides
+ * convenient access to its associated reference objects, including:
+ * &lt;/p&gt;
+ * &lt;ul&gt;
+ *     &lt;li&gt;Branch&lt;/li&gt;
+ *     &lt;li&gt;Industry&lt;/li&gt;
+ *     &lt;li&gt;Company&lt;/li&gt;
+ *     &lt;li&gt;Client Master&lt;/li&gt;
+ *     &lt;li&gt;Client Address&lt;/li&gt;
+ *     &lt;li&gt;Client Mobile&lt;/li&gt;
+ *     &lt;li&gt;Client Social Media&lt;/li&gt;
+ * &lt;/ul&gt;
+ *
+ * &lt;p&gt;
+ * The model also maintains vehicle information, transaction pricing,
+ * freight charges, promotional and fleet discounts, supplier and dealer
+ * amounts, reservation and payment amounts, sales commission information,
+ * printing status, transaction status, and audit information.
+ * &lt;/p&gt;
+ *
+ * &lt;p&gt;
+ * Upon initialization, the model loads its metadata, assigns default values,
+ * initializes its reference objects, and prepares the entity for create,
+ * retrieve, update, and save operations.
+ * &lt;/p&gt;
+ *
+ * @author TEEJEI DE CELIS
+ * @date August 14, 2026
+ * @module VSP Master
+ * @since 1.0
+ */
+<span class="nc" id="L68">public class Model_Vsp_Master extends Model {</span>
+
+    //reference objects
+    Model_Branch poBranch;
+    Model_Industry poIndustry;
+    Model_Company poCompany;
+    Model_Client_Master poClient;
+    Model_Client_Address poClientAddress;
+    Model_Client_Social_Media poClientSocMed;
+    Model_Client_Mobile poClientMobile;
+    //    Model_Client_Master poAgent;
+
+    @Override
+    public void initialize() {
+        try {
+<span class="nc" id="L83">            poEntity = MiscUtil.xml2ResultSet(</span>
+<span class="nc" id="L84">                    System.getProperty(&quot;sys.default.path.metadata&quot;) + XML,</span>
+<span class="nc" id="L85">                    getTable()</span>
+            );
+
+<span class="nc" id="L88">            poEntity.last();</span>
+<span class="nc" id="L89">            poEntity.moveToInsertRow();</span>
+
+<span class="nc" id="L91">            MiscUtil.initRowSet(poEntity);</span>
+
+            // assign default values
+<span class="nc" id="L94">            poEntity.updateObject(&quot;dTransact&quot;, poGRider.getServerDate());</span>
+<span class="nc" id="L95">            poEntity.updateNull(&quot;dDelvryDt&quot;);</span>
+<span class="nc" id="L96">            poEntity.updateNull(&quot;dPrintxxx&quot;);</span>
+<span class="nc" id="L97">            poEntity.updateNull(&quot;dModified&quot;);</span>
+
+<span class="nc" id="L99">            poEntity.updateString(&quot;cTranStat&quot;, &quot;&quot;);</span>
+            // end - assign default values
+
+<span class="nc" id="L102">            poEntity.insertRow();</span>
+<span class="nc" id="L103">            poEntity.moveToCurrentRow();</span>
+<span class="nc" id="L104">            poEntity.absolute(1);</span>
+
+<span class="nc" id="L106">            ID = &quot;sTransNox&quot;;</span>
+
+            // initialize reference objects
+<span class="nc" id="L109">            ClientModels clientModel = new ClientModels(poGRider);</span>
+<span class="nc" id="L110">            poClient = clientModel.ClientMaster();</span>
+<span class="nc" id="L111">            poClientAddress = clientModel.ClientAddress();</span>
+<span class="nc" id="L112">            poClientMobile = clientModel.ClientMobile();</span>
+<span class="nc" id="L113">            poClientSocMed = clientModel.ClientSocMed();</span>
+
+<span class="nc" id="L115">            ParamModels paramModel = new ParamModels(poGRider);</span>
+<span class="nc" id="L116">            poBranch = paramModel.Branch();</span>
+<span class="nc" id="L117">            poIndustry = paramModel.Industry();</span>
+<span class="nc" id="L118">            poCompany = paramModel.Company();</span>
+
+
+            // end - initialize reference objects
+
+<span class="nc" id="L123">        } catch (SQLException e) {</span>
+<span class="nc" id="L124">            logwrapr.severe(e.getMessage());</span>
+<span class="nc" id="L125">            System.exit(1);</span>
+<span class="nc" id="L126">        }</span>
+<span class="nc" id="L127">    }</span>
+
+    public JSONObject setTransactionNo(String transactionNo) {
+<span class="nc" id="L130">        return setValue(&quot;sTransNox&quot;, transactionNo);</span>
+    }
+
+    public String getTransactionNo() {
+<span class="nc" id="L134">        return (String) getValue(&quot;sTransNox&quot;);</span>
+    }
+
+    public JSONObject setIndustryCode(String industryCode) {
+<span class="nc" id="L138">        return setValue(&quot;sIndstCdx&quot;, industryCode);</span>
+    }
+
+    public String getIndustryCode() {
+<span class="nc" id="L142">        return (String) getValue(&quot;sIndstCdx&quot;);</span>
+    }
+
+    public JSONObject setBranchCode(String branchCode) {
+<span class="nc" id="L146">        return setValue(&quot;sBranchCD&quot;, branchCode);</span>
+    }
+
+    public String getBranchCode() {
+<span class="nc" id="L150">        return (String) getValue(&quot;sBranchCD&quot;);</span>
+    }
+
+    public JSONObject setCompanyId(String companyId) {
+<span class="nc" id="L154">        return setValue(&quot;sCompnyID&quot;, companyId);</span>
+    }
+
+    public String getCompanyId() {
+<span class="nc" id="L158">        return (String) getValue(&quot;sCompnyID&quot;);</span>
+    }
+
+    public JSONObject setTransactionDate(Date transactionDate) {
+<span class="nc" id="L162">        return setValue(&quot;dTransact&quot;, transactionDate);</span>
+    }
+
+    public Date getTransactionDate() {
+<span class="nc" id="L166">        return (Date) getValue(&quot;dTransact&quot;);</span>
+    }
+
+    public JSONObject setDeliveryDate(Date deliveryDate) {
+<span class="nc" id="L170">        return setValue(&quot;dDelvryDt&quot;, deliveryDate);</span>
+    }
+
+    public Date getDeliveryDate() {
+<span class="nc" id="L174">        return (Date) getValue(&quot;dDelvryDt&quot;);</span>
+    }
+
+    public JSONObject setClientId(String clientId) {
+<span class="nc" id="L178">        return setValue(&quot;sClientID&quot;, clientId);</span>
+    }
+
+    public String getClientId() {
+<span class="nc" id="L182">        return (String) getValue(&quot;sClientID&quot;);</span>
+    }
+
+    public JSONObject setAddressId(String addressId) {
+<span class="nc" id="L186">        return setValue(&quot;sAddrssID&quot;, addressId);</span>
+    }
+
+    public String getAddressId() {
+<span class="nc" id="L190">        return (String) getValue(&quot;sAddrssID&quot;);</span>
+    }
+
+    public JSONObject setContactId(String contactId) {
+<span class="nc" id="L194">        return setValue(&quot;sContctID&quot;, contactId);</span>
+    }
+
+    public String getContactId() {
+<span class="nc" id="L198">        return (String) getValue(&quot;sContctID&quot;);</span>
+    }
+
+    public JSONObject setVehicleNew(String vehicleNew) {
+<span class="nc" id="L202">        return setValue(&quot;cIsVhclNw&quot;, vehicleNew);</span>
+    }
+
+    public String getVehicleNew() {
+<span class="nc" id="L206">        return (String) getValue(&quot;cIsVhclNw&quot;);</span>
+    }
+
+    public JSONObject setVIP(String vip) {
+<span class="nc" id="L210">        return setValue(&quot;cIsVIPxxx&quot;, vip);</span>
+    }
+
+    public String getVIP() {
+<span class="nc" id="L214">        return (String) getValue(&quot;cIsVIPxxx&quot;);</span>
+    }
+
+    public JSONObject setSerialId(String serialId) {
+<span class="nc" id="L218">        return setValue(&quot;sSerialID&quot;, serialId);</span>
+    }
+
+    public String getSerialId() {
+<span class="nc" id="L222">        return (String) getValue(&quot;sSerialID&quot;);</span>
+    }
+
+    public JSONObject setEndPlate(String endPlate) {
+<span class="nc" id="L226">        return setValue(&quot;sEndPlate&quot;, endPlate);</span>
+    }
+
+    public String getEndPlate() {
+<span class="nc" id="L230">        return (String) getValue(&quot;sEndPlate&quot;);</span>
+    }
+
+    public JSONObject setUnitPrice(Double unitPrice) {
+<span class="nc" id="L234">        return setValue(&quot;nUnitPrce&quot;, unitPrice);</span>
+    }
+
+    public Double getUnitPrice() {
+<span class="nc" id="L238">        return (Double) getValue(&quot;nUnitPrce&quot;);</span>
+    }
+
+    public JSONObject setLaborAmount(Double laborAmount) {
+<span class="nc" id="L242">        return setValue(&quot;nLaborAmt&quot;, laborAmount);</span>
+    }
+
+    public Double getLaborAmount() {
+<span class="nc" id="L246">        return (Double) getValue(&quot;nLaborAmt&quot;);</span>
+    }
+
+    public JSONObject setAccessoriesAmount(Double accessoriesAmount) {
+<span class="nc" id="L250">        return setValue(&quot;nAccesAmt&quot;, accessoriesAmount);</span>
+    }
+
+    public Double getAccessoriesAmount() {
+<span class="nc" id="L254">        return (Double) getValue(&quot;nAccesAmt&quot;);</span>
+    }
+
+    public JSONObject setPayload(String payload) {
+<span class="nc" id="L258">        return setValue(&quot;sPayLoadx&quot;, payload);</span>
+    }
+
+    public String getPayload() {
+<span class="nc" id="L262">        return (String) getValue(&quot;sPayLoadx&quot;);</span>
+    }
+
+    public JSONObject setFreightCharge(Double freightCharge) {
+<span class="nc" id="L266">        return setValue(&quot;nFrgtChrg&quot;, freightCharge);</span>
+    }
+
+    public Double getFreightCharge() {
+<span class="nc" id="L270">        return (Double) getValue(&quot;nFrgtChrg&quot;);</span>
+    }
+
+    public JSONObject setPromoDiscount(Double promoDiscount) {
+<span class="nc" id="L274">        return setValue(&quot;nPromoDsc&quot;, promoDiscount);</span>
+    }
+
+    public Double getPromoDiscount() {
+<span class="nc" id="L278">        return (Double) getValue(&quot;nPromoDsc&quot;);</span>
+    }
+
+    public JSONObject setFleetDiscount(Double fleetDiscount) {
+<span class="nc" id="L282">        return setValue(&quot;nFleetDsc&quot;, fleetDiscount);</span>
+    }
+
+    public Double getFleetDiscount() {
+<span class="nc" id="L286">        return (Double) getValue(&quot;nFleetDsc&quot;);</span>
+    }
+
+    public JSONObject setSPFleetDiscount(Double spFleetDiscount) {
+<span class="nc" id="L290">        return setValue(&quot;nSPFltDsc&quot;, spFleetDiscount);</span>
+    }
+
+    public Double getSPFleetDiscount() {
+<span class="nc" id="L294">        return (Double) getValue(&quot;nSPFltDsc&quot;);</span>
+    }
+
+    public JSONObject setBundleDiscount(Double bundleDiscount) {
+<span class="nc" id="L298">        return setValue(&quot;nBndleDsc&quot;, bundleDiscount);</span>
+    }
+
+    public Double getBundleDiscount() {
+<span class="nc" id="L302">        return (Double) getValue(&quot;nBndleDsc&quot;);</span>
+    }
+
+    public JSONObject setAdditionalDiscount(Double additionalDiscount) {
+<span class="nc" id="L306">        return setValue(&quot;nAddlDscx&quot;, additionalDiscount);</span>
+    }
+
+    public Double getAdditionalDiscount() {
+<span class="nc" id="L310">        return (Double) getValue(&quot;nAddlDscx&quot;);</span>
+    }
+
+    public JSONObject setDueToSupplier(Double dueToSupplier) {
+<span class="nc" id="L314">        return setValue(&quot;nDue2Supx&quot;, dueToSupplier);</span>
+    }
+
+    public Double getDueToSupplier() {
+<span class="nc" id="L318">        return (Double) getValue(&quot;nDue2Supx&quot;);</span>
+    }
+
+    public JSONObject setDueToDealer(Double dueToDealer) {
+<span class="nc" id="L322">        return setValue(&quot;nDue2Dlrx&quot;, dueToDealer);</span>
+    }
+
+    public Double getDueToDealer() {
+<span class="nc" id="L326">        return (Double) getValue(&quot;nDue2Dlrx&quot;);</span>
+    }
+
+    public JSONObject setSPFDueToSupplier(Double spfDueToSupplier) {
+<span class="nc" id="L330">        return setValue(&quot;nSPFD2Sup&quot;, spfDueToSupplier);</span>
+    }
+
+    public Double getSPFDueToSupplier() {
+<span class="nc" id="L334">        return (Double) getValue(&quot;nSPFD2Sup&quot;);</span>
+    }
+
+    public JSONObject setSPFDueToDealer(Double spfDueToDealer) {
+<span class="nc" id="L338">        return setValue(&quot;nSPFD2Dlr&quot;, spfDueToDealer);</span>
+    }
+
+    public Double getSPFDueToDealer() {
+<span class="nc" id="L342">        return (Double) getValue(&quot;nSPFD2Dlr&quot;);</span>
+    }
+
+    public JSONObject setPremiumDueToSupplier(Double premiumDueToSupplier) {
+<span class="nc" id="L346">        return setValue(&quot;nPrmD2Sup&quot;, premiumDueToSupplier);</span>
+    }
+
+    public Double getPremiumDueToSupplier() {
+<span class="nc" id="L350">        return (Double) getValue(&quot;nPrmD2Sup&quot;);</span>
+    }
+
+    public JSONObject setPremiumDueToDealer(Double premiumDueToDealer) {
+<span class="nc" id="L354">        return setValue(&quot;nPrmD2Dlr&quot;, premiumDueToDealer);</span>
+    }
+
+    public Double getPremiumDueToDealer() {
+<span class="nc" id="L358">        return (Double) getValue(&quot;nPrmD2Dlr&quot;);</span>
+    }
+
+    public JSONObject setReservationFee(Double reservationFee) {
+<span class="nc" id="L362">        return setValue(&quot;nResrvFee&quot;, reservationFee);</span>
+    }
+
+    public Double getReservationFee() {
+<span class="nc" id="L366">        return (Double) getValue(&quot;nResrvFee&quot;);</span>
+    }
+
+    public JSONObject setDownPayment(Double downPayment) {
+<span class="nc" id="L370">        return setValue(&quot;nDownPaym&quot;, downPayment);</span>
+    }
+
+    public Double getDownPayment() {
+<span class="nc" id="L374">        return (Double) getValue(&quot;nDownPaym&quot;);</span>
+    }
+
+    public JSONObject setFullPayment(Double fullPayment) {
+<span class="nc" id="L378">        return setValue(&quot;nFullPaym&quot;, fullPayment);</span>
+    }
+
+    public Double getFullPayment() {
+<span class="nc" id="L382">        return (Double) getValue(&quot;nFullPaym&quot;);</span>
+    }
+
+    public JSONObject setTransactionTotal(Double transactionTotal) {
+<span class="nc" id="L386">        return setValue(&quot;nTranTotl&quot;, transactionTotal);</span>
+    }
+
+    public Double getTransactionTotal() {
+<span class="nc" id="L390">        return (Double) getValue(&quot;nTranTotl&quot;);</span>
+    }
+
+    public JSONObject setAmountPaid(Double amountPaid) {
+<span class="nc" id="L394">        return setValue(&quot;nAmtPaidx&quot;, amountPaid);</span>
+    }
+
+    public Double getAmountPaid() {
+<span class="nc" id="L398">        return (Double) getValue(&quot;nAmtPaidx&quot;);</span>
+    }
+
+    public JSONObject setPaymentMode(String paymentMode) {
+<span class="nc" id="L402">        return setValue(&quot;cPayModex&quot;, paymentMode);</span>
+    }
+
+    public String getPaymentMode() {
+<span class="nc" id="L406">        return (String) getValue(&quot;cPayModex&quot;);</span>
+    }
+
+    public JSONObject setSalesCommissionCode(String salesCommissionCode) {
+<span class="nc" id="L410">        return setValue(&quot;sSlsComCD&quot;, salesCommissionCode);</span>
+    }
+
+    public String getSalesCommissionCode() {
+<span class="nc" id="L414">        return (String) getValue(&quot;sSlsComCD&quot;);</span>
+    }
+
+    public JSONObject setRemarks(String remarks) {
+<span class="nc" id="L418">        return setValue(&quot;sRemarksx&quot;, remarks);</span>
+    }
+
+    public String getRemarks() {
+<span class="nc" id="L422">        return (String) getValue(&quot;sRemarksx&quot;);</span>
+    }
+
+    public JSONObject setPrintStatus(String printStatus) {
+<span class="nc" id="L426">        return setValue(&quot;cPrintxxx&quot;, printStatus);</span>
+    }
+
+    public String getPrintStatus() {
+<span class="nc" id="L430">        return (String) getValue(&quot;cPrintxxx&quot;);</span>
+    }
+
+    public JSONObject setPrintDate(Date printDate) {
+<span class="nc" id="L434">        return setValue(&quot;dPrintxxx&quot;, printDate);</span>
+    }
+
+    public Date getPrintDate() {
+<span class="nc" id="L438">        return (Date) getValue(&quot;dPrintxxx&quot;);</span>
+    }
+
+    public JSONObject setTransactionStatus(String transactionStatus) {
+<span class="nc" id="L442">        return setValue(&quot;cTranStat&quot;, transactionStatus);</span>
+    }
+
+    public String getTransactionStatus() {
+<span class="nc" id="L446">        return (String) getValue(&quot;cTranStat&quot;);</span>
+    }
+
+    public JSONObject setEntryBy(String entryBy) {
+<span class="nc" id="L450">        return setValue(&quot;sEntryByx&quot;, entryBy);</span>
+    }
+
+    public String getEntryBy() {
+<span class="nc" id="L454">        return (String) getValue(&quot;sEntryByx&quot;);</span>
+    }
+
+    public JSONObject setEntryDate(Date entryDate) {
+<span class="nc" id="L458">        return setValue(&quot;dEntryDte&quot;, entryDate);</span>
+    }
+
+    public Date getEntryDate() {
+<span class="nc" id="L462">        return (Date) getValue(&quot;dEntryDte&quot;);</span>
+    }
+
+    public JSONObject setModifyingId(String modifiedBy) {
+<span class="nc" id="L466">        return setValue(&quot;sModified&quot;, modifiedBy);</span>
+    }
+
+    public String getModifyingId() {
+<span class="nc" id="L470">        return (String) getValue(&quot;sModified&quot;);</span>
+    }
+
+    public JSONObject setModifiedDate(Date modifiedDate) {
+<span class="nc" id="L474">        return setValue(&quot;dModified&quot;, modifiedDate);</span>
+    }
+
+    public Date getModifiedDate() {
+<span class="nc" id="L478">        return (Date) getValue(&quot;dModified&quot;);</span>
+    }
+
+    @Override
+    public String getNextCode() {
+<span class="nc" id="L483">        return MiscUtil.getNextCode(</span>
+<span class="nc" id="L484">                this.getTable(),</span>
+                ID,
+                true,
+<span class="nc" id="L487">                poGRider.getGConnection().getConnection(),</span>
+<span class="nc" id="L488">                poGRider.getBranchCode()</span>
+        );
+    }
+
+    // reference object models
+
+    /**
+     * Retrieves the client associated with the current VSP transaction.
+     *
+     * @return the {@link Model_Client_Master} associated with the current
+     *         transaction; otherwise, an initialized empty client model.
+     *
+     * @throws SQLException if a database access error occurs while retrieving
+     *         the client record.
+     * @throws GuanzonException if an application-specific error occurs while
+     *         loading the client information.
+     */
+    public Model_Client_Master Client() throws SQLException, GuanzonException {
+<span class="nc bnc" id="L506" title="All 2 branches missed.">        if (!&quot;&quot;.equals((String) getValue(&quot;sClientID&quot;))) {</span>
+<span class="nc bnc" id="L507" title="All 2 branches missed.">            if (poClient.getEditMode() == EditMode.READY</span>
+<span class="nc bnc" id="L508" title="All 2 branches missed.">                    &amp;&amp; poClient.getClientId().equals((String) getValue(&quot;sClientID&quot;))) {</span>
+
+<span class="nc" id="L510">                return poClient;</span>
+
+            } else {
+<span class="nc" id="L513">                poJSON = poClient.openRecord((String) getValue(&quot;sClientID&quot;));</span>
+
+<span class="nc bnc" id="L515" title="All 2 branches missed.">                if (&quot;success&quot;.equals((String) poJSON.get(&quot;result&quot;))) {</span>
+<span class="nc" id="L516">                    return poClient;</span>
+                } else {
+<span class="nc" id="L518">                    poClient.initialize();</span>
+<span class="nc" id="L519">                    return poClient;</span>
+                }
+            }
+        } else {
+<span class="nc" id="L523">            poClient.initialize();</span>
+<span class="nc" id="L524">            return poClient;</span>
+        }
+    }
+
+    /**
+     * Retrieves the primary address of the client associated with the current
+     * VSP transaction.
+     *
+     * @return the {@link Model_Client_Address} associated with the current
+     *         client; otherwise, an initialized empty address model.
+     *
+     * @throws SQLException if a database access error occurs while retrieving
+     *         the client address.
+     * @throws GuanzonException if an application-specific error occurs while
+     *         loading the client address.
+     */
+    public Model_Client_Address ClientAddress() throws SQLException, GuanzonException {
+<span class="nc bnc" id="L541" title="All 2 branches missed.">        if (!&quot;&quot;.equals((String) getValue(&quot;sClientID&quot;))) {</span>
+<span class="nc bnc" id="L542" title="All 2 branches missed.">            if (poClientAddress.getEditMode() == EditMode.READY</span>
+<span class="nc bnc" id="L543" title="All 2 branches missed.">                    &amp;&amp; poClientAddress.getClientId().equals((String) getValue(&quot;sClientID&quot;))) {</span>
+
+<span class="nc" id="L545">                return poClientAddress;</span>
+
+            } else {
+<span class="nc" id="L548">                poJSON = poClientAddress.openRecord((String) getValue(&quot;sClientID&quot;));</span>
+
+<span class="nc bnc" id="L550" title="All 2 branches missed.">                if (&quot;success&quot;.equals((String) poJSON.get(&quot;result&quot;))) {</span>
+<span class="nc" id="L551">                    return poClientAddress;</span>
+                } else {
+<span class="nc" id="L553">                    poClientAddress.initialize();</span>
+<span class="nc" id="L554">                    return poClientAddress;</span>
+                }
+            }
+        } else {
+<span class="nc" id="L558">            poClientAddress.initialize();</span>
+<span class="nc" id="L559">            return poClientAddress;</span>
+        }
+    }
+
+    /**
+     * Retrieves the social media information of the client associated with the
+     * current VSP transaction.
+     *
+     * @return the {@link Model_Client_Social_Media} associated with the current
+     *         client; otherwise, an initialized empty social media model.
+     *
+     * @throws SQLException if a database access error occurs while retrieving
+     *         the client's social media information.
+     * @throws GuanzonException if an application-specific error occurs while
+     *         loading the social media information.
+     */
+    public Model_Client_Social_Media ClientSocMed() throws SQLException, GuanzonException {
+<span class="nc bnc" id="L576" title="All 2 branches missed.">        if (!&quot;&quot;.equals((String) getValue(&quot;sClientID&quot;))) {</span>
+<span class="nc bnc" id="L577" title="All 2 branches missed.">            if (poClientSocMed.getEditMode() == EditMode.READY</span>
+<span class="nc bnc" id="L578" title="All 2 branches missed.">                    &amp;&amp; poClientSocMed.getClientId().equals((String) getValue(&quot;sClientID&quot;))) {</span>
+
+<span class="nc" id="L580">                return poClientSocMed;</span>
+
+            } else {
+<span class="nc" id="L583">                poJSON = poClientSocMed.openRecord((String) getValue(&quot;sClientID&quot;));</span>
+
+<span class="nc bnc" id="L585" title="All 2 branches missed.">                if (&quot;success&quot;.equals((String) poJSON.get(&quot;result&quot;))) {</span>
+<span class="nc" id="L586">                    return poClientSocMed;</span>
+                } else {
+<span class="nc" id="L588">                    poClientSocMed.initialize();</span>
+<span class="nc" id="L589">                    return poClientSocMed;</span>
+                }
+            }
+        } else {
+<span class="nc" id="L593">            poClientSocMed.initialize();</span>
+<span class="nc" id="L594">            return poClientSocMed;</span>
+        }
+    }
+
+    /**
+     * Retrieves the mobile contact information associated with the current
+     * VSP transaction.
+     *
+     * @return the {@link Model_Client_Mobile} associated with the current
+     *         transaction; otherwise, an initialized empty mobile model.
+     *
+     * @throws SQLException if a database access error occurs while retrieving
+     *         the mobile contact information.
+     * @throws GuanzonException if an application-specific error occurs while
+     *         loading the mobile information.
+     */
+    public Model_Client_Mobile ClientMobile() throws SQLException, GuanzonException {
+<span class="nc bnc" id="L611" title="All 2 branches missed.">        if (!&quot;&quot;.equals((String) getValue(&quot;sContctID&quot;))) {</span>
+<span class="nc bnc" id="L612" title="All 2 branches missed.">            if (poClientMobile.getEditMode() == EditMode.READY</span>
+<span class="nc bnc" id="L613" title="All 2 branches missed.">                    &amp;&amp; poClientMobile.getClientId().equals((String) getValue(&quot;sContctID&quot;))) {</span>
+
+<span class="nc" id="L615">                return poClientMobile;</span>
+
+            } else {
+<span class="nc" id="L618">                poJSON = poClientMobile.openRecord((String) getValue(&quot;sContctID&quot;));</span>
+
+<span class="nc bnc" id="L620" title="All 2 branches missed.">                if (&quot;success&quot;.equals((String) poJSON.get(&quot;result&quot;))) {</span>
+<span class="nc" id="L621">                    return poClientMobile;</span>
+                } else {
+<span class="nc" id="L623">                    poClientMobile.initialize();</span>
+<span class="nc" id="L624">                    return poClientMobile;</span>
+                }
+            }
+        } else {
+<span class="nc" id="L628">            poClientMobile.initialize();</span>
+<span class="nc" id="L629">            return poClientMobile;</span>
+        }
+    }
+    /**
+     * Retrieves the industry associated with the current VSP transaction.
+     *
+     * &lt;p&gt;
+     * If an industry code is assigned to the current transaction, this method
+     * checks whether the existing industry model is already loaded for the same
+     * industry. If it is ready and matches the current industry code, the
+     * existing model is returned. Otherwise, the industry record is opened using
+     * the current industry code.
+     * &lt;/p&gt;
+     *
+     * &lt;p&gt;
+     * If the industry record cannot be opened successfully, the industry model
+     * is reinitialized and returned. When no industry code is assigned to the
+     * current transaction, the industry model is also reinitialized.
+     * &lt;/p&gt;
+     *
+     * @return the {@link Model_Industry} associated with the current VSP
+     *         transaction, or an initialized industry model when no valid
+     *         industry record is available.
+     *
+     * @throws SQLException if a database access error occurs while retrieving
+     *         the industry record.
+     * @throws GuanzonException if an application-specific error occurs while
+     *         processing the industry record.
+     */
+
+    public Model_Industry Industry() throws SQLException, GuanzonException {
+<span class="nc bnc" id="L660" title="All 2 branches missed.">        if (!&quot;&quot;.equals((String) getValue(&quot;sIndstCdx&quot;))) {</span>
+<span class="nc bnc" id="L661" title="All 2 branches missed.">            if (poIndustry.getEditMode() == EditMode.READY</span>
+<span class="nc bnc" id="L662" title="All 2 branches missed.">                    &amp;&amp; poIndustry.getIndustryId().equals((String) getValue(&quot;sIndstCdx&quot;))) {</span>
+
+<span class="nc" id="L664">                return poIndustry;</span>
+
+            } else {
+<span class="nc" id="L667">                poJSON = poIndustry.openRecord((String) getValue(&quot;sIndstCdx&quot;));</span>
+
+<span class="nc bnc" id="L669" title="All 2 branches missed.">                if (&quot;success&quot;.equals((String) poJSON.get(&quot;result&quot;))) {</span>
+<span class="nc" id="L670">                    return poIndustry;</span>
+                } else {
+<span class="nc" id="L672">                    poIndustry.initialize();</span>
+<span class="nc" id="L673">                    return poIndustry;</span>
+                }
+            }
+        } else {
+<span class="nc" id="L677">            poIndustry.initialize();</span>
+<span class="nc" id="L678">            return poIndustry;</span>
+        }
+    }
+    /**
+     * Retrieves the branch associated with the current VSP transaction.
+     *
+     * &lt;p&gt;
+     * If a branch code is assigned to the current transaction, this method
+     * checks whether the existing branch model is already loaded for the same
+     * branch. If it is ready and matches the current branch code, the existing
+     * model is returned. Otherwise, the branch record is opened using the
+     * current branch code.
+     * &lt;/p&gt;
+     *
+     * &lt;p&gt;
+     * If the branch record cannot be opened successfully, the branch model
+     * is reinitialized and returned. When no branch code is assigned to the
+     * current transaction, the branch model is also reinitialized.
+     * &lt;/p&gt;
+     *
+     * @return the {@link Model_Branch} associated with the current VSP
+     *         transaction, or an initialized branch model when no valid
+     *         branch record is available.
+     *
+     * @throws SQLException if a database access error occurs while retrieving
+     *         the branch record.
+     * @throws GuanzonException if an application-specific error occurs while
+     *         processing the branch record.
+     */
+    public Model_Branch Branch() throws SQLException, GuanzonException {
+<span class="nc bnc" id="L708" title="All 2 branches missed.">        if (!&quot;&quot;.equals((String) getValue(&quot;sBranchCD&quot;))) {</span>
+<span class="nc bnc" id="L709" title="All 2 branches missed.">            if (poBranch.getEditMode() == EditMode.READY</span>
+<span class="nc bnc" id="L710" title="All 2 branches missed.">                    &amp;&amp; poBranch.getBranchCode().equals((String) getValue(&quot;sBranchCD&quot;))) {</span>
+
+<span class="nc" id="L712">                return poBranch;</span>
+
+            } else {
+<span class="nc" id="L715">                poJSON = poBranch.openRecord((String) getValue(&quot;sBranchCD&quot;));</span>
+
+<span class="nc bnc" id="L717" title="All 2 branches missed.">                if (&quot;success&quot;.equals((String) poJSON.get(&quot;result&quot;))) {</span>
+<span class="nc" id="L718">                    return poBranch;</span>
+                } else {
+<span class="nc" id="L720">                    poBranch.initialize();</span>
+<span class="nc" id="L721">                    return poBranch;</span>
+                }
+            }
+        } else {
+<span class="nc" id="L725">            poBranch.initialize();</span>
+<span class="nc" id="L726">            return poBranch;</span>
+        }
+    }
+    /**
+     * Retrieves the company associated with the current VSP transaction.
+     *
+     * &lt;p&gt;
+     * If a company ID is assigned to the current transaction, this method
+     * checks whether the existing company model is already loaded for the same
+     * company. If it is ready and matches the current company ID, the existing
+     * model is returned. Otherwise, the company record is opened using the
+     * current company ID.
+     * &lt;/p&gt;
+     *
+     * &lt;p&gt;
+     * If the company record cannot be opened successfully, the company model
+     * is reinitialized and returned. When no company ID is assigned to the
+     * current transaction, the company model is also reinitialized.
+     * &lt;/p&gt;
+     *
+     * @return the {@link Model_Company} associated with the current VSP
+     *         transaction, or an initialized company model when no valid
+     *         company record is available.
+     *
+     * @throws SQLException if a database access error occurs while retrieving
+     *         the company record.
+     * @throws GuanzonException if an application-specific error occurs while
+     *         processing the company record.
+     */
+    public Model_Company Company() throws SQLException, GuanzonException {
+<span class="nc bnc" id="L756" title="All 2 branches missed.">        if (!&quot;&quot;.equals((String) getValue(&quot;sCompnyID&quot;))) {</span>
+<span class="nc bnc" id="L757" title="All 2 branches missed.">            if (poCompany.getEditMode() == EditMode.READY</span>
+<span class="nc bnc" id="L758" title="All 2 branches missed.">                    &amp;&amp; poCompany.getCompanyId().equals((String) getValue(&quot;sCompnyID&quot;))) {</span>
+
+<span class="nc" id="L760">                return poCompany;</span>
+
+            } else {
+<span class="nc" id="L763">                poJSON = poCompany.openRecord((String) getValue(&quot;sCompnyID&quot;));</span>
+
+<span class="nc bnc" id="L765" title="All 2 branches missed.">                if (&quot;success&quot;.equals((String) poJSON.get(&quot;result&quot;))) {</span>
+<span class="nc" id="L766">                    return poCompany;</span>
+                } else {
+<span class="nc" id="L768">                    poCompany.initialize();</span>
+<span class="nc" id="L769">                    return poCompany;</span>
+                }
+            }
+        } else {
+<span class="nc" id="L773">            poCompany.initialize();</span>
+<span class="nc" id="L774">            return poCompany;</span>
+        }
+    }
+
+    // end - reference object models
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

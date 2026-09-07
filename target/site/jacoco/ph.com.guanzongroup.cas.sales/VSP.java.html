@@ -1,0 +1,440 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>VSP.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">cas-sales</a> &gt; <a href="index.source.html" class="el_package">ph.com.guanzongroup.cas.sales</a> &gt; <span class="el_source">VSP.java</span></div><h1>VSP.java</h1><pre class="source lang-java linenums">package ph.com.guanzongroup.cas.sales;
+
+import org.guanzon.appdriver.agent.ShowDialogFX;
+import org.guanzon.appdriver.agent.ShowMessageFX;
+import org.guanzon.appdriver.agent.services.Model;
+import org.guanzon.appdriver.agent.services.Transaction;
+import org.guanzon.appdriver.base.GuanzonException;
+import org.guanzon.appdriver.base.MiscUtil;
+import org.guanzon.appdriver.base.SQLUtil;
+import org.guanzon.appdriver.constant.EditMode;
+import org.guanzon.appdriver.constant.RecordStatus;
+import org.guanzon.appdriver.constant.UserRight;
+import org.guanzon.appdriver.iface.GValidator;
+import org.guanzon.cas.client.Client;
+import org.guanzon.cas.client.services.ClientControllers;
+import org.guanzon.cas.inv.Inventory;
+import org.guanzon.cas.inv.services.InvControllers;
+import org.guanzon.cas.parameter.Branch;
+import org.guanzon.cas.parameter.Brand;
+import org.guanzon.cas.parameter.services.ParamControllers;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.ParseException;
+import ph.com.guanzongroup.cas.sales.model.Model_Vsp_Master;
+import ph.com.guanzongroup.cas.sales.services.SalesControllers;
+import ph.com.guanzongroup.cas.sales.services.SalesModels;
+import ph.com.guanzongroup.cas.sales.status.VSPStatic;
+import ph.com.guanzongroup.cas.sales.validator.VSPValidator;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+<span class="nc" id="L35">public class VSP extends Transaction {</span>
+
+    List&lt;Model_Vsp_Master&gt; poVspMaster;
+
+    List&lt;Model&gt; paDetailRemoved;
+    SalesInquiry salesInquiry;
+
+    public JSONObject InitTransaction() throws SQLException, GuanzonException {
+<span class="nc" id="L43">        SOURCE_CODE = &quot;srsv&quot;;</span>
+
+<span class="nc" id="L45">        poMaster = new SalesModels(poGRider).VspMaster();</span>
+//        poDetail = new SalesModels(poGRider).();
+<span class="nc" id="L47">        salesInquiry = new SalesControllers(poGRider, logwrapr).SalesInquiry();</span>
+<span class="nc" id="L48">        paDetail = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L49">        return initialize();</span>
+    }
+<span class="nc" id="L51">    private String psIndustryId = &quot;&quot;;</span>
+<span class="nc" id="L52">    private String psCompanyId = &quot;&quot;;</span>
+<span class="nc" id="L53">    private String psCategoryCd = &quot;&quot;;</span>
+
+    @Override
+    public JSONObject initFields() {
+        //Put initial model values here/
+<span class="nc" id="L58">        poJSON = new JSONObject();</span>
+        try {
+<span class="nc" id="L60">            poJSON = new JSONObject();</span>
+<span class="nc" id="L61">            Master().setBranchCode(poGRider.getBranchCode());</span>
+<span class="nc" id="L62">            Master().setIndustryCode(psIndustryId);</span>
+<span class="nc" id="L63">            Master().setCompanyId(psCompanyId);</span>
+<span class="nc" id="L64">            Master().setTransactionDate(poGRider.getServerDate());</span>
+
+<span class="nc" id="L66">        } catch (SQLException ex) {</span>
+<span class="nc" id="L67">            Logger.getLogger(VSP.class</span>
+<span class="nc" id="L68">                    .getName()).log(Level.SEVERE, MiscUtil.getException(ex), ex);</span>
+<span class="nc" id="L69">            poJSON.put(&quot;result&quot;, &quot;error&quot;);</span>
+<span class="nc" id="L70">            poJSON.put(&quot;message&quot;, MiscUtil.getException(ex));</span>
+<span class="nc" id="L71">            return poJSON;</span>
+<span class="nc" id="L72">        }</span>
+<span class="nc" id="L73">        poJSON.put(&quot;result&quot;, &quot;success&quot;);</span>
+<span class="nc" id="L74">        return poJSON;</span>
+    }
+
+    public void setIndustryID(String industryID) {
+<span class="nc" id="L78">        psIndustryId = industryID;</span>
+<span class="nc" id="L79">    }</span>
+
+    public void setCompanyID(String companyID) {
+<span class="nc" id="L82">        psCompanyId = companyID;</span>
+<span class="nc" id="L83">    }</span>
+
+    public void setCategoryCd(String categoryCD) {
+<span class="nc" id="L86">        psCategoryCd = categoryCD;</span>
+<span class="nc" id="L87">    }</span>
+
+    public JSONObject NewTransaction() throws CloneNotSupportedException {
+<span class="nc" id="L90">        return newTransaction();</span>
+    }
+
+    public JSONObject SaveTransaction() throws SQLException, GuanzonException, CloneNotSupportedException {
+<span class="nc" id="L94">        return saveTransaction();</span>
+    }
+
+    public JSONObject OpenTransaction(String transactionNo) throws CloneNotSupportedException, SQLException, GuanzonException {
+<span class="nc" id="L98">        return openTransaction(transactionNo);</span>
+    }
+
+    public JSONObject UpdateTransaction() {
+<span class="nc" id="L102">        return updateTransaction();</span>
+    }
+
+    public JSONObject CancelTransaction(String remarks) throws ParseException, SQLException, CloneNotSupportedException, GuanzonException {
+<span class="nc" id="L106">        poJSON = new JSONObject();</span>
+
+<span class="nc" id="L108">        String lsStatus = VSPStatic.CANCELLED;</span>
+<span class="nc" id="L109">        boolean lbConfirm = true;</span>
+
+<span class="nc bnc" id="L111" title="All 2 branches missed.">        if (getEditMode() != EditMode.READY) {</span>
+<span class="nc" id="L112">            poJSON.put(&quot;result&quot;, &quot;error&quot;);</span>
+<span class="nc" id="L113">            poJSON.put(&quot;message&quot;, &quot;No transacton was loaded.&quot;);</span>
+<span class="nc" id="L114">            return poJSON;</span>
+        }
+
+<span class="nc bnc" id="L117" title="All 2 branches missed.">        if (lsStatus.equals((String) poMaster.getValue(&quot;cTranStat&quot;))) {</span>
+<span class="nc" id="L118">            poJSON.put(&quot;result&quot;, &quot;error&quot;);</span>
+<span class="nc" id="L119">            poJSON.put(&quot;message&quot;, &quot;Transaction was already cancelled.&quot;);</span>
+<span class="nc" id="L120">            return poJSON;</span>
+        }
+
+        //validator
+<span class="nc" id="L124">        poJSON = isEntryOkay(VSPStatic.CANCELLED);</span>
+<span class="nc bnc" id="L125" title="All 2 branches missed.">        if (!&quot;success&quot;.equals((String) poJSON.get(&quot;result&quot;))) {</span>
+<span class="nc" id="L126">            return poJSON;</span>
+        }
+
+<span class="nc bnc" id="L129" title="All 2 branches missed.">        if (poGRider.getUserLevel() &lt;= UserRight.ENCODER) {</span>
+<span class="nc" id="L130">            poJSON = ShowDialogFX.getUserApproval(poGRider);</span>
+<span class="nc bnc" id="L131" title="All 2 branches missed.">            if (!&quot;success&quot;.equals((String) poJSON.get(&quot;result&quot;))) {</span>
+<span class="nc" id="L132">                return poJSON;</span>
+            } else {
+<span class="nc bnc" id="L134" title="All 2 branches missed.">                if (Integer.parseInt(poJSON.get(&quot;nUserLevl&quot;).toString()) &lt;= UserRight.ENCODER) {</span>
+<span class="nc" id="L135">                    poJSON.put(&quot;result&quot;, &quot;error&quot;);</span>
+<span class="nc" id="L136">                    poJSON.put(&quot;message&quot;, &quot;User is not an authorized approving officer..&quot;);</span>
+<span class="nc" id="L137">                    return poJSON;</span>
+                }
+<span class="nc" id="L139">                setApproving((String) poJSON.get(&quot;sUserIDxx&quot;));</span>
+            }
+        }
+//        poJSON = setValueToOthers(lsStatus);
+//        if (!&quot;success&quot;.equals((String) poJSON.get(&quot;result&quot;))) {
+//            return poJSON;
+//        }
+        //check  the user level again then if he/she allow to approve
+<span class="nc" id="L147">        poGRider.beginTrans(&quot;UPDATE STATUS&quot;, &quot;CancelTransaction&quot;, SOURCE_CODE, Master().getTransactionNo());</span>
+
+<span class="nc bnc" id="L149" title="All 2 branches missed.">        poJSON = statusChange(poMaster.getTable(), (String) poMaster.getValue(&quot;sTransNox&quot;), remarks, lsStatus, !lbConfirm, true);</span>
+<span class="nc bnc" id="L150" title="All 2 branches missed.">        if (!&quot;success&quot;.equals((String) poJSON.get(&quot;result&quot;))) {</span>
+<span class="nc" id="L151">            poGRider.rollbackTrans();</span>
+<span class="nc" id="L152">            return poJSON;</span>
+        }
+//        poJSON = saveUpdates(PurchaseOrderStatus.CONFIRMED);
+//        if (!&quot;success&quot;.equals((String) poJSON.get(&quot;result&quot;))) {
+//            poGRider.rollbackTrans();
+//            return poJSON;
+//        }
+
+<span class="nc" id="L160">        poGRider.commitTrans();</span>
+
+<span class="nc" id="L162">        poJSON = new JSONObject();</span>
+<span class="nc" id="L163">        poJSON.put(&quot;result&quot;, &quot;success&quot;);</span>
+
+<span class="nc bnc" id="L165" title="All 2 branches missed.">        if (lbConfirm) {</span>
+<span class="nc" id="L166">            poJSON.put(&quot;message&quot;, &quot;Transaction cancelled successfully.&quot;);</span>
+        } else {
+<span class="nc" id="L168">            poJSON.put(&quot;message&quot;, &quot;Transaction cancelled request submitted successfully.&quot;);</span>
+        }
+
+<span class="nc" id="L171">        return poJSON;</span>
+    }
+
+
+
+
+
+
+    /*Search Master References*/
+    public JSONObject SearchBranch(String value, boolean byCode) throws ExceptionInInitializerError, SQLException, GuanzonException {
+<span class="nc" id="L181">        Branch object = new ParamControllers(poGRider, logwrapr).Branch();</span>
+<span class="nc" id="L182">        object.setRecordStatus(&quot;1&quot;);</span>
+
+<span class="nc" id="L184">        poJSON = object.searchRecord(value, byCode);</span>
+
+<span class="nc bnc" id="L186" title="All 2 branches missed.">        if (&quot;success&quot;.equals((String) poJSON.get(&quot;result&quot;))) {</span>
+<span class="nc" id="L187">            Master().setBranchCode(object.getModel().getBranchCode());</span>
+        }
+
+<span class="nc" id="L190">        return poJSON;</span>
+    }
+
+
+    @Override
+    public void initSQL() {
+<span class="nc" id="L196">        SQL_BROWSE = &quot;SELECT &quot;</span>
+                + &quot; a.sTransNox, &quot;
+                + &quot; a.dTransact, &quot;
+                + &quot; c.sBranchNm, &quot;
+                + &quot; a.sClientID, &quot;
+                + &quot; d.sCompnyNm &quot;
+                + &quot; FROM Sales_Reservation_Master a &quot;
+                + &quot; LEFT JOIN Branch c ON LEFT(a.sTransNox, 4) = c.sBranchCd &quot;
+                + &quot; LEFT JOIN Client_Master d ON a.sClientID = d.sClientID &quot;
+                + &quot; LEFT JOIN Client_Address e ON d.sClientID = e.sClientID &quot;
+                + &quot; LEFT JOIN Client_Mobile f ON d.sClientID = f.sClientID &quot;
+                + &quot;, Sales_Reservation_Detail b &quot;;
+<span class="nc" id="L208">    }</span>
+
+    public JSONObject SearchTransaction(String fsValue) throws CloneNotSupportedException, SQLException, GuanzonException {
+<span class="nc" id="L211">        poJSON = new JSONObject();</span>
+<span class="nc" id="L212">        String lsTransStat = &quot;&quot;;</span>
+<span class="nc" id="L213">        String lsBranch = &quot;&quot;;</span>
+<span class="nc bnc" id="L214" title="All 2 branches missed.">        if (psTranStat.length() &gt; 1) {</span>
+<span class="nc bnc" id="L215" title="All 2 branches missed.">            for (int lnCtr = 0; lnCtr &lt;= psTranStat.length() - 1; lnCtr++) {</span>
+<span class="nc" id="L216">                lsTransStat += &quot;, &quot; + SQLUtil.toSQL(Character.toString(psTranStat.charAt(lnCtr)));</span>
+            }
+<span class="nc" id="L218">            lsTransStat = &quot; AND a.cTranStat IN (&quot; + lsTransStat.substring(2) + &quot;)&quot;;</span>
+        } else {
+<span class="nc" id="L220">            lsTransStat = &quot; AND a.cTranStat = &quot; + SQLUtil.toSQL(psTranStat);</span>
+        }
+
+<span class="nc" id="L223">        initSQL();</span>
+<span class="nc" id="L224">        String lsFilterCondition = String.join(&quot; AND &quot;, &quot;a.sIndstCdx = &quot; + SQLUtil.toSQL(Master().getIndustryCode()),</span>
+<span class="nc" id="L225">                &quot; a.sCompnyID = &quot; + SQLUtil.toSQL(Master().getCompanyId()));</span>
+
+<span class="nc" id="L227">        String lsSQL = MiscUtil.addCondition(SQL_BROWSE, lsFilterCondition);</span>
+
+<span class="nc bnc" id="L229" title="All 2 branches missed.">        if (!fsValue.isEmpty()) {</span>
+<span class="nc bnc" id="L230" title="All 2 branches missed.">            if (Master().getClientId() == null) {</span>
+<span class="nc" id="L231">                lsSQL = lsSQL + &quot; AND d.sCompnyNm LIKE &quot; + SQLUtil.toSQL(&quot;%&quot; + fsValue + &quot;%&quot;);</span>
+            } else {
+<span class="nc" id="L233">                lsSQL = lsSQL + &quot; AND a.sClientID = &quot; + SQLUtil.toSQL(Master().getClientId());</span>
+            }
+        } else {
+<span class="nc" id="L236">            lsSQL = lsSQL + &quot; AND d.sCompnyNm LIKE &quot; + SQLUtil.toSQL(&quot;%&quot; + fsValue + &quot;%&quot;);</span>
+        }
+
+<span class="nc bnc" id="L239" title="All 2 branches missed.">        if (!psTranStat.isEmpty()) {</span>
+<span class="nc" id="L240">            lsSQL = lsSQL + lsTransStat;</span>
+        }
+<span class="nc bnc" id="L242" title="All 4 branches missed.">        if (!poGRider.isMainOffice() || !poGRider.isWarehouse()) {</span>
+<span class="nc" id="L243">            lsSQL = lsSQL + &quot; AND a.sBranchCd LIKE &quot; + SQLUtil.toSQL(poGRider.getBranchCode());</span>
+        }
+
+<span class="nc" id="L246">        lsSQL = lsSQL + &quot; GROUP BY a.sTransNox&quot;;</span>
+<span class="nc" id="L247">        System.out.println(&quot;SQL EXECUTED: &quot; + lsSQL);</span>
+<span class="nc" id="L248">        poJSON = ShowDialogFX.Browse(poGRider,</span>
+                lsSQL,
+                fsValue,
+                &quot;Transaction Date»Transaction No»Customer Name»Branch&quot;,
+                &quot;a.dTransact»a.sTransNox»d.sCompnyNm»c.sBranchNm&quot;,
+                &quot;a.dTransact»a.sTransNox»d.sCompnyNm»ecsBranchNm&quot;,
+                1);
+
+<span class="nc bnc" id="L256" title="All 2 branches missed.">        if (poJSON != null) {</span>
+<span class="nc" id="L257">            return OpenTransaction((String) poJSON.get(&quot;sTransNox&quot;));</span>
+        } else {
+<span class="nc" id="L259">            poJSON = new JSONObject();</span>
+<span class="nc" id="L260">            poJSON.put(&quot;result&quot;, &quot;error&quot;);</span>
+<span class="nc" id="L261">            poJSON.put(&quot;message&quot;, &quot;No record loaded.&quot;);</span>
+<span class="nc" id="L262">            return poJSON;</span>
+        }
+    }
+
+    public JSONObject SearchTransactionbyFilter(String fsValue, boolean fsByCode) throws CloneNotSupportedException, SQLException, GuanzonException {
+<span class="nc" id="L267">        poJSON = new JSONObject();</span>
+<span class="nc" id="L268">        String lsTransStat = &quot;&quot;;</span>
+<span class="nc" id="L269">        String lsBranch = &quot;&quot;;</span>
+<span class="nc bnc" id="L270" title="All 2 branches missed.">        if (psTranStat.length() &gt; 1) {</span>
+<span class="nc bnc" id="L271" title="All 2 branches missed.">            for (int lnCtr = 0; lnCtr &lt;= psTranStat.length() - 1; lnCtr++) {</span>
+<span class="nc" id="L272">                lsTransStat += &quot;, &quot; + SQLUtil.toSQL(Character.toString(psTranStat.charAt(lnCtr)));</span>
+            }
+<span class="nc" id="L274">            lsTransStat = &quot; AND a.cTranStat IN (&quot; + lsTransStat.substring(2) + &quot;)&quot;;</span>
+        } else {
+<span class="nc" id="L276">            lsTransStat = &quot; AND a.cTranStat = &quot; + SQLUtil.toSQL(psTranStat);</span>
+        }
+
+<span class="nc" id="L279">        initSQL();</span>
+<span class="nc" id="L280">        String lsFilterCondition = String.join(&quot; AND &quot;, &quot;a.sIndstCdx = &quot; + SQLUtil.toSQL(Master().getIndustryCode()),</span>
+<span class="nc" id="L281">                &quot; a.sCompnyID = &quot; + SQLUtil.toSQL(Master().getCompanyId()));</span>
+
+<span class="nc" id="L283">        String lsSQL = MiscUtil.addCondition(SQL_BROWSE, lsFilterCondition);</span>
+
+<span class="nc bnc" id="L285" title="All 2 branches missed.">        if (fsByCode) {</span>
+<span class="nc bnc" id="L286" title="All 2 branches missed.">            if (!fsValue.isEmpty()) {</span>
+<span class="nc" id="L287">                lsSQL = lsSQL + &quot; AND a.sTransNox = &quot; + SQLUtil.toSQL(fsValue);</span>
+            } else {
+<span class="nc" id="L289">                lsSQL = lsSQL + &quot;  AND a.sTransNox LIKE '%' &quot;;</span>
+            }
+        } else {
+<span class="nc bnc" id="L292" title="All 2 branches missed.">            if (!fsValue.isEmpty()) {</span>
+<span class="nc" id="L293">                lsSQL = lsSQL + &quot; AND d.sCompnyNm LIKE &quot; + SQLUtil.toSQL(&quot;%&quot; + fsValue);</span>
+            } else {
+<span class="nc" id="L295">                lsSQL = lsSQL + &quot; AND d.sCompnyNm LIKE '%'&quot;;</span>
+            }
+        }
+
+<span class="nc bnc" id="L299" title="All 2 branches missed.">        if (!psTranStat.isEmpty()) {</span>
+<span class="nc" id="L300">            lsSQL = lsSQL + lsTransStat;</span>
+        }
+<span class="nc bnc" id="L302" title="All 4 branches missed.">        if (!poGRider.isMainOffice() || !poGRider.isWarehouse()) {</span>
+<span class="nc" id="L303">            lsSQL = lsSQL + &quot; AND a.sBranchCd LIKE &quot; + SQLUtil.toSQL(poGRider.getBranchCode());</span>
+        }
+
+<span class="nc" id="L306">        lsSQL = lsSQL + &quot; GROUP BY a.sTransNox&quot;;</span>
+<span class="nc" id="L307">        System.out.println(&quot;SQL EXECUTED: &quot; + lsSQL);</span>
+<span class="nc bnc" id="L308" title="All 2 branches missed.">        poJSON = ShowDialogFX.Browse(poGRider,</span>
+                lsSQL,
+                fsValue,
+                &quot;Transaction Date»Transaction No»Customer Name»Branch&quot;,
+                &quot;a.dTransact»a.sTransNox»d.sCompnyNm»c.sBranchNm&quot;,
+                &quot;a.dTransact»a.sTransNox»d.sCompnyNm»ecsBranchNm&quot;,
+                fsByCode ? 1 : 2);
+
+<span class="nc bnc" id="L316" title="All 2 branches missed.">        if (poJSON != null) {</span>
+<span class="nc" id="L317">            return OpenTransaction((String) poJSON.get(&quot;sTransNox&quot;));</span>
+        } else {
+<span class="nc" id="L319">            poJSON = new JSONObject();</span>
+<span class="nc" id="L320">            poJSON.put(&quot;result&quot;, &quot;error&quot;);</span>
+<span class="nc" id="L321">            poJSON.put(&quot;message&quot;, &quot;No record loaded.&quot;);</span>
+<span class="nc" id="L322">            return poJSON;</span>
+        }
+    }
+
+    /*End - Search Master References*/
+    @Override
+    public String getSourceCode() {
+<span class="nc" id="L329">        return SOURCE_CODE;</span>
+    }
+
+    @Override
+    public Model_Vsp_Master Master() {
+<span class="nc" id="L334">        return (Model_Vsp_Master) poMaster;</span>
+    }
+
+//    @Override
+//    public Model_Sales_Reservation_Detail Detail(int row) {
+//        return (Model_Sales_Reservation_Detail) paDetail.get(row);
+//    }
+
+    @Override
+    public JSONObject willSave() throws SQLException, GuanzonException, CloneNotSupportedException {
+
+//        if (paDetailRemoved == null) {
+//            paDetailRemoved = new ArrayList&lt;&gt;();
+//        }
+//
+//        Iterator&lt;Model&gt; detail = Detail().iterator();
+//        while (detail.hasNext()) {
+//            Model item = detail.next();
+//            Object quantityObj = item.getValue(&quot;nQuantity&quot;);
+//
+//            if (quantityObj != null) {
+//                double quantity = ((Number) quantityObj).doubleValue();
+//                if (quantity &lt;= 0.00) {
+//                    switch (getEditMode()) {
+//                        case EditMode.ADDNEW:
+//                            detail.remove();
+//                            break;
+//                        case EditMode.UPDATE:
+//                            paDetailRemoved.add(item);
+//                            item.setValue(&quot;cReversex&quot;, &quot;0&quot;);
+//                            break;
+//                        default:
+//                            throw new AssertionError();
+//                    }
+//                }
+//            } else {
+//                paDetailRemoved.add(item); // track removed
+//                detail.remove();
+//            }
+//        }
+//
+//        // Re-number remaining details
+//        for (int lnCtr = 0; lnCtr &lt; getDetailCount(); lnCtr++) {
+//            Detail(lnCtr).setTransactionNo(Master().getTransactionNo());
+//            Detail(lnCtr).setEntryNo(lnCtr + 1);
+//            Detail(lnCtr).setModifiedDate(poGRider.getServerDate());
+//        }
+
+<span class="nc" id="L382">        Master().setModifiedDate(poGRider.getServerDate());</span>
+<span class="nc" id="L383">        poJSON.put(&quot;result&quot;, &quot;success&quot;);</span>
+<span class="nc" id="L384">        return poJSON;</span>
+    }
+
+    @Override
+    public JSONObject save() {
+        /*Put saving business rules here*/
+<span class="nc" id="L390">        return isEntryOkay(RecordStatus.INACTIVE);</span>
+    }
+
+    @Override
+    public JSONObject saveOthers() {
+<span class="nc" id="L395">        poJSON.put(&quot;result&quot;, &quot;success&quot;);</span>
+<span class="nc" id="L396">        return poJSON;</span>
+    }
+
+    @Override
+    public void saveComplete() {
+        /*This procedure was called when saving was complete*/
+<span class="nc" id="L402">        System.out.println(&quot;Transaction saved successfully.&quot;);</span>
+<span class="nc" id="L403">    }</span>
+
+
+
+    @Override
+    protected JSONObject isEntryOkay(String status) {
+<span class="nc" id="L409">        GValidator loValidator = (GValidator) new VSPValidator();</span>
+
+<span class="nc" id="L411">        loValidator.setApplicationDriver(poGRider);</span>
+<span class="nc" id="L412">        loValidator.setTransactionStatus(status);</span>
+<span class="nc" id="L413">        loValidator.setMaster(Master());</span>
+
+<span class="nc" id="L415">        poJSON = loValidator.validate();</span>
+<span class="nc" id="L416">        return poJSON;</span>
+    }
+
+    public JSONObject callapproval() {
+<span class="nc" id="L420">        JSONObject loJSON = new JSONObject();</span>
+<span class="nc bnc" id="L421" title="All 2 branches missed.">        if (poGRider.getUserLevel() &lt;= UserRight.ENCODER) {</span>
+<span class="nc" id="L422">            loJSON = ShowDialogFX.getUserApproval(poGRider);</span>
+
+<span class="nc bnc" id="L424" title="All 2 branches missed.">            if (!&quot;success&quot;.equalsIgnoreCase((String) loJSON.get(&quot;result&quot;))) {</span>
+<span class="nc" id="L425">                return loJSON; // Already contains result/message</span>
+            }
+
+<span class="nc" id="L428">            int approvingUserLevel = Integer.parseInt(loJSON.get(&quot;nUserLevl&quot;).toString());</span>
+<span class="nc bnc" id="L429" title="All 2 branches missed.">            if (approvingUserLevel &lt;= UserRight.ENCODER) {</span>
+<span class="nc" id="L430">                loJSON.put(&quot;result&quot;, &quot;error&quot;);</span>
+<span class="nc" id="L431">                loJSON.put(&quot;message&quot;, &quot;User is not an authorized approving officer.&quot;);</span>
+<span class="nc" id="L432">                return loJSON;</span>
+            }
+<span class="nc" id="L434">            setApproving((String) poJSON.get(&quot;sUserIDxx&quot;));</span>
+        }
+<span class="nc" id="L436">        loJSON.put(&quot;result&quot;, &quot;success&quot;);</span>
+<span class="nc" id="L437">        return loJSON;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

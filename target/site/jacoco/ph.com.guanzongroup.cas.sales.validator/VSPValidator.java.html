@@ -1,0 +1,246 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>VSPValidator.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">cas-sales</a> &gt; <a href="index.source.html" class="el_package">ph.com.guanzongroup.cas.sales.validator</a> &gt; <span class="el_source">VSPValidator.java</span></div><h1>VSPValidator.java</h1><pre class="source lang-java linenums">/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package ph.com.guanzongroup.cas.sales.validator;
+
+import org.guanzon.appdriver.base.GRiderCAS;
+import org.guanzon.appdriver.iface.GValidator;
+import org.json.simple.JSONObject;
+import ph.com.guanzongroup.cas.sales.model.Model_Sales_Inquiry_Detail;
+import ph.com.guanzongroup.cas.sales.model.Model_Sales_Inquiry_Master;
+import ph.com.guanzongroup.cas.sales.status.SalesInquiryStatic;
+
+import java.sql.SQLException;
+import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+/**
+ *
+ * @author TEEJEI DE CELIS
+ * @date August 15, 2026
+ * @module VSP
+ * @since 1.0
+ */
+<span class="nc" id="L31">public class VSPValidator implements GValidator{</span>
+    GRiderCAS poGRider;
+    String psTranStat;
+    JSONObject poJSON;
+
+    Model_Sales_Inquiry_Master poMaster;
+    ArrayList&lt;Model_Sales_Inquiry_Detail&gt; poDetail;
+
+    @Override
+    public void setApplicationDriver(Object applicationDriver) {
+<span class="nc" id="L41">        poGRider = (GRiderCAS) applicationDriver;</span>
+<span class="nc" id="L42">    }</span>
+
+    @Override
+    public void setTransactionStatus(String transactionStatus) {
+<span class="nc" id="L46">        psTranStat = transactionStatus;</span>
+<span class="nc" id="L47">    }</span>
+
+    @Override
+    public void setMaster(Object value) {
+<span class="nc" id="L51">        poMaster = (Model_Sales_Inquiry_Master) value;</span>
+<span class="nc" id="L52">    }</span>
+
+    @Override
+    public void setDetail(ArrayList&lt;Object&gt; value) {
+<span class="nc" id="L56">        poDetail.clear();</span>
+<span class="nc bnc" id="L57" title="All 2 branches missed.">        for(int lnCtr = 0; lnCtr &lt;= value.size() - 1; lnCtr++){</span>
+<span class="nc" id="L58">            poDetail.add((Model_Sales_Inquiry_Detail) value.get(lnCtr));</span>
+        }
+<span class="nc" id="L60">    }</span>
+
+    @Override
+    public void setOthers(ArrayList&lt;Object&gt; value) {
+<span class="nc" id="L64">        throw new UnsupportedOperationException(&quot;Not supported yet.&quot;);</span>
+    }
+
+    @Override
+    public JSONObject validate() {
+        try {
+<span class="nc bnc" id="L70" title="All 8 branches missed.">            switch (psTranStat){</span>
+                case SalesInquiryStatic.OPEN:
+<span class="nc" id="L72">                    return validateNew();</span>
+                case SalesInquiryStatic.CONFIRMED:
+<span class="nc" id="L74">                    return validateConfirmed();</span>
+                case SalesInquiryStatic.QUOTED:
+<span class="nc" id="L76">                    return validateQuoted();</span>
+                case SalesInquiryStatic.SALE:
+<span class="nc" id="L78">                    return validateSale();</span>
+                case SalesInquiryStatic.LOST:
+<span class="nc" id="L80">                    return validateLost();</span>
+                case SalesInquiryStatic.CANCELLED:
+<span class="nc" id="L82">                    return validateCancelled();</span>
+                case SalesInquiryStatic.VOID:
+<span class="nc" id="L84">                    return validateVoid();</span>
+                default:
+<span class="nc" id="L86">                    poJSON = new JSONObject();</span>
+<span class="nc" id="L87">                    poJSON.put(&quot;result&quot;, &quot;success&quot;);</span>
+            }
+<span class="nc" id="L89">        } catch (SQLException ex) {</span>
+<span class="nc" id="L90">            Logger.getLogger(getClass().getName()).log(Level.SEVERE, null, ex);</span>
+<span class="nc" id="L91">        }</span>
+
+<span class="nc" id="L93">        return poJSON;</span>
+    }
+
+    private JSONObject validateNew() throws SQLException{
+<span class="nc" id="L97">        poJSON = new JSONObject();</span>
+<span class="nc" id="L98">        Date loTransactionDate = poMaster.getTransactionDate();</span>
+<span class="nc" id="L99">        Date loTargetDate = poMaster.getTargetDate();</span>
+<span class="nc" id="L100">        LocalDate serverDate = strToDate(xsDateShort(poGRider.getServerDate()));</span>
+<span class="nc" id="L101">        LocalDate oneYearAgo = serverDate.minusYears(1);</span>
+
+<span class="nc bnc" id="L103" title="All 2 branches missed.">        if (loTransactionDate == null) {</span>
+<span class="nc" id="L104">            poJSON.put(&quot;result&quot;, &quot;error&quot;);</span>
+<span class="nc" id="L105">            poJSON.put(&quot;message&quot;, &quot;Invalid Transaction Date.&quot;);</span>
+<span class="nc" id="L106">            return poJSON;</span>
+        }
+
+<span class="nc bnc" id="L109" title="All 2 branches missed.">        if (&quot;1900-01-01&quot;.equals(xsDateShort(loTransactionDate))) {</span>
+<span class="nc" id="L110">            poJSON.put(&quot;result&quot;, &quot;error&quot;);</span>
+<span class="nc" id="L111">            poJSON.put(&quot;message&quot;, &quot;Invalid Transaction Date.&quot;);</span>
+<span class="nc" id="L112">            return poJSON;</span>
+        }
+
+<span class="nc bnc" id="L115" title="All 2 branches missed.">        if (loTargetDate == null) {</span>
+<span class="nc" id="L116">            poJSON.put(&quot;result&quot;, &quot;error&quot;);</span>
+<span class="nc" id="L117">            poJSON.put(&quot;message&quot;, &quot;Invalid Target Date.&quot;);</span>
+<span class="nc" id="L118">            return poJSON;</span>
+        }
+<span class="nc bnc" id="L120" title="All 2 branches missed.">        if (poMaster.getIndustryId() == null) {</span>
+<span class="nc" id="L121">            poJSON.put(&quot;result&quot;, &quot;error&quot;);</span>
+<span class="nc" id="L122">            poJSON.put(&quot;message&quot;, &quot;Industry is not set.&quot;);</span>
+<span class="nc" id="L123">            return poJSON;</span>
+        }
+<span class="nc bnc" id="L125" title="All 4 branches missed.">        if (poMaster.getCompanyId() == null || &quot;&quot;.equals(poMaster.getCompanyId())) {</span>
+<span class="nc" id="L126">            poJSON.put(&quot;result&quot;, &quot;error&quot;);</span>
+<span class="nc" id="L127">            poJSON.put(&quot;message&quot;, &quot;Company is not set.&quot;);</span>
+<span class="nc" id="L128">            return poJSON;</span>
+        }
+<span class="nc bnc" id="L130" title="All 4 branches missed.">        if (poMaster.getCategoryCode()== null || &quot;&quot;.equals(poMaster.getCategoryCode())) {</span>
+<span class="nc" id="L131">            poJSON.put(&quot;result&quot;, &quot;error&quot;);</span>
+<span class="nc" id="L132">            poJSON.put(&quot;message&quot;, &quot;Category is not set.&quot;);</span>
+<span class="nc" id="L133">            return poJSON;</span>
+        }
+<span class="nc bnc" id="L135" title="All 4 branches missed.">        if (poMaster.getBranchCode()== null || &quot;&quot;.equals(poMaster.getBranchCode())) {</span>
+<span class="nc" id="L136">            poJSON.put(&quot;result&quot;, &quot;error&quot;);</span>
+<span class="nc" id="L137">            poJSON.put(&quot;message&quot;, &quot;Branch is not set.&quot;);</span>
+<span class="nc" id="L138">            return poJSON;</span>
+        }
+<span class="nc bnc" id="L140" title="All 4 branches missed.">        if (poMaster.getPurchaseType()== null || &quot;&quot;.equals(poMaster.getPurchaseType())) {</span>
+<span class="nc" id="L141">            poJSON.put(&quot;result&quot;, &quot;error&quot;);</span>
+<span class="nc" id="L142">            poJSON.put(&quot;message&quot;, &quot;Purchase Type is not set.&quot;);</span>
+<span class="nc" id="L143">            return poJSON;</span>
+        }
+<span class="nc bnc" id="L145" title="All 2 branches missed.">        if(SalesInquiryStatic.CategoryCode.MOTORCYCLE.equals(poMaster.getCategoryCode())){</span>
+<span class="nc bnc" id="L146" title="All 4 branches missed.">            if (poMaster.getCategoryType()== null || &quot;&quot;.equals(poMaster.getCategoryType())) {</span>
+<span class="nc" id="L147">                poJSON.put(&quot;result&quot;, &quot;error&quot;);</span>
+<span class="nc" id="L148">                poJSON.put(&quot;message&quot;, &quot;Unit Type is not set.&quot;);</span>
+<span class="nc" id="L149">                return poJSON;</span>
+            }
+        }
+<span class="nc bnc" id="L152" title="All 4 branches missed.">        if (poMaster.getSourceCode()== null || &quot;&quot;.equals(poMaster.getSourceCode())) {</span>
+<span class="nc" id="L153">            poJSON.put(&quot;result&quot;, &quot;error&quot;);</span>
+<span class="nc" id="L154">            poJSON.put(&quot;message&quot;, &quot;Inquiry Type is not set.&quot;);</span>
+<span class="nc" id="L155">            return poJSON;</span>
+        }
+<span class="nc bnc" id="L157" title="All 4 branches missed.">        if (poMaster.getSalesMan()== null || &quot;&quot;.equals(poMaster.getSalesMan())) {</span>
+<span class="nc" id="L158">            poJSON.put(&quot;result&quot;, &quot;error&quot;);</span>
+<span class="nc" id="L159">            poJSON.put(&quot;message&quot;, &quot;Sales Person is not set.&quot;);</span>
+<span class="nc" id="L160">            return poJSON;</span>
+        }
+<span class="nc bnc" id="L162" title="All 4 branches missed.">        if (poMaster.getClientId() == null || &quot;&quot;.equals(poMaster.getClientId())) {</span>
+<span class="nc" id="L163">            poJSON.put(&quot;result&quot;, &quot;error&quot;);</span>
+<span class="nc" id="L164">            poJSON.put(&quot;message&quot;, &quot;Client is not set.&quot;);</span>
+<span class="nc" id="L165">            return poJSON;</span>
+        }
+//        if (poMaster.getAddressId()== null || &quot;&quot;.equals(poMaster.getAddressId())) {
+//            poJSON.put(&quot;message&quot;, &quot;Address is not set.&quot;);
+//            return poJSON;
+//        }
+//        if (poMaster.getContactId()== null || &quot;&quot;.equals(poMaster.getContactId())) {
+//            poJSON.put(&quot;message&quot;, &quot;Contact Number is not set.&quot;);
+//            return poJSON;
+//        }
+<span class="nc bnc" id="L175" title="All 4 branches missed.">        if (poMaster.getInquiryStatus()== null || &quot;&quot;.equals(poMaster.getInquiryStatus())) {</span>
+<span class="nc" id="L176">            poJSON.put(&quot;result&quot;, &quot;error&quot;);</span>
+<span class="nc" id="L177">            poJSON.put(&quot;message&quot;, &quot;Inquiry Status is not set.&quot;);</span>
+<span class="nc" id="L178">            return poJSON;</span>
+        }
+
+<span class="nc" id="L181">        poJSON.put(&quot;result&quot;, &quot;success&quot;);</span>
+<span class="nc" id="L182">        return poJSON;</span>
+    }
+
+    private JSONObject validateConfirmed()throws SQLException{
+<span class="nc" id="L186">        poJSON = new JSONObject();</span>
+<span class="nc" id="L187">        poJSON.put(&quot;result&quot;, &quot;success&quot;);</span>
+<span class="nc" id="L188">        return poJSON;</span>
+    }
+
+    private JSONObject validateProcessed(){
+<span class="nc" id="L192">        poJSON = new JSONObject();</span>
+
+<span class="nc" id="L194">        poJSON.put(&quot;result&quot;, &quot;success&quot;);</span>
+<span class="nc" id="L195">        return poJSON;</span>
+    }
+
+    private JSONObject validateCancelled() throws SQLException{
+<span class="nc" id="L199">        poJSON = new JSONObject();</span>
+
+<span class="nc" id="L201">        poJSON.put(&quot;result&quot;, &quot;success&quot;);</span>
+<span class="nc" id="L202">        return poJSON;</span>
+    }
+
+    private JSONObject validateVoid() throws SQLException{
+<span class="nc" id="L206">        poJSON = new JSONObject();</span>
+<span class="nc" id="L207">        poJSON.put(&quot;result&quot;, &quot;success&quot;);</span>
+<span class="nc" id="L208">        return poJSON;</span>
+    }
+
+    private JSONObject validateQuoted(){
+<span class="nc" id="L212">        poJSON = new JSONObject();</span>
+
+<span class="nc" id="L214">        poJSON.put(&quot;result&quot;, &quot;success&quot;);</span>
+<span class="nc" id="L215">        return poJSON;</span>
+    }
+
+    private JSONObject validateSale(){
+<span class="nc" id="L219">        poJSON = new JSONObject();</span>
+
+<span class="nc" id="L221">        poJSON.put(&quot;result&quot;, &quot;success&quot;);</span>
+<span class="nc" id="L222">        return poJSON;</span>
+    }
+
+    private JSONObject validateLost(){
+<span class="nc" id="L226">        poJSON = new JSONObject();</span>
+
+<span class="nc" id="L228">        poJSON.put(&quot;result&quot;, &quot;success&quot;);</span>
+<span class="nc" id="L229">        return poJSON;</span>
+    }
+
+    private static String xsDateShort(Date fdValue) {
+<span class="nc" id="L233">        SimpleDateFormat sdf = new SimpleDateFormat(&quot;yyyy-MM-dd&quot;);</span>
+<span class="nc" id="L234">        String date = sdf.format(fdValue);</span>
+<span class="nc" id="L235">        return date;</span>
+    }
+
+    private LocalDate strToDate(String val) {
+<span class="nc" id="L239">        DateTimeFormatter date_formatter = DateTimeFormatter.ofPattern(&quot;yyyy-MM-dd&quot;);</span>
+<span class="nc" id="L240">        LocalDate localDate = LocalDate.parse(val, date_formatter);</span>
+<span class="nc" id="L241">        return localDate;</span>
+    }
+
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

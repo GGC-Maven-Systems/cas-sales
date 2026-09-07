@@ -1,42 +1,63 @@
-D:\Guanzon\GMC SEG Folder - Maven\cas-sales\src\main\java\ph\com\guanzongroup\cas\sales\CasSalesT1.java
-D:\Guanzon\GMC SEG Folder - Maven\cas-sales\src\main\java\ph\com\guanzongroup\cas\sales\SalesGiveaways.java
-D:\Guanzon\GMC SEG Folder - Maven\cas-sales\src\main\java\ph\com\guanzongroup\cas\sales\validator\SalesInquiry_MC.java
-D:\Guanzon\GMC SEG Folder - Maven\cas-sales\src\main\java\ph\com\guanzongroup\cas\sales\model\Model_Sales_Commitment_Master.java
-D:\Guanzon\GMC SEG Folder - Maven\cas-sales\src\main\java\ph\com\guanzongroup\cas\sales\status\BankApplicationStatus.java
-D:\Guanzon\GMC SEG Folder - Maven\cas-sales\src\main\java\ph\com\guanzongroup\cas\sales\model\Model_Requirement_Source_PerGroup.java
-D:\Guanzon\GMC SEG Folder - Maven\cas-sales\src\main\java\ph\com\guanzongroup\cas\sales\model\Model_Sales_Agent.java
-D:\Guanzon\GMC SEG Folder - Maven\cas-sales\src\main\java\ph\com\guanzongroup\cas\sales\SalesAgent.java
-D:\Guanzon\GMC SEG Folder - Maven\cas-sales\src\main\java\ph\com\guanzongroup\cas\sales\validator\SalesInquiryRequirements.java
-D:\Guanzon\GMC SEG Folder - Maven\cas-sales\src\main\java\ph\com\guanzongroup\cas\sales\validator\SalesInquiry_Appliances.java
-D:\Guanzon\GMC SEG Folder - Maven\cas-sales\src\main\java\ph\com\guanzongroup\cas\sales\SalesBankApplication.java
-D:\Guanzon\GMC SEG Folder - Maven\cas-sales\src\main\java\ph\com\guanzongroup\cas\sales\services\SalesModels.java
-D:\Guanzon\GMC SEG Folder - Maven\cas-sales\src\main\java\ph\com\guanzongroup\cas\sales\Salesman.java
-D:\Guanzon\GMC SEG Folder - Maven\cas-sales\src\main\java\ph\com\guanzongroup\cas\sales\model\Model_Bank_Application.java
-D:\Guanzon\GMC SEG Folder - Maven\cas-sales\src\main\java\ph\com\guanzongroup\cas\sales\model\Model_Sales_Giveaways_Master.java
-D:\Guanzon\GMC SEG Folder - Maven\cas-sales\src\main\java\ph\com\guanzongroup\cas\sales\RequirementsSource.java
-D:\Guanzon\GMC SEG Folder - Maven\cas-sales\src\main\java\ph\com\guanzongroup\cas\sales\model\Model_Sales_Inquiry_Requirements.java
-D:\Guanzon\GMC SEG Folder - Maven\cas-sales\src\main\java\ph\com\guanzongroup\cas\sales\model\Model_Requirement_Source.java
-D:\Guanzon\GMC SEG Folder - Maven\cas-sales\src\main\java\ph\com\guanzongroup\cas\sales\model\Model_Sales_Giveaways_Item.java
-D:\Guanzon\GMC SEG Folder - Maven\cas-sales\src\main\java\ph\com\guanzongroup\cas\sales\validator\BankApplication.java
-D:\Guanzon\GMC SEG Folder - Maven\cas-sales\src\main\java\ph\com\guanzongroup\cas\sales\validator\SalesInquiry_MP.java
-D:\Guanzon\GMC SEG Folder - Maven\cas-sales\src\main\java\ph\com\guanzongroup\cas\sales\SalesCommitment.java
-D:\Guanzon\GMC SEG Folder - Maven\cas-sales\src\main\java\ph\com\guanzongroup\cas\sales\validator\SalesInquiry_Monarch.java
-D:\Guanzon\GMC SEG Folder - Maven\cas-sales\src\main\java\ph\com\guanzongroup\cas\sales\status\SalesInquiryStatic.java
-D:\Guanzon\GMC SEG Folder - Maven\cas-sales\src\main\java\ph\com\guanzongroup\cas\sales\SalesInquiry.java
-D:\Guanzon\GMC SEG Folder - Maven\cas-sales\src\main\java\ph\com\guanzongroup\cas\sales\status\CustomerInquiryFollowUpStatic.java
-D:\Guanzon\GMC SEG Folder - Maven\cas-sales\src\main\java\ph\com\guanzongroup\cas\sales\model\Model_Salesman.java
-D:\Guanzon\GMC SEG Folder - Maven\cas-sales\src\main\java\ph\com\guanzongroup\cas\sales\SalesInquirySources.java
-D:\Guanzon\GMC SEG Folder - Maven\cas-sales\src\main\java\ph\com\guanzongroup\cas\sales\status\SalesGiveawaysStatus.java
-D:\Guanzon\GMC SEG Folder - Maven\cas-sales\src\main\java\ph\com\guanzongroup\cas\sales\CustomerInquiryFollowUp.java
-D:\Guanzon\GMC SEG Folder - Maven\cas-sales\src\main\java\ph\com\guanzongroup\cas\sales\RequirementsSourcePerGroup.java
-D:\Guanzon\GMC SEG Folder - Maven\cas-sales\src\main\java\ph\com\guanzongroup\cas\sales\model\Model_Customer_Inquiry_FollowUp.java
-D:\Guanzon\GMC SEG Folder - Maven\cas-sales\src\main\java\ph\com\guanzongroup\cas\sales\validator\SalesInquiry_Vehicle.java
-D:\Guanzon\GMC SEG Folder - Maven\cas-sales\src\main\java\ph\com\guanzongroup\cas\sales\model\Model_Sales_Inquiry_Sources.java
-D:\Guanzon\GMC SEG Folder - Maven\cas-sales\src\main\java\ph\com\guanzongroup\cas\sales\validator\SalesInquiry_LP.java
-D:\Guanzon\GMC SEG Folder - Maven\cas-sales\src\main\java\ph\com\guanzongroup\cas\sales\model\Model_Sales_Inquiry_Master.java
-D:\Guanzon\GMC SEG Folder - Maven\cas-sales\src\main\java\ph\com\guanzongroup\cas\sales\model\Model_Sales_Commitment_Detail.java
-D:\Guanzon\GMC SEG Folder - Maven\cas-sales\src\main\java\ph\com\guanzongroup\cas\sales\validator\SalesInquiryValidatorFactory.java
-D:\Guanzon\GMC SEG Folder - Maven\cas-sales\src\main\java\ph\com\guanzongroup\cas\sales\services\SalesControllers.java
-D:\Guanzon\GMC SEG Folder - Maven\cas-sales\src\main\java\ph\com\guanzongroup\cas\sales\model\Model_Sales_Inquiry_Detail.java
-D:\Guanzon\GMC SEG Folder - Maven\cas-sales\src\main\java\ph\com\guanzongroup\cas\sales\validator\SalesCommitmentValidator.java
-D:\Guanzon\GMC SEG Folder - Maven\cas-sales\src\main\java\ph\com\guanzongroup\cas\sales\model\Model_Sales_Quotation_Master.java
+D:\Maven Projects IJ Idea\cas-sales-t1\src\main\java\ph\com\guanzongroup\cas\sales\validator\VSPValidator.java
+D:\Maven Projects IJ Idea\cas-sales-t1\src\main\java\ph\com\guanzongroup\cas\sales\SalesVehicleRelease.java
+D:\Maven Projects IJ Idea\cas-sales-t1\src\main\java\ph\com\guanzongroup\cas\sales\validator\SalesInquiry_Monarch.java
+D:\Maven Projects IJ Idea\cas-sales-t1\src\main\java\ph\com\guanzongroup\cas\sales\status\VSPStatic.java
+D:\Maven Projects IJ Idea\cas-sales-t1\src\main\java\ph\com\guanzongroup\cas\sales\SalesBankApplication.java
+D:\Maven Projects IJ Idea\cas-sales-t1\src\main\java\ph\com\guanzongroup\cas\sales\services\SalesModels.java
+D:\Maven Projects IJ Idea\cas-sales-t1\src\main\java\ph\com\guanzongroup\cas\sales\model\Model_Customer_Inquiry_FollowUp.java
+D:\Maven Projects IJ Idea\cas-sales-t1\src\main\java\ph\com\guanzongroup\cas\sales\status\SalesVehicleReleaseQueries.java
+D:\Maven Projects IJ Idea\cas-sales-t1\src\main\java\ph\com\guanzongroup\cas\sales\validator\SalesInquiry_MC.java
+D:\Maven Projects IJ Idea\cas-sales-t1\src\main\java\ph\com\guanzongroup\cas\sales\model\Model_Sales_Quotation_Master.java
+D:\Maven Projects IJ Idea\cas-sales-t1\src\main\java\ph\com\guanzongroup\cas\sales\SalesInquirySources.java
+D:\Maven Projects IJ Idea\cas-sales-t1\src\main\java\ph\com\guanzongroup\cas\sales\validator\SalesCommitmentValidator.java
+D:\Maven Projects IJ Idea\cas-sales-t1\src\main\java\ph\com\guanzongroup\cas\sales\validator\Sales_Reservation_Validator_Factory.java
+D:\Maven Projects IJ Idea\cas-sales-t1\src\main\java\ph\com\guanzongroup\cas\sales\validator\BankApplication.java
+D:\Maven Projects IJ Idea\cas-sales-t1\src\main\java\ph\com\guanzongroup\cas\sales\model\Model_Sales_Inquiry_Master.java
+D:\Maven Projects IJ Idea\cas-sales-t1\src\main\java\ph\com\guanzongroup\cas\sales\validator\SalesInquiry_Vehicle.java
+D:\Maven Projects IJ Idea\cas-sales-t1\src\main\java\ph\com\guanzongroup\cas\sales\validator\SalesInquiry_MP.java
+D:\Maven Projects IJ Idea\cas-sales-t1\src\main\java\ph\com\guanzongroup\cas\sales\validator\Sales_Reservation_Validator_MC.java
+D:\Maven Projects IJ Idea\cas-sales-t1\src\main\java\ph\com\guanzongroup\cas\sales\validator\Sales_Reservation_Validator_Vehicle.java
+D:\Maven Projects IJ Idea\cas-sales-t1\src\main\java\ph\com\guanzongroup\cas\sales\status\SalesVehicleReleaseStatic.java
+D:\Maven Projects IJ Idea\cas-sales-t1\src\main\java\ph\com\guanzongroup\cas\sales\SalesCommitment.java
+D:\Maven Projects IJ Idea\cas-sales-t1\src\main\java\ph\com\guanzongroup\cas\sales\utility\CustomCommonUtil.java
+D:\Maven Projects IJ Idea\cas-sales-t1\src\main\java\ph\com\guanzongroup\cas\sales\RequirementsSource.java
+D:\Maven Projects IJ Idea\cas-sales-t1\src\main\java\ph\com\guanzongroup\cas\sales\SalesInquiry.java
+D:\Maven Projects IJ Idea\cas-sales-t1\src\main\java\ph\com\guanzongroup\cas\sales\validator\SalesInquiryValidatorFactory.java
+D:\Maven Projects IJ Idea\cas-sales-t1\src\main\java\ph\com\guanzongroup\cas\sales\CustomerInquiryFollowUp.java
+D:\Maven Projects IJ Idea\cas-sales-t1\src\main\java\ph\com\guanzongroup\cas\sales\model\Model_Sales_Giveaways_Master.java
+D:\Maven Projects IJ Idea\cas-sales-t1\src\main\java\ph\com\guanzongroup\cas\sales\model\Model_Vehicle_Release_Master.java
+D:\Maven Projects IJ Idea\cas-sales-t1\src\main\java\ph\com\guanzongroup\cas\sales\status\BankApplicationStatus.java
+D:\Maven Projects IJ Idea\cas-sales-t1\src\main\java\ph\com\guanzongroup\cas\sales\validator\SalesInquiryRequirements.java
+D:\Maven Projects IJ Idea\cas-sales-t1\src\main\java\ph\com\guanzongroup\cas\sales\status\SalesInquiryStatic.java
+D:\Maven Projects IJ Idea\cas-sales-t1\src\main\java\ph\com\guanzongroup\cas\sales\model\Model_Sales_Inquiry_Sources.java
+D:\Maven Projects IJ Idea\cas-sales-t1\src\main\java\ph\com\guanzongroup\cas\sales\model\Model_Sales_Inquiry_Requirements.java
+D:\Maven Projects IJ Idea\cas-sales-t1\src\main\java\ph\com\guanzongroup\cas\sales\validator\Sales_Reservation_Validator_Hospitality.java
+D:\Maven Projects IJ Idea\cas-sales-t1\src\main\java\ph\com\guanzongroup\cas\sales\services\SalesControllers.java
+D:\Maven Projects IJ Idea\cas-sales-t1\src\main\java\ph\com\guanzongroup\cas\sales\validator\Sales_Reservation_Validator_LP.java
+D:\Maven Projects IJ Idea\cas-sales-t1\src\main\java\ph\com\guanzongroup\cas\sales\Salesman.java
+D:\Maven Projects IJ Idea\cas-sales-t1\src\main\java\ph\com\guanzongroup\cas\sales\model\Model_Sales_Reservation_Detail.java
+D:\Maven Projects IJ Idea\cas-sales-t1\src\main\java\ph\com\guanzongroup\cas\sales\utility\TextFormaterUtil.java
+D:\Maven Projects IJ Idea\cas-sales-t1\src\main\java\ph\com\guanzongroup\cas\sales\validator\SalesInquiry_Appliances.java
+D:\Maven Projects IJ Idea\cas-sales-t1\src\main\java\ph\com\guanzongroup\cas\sales\utility\ModelSalesReservationDetail.java
+D:\Maven Projects IJ Idea\cas-sales-t1\src\main\java\ph\com\guanzongroup\cas\sales\VSP.java
+D:\Maven Projects IJ Idea\cas-sales-t1\src\main\java\ph\com\guanzongroup\cas\sales\model\Model_Sales_Commitment_Detail.java
+D:\Maven Projects IJ Idea\cas-sales-t1\src\main\java\ph\com\guanzongroup\cas\sales\model\Model_Sales_Giveaways_Item.java
+D:\Maven Projects IJ Idea\cas-sales-t1\src\main\java\ph\com\guanzongroup\cas\sales\model\Model_Requirement_Source.java
+D:\Maven Projects IJ Idea\cas-sales-t1\src\main\java\ph\com\guanzongroup\cas\sales\model\Model_Vsp_Master.java
+D:\Maven Projects IJ Idea\cas-sales-t1\src\main\java\ph\com\guanzongroup\cas\sales\model\Model_Sales_Commitment_Master.java
+D:\Maven Projects IJ Idea\cas-sales-t1\src\main\java\ph\com\guanzongroup\cas\sales\model\Model_Sales_Inquiry_Detail.java
+D:\Maven Projects IJ Idea\cas-sales-t1\src\main\java\ph\com\guanzongroup\cas\sales\SalesAgent.java
+D:\Maven Projects IJ Idea\cas-sales-t1\src\main\java\ph\com\guanzongroup\cas\sales\CasSalesT1.java
+D:\Maven Projects IJ Idea\cas-sales-t1\src\main\java\ph\com\guanzongroup\cas\sales\model\Model_Bank_Application.java
+D:\Maven Projects IJ Idea\cas-sales-t1\src\main\java\ph\com\guanzongroup\cas\sales\validator\Sales_Reservation_Validator_MP.java
+D:\Maven Projects IJ Idea\cas-sales-t1\src\main\java\ph\com\guanzongroup\cas\sales\RequirementsSourcePerGroup.java
+D:\Maven Projects IJ Idea\cas-sales-t1\src\main\java\ph\com\guanzongroup\cas\sales\status\SalesGiveawaysStatus.java
+D:\Maven Projects IJ Idea\cas-sales-t1\src\main\java\ph\com\guanzongroup\cas\sales\validator\SalesInquiry_LP.java
+D:\Maven Projects IJ Idea\cas-sales-t1\src\main\java\ph\com\guanzongroup\cas\sales\constant\Sales_Reservation_Static.java
+D:\Maven Projects IJ Idea\cas-sales-t1\src\main\java\ph\com\guanzongroup\cas\sales\model\Model_Sales_Agent.java
+D:\Maven Projects IJ Idea\cas-sales-t1\src\main\java\ph\com\guanzongroup\cas\sales\status\CustomerInquiryFollowUpStatic.java
+D:\Maven Projects IJ Idea\cas-sales-t1\src\main\java\ph\com\guanzongroup\cas\sales\model\Model_Salesman.java
+D:\Maven Projects IJ Idea\cas-sales-t1\src\main\java\ph\com\guanzongroup\cas\sales\SalesGiveaways.java
+D:\Maven Projects IJ Idea\cas-sales-t1\src\main\java\ph\com\guanzongroup\cas\sales\model\Model_Sales_Reservation_Master.java
+D:\Maven Projects IJ Idea\cas-sales-t1\src\main\java\ph\com\guanzongroup\cas\sales\SalesReservation.java
+D:\Maven Projects IJ Idea\cas-sales-t1\src\main\java\ph\com\guanzongroup\cas\sales\model\Model_Requirement_Source_PerGroup.java

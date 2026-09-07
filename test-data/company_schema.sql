@@ -1,17 +1,16 @@
-DROP TABLE IF EXISTS company;
+DROP TABLE IF EXISTS `Company`;
 
-CREATE TABLE company (
-    sCompnyID CHAR(4) NOT NULL,
-    sCompnyNm CHAR(64),
-    sCompnyCd CHAR(8),
-    sAddressx CHAR(128),
-    sTownIDxx CHAR(4),
-    sTaxIDNox CHAR(16),
-    sEmplyrNo CHAR(16),
-    cRecdStat CHAR(1) DEFAULT '1',
-    sModified CHAR(32),
-    dModified TIMESTAMP,
-    dTimeStmp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (sCompnyID)
-);
-
+CREATE TABLE `Company` (
+  `sCompnyID` char(4) NOT NULL,
+  `sCompnyNm` char(64) DEFAULT NULL,
+  `sCompnyCd` char(8) DEFAULT NULL,
+  `sAddressx` char(128) DEFAULT NULL,
+  `sTownIDxx` char(4) DEFAULT NULL,
+  `sTaxIDNox` char(16) DEFAULT NULL,
+  `sEmplyrNo` char(16) DEFAULT NULL,
+  `cRecdStat` char(1) DEFAULT '1',
+  `sModified` char(32) DEFAULT NULL,
+  `dModified` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `dTimeStmp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`sCompnyID`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;

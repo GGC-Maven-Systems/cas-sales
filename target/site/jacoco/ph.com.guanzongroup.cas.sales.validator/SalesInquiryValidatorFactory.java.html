@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SalesInquiryValidatorFactory.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">cas-sales</a> &gt; <a href="index.source.html" class="el_package">ph.com.guanzongroup.cas.sales.validator</a> &gt; <span class="el_source">SalesInquiryValidatorFactory.java</span></div><h1>SalesInquiryValidatorFactory.java</h1><pre class="source lang-java linenums">/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package ph.com.guanzongroup.cas.sales.validator;
+
+import org.guanzon.appdriver.iface.GValidator;
+import ph.com.guanzongroup.cas.sales.status.SalesInquiryStatic;
+
+/**
+ *
+ * @author Arsiela 
+ */
+<span class="nc" id="L15">public class SalesInquiryValidatorFactory {</span>
+    public static GValidator make(String industryId){
+<span class="nc bnc" id="L17" title="All 7 branches missed.">        switch (industryId) {</span>
+            case SalesInquiryStatic.Industry.MOBILEPHONE: //Mobile Phone
+<span class="nc" id="L19">                return new SalesInquiry_MP();</span>
+            case SalesInquiryStatic.Industry.MOTORCYCLE: //Motorcycle
+<span class="nc" id="L21">                return new SalesInquiry_MC();</span>
+            case SalesInquiryStatic.Industry.CAR: //Vehicle
+            case SalesInquiryStatic.Industry.CAR_Nissan: //Vehicle
+            case SalesInquiryStatic.Industry.CAR_Any: //Vehicle
+<span class="nc" id="L25">                return new SalesInquiry_Vehicle();</span>
+            case SalesInquiryStatic.Industry.HOSPITALITY: //Monarch Food
+<span class="nc" id="L27">                return new SalesInquiry_Monarch();</span>
+            case SalesInquiryStatic.Industry.LPFOOD: //Los Pedritos
+<span class="nc" id="L29">                return new SalesInquiry_LP();</span>
+            case SalesInquiryStatic.Industry.APPLIANCES: //Appliances
+<span class="nc" id="L31">                return new SalesInquiry_Appliances();</span>
+            default:
+<span class="nc" id="L33">                return null;</span>
+        }
+    }
+    
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>
