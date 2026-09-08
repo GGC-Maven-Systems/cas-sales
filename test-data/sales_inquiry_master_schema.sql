@@ -1,6 +1,6 @@
-DROP TABLE IF EXISTS `sales_inquiry_master`;
+DROP TABLE IF EXISTS `Sales_Inquiry_Master`;
 
-CREATE TABLE `sales_inquiry_master` (
+CREATE TABLE `Sales_Inquiry_Master` (
   `sTransNox` char(12) NOT NULL,
   `sIndstCdx` char(4) DEFAULT NULL,
   `sCompnyID` char(4) DEFAULT NULL,
@@ -26,15 +26,5 @@ CREATE TABLE `sales_inquiry_master` (
   `sModified` char(32) DEFAULT NULL,
   `dModified` datetime DEFAULT NULL,
   `dTimeStmp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`sTransNox`),
-  KEY `sIndstCdx` (`sIndstCdx`),
-  KEY `sCompnyID` (`sCompnyID`),
-  KEY `sBranchCd` (`sBranchCd`),
-  KEY `sCategrCd` (`sCategrCd`),
-  KEY `dTargetxx` (`dTargetxx`),
-  KEY `dFollowUp` (`dFollowUp`),
-  KEY `sSourceCd` (`sSourceCd`,`sSourceNo`),
-  KEY `cInqrStat` (`cInqrStat`),
-  KEY `cTranStat` (`cTranStat`),
-  KEY `cConditnx` (`cConditnx`)
+  PRIMARY KEY (`sTransNox`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;

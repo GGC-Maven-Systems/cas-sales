@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Sales_Reservation_Validator_LP.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">cas-sales</a> &gt; <a href="index.source.html" class="el_package">ph.com.guanzongroup.cas.sales.validator</a> &gt; <span class="el_source">Sales_Reservation_Validator_LP.java</span></div><h1>Sales_Reservation_Validator_LP.java</h1><pre class="source lang-java linenums">package ph.com.guanzongroup.cas.sales.validator;
+
+import org.guanzon.appdriver.base.GRiderCAS;
+import org.guanzon.appdriver.iface.GValidator;
+import org.json.simple.JSONObject;
+import ph.com.guanzongroup.cas.sales.constant.Sales_Reservation_Static;
+import ph.com.guanzongroup.cas.sales.model.Model_Sales_Reservation_Detail;
+import ph.com.guanzongroup.cas.sales.model.Model_Sales_Reservation_Master;
+
+import java.util.ArrayList;
+
+<span class="nc" id="L12">public class Sales_Reservation_Validator_LP implements GValidator{</span>
+    GRiderCAS poGrider;
+    String psTranStat;
+    JSONObject poJSON;
+    
+    Model_Sales_Reservation_Master poMaster;
+    ArrayList&lt;Model_Sales_Reservation_Detail&gt; poDetail;
+
+    @Override
+    public void setApplicationDriver(Object applicationDriver) {
+<span class="nc" id="L22">        poGrider = (GRiderCAS) applicationDriver;</span>
+<span class="nc" id="L23">    }</span>
+
+    @Override
+    public void setTransactionStatus(String transactionStatus) {
+<span class="nc" id="L27">        psTranStat = transactionStatus;</span>
+<span class="nc" id="L28">    }</span>
+
+    @Override
+    public void setMaster(Object value) {
+<span class="nc" id="L32">        poMaster = (Model_Sales_Reservation_Master) value;</span>
+<span class="nc" id="L33">    }</span>
+
+    @Override
+    public void setDetail(ArrayList&lt;Object&gt; value) {
+<span class="nc" id="L37">        poDetail.clear();</span>
+<span class="nc bnc" id="L38" title="All 2 branches missed.">        for(int lnCtr = 0; lnCtr &lt;= value.size() - 1; lnCtr++){</span>
+<span class="nc" id="L39">            poDetail.add((Model_Sales_Reservation_Detail) value.get(lnCtr));</span>
+        }
+<span class="nc" id="L41">    }</span>
+
+    @Override
+    public void setOthers(ArrayList&lt;Object&gt; value) {
+<span class="nc" id="L45">        throw new UnsupportedOperationException(&quot;Not supported yet.&quot;);</span>
+    }
+
+    @Override
+    public JSONObject validate() {
+<span class="nc bnc" id="L50" title="All 5 branches missed.">        switch (psTranStat){</span>
+            case Sales_Reservation_Static.OPEN:
+<span class="nc" id="L52">                return validateNew();</span>
+            case Sales_Reservation_Static.CONFIRMED:
+<span class="nc" id="L54">                return validateConfirmed();</span>
+            case Sales_Reservation_Static.PAID:
+<span class="nc" id="L56">                return validatePaid();</span>
+            case Sales_Reservation_Static.CANCELLED:
+<span class="nc" id="L58">                return validateCancelled();</span>
+            default:
+<span class="nc" id="L60">                poJSON = new JSONObject();</span>
+<span class="nc" id="L61">                poJSON.put(&quot;result&quot;, &quot;success&quot;);</span>
+        }
+        
+<span class="nc" id="L64">        return poJSON;</span>
+    }
+    
+    private JSONObject validateNew(){
+<span class="nc" id="L68">        poJSON = new JSONObject();</span>
+        
+<span class="nc bnc" id="L70" title="All 4 branches missed.">        if (poMaster.getIndustryID()== null || poMaster.getIndustryID().isEmpty()) {</span>
+<span class="nc" id="L71">            poJSON.put(&quot;message&quot;, &quot;Industry is missing or not set.&quot;);</span>
+<span class="nc" id="L72">            return poJSON;</span>
+        }
+        
+<span class="nc bnc" id="L75" title="All 4 branches missed.">        if (poMaster.getBranchCode()== null || poMaster.getBranchCode().isEmpty()) {</span>
+<span class="nc" id="L76">            poJSON.put(&quot;message&quot;, &quot;Invalid Branch&quot;);</span>
+<span class="nc" id="L77">            return poJSON;</span>
+        }
+
+<span class="nc bnc" id="L80" title="All 4 branches missed.">        if (poMaster.getIndustryID()== null || poMaster.getIndustryID().isEmpty()) {</span>
+<span class="nc" id="L81">            poJSON.put(&quot;message&quot;, &quot;Industry is missing or not set.&quot;);</span>
+<span class="nc" id="L82">            return poJSON;</span>
+        }
+        
+<span class="nc bnc" id="L85" title="All 4 branches missed.">        if (poMaster.getCompanyID()== null || poMaster.getCompanyID().isEmpty()) {</span>
+<span class="nc" id="L86">            poJSON.put(&quot;message&quot;, &quot;Company is missing or not set.&quot;);</span>
+<span class="nc" id="L87">            return poJSON;</span>
+        }
+        
+<span class="nc bnc" id="L90" title="All 4 branches missed.">        if (poMaster.getClientID()== null || poMaster.getClientID().isEmpty()) {</span>
+<span class="nc" id="L91">            poJSON.put(&quot;message&quot;, &quot;Client ID is missing or not set.&quot;);</span>
+<span class="nc" id="L92">            return poJSON;</span>
+        }        
+        
+<span class="nc bnc" id="L95" title="All 4 branches missed.">        if (poMaster.getAddressID()== null || poMaster.getAddressID().isEmpty()) {</span>
+<span class="nc" id="L96">            poJSON.put(&quot;message&quot;, &quot;Adress is missing or not set.&quot;);</span>
+<span class="nc" id="L97">            return poJSON;</span>
+        }
+        
+//        if (poMaster.getContactID()== null || poMaster.getContactID().isEmpty()) {
+//            poJSON.put(&quot;message&quot;, &quot;Contact is missing or not set.&quot;);
+//            return poJSON;
+//        }
+        
+<span class="nc" id="L105">        poJSON.put(&quot;result&quot;, &quot;success&quot;);</span>
+<span class="nc" id="L106">        return poJSON;</span>
+    }
+    
+    private JSONObject validateConfirmed(){
+<span class="nc" id="L110">        poJSON = new JSONObject();</span>
+        
+<span class="nc bnc" id="L112" title="All 4 branches missed.">        if (poMaster.getIndustryID()== null || poMaster.getIndustryID().isEmpty()) {</span>
+<span class="nc" id="L113">            poJSON.put(&quot;message&quot;, &quot;Industry is missing or not set.&quot;);</span>
+<span class="nc" id="L114">            return poJSON;</span>
+        }
+        
+<span class="nc bnc" id="L117" title="All 4 branches missed.">        if (poMaster.getBranchCode()== null || poMaster.getBranchCode().isEmpty()) {</span>
+<span class="nc" id="L118">            poJSON.put(&quot;message&quot;, &quot;Invalid Branch&quot;);</span>
+<span class="nc" id="L119">            return poJSON;</span>
+        }
+
+<span class="nc bnc" id="L122" title="All 4 branches missed.">        if (poMaster.getIndustryID()== null || poMaster.getIndustryID().isEmpty()) {</span>
+<span class="nc" id="L123">            poJSON.put(&quot;message&quot;, &quot;Industry is missing or not set.&quot;);</span>
+<span class="nc" id="L124">            return poJSON;</span>
+        }
+        
+<span class="nc bnc" id="L127" title="All 4 branches missed.">        if (poMaster.getCompanyID()== null || poMaster.getCompanyID().isEmpty()) {</span>
+<span class="nc" id="L128">            poJSON.put(&quot;message&quot;, &quot;Company is missing or not set.&quot;);</span>
+<span class="nc" id="L129">            return poJSON;</span>
+        }
+        
+<span class="nc bnc" id="L132" title="All 4 branches missed.">        if (poMaster.getClientID()== null || poMaster.getClientID().isEmpty()) {</span>
+<span class="nc" id="L133">            poJSON.put(&quot;message&quot;, &quot;Client ID is missing or not set.&quot;);</span>
+<span class="nc" id="L134">            return poJSON;</span>
+        }        
+        
+<span class="nc bnc" id="L137" title="All 4 branches missed.">        if (poMaster.getAddressID()== null || poMaster.getAddressID().isEmpty()) {</span>
+<span class="nc" id="L138">            poJSON.put(&quot;message&quot;, &quot;Adress is missing or not set.&quot;);</span>
+<span class="nc" id="L139">            return poJSON;</span>
+        }
+        
+//        if (poMaster.getContactID()== null || poMaster.getContactID().isEmpty()) {
+//            poJSON.put(&quot;message&quot;, &quot;Contact is missing or not set.&quot;);
+//            return poJSON;
+//        }
+<span class="nc" id="L146">        poJSON.put(&quot;result&quot;, &quot;success&quot;);</span>
+<span class="nc" id="L147">        return poJSON;</span>
+    }
+    
+    private JSONObject validatePaid(){
+<span class="nc" id="L151">        poJSON = new JSONObject();</span>
+                
+<span class="nc" id="L153">        poJSON.put(&quot;result&quot;, &quot;success&quot;);</span>
+<span class="nc" id="L154">        return poJSON;</span>
+    }
+    
+    private JSONObject validateCancelled(){
+<span class="nc" id="L158">        poJSON = new JSONObject();</span>
+                
+<span class="nc" id="L160">        poJSON.put(&quot;result&quot;, &quot;success&quot;);</span>
+<span class="nc" id="L161">        return poJSON;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

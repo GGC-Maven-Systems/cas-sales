@@ -1,0 +1,285 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Model_Bank_Application.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">cas-sales</a> &gt; <a href="index.source.html" class="el_package">ph.com.guanzongroup.cas.sales.model</a> &gt; <span class="el_source">Model_Bank_Application.java</span></div><h1>Model_Bank_Application.java</h1><pre class="source lang-java linenums">/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package ph.com.guanzongroup.cas.sales.model;
+
+import java.sql.SQLException;
+import java.util.Date;
+import org.guanzon.appdriver.agent.services.Model;
+import org.guanzon.appdriver.base.GuanzonException;
+import org.guanzon.appdriver.base.MiscUtil;
+import org.guanzon.appdriver.base.SQLUtil;
+import org.guanzon.appdriver.constant.EditMode;
+import org.guanzon.cas.parameter.model.Model_Banks;
+import org.guanzon.cas.parameter.services.ParamModels;
+import org.json.simple.JSONObject;
+import ph.com.guanzongroup.cas.sales.status.BankApplicationStatus;
+
+/**
+ *
+ * @author Arsiela
+ */
+<span class="nc" id="L24">public class Model_Bank_Application extends Model {</span>
+    
+    //reference objects
+    Model_Banks poBank;
+
+    @Override
+    public void initialize() {
+        try {
+<span class="nc" id="L32">            poEntity = MiscUtil.xml2ResultSet(System.getProperty(&quot;sys.default.path.metadata&quot;) + XML, getTable());</span>
+
+<span class="nc" id="L34">            poEntity.last();</span>
+<span class="nc" id="L35">            poEntity.moveToInsertRow();</span>
+
+<span class="nc" id="L37">            MiscUtil.initRowSet(poEntity);</span>
+
+            //assign default values
+//            poEntity.updateObject(&quot;dEntryDte&quot;, SQLUtil.toDate(&quot;1900-01-01&quot;, SQLUtil.FORMAT_SHORT_DATE));
+//            poEntity.updateObject(&quot;dModified&quot;, SQLUtil.toDate(&quot;1900-01-01&quot;, SQLUtil.FORMAT_SHORT_DATE));
+//            poEntity.updateObject(&quot;dAppliedx&quot;, SQLUtil.toDate(&quot;1900-01-01&quot;, SQLUtil.FORMAT_SHORT_DATE));
+//            poEntity.updateObject(&quot;dApproved&quot;, SQLUtil.toDate(&quot;1900-01-01&quot;, SQLUtil.FORMAT_SHORT_DATE));
+//            poEntity.updateObject(&quot;dCancelld&quot;, SQLUtil.toDate(&quot;1900-01-01&quot;, SQLUtil.FORMAT_SHORT_DATE));
+            
+<span class="nc" id="L46">            poEntity.updateNull(&quot;dEntryDte&quot;);</span>
+<span class="nc" id="L47">            poEntity.updateNull(&quot;dModified&quot;);</span>
+<span class="nc" id="L48">            poEntity.updateNull(&quot;dAppliedx&quot;);</span>
+<span class="nc" id="L49">            poEntity.updateNull(&quot;dApproved&quot;);</span>
+<span class="nc" id="L50">            poEntity.updateNull(&quot;dCancelld&quot;);</span>
+            
+<span class="nc" id="L52">            poEntity.updateObject(&quot;nEntryNox&quot;, 0);</span>
+<span class="nc" id="L53">            poEntity.updateString(&quot;cTranStat&quot;, BankApplicationStatus.OPEN);</span>
+            //end - assign default values
+
+<span class="nc" id="L56">            poEntity.insertRow();</span>
+<span class="nc" id="L57">            poEntity.moveToCurrentRow();</span>
+<span class="nc" id="L58">            poEntity.absolute(1);</span>
+
+<span class="nc" id="L60">            ID = &quot;sTransNox&quot;;</span>
+<span class="nc" id="L61">            ID2 = &quot;nEntryNox&quot;;</span>
+
+            //initialize reference objects
+<span class="nc" id="L64">            ParamModels model = new ParamModels(poGRider);</span>
+<span class="nc" id="L65">            poBank = model.Banks();</span>
+            
+//            end - initialize reference objects
+
+<span class="nc" id="L69">            pnEditMode = EditMode.UNKNOWN;</span>
+<span class="nc" id="L70">        } catch (SQLException e) {</span>
+<span class="nc" id="L71">            logwrapr.severe(e.getMessage());</span>
+<span class="nc" id="L72">            System.exit(1);</span>
+<span class="nc" id="L73">        }</span>
+<span class="nc" id="L74">    }</span>
+
+    public JSONObject setTransactionNo(String transactionNo) {
+<span class="nc" id="L77">        return setValue(&quot;sTransNox&quot;, transactionNo);</span>
+    }
+
+    public String getTransactionNo() {
+<span class="nc" id="L81">        return (String) getValue(&quot;sTransNox&quot;);</span>
+    }
+
+    public JSONObject setEntryNo(int entryNo) {
+<span class="nc" id="L85">        return setValue(&quot;nEntryNox&quot;, entryNo);</span>
+    }
+
+    public int getEntryNo() {
+<span class="nc bnc" id="L89" title="All 4 branches missed.">        if (getValue(&quot;nEntryNox&quot;) == null || &quot;&quot;.equals(getValue(&quot;nEntryNox&quot;))) {</span>
+<span class="nc" id="L90">            return 0;</span>
+        }
+<span class="nc" id="L92">        return (int) getValue(&quot;nEntryNox&quot;);</span>
+    }
+
+    public JSONObject setApplicationNo(String applicationNo) {
+<span class="nc" id="L96">        return setValue(&quot;sApplicNo&quot;, applicationNo);</span>
+    }
+
+    public String getApplicationNo() {
+<span class="nc" id="L100">        return (String) getValue(&quot;sApplicNo&quot;);</span>
+    }
+    
+    public JSONObject setAppliedDate(Date appliedDate) {
+<span class="nc" id="L104">        return setValue(&quot;dAppliedx&quot;, appliedDate);</span>
+    }
+
+    public Date getAppliedDate() {
+<span class="nc" id="L108">        return (Date) getValue(&quot;dAppliedx&quot;);</span>
+    }
+    
+    public JSONObject setApprovedDate(Date approvedDate) {
+<span class="nc" id="L112">        return setValue(&quot;dApproved&quot;, approvedDate);</span>
+    }
+
+    public Date getApprovedDate() {
+<span class="nc" id="L116">        return (Date) getValue(&quot;dApproved&quot;);</span>
+    }
+
+    public JSONObject setPaymentMode(String paymentMode) {
+<span class="nc" id="L120">        return setValue(&quot;cPayModex&quot;, paymentMode);</span>
+    }
+
+    public String getPaymentMode() {
+<span class="nc" id="L124">        return (String) getValue(&quot;cPayModex&quot;);</span>
+    }
+
+    public JSONObject setSourceCode(String sourceCode) {
+<span class="nc" id="L128">        return setValue(&quot;sSourceCd&quot;, sourceCode);</span>
+    }
+
+    public String getSourceCode() {
+<span class="nc" id="L132">        return (String) getValue(&quot;sSourceCd&quot;);</span>
+    }
+
+    public JSONObject setSourceNo(String sourceNo) {
+<span class="nc" id="L136">        return setValue(&quot;sSourceNo&quot;, sourceNo);</span>
+    }
+
+    public String getSourceNo() {
+<span class="nc" id="L140">        return (String) getValue(&quot;sSourceNo&quot;);</span>
+    }
+
+    public JSONObject setBankId(String bankCode) {
+<span class="nc" id="L144">        return setValue(&quot;sBankIDxx&quot;, bankCode);</span>
+    }
+
+    public String getBankId() {
+<span class="nc" id="L148">        return (String) getValue(&quot;sBankIDxx&quot;);</span>
+    }
+
+    public JSONObject setRemarks(String remarks) {
+<span class="nc" id="L152">        return setValue(&quot;sRemarksx&quot;, remarks);</span>
+    }
+
+    public String getRemarks() {
+<span class="nc" id="L156">        return (String) getValue(&quot;sRemarksx&quot;);</span>
+    }
+
+    public JSONObject setTransactionStatus(String transactionStatus) {
+<span class="nc" id="L160">        return setValue(&quot;cTranStat&quot;, transactionStatus);</span>
+    }
+
+    public String getTransactionStatus() {
+<span class="nc" id="L164">        return (String) getValue(&quot;cTranStat&quot;);</span>
+    }
+
+    public JSONObject setCancelledBy(String cancelledBy) {
+<span class="nc" id="L168">        return setValue(&quot;sCancelld&quot;, cancelledBy);</span>
+    }
+
+    public String getCancelledBy() {
+<span class="nc" id="L172">        return (String) getValue(&quot;sCancelld&quot;);</span>
+    }
+
+    public JSONObject setCancelledDate(Date cancelledDate) {
+<span class="nc" id="L176">        return setValue(&quot;dCancelld&quot;, cancelledDate);</span>
+    }
+
+    public Date getCancelledDate() {
+<span class="nc" id="L180">        return (Date) getValue(&quot;dCancelld&quot;);</span>
+    }
+    
+    public JSONObject setEntryBy(String entryBy) {
+<span class="nc" id="L184">        return setValue(&quot;sEntryByx&quot;, entryBy);</span>
+    }
+
+    public String getEntryBy() {
+<span class="nc" id="L188">        return (String) getValue(&quot;sEntryByx&quot;);</span>
+    }
+
+    public JSONObject setEntryDate(Date entryDate) {
+<span class="nc" id="L192">        return setValue(&quot;dEntryDte&quot;, entryDate);</span>
+    }
+
+    public Date getEntryDate() {
+<span class="nc" id="L196">        return (Date) getValue(&quot;dEntryDte&quot;);</span>
+    }
+    
+    public JSONObject setModifyingId(String modifiedBy) {
+<span class="nc" id="L200">        return setValue(&quot;sModified&quot;, modifiedBy);</span>
+    }
+
+    public String getModifyingId() {
+<span class="nc" id="L204">        return (String) getValue(&quot;sModified&quot;);</span>
+    }
+
+    public JSONObject setModifiedDate(Date modifiedDate) {
+<span class="nc" id="L208">        return setValue(&quot;dModified&quot;, modifiedDate);</span>
+    }
+
+    public Date getModifiedDate() {
+<span class="nc" id="L212">        return (Date) getValue(&quot;dModified&quot;);</span>
+    }
+    
+//    public JSONObject isProcessed(boolean isProcessed) {
+//        return setValue(&quot;cProcessd&quot;, isProcessed ? &quot;1&quot; : &quot;0&quot;);
+//    }
+//
+//    public boolean isProcessed() {
+//        return ((String) getValue(&quot;cProcessd&quot;)).equals(&quot;1&quot;);
+//    }
+
+    
+    @Override
+    public String getNextCode() {
+<span class="nc" id="L226">        return MiscUtil.getNextCode(this.getTable(), ID, true, poGRider.getGConnection().getConnection(), poGRider.getBranchCode());</span>
+    }
+
+    //reference object models
+    public Model_Banks Bank() throws SQLException, GuanzonException {
+<span class="nc bnc" id="L231" title="All 2 branches missed.">        if (!&quot;&quot;.equals((String) getValue(&quot;sBankIDxx&quot;))) {</span>
+<span class="nc bnc" id="L232" title="All 2 branches missed.">            if (poBank.getEditMode() == EditMode.READY</span>
+<span class="nc bnc" id="L233" title="All 2 branches missed.">                    &amp;&amp; poBank.getBankCode().equals((String) getValue(&quot;sBankIDxx&quot;))) {</span>
+<span class="nc" id="L234">                return poBank;</span>
+            } else {
+<span class="nc" id="L236">                poJSON = poBank.openRecord((String) getValue(&quot;sBankIDxx&quot;));</span>
+
+<span class="nc bnc" id="L238" title="All 2 branches missed.">                if (&quot;success&quot;.equals((String) poJSON.get(&quot;result&quot;))) {</span>
+<span class="nc" id="L239">                    return poBank;</span>
+                } else {
+<span class="nc" id="L241">                    poBank.initialize();</span>
+<span class="nc" id="L242">                    return poBank;</span>
+                }
+            }
+        } else {
+<span class="nc" id="L246">            poBank.initialize();</span>
+<span class="nc" id="L247">            return poBank;</span>
+        }
+    }
+    //end - reference object models
+    
+    
+    
+//    public JSONObject openRecord(String transactionNo, int entryNo, String applicationNo) throws SQLException, GuanzonException {
+//        poJSON = new JSONObject();
+//        String lsSQL = MiscUtil.makeSelect(this);
+//        lsSQL = MiscUtil.addCondition(lsSQL, &quot; sTransNox = &quot; + SQLUtil.toSQL(transactionNo) 
+//                                        + &quot; AND nEntryNox = &quot; + SQLUtil.toSQL(entryNo)
+//                                        + &quot; AND sApplicNo = &quot; + SQLUtil.toSQL(applicationNo));
+//        System.out.println(&quot;Executing SQL: &quot; + lsSQL);
+//        ResultSet loRS = poGRider.executeQuery(lsSQL);
+//        try {
+//            if (loRS.next()) {
+//                for (int lnCtr = 1; lnCtr &lt;= loRS.getMetaData().getColumnCount(); lnCtr++){
+//                    setValue(lnCtr, loRS.getObject(lnCtr)); 
+//                }
+//                MiscUtil.close(loRS);
+//                pnEditMode = EditMode.READY;
+//                poJSON = new JSONObject();
+//                poJSON.put(&quot;result&quot;, &quot;success&quot;);
+//                poJSON.put(&quot;message&quot;, &quot;Record loaded successfully.&quot;);
+//            } else {
+//                poJSON = new JSONObject();
+//                poJSON.put(&quot;result&quot;, &quot;error&quot;);
+//                poJSON.put(&quot;message&quot;, &quot;No record to load.&quot;);
+//            } 
+//        } catch (SQLException e) {
+//            poJSON = new JSONObject();
+//            poJSON.put(&quot;result&quot;, &quot;error&quot;);
+//            poJSON.put(&quot;message&quot;, e.getMessage());
+//        } 
+//        return poJSON;
+//    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

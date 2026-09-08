@@ -5,21 +5,8 @@
  */
 package ph.com.guanzongroup.cas.sales.services;
 
-import ph.com.guanzongroup.cas.sales.model.Model_Customer_Inquiry_FollowUp;
+import ph.com.guanzongroup.cas.sales.model.*;
 import org.guanzon.appdriver.base.GRiderCAS;
-import ph.com.guanzongroup.cas.sales.model.Model_Bank_Application;
-import ph.com.guanzongroup.cas.sales.model.Model_Requirement_Source;
-import ph.com.guanzongroup.cas.sales.model.Model_Requirement_Source_PerGroup;
-import ph.com.guanzongroup.cas.sales.model.Model_Sales_Agent;
-import ph.com.guanzongroup.cas.sales.model.Model_Sales_Commitment_Detail;
-import ph.com.guanzongroup.cas.sales.model.Model_Sales_Commitment_Master;
-import ph.com.guanzongroup.cas.sales.model.Model_Sales_Giveaways_Item;
-import ph.com.guanzongroup.cas.sales.model.Model_Sales_Giveaways_Master;
-import ph.com.guanzongroup.cas.sales.model.Model_Sales_Inquiry_Detail;
-import ph.com.guanzongroup.cas.sales.model.Model_Sales_Inquiry_Master;
-import ph.com.guanzongroup.cas.sales.model.Model_Sales_Inquiry_Requirements;
-import ph.com.guanzongroup.cas.sales.model.Model_Sales_Inquiry_Sources;
-import ph.com.guanzongroup.cas.sales.model.Model_Salesman;
 
 /**
  *
@@ -268,6 +255,73 @@ public class SalesModels {
 
         return poSalesCommitmentDetail;
     }
+
+    public Model_Vehicle_Release_Master VehicleReleaseMaster(){
+        if (poGRider == null){
+            System.err.println("SalesModels.VehicleReleaseMaster: Application driver is not set.");
+            return null;
+        }
+
+        if (poVehicleReleaseMaster == null){
+            poVehicleReleaseMaster = new Model_Vehicle_Release_Master();
+            poVehicleReleaseMaster.setApplicationDriver(poGRider);
+            poVehicleReleaseMaster.setXML("Model_Vehicle_Release_Master");
+            poVehicleReleaseMaster.setTableName("Vehicle_Release_Master");
+            poVehicleReleaseMaster.initialize();
+        }
+
+        return poVehicleReleaseMaster;
+    }
+    public Model_Vsp_Master VspMaster(){
+        if (poGRider == null){
+            System.err.println("SalesModels.Vsp: Application driver is not set.");
+            return null;
+        }
+
+        if (poVspMaster == null){
+            poVspMaster = new Model_Vsp_Master();
+            poVspMaster.setApplicationDriver(poGRider);
+            poVspMaster.setXML("Model_Vsp_Master");
+            poVspMaster.setTableName("Vsp_Master");
+            poVspMaster.initialize();
+        }
+
+        return poVspMaster;
+    }
+
+    public Model_Sales_Reservation_Master Sales_Reservation_Master(){
+        if (poGRider == null){
+            System.err.println("CashflowModels.Sales Reservation Master: Application driver is not set.");
+            return null;
+        }
+
+        if (poSalesReservationMaster == null){
+            poSalesReservationMaster = new Model_Sales_Reservation_Master();
+            poSalesReservationMaster.setApplicationDriver(poGRider);
+            poSalesReservationMaster.setXML("Model_Sales_Reservation_Master");
+            poSalesReservationMaster.setTableName("Sales_Reservation_Master");
+            poSalesReservationMaster.initialize();
+        }
+
+        return poSalesReservationMaster;
+    }
+
+    public Model_Sales_Reservation_Detail Sales_Reservation_Detail(){
+        if (poGRider == null){
+            System.err.println("CashflowModels.Sales Reservation Detail: Application driver is not set.");
+            return null;
+        }
+
+        if (poSalesReservationDetail == null){
+            poSalesReservationDetail = new Model_Sales_Reservation_Detail();
+            poSalesReservationDetail.setApplicationDriver(poGRider);
+            poSalesReservationDetail.setXML("Model_Sales_Reservation_Detail");
+            poSalesReservationDetail.setTableName("Sales_Reservation_Detail");
+            poSalesReservationDetail.initialize();
+        }
+
+        return poSalesReservationDetail;
+    }
     
     @Override
     protected void finalize() throws Throwable {
@@ -285,6 +339,10 @@ public class SalesModels {
             poSalesInquiryFollowUp = null;
             poSalesCommitmentMaster = null;
             poSalesCommitmentDetail = null;
+            poVehicleReleaseMaster = null;
+            poVspMaster = null;
+            poSalesReservationMaster = null;
+            poSalesReservationDetail = null;
 
             poGRider = null;
         } finally {
@@ -308,4 +366,8 @@ public class SalesModels {
     private Model_Customer_Inquiry_FollowUp poSalesInquiryFollowUp;
     private Model_Sales_Commitment_Master poSalesCommitmentMaster;
     private Model_Sales_Commitment_Detail poSalesCommitmentDetail;
+    private Model_Vehicle_Release_Master poVehicleReleaseMaster;
+    private Model_Vsp_Master poVspMaster;
+    private Model_Sales_Reservation_Master poSalesReservationMaster;
+    private Model_Sales_Reservation_Detail poSalesReservationDetail;
 }

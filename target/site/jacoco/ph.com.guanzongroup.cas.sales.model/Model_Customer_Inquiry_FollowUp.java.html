@@ -1,0 +1,391 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Model_Customer_Inquiry_FollowUp.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">cas-sales</a> &gt; <a href="index.source.html" class="el_package">ph.com.guanzongroup.cas.sales.model</a> &gt; <span class="el_source">Model_Customer_Inquiry_FollowUp.java</span></div><h1>Model_Customer_Inquiry_FollowUp.java</h1><pre class="source lang-java linenums">/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package ph.com.guanzongroup.cas.sales.model;
+
+import org.guanzon.appdriver.agent.services.Model;
+import org.guanzon.appdriver.base.GuanzonException;
+import org.guanzon.appdriver.base.MiscUtil;
+import org.guanzon.appdriver.base.SQLUtil;
+import org.guanzon.appdriver.constant.EditMode;
+import org.guanzon.appdriver.constant.RecordStatus;
+import org.json.simple.JSONObject;
+import ph.com.guanzongroup.cas.sales.services.SalesModels;
+import ph.com.guanzongroup.cas.sales.status.CustomerInquiryFollowUpStatic;
+
+import java.sql.SQLException;
+import java.sql.Time;
+import java.util.Date;
+
+/**
+ *
+ * @author TEEJEI DE CELIS
+ * @date July 25, 2026
+ * @module Customer Inquiry Follow Up
+ */
+<span class="fc" id="L28">public class Model_Customer_Inquiry_FollowUp extends Model {</span>
+    
+    //reference objects
+    Model_Salesman poSalesMan;
+    Model_Sales_Inquiry_Master poSalesInquiryMaster;
+    Model_Sales_Inquiry_Detail poSalesInquiryDetail;
+
+    @Override
+    public void initialize() {
+        try {
+<span class="fc" id="L38">            poEntity = MiscUtil.xml2ResultSet(System.getProperty(&quot;sys.default.path.metadata&quot;) + XML, getTable());</span>
+
+<span class="fc" id="L40">            poEntity.last();</span>
+<span class="fc" id="L41">            poEntity.moveToInsertRow();</span>
+
+<span class="fc" id="L43">            MiscUtil.initRowSet(poEntity);</span>
+
+            //assign default values
+<span class="fc" id="L46">            poEntity.updateObject(&quot;dTransact&quot;, poGRider.getServerDate());</span>
+<span class="fc" id="L47">            poEntity.updateObject(&quot;sEntryByx&quot;, poGRider.getUserID());</span>
+<span class="fc" id="L48">            poEntity.updateObject(&quot;dEntryDte&quot;, SQLUtil.toDate(&quot;1900-01-01&quot;, SQLUtil.FORMAT_SHORT_DATE));</span>
+<span class="fc" id="L49">            poEntity.updateString(&quot;cRecdStat&quot;, CustomerInquiryFollowUpStatic.FOLLOWED_UP);</span>
+            //end - assign default values
+
+<span class="fc" id="L52">            poEntity.insertRow();</span>
+<span class="fc" id="L53">            poEntity.moveToCurrentRow();</span>
+<span class="fc" id="L54">            poEntity.absolute(1);</span>
+
+<span class="fc" id="L56">            ID = &quot;sTransNox&quot;;</span>
+
+            //initialize reference objects
+<span class="fc" id="L59">            SalesModels salesModels = new SalesModels(poGRider);</span>
+<span class="fc" id="L60">            poSalesMan = salesModels.Salesman();</span>
+<span class="fc" id="L61">            poSalesInquiryMaster = salesModels.SalesInquiryMaster();</span>
+<span class="fc" id="L62">            poSalesInquiryDetail = salesModels.SalesInquiryDetails();</span>
+
+            
+//            end - initialize reference objects
+
+<span class="fc" id="L67">            pnEditMode = EditMode.UNKNOWN;</span>
+<span class="nc" id="L68">        } catch (SQLException e) {</span>
+<span class="nc" id="L69">            logwrapr.severe(e.getMessage());</span>
+<span class="nc" id="L70">            System.exit(1);</span>
+<span class="fc" id="L71">        }</span>
+<span class="fc" id="L72">    }</span>
+    public JSONObject setTransactionNo(String transactionNo) {
+<span class="fc" id="L74">        return setValue(&quot;sTransNox&quot;, transactionNo);</span>
+    }
+
+    public String getTransactionNo() {
+<span class="fc" id="L78">        return (String) getValue(&quot;sTransNox&quot;);</span>
+    }
+
+    public JSONObject setReferenceNo(String referenceNo) {
+<span class="nc" id="L82">        return setValue(&quot;sReferNox&quot;, referenceNo);</span>
+    }
+
+    public String getReferenceNo() {
+<span class="nc" id="L86">        return (String) getValue(&quot;sReferNox&quot;);</span>
+    }
+
+    public JSONObject setTransactionDate(Date transactionDate) {
+<span class="fc" id="L90">        return setValue(&quot;dTransact&quot;, transactionDate);</span>
+    }
+
+    public Date getTransactionDate() {
+<span class="nc" id="L94">        return (Date) getValue(&quot;dTransact&quot;);</span>
+    }
+
+    public JSONObject setSourceCode(String sourceCode) {
+<span class="fc" id="L98">        return setValue(&quot;sSourceCD&quot;, sourceCode);</span>
+    }
+
+    public String getSourceCode() {
+<span class="fc" id="L102">        return (String) getValue(&quot;sSourceCD&quot;);</span>
+    }
+
+    public JSONObject setSourceNo(String sourceNo) {
+<span class="fc" id="L106">        return setValue(&quot;sSourceNo&quot;, sourceNo);</span>
+    }
+
+    public String getSourceNo() {
+<span class="fc" id="L110">        return (String) getValue(&quot;sSourceNo&quot;);</span>
+    }
+
+    public JSONObject setRemarks(String remarks) {
+<span class="fc" id="L114">        return setValue(&quot;sRemarksx&quot;, remarks);</span>
+    }
+
+    public String getRemarks() {
+<span class="fc" id="L118">        return (String) getValue(&quot;sRemarksx&quot;);</span>
+    }
+
+    public JSONObject setMessage(String message) {
+<span class="fc" id="L122">        return setValue(&quot;sMessagex&quot;, message);</span>
+    }
+
+    public String getMessage() {
+<span class="fc" id="L126">        return (String) getValue(&quot;sMessagex&quot;);</span>
+    }
+
+    public JSONObject setMethodCode(String methodCode) {
+<span class="fc" id="L130">        return setValue(&quot;sMethodCd&quot;, methodCode);</span>
+    }
+
+    public String getMethodCode() {
+<span class="fc" id="L134">        return (String) getValue(&quot;sMethodCd&quot;);</span>
+    }
+
+    public JSONObject setSocialMediaCode(String socialMediaCode) {
+<span class="fc" id="L138">        return setValue(&quot;sSclMedia&quot;, socialMediaCode);</span>
+    }
+
+    public String getSocialMediaCode() {
+<span class="fc" id="L142">        return (String) getValue(&quot;sSclMedia&quot;);</span>
+    }
+
+    public JSONObject setFollowUpDate(Date followUpDate) {
+<span class="fc" id="L146">        return setValue(&quot;dFollowUp&quot;, followUpDate);</span>
+    }
+
+    public Date getFollowUpDate() {
+<span class="fc" id="L150">        Object loValue = getValue(&quot;dFollowUp&quot;);</span>
+
+<span class="pc bpc" id="L152" title="1 of 2 branches missed.">        if (loValue == null) {</span>
+<span class="nc" id="L153">            return null;</span>
+        }
+
+<span class="pc bpc" id="L156" title="1 of 2 branches missed.">        if (loValue instanceof java.sql.Timestamp) {</span>
+<span class="nc" id="L157">            return new Date(((java.sql.Timestamp) loValue).getTime());</span>
+        }
+
+<span class="pc bpc" id="L160" title="1 of 2 branches missed.">        if (loValue instanceof Date) {</span>
+<span class="fc" id="L161">            return (Date) loValue;</span>
+        }
+
+<span class="nc bnc" id="L164" title="All 2 branches missed.">        if (loValue instanceof String) {</span>
+<span class="nc" id="L165">            String lsValue = ((String) loValue).trim();</span>
+
+<span class="nc bnc" id="L167" title="All 2 branches missed.">            if (lsValue.isEmpty()) {</span>
+<span class="nc" id="L168">                return null;</span>
+            }
+
+            try {
+                // Handle values like &quot;yyyy-MM-dd HH:mm:ss&quot; by extracting the date part.
+<span class="nc bnc" id="L173" title="All 2 branches missed.">                String lsDateOnly = lsValue.length() &gt;= 10 ? lsValue.substring(0, 10) : lsValue;</span>
+<span class="nc" id="L174">                return SQLUtil.toDate(lsDateOnly, SQLUtil.FORMAT_SHORT_DATE);</span>
+<span class="nc" id="L175">            } catch (Exception ex) {</span>
+<span class="nc" id="L176">                throw new ClassCastException(&quot;Invalid dFollowUp value: &quot; + loValue);</span>
+            }
+        }
+
+<span class="nc" id="L180">        throw new ClassCastException(&quot;Unsupported dFollowUp type: &quot; + loValue.getClass().getName());</span>
+    }
+
+    public JSONObject setFollowUpTime(Time followUpTime) {
+<span class="fc" id="L184">        return setValue(&quot;tFollowUp&quot;, followUpTime);</span>
+    }
+
+    public Time getFollowUpTime() {
+<span class="fc" id="L188">        Object loValue = getValue(&quot;tFollowUp&quot;);</span>
+
+<span class="pc bpc" id="L190" title="1 of 2 branches missed.">        if (loValue == null) {</span>
+<span class="nc" id="L191">            return null;</span>
+        }
+
+<span class="pc bpc" id="L194" title="1 of 2 branches missed.">        if (loValue instanceof Time) {</span>
+<span class="fc" id="L195">            return (Time) loValue;</span>
+        }
+
+<span class="nc bnc" id="L198" title="All 2 branches missed.">        if (loValue instanceof java.sql.Timestamp) {</span>
+<span class="nc" id="L199">            return new Time(((java.sql.Timestamp) loValue).getTime());</span>
+        }
+
+<span class="nc bnc" id="L202" title="All 2 branches missed.">        if (loValue instanceof Date) {</span>
+<span class="nc" id="L203">            return new Time(((Date) loValue).getTime());</span>
+        }
+
+<span class="nc bnc" id="L206" title="All 2 branches missed.">        if (loValue instanceof String) {</span>
+<span class="nc" id="L207">            String lsValue = ((String) loValue).trim();</span>
+
+<span class="nc bnc" id="L209" title="All 2 branches missed.">            if (lsValue.isEmpty()) {</span>
+<span class="nc" id="L210">                return null;</span>
+            }
+
+            // Accept common formats like &quot;HH:mm&quot;, &quot;HH:mm:ss&quot;, or &quot;yyyy-MM-dd HH:mm:ss&quot;.
+<span class="nc bnc" id="L214" title="All 2 branches missed.">            if (lsValue.contains(&quot; &quot;)) {</span>
+<span class="nc" id="L215">                lsValue = lsValue.substring(lsValue.lastIndexOf(' ') + 1);</span>
+            }
+<span class="nc bnc" id="L217" title="All 2 branches missed.">            if (lsValue.length() == 5) {</span>
+<span class="nc" id="L218">                lsValue = lsValue + &quot;:00&quot;;</span>
+            }
+<span class="nc bnc" id="L220" title="All 2 branches missed.">            if (lsValue.length() &gt; 8) {</span>
+<span class="nc" id="L221">                lsValue = lsValue.substring(0, 8);</span>
+            }
+
+            try {
+<span class="nc" id="L225">                return Time.valueOf(lsValue);</span>
+<span class="nc" id="L226">            } catch (IllegalArgumentException ex) {</span>
+<span class="nc" id="L227">                throw new ClassCastException(&quot;Invalid tFollowUp value: &quot; + loValue);</span>
+            }
+        }
+
+<span class="nc" id="L231">        throw new ClassCastException(&quot;Unsupported tFollowUp type: &quot; + loValue.getClass().getName());</span>
+    }
+
+    public JSONObject setNextFollowUpDate(Date nextFollowUpDate) {
+<span class="nc" id="L235">        return setValue(&quot;dNxtFolUp&quot;, nextFollowUpDate);</span>
+    }
+
+    public Date getNextFollowUpDate() {
+<span class="nc" id="L239">        return (Date) getValue(&quot;dNxtFolUp&quot;);</span>
+    }
+
+    public JSONObject setCompetitorGoods(String competitorGoods) {
+<span class="nc" id="L243">        return setValue(&quot;sGdsCmptr&quot;, competitorGoods);</span>
+    }
+
+    public String getCompetitorGoods() {
+<span class="nc" id="L247">        return (String) getValue(&quot;sGdsCmptr&quot;);</span>
+    }
+
+    public JSONObject setCompetitorMake(String competitorMake) {
+<span class="nc" id="L251">        return setValue(&quot;sMkeCmptr&quot;, competitorMake);</span>
+    }
+
+    public String getCompetitorMake() {
+<span class="nc" id="L255">        return (String) getValue(&quot;sMkeCmptr&quot;);</span>
+    }
+
+    public JSONObject setCompetitorDealer(String competitorDealer) {
+<span class="nc" id="L259">        return setValue(&quot;sDlrCmptr&quot;, competitorDealer);</span>
+    }
+
+    public String getCompetitorDealer() {
+<span class="nc" id="L263">        return (String) getValue(&quot;sDlrCmptr&quot;);</span>
+    }
+
+    public JSONObject setResponseCode(String responseCode) {
+<span class="fc" id="L267">        return setValue(&quot;sRspnseCd&quot;, responseCode);</span>
+    }
+
+    public String getResponseCode() {
+<span class="fc" id="L271">        return (String) getValue(&quot;sRspnseCd&quot;);</span>
+    }
+
+    public JSONObject setClientId(String clientId) {
+<span class="fc" id="L275">        return setValue(&quot;sClientID&quot;, clientId);</span>
+    }
+
+    public String getClientId() {
+<span class="fc" id="L279">        return (String) getValue(&quot;sClientID&quot;);</span>
+    }
+
+    public JSONObject setEntryBy(String entryBy) {
+<span class="fc" id="L283">        return setValue(&quot;sEntryByx&quot;, entryBy);</span>
+    }
+
+    public String getEntryBy() {
+<span class="fc" id="L287">        return (String) getValue(&quot;sEntryByx&quot;);</span>
+    }
+
+    public JSONObject setEntryDate(Date entryDate) {
+<span class="fc" id="L291">        return setValue(&quot;dEntryDte&quot;, entryDate);</span>
+    }
+
+    public Date getEntryDate() {
+<span class="fc" id="L295">        return (Date) getValue(&quot;dEntryDte&quot;);</span>
+    }
+
+    public JSONObject setRecordStatus(String recordStatus) {
+<span class="fc" id="L299">        return setValue(&quot;cRecdStat&quot;, recordStatus);</span>
+    }
+
+    public String getRecordStatus() {
+<span class="fc" id="L303">        return (String) getValue(&quot;cRecdStat&quot;);</span>
+    }
+
+    public JSONObject setTimeStamp(Date timeStamp) {
+<span class="nc" id="L307">        return setValue(&quot;dTimeStmp&quot;, timeStamp);</span>
+    }
+
+    public Date getTimeStamp() {
+<span class="nc" id="L311">        return (Date) getValue(&quot;dTimeStmp&quot;);</span>
+    }
+
+    @Override
+    public String getNextCode() {
+<span class="fc" id="L316">        return MiscUtil.getNextCode(</span>
+<span class="fc" id="L317">                this.getTable(),</span>
+                ID,
+    true,
+<span class="fc" id="L320">                poGRider.getGConnection().getConnection(),</span>
+<span class="fc" id="L321">                poGRider.getBranchCode());</span>
+    }
+
+    //reference object models
+    public Model_Salesman Salesman() throws SQLException, GuanzonException {
+<span class="nc bnc" id="L326" title="All 2 branches missed.">        if (!&quot;&quot;.equals((String) getValue(&quot;sClientID&quot;))) {</span>
+<span class="nc bnc" id="L327" title="All 2 branches missed.">            if (poSalesMan.getEditMode() == EditMode.READY</span>
+<span class="nc bnc" id="L328" title="All 2 branches missed.">                    &amp;&amp; poSalesMan.getEmployeeId().equals((String) getValue(&quot;sClientID&quot;))) {</span>
+<span class="nc" id="L329">                return poSalesMan;</span>
+            } else {
+<span class="nc" id="L331">                poJSON = poSalesMan.openRecord((String) getValue(&quot;sClientID&quot;));</span>
+
+<span class="nc bnc" id="L333" title="All 2 branches missed.">                if (&quot;success&quot;.equals((String) poJSON.get(&quot;result&quot;))) {</span>
+<span class="nc" id="L334">                    return poSalesMan;</span>
+                } else {
+<span class="nc" id="L336">                    poSalesMan.initialize();</span>
+<span class="nc" id="L337">                    return poSalesMan;</span>
+                }
+            }
+        } else {
+<span class="nc" id="L341">            poSalesMan.initialize();</span>
+<span class="nc" id="L342">            return poSalesMan;</span>
+        }
+    }
+    
+    
+    public Model_Sales_Inquiry_Master SalesInquiryMaster() throws SQLException, GuanzonException {
+<span class="nc bnc" id="L348" title="All 2 branches missed.">        if (!&quot;&quot;.equals((String) getValue(&quot;sSourceNo&quot;))) {</span>
+<span class="nc bnc" id="L349" title="All 2 branches missed.">            if (poSalesInquiryMaster.getEditMode() == EditMode.READY</span>
+<span class="nc bnc" id="L350" title="All 2 branches missed.">                    &amp;&amp; poSalesInquiryMaster.getTransactionNo().equals((String) getValue(&quot;sSourceNo&quot;))) {</span>
+<span class="nc" id="L351">                return poSalesInquiryMaster;</span>
+            } else {
+<span class="nc" id="L353">                poJSON = poSalesInquiryMaster.openRecord((String) getValue(&quot;sSourceNo&quot;));</span>
+
+<span class="nc bnc" id="L355" title="All 2 branches missed.">                if (&quot;success&quot;.equals((String) poJSON.get(&quot;result&quot;))) {</span>
+<span class="nc" id="L356">                    return poSalesInquiryMaster;</span>
+                } else {
+<span class="nc" id="L358">                    poSalesInquiryMaster.initialize();</span>
+<span class="nc" id="L359">                    return poSalesInquiryMaster;</span>
+                }
+            }
+        } else {
+<span class="nc" id="L363">            poSalesInquiryMaster.initialize();</span>
+<span class="nc" id="L364">            return poSalesInquiryMaster;</span>
+        }
+    }
+
+    public Model_Sales_Inquiry_Detail SalesInquiryDetail() throws SQLException, GuanzonException {
+<span class="nc bnc" id="L369" title="All 2 branches missed.">        if (!&quot;&quot;.equals((String) getValue(&quot;sSourceNo&quot;))) {</span>
+<span class="nc bnc" id="L370" title="All 2 branches missed.">            if (poSalesInquiryDetail.getEditMode() == EditMode.READY</span>
+<span class="nc bnc" id="L371" title="All 2 branches missed.">                    &amp;&amp; poSalesInquiryDetail.getTransactionNo().equals((String) getValue(&quot;sSourceNo&quot;))) {</span>
+<span class="nc" id="L372">                return poSalesInquiryDetail;</span>
+            } else {
+<span class="nc" id="L374">                poJSON = poSalesInquiryDetail.openRecord((String) getValue(&quot;sSourceNo&quot;), 1);</span>
+
+<span class="nc bnc" id="L376" title="All 2 branches missed.">                if (&quot;success&quot;.equals((String) poJSON.get(&quot;result&quot;))) {</span>
+<span class="nc" id="L377">                    return poSalesInquiryDetail;</span>
+                } else {
+<span class="nc" id="L379">                    poSalesInquiryDetail.initialize();</span>
+<span class="nc" id="L380">                    return poSalesInquiryDetail;</span>
+                }
+            }
+        } else {
+<span class="nc" id="L384">            poSalesInquiryDetail.initialize();</span>
+<span class="nc" id="L385">            return poSalesInquiryDetail;</span>
+        }
+    }
+    //end - reference object models
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

@@ -40,7 +40,7 @@ public class testSalesInquiry {
     @Test
     public void testNewTransaction() {
         String branchCd = instance.getBranchCode();
-        String industryId = "05";
+        String industryId = "02";
         String companyId = "0002";
         String categoryId = "0008";
         String remarks = "this is a test Class 4.";
@@ -80,8 +80,8 @@ public class testSalesInquiry {
                 Assert.assertEquals(poSalesInquiryController.Master().getBranchCode(), branchCd);
                 poSalesInquiryController.Master().setSourceCode("0"); 
                 Assert.assertEquals(poSalesInquiryController.Master().getSourceCode(), "0");
-                poSalesInquiryController.Master().setClientId("C00124000020"); 
-                Assert.assertEquals(poSalesInquiryController.Master().getClientId(), "C00124000020");
+                poSalesInquiryController.Master().setClientId("GCO126000001");
+                Assert.assertEquals(poSalesInquiryController.Master().getClientId(), "GCO126000001");
 
                 poSalesInquiryController.Master().setRemarks(remarks);
                 Assert.assertEquals(poSalesInquiryController.Master().getRemarks(), remarks);

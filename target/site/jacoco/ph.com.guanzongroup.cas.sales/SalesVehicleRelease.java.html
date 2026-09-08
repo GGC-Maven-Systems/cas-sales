@@ -1,0 +1,736 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SalesVehicleRelease.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">cas-sales</a> &gt; <a href="index.source.html" class="el_package">ph.com.guanzongroup.cas.sales</a> &gt; <span class="el_source">SalesVehicleRelease.java</span></div><h1>SalesVehicleRelease.java</h1><pre class="source lang-java linenums">/*
+ * Copyright (c) 2026 Guanzon Group of Companies.
+ * All rights reserved.
+ *
+ * @author TEEJEI DE CELIS
+ * @date August 15, 2026
+ */
+package ph.com.guanzongroup.cas.sales;
+
+import org.guanzon.appdriver.agent.ShowDialogFX;
+import org.guanzon.appdriver.agent.services.Parameter;
+import org.guanzon.appdriver.base.GuanzonException;
+import org.guanzon.appdriver.base.MiscUtil;
+import org.guanzon.appdriver.base.SQLUtil;
+import org.guanzon.appdriver.constant.RecordStatus;
+import org.guanzon.appdriver.constant.UserRight;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import ph.com.guanzongroup.cas.sales.model.Model_Vehicle_Release_Master;
+import ph.com.guanzongroup.cas.sales.services.SalesControllers;
+import ph.com.guanzongroup.cas.sales.services.SalesModels;
+import ph.com.guanzongroup.cas.sales.status.SalesVehicleReleaseQueries;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Handles Vehicle Release transactions within the CAS Sales module.
+ *
+ * &lt;p&gt;
+ * This class provides the business logic for initializing, validating,
+ * searching, retrieving, and opening Vehicle Release transactions. It
+ * manages the transaction lifecycle and coordinates interactions between
+ * the Vehicle Release master model, salesman records, VSP transactions,
+ * and the database.
+ * &lt;/p&gt;
+ *
+ * &lt;p&gt;
+ * The class supports employee and salesman searches, branch-specific
+ * salesman searches, retrieval of VSP transactions available for release,
+ * and opening of existing VSP transactions for Vehicle Release processing.
+ * &lt;/p&gt;
+ *
+ * &lt;p&gt;
+ * The transaction uses {@link Model_Vehicle_Release_Master} as its primary
+ * data model and inherits common transaction behaviors from the
+ * {@link Parameter} base class.
+ * &lt;/p&gt;
+ *
+ * @author TEEJEI DE CELIS
+ * @date August 15, 2026
+ * @module Vehicle Release
+ * @since 1.0
+ */
+<span class="nc" id="L57">public class SalesVehicleRelease extends Parameter {</span>
+    /**
+     * Vehicle Release master model that stores the current transaction data.
+     */
+    Model_Vehicle_Release_Master poModel;
+    /**
+     * Initializes the Vehicle Release transaction controller.
+     *
+     * &lt;p&gt;
+     * This method performs the initial setup required before any transaction
+     * processing can occur. It:
+     * &lt;/p&gt;
+     * &lt;ul&gt;
+     *     &lt;li&gt;Sets the default record status to {@link RecordStatus#ACTIVE}.&lt;/li&gt;
+     *     &lt;li&gt;Creates a new instance of {@link Model_Vehicle_Release_Master}
+     *         using the Sales Models factory.&lt;/li&gt;
+     *     &lt;li&gt;Invokes the parent class initialization to complete the setup
+     *         of common transaction resources.&lt;/li&gt;
+     * &lt;/ul&gt;
+     *
+     * @throws SQLException if a database access error occurs during
+     *         initialization.
+     * @throws GuanzonException if an application-specific error occurs while
+     *         initializing the transaction.
+     *
+     * @author TEEJEI DE CELIS
+     * @date August 7, 2026
+     */
+    @Override
+    public void initialize() throws SQLException, GuanzonException {
+<span class="nc" id="L87">        psRecdStat = RecordStatus.ACTIVE;</span>
+<span class="nc" id="L88">        poModel = new SalesModels(poGRider).VehicleReleaseMaster();</span>
+<span class="nc" id="L89">        super.initialize();</span>
+<span class="nc" id="L90">    }</span>
+
+    /**
+     * Returns the current Vehicle Release master model associated with this
+     * transaction.
+     *
+     * &lt;p&gt;
+     * The returned model contains the transaction data that is created,
+     * retrieved, updated, or saved by this controller.
+     * &lt;/p&gt;
+     *
+     * @return the current {@link Model_Vehicle_Release_Master} instance.
+     *
+     * @author TEEJEI DE CELIS
+     * @date August 7, 2026
+     */
+    @Override
+    public Model_Vehicle_Release_Master getModel() {
+<span class="nc" id="L108">        return poModel;</span>
+    }
+
+    /**
+     * Validates the current Vehicle Release transaction before it is saved.
+     *
+     * &lt;p&gt;
+     * This method performs the following validations:
+     * &lt;/p&gt;
+     * &lt;ul&gt;
+     *     &lt;li&gt;Verifies that the logged-in user has at least
+     *         {@link UserRight#BRANCH_MANAGER} access rights.&lt;/li&gt;
+     *     &lt;li&gt;Ensures that a Client has been selected.&lt;/li&gt;
+     *     &lt;li&gt;Ensures that the Source Code is specified.&lt;/li&gt;
+     *     &lt;li&gt;Ensures that the Source Number is specified.&lt;/li&gt;
+     * &lt;/ul&gt;
+     *
+     * &lt;p&gt;
+     * If all validations pass, the method automatically updates the audit
+     * information by setting the modifying user and the server modification
+     * timestamp before allowing the transaction to proceed.
+     * &lt;/p&gt;
+     *
+     * @return a {@link JSONObject} containing the validation result:
+     * &lt;ul&gt;
+     *     &lt;li&gt;&lt;b&gt;result&lt;/b&gt; = {@code &quot;success&quot;} if the transaction is valid.&lt;/li&gt;
+     *     &lt;li&gt;&lt;b&gt;result&lt;/b&gt; = {@code &quot;error&quot;} together with a descriptive
+     *         &lt;b&gt;message&lt;/b&gt; if validation fails.&lt;/li&gt;
+     * &lt;/ul&gt;
+     *
+     * @throws SQLException if a database access error occurs while performing
+     *         validation or retrieving server-related information.
+     *
+     * @author TEEJEI DE CELIS
+     * @date August 7, 2026
+     */
+
+    @Override
+    public JSONObject isEntryOkay() throws SQLException {
+<span class="nc" id="L147">        poJSON = new JSONObject();</span>
+
+<span class="nc bnc" id="L149" title="All 2 branches missed.">        if (poGRider.getUserLevel() &lt; UserRight.BRANCH_MANAGER) {</span>
+<span class="nc" id="L150">            poJSON.put(&quot;result&quot;, &quot;error&quot;);</span>
+<span class="nc" id="L151">            poJSON.put(&quot;message&quot;, &quot;User is not allowed to save record.&quot;);</span>
+<span class="nc" id="L152">            return poJSON;</span>
+        }
+
+<span class="nc bnc" id="L155" title="All 2 branches missed.">        if (poModel.getClientId().isEmpty()) {</span>
+<span class="nc" id="L156">            poJSON.put(&quot;result&quot;, &quot;error&quot;);</span>
+<span class="nc" id="L157">            poJSON.put(&quot;message&quot;, &quot;Client must not be empty.&quot;);</span>
+<span class="nc" id="L158">            return poJSON;</span>
+        }
+
+<span class="nc bnc" id="L161" title="All 2 branches missed.">        if (poModel.getSourceCode().isEmpty()) {</span>
+<span class="nc" id="L162">            poJSON.put(&quot;result&quot;, &quot;error&quot;);</span>
+<span class="nc" id="L163">            poJSON.put(&quot;message&quot;, &quot;Source Code must not be empty.&quot;);</span>
+<span class="nc" id="L164">            return poJSON;</span>
+        }
+
+<span class="nc bnc" id="L167" title="All 2 branches missed.">        if (poModel.getSourceNo().isEmpty()) {</span>
+<span class="nc" id="L168">            poJSON.put(&quot;result&quot;, &quot;error&quot;);</span>
+<span class="nc" id="L169">            poJSON.put(&quot;message&quot;, &quot;Source No. must not be empty.&quot;);</span>
+<span class="nc" id="L170">            return poJSON;</span>
+        }
+
+<span class="nc" id="L173">        poModel.setModifyingId(poGRider.Encrypt(poGRider.getUserID()));</span>
+<span class="nc" id="L174">        poModel.setModifiedDate(poGRider.getServerDate());</span>
+
+<span class="nc" id="L176">        poJSON.put(&quot;result&quot;, &quot;success&quot;);</span>
+<span class="nc" id="L177">        return poJSON;</span>
+    }
+
+    /**
+     * Searches for an employee/salesman record based on the specified search value
+     * and search mode, while applying the configured record status filter.
+     *
+     * &lt;p&gt;The method builds a record-status condition based on the value of
+     * {@code psRecdStat}. If multiple record-status values are configured, the
+     * values are used in an SQL {@code IN} clause. If only one value is configured,
+     * an SQL equality condition is used.&lt;/p&gt;
+     *
+     * &lt;p&gt;The resulting condition is appended to the SQL statement returned by
+     * {@link #getSQ_Browse()}. The method then displays a browse dialog containing
+     * the employee ID and salesman name. The selected employee record is loaded
+     * through the model using the employee ID returned by the browse dialog.&lt;/p&gt;
+     *
+     * &lt;p&gt;The search behavior is determined by the {@code byCode} parameter:
+     * &lt;ul&gt;
+     *     &lt;li&gt;{@code true} - searches/selects using the Employee ID column.&lt;/li&gt;
+     *     &lt;li&gt;{@code false} - searches/selects using the Salesman name column.&lt;/li&gt;
+     * &lt;/ul&gt;
+     * &lt;/p&gt;
+     *
+     * &lt;p&gt;If no record is selected from the browse dialog, a JSON object containing
+     * an error result and message is returned.&lt;/p&gt;
+     *
+     * @param value
+     *        the value to be used when searching for an employee or salesman
+     *        record
+     * @param byCode
+     *        indicates whether the search is performed by employee ID
+     *        ({@code true}) or by salesman name ({@code false})
+     *
+     * @return a {@link JSONObject} containing the selected employee record when a
+     *         record is successfully selected; otherwise, a JSON object containing
+     *         an error result and message
+     *
+     * @throws SQLException
+     *         if a database access error occurs while executing the search or
+     *         loading the selected record
+     * @throws GuanzonException
+     *         if an application-specific error occurs while processing the
+     *         employee record
+     */
+    @Override
+    public JSONObject searchRecord(String value, boolean byCode) throws SQLException, GuanzonException {
+<span class="nc" id="L224">        String lsCondition = &quot;&quot;;</span>
+<span class="nc bnc" id="L225" title="All 2 branches missed.">        if (psRecdStat != null) {</span>
+<span class="nc bnc" id="L226" title="All 2 branches missed.">            if (psRecdStat.length() &gt; 1) {</span>
+<span class="nc bnc" id="L227" title="All 2 branches missed.">                for (int lnCtr = 0; lnCtr &lt;= psRecdStat.length() - 1; lnCtr++) {</span>
+<span class="nc" id="L228">                    lsCondition += &quot;, &quot; + SQLUtil.toSQL(Character.toString(psRecdStat.charAt(lnCtr)));</span>
+                }
+<span class="nc" id="L230">                lsCondition = &quot; a.cRecdStat IN (&quot; + lsCondition.substring(2) + &quot;)&quot;;</span>
+            } else {
+<span class="nc" id="L232">                lsCondition = &quot; a.cRecdStat = &quot; + SQLUtil.toSQL(psRecdStat);</span>
+            }
+        }
+
+<span class="nc" id="L236">        String lsSQL = MiscUtil.addCondition(getSQ_Browse(), lsCondition);</span>
+
+<span class="nc" id="L238">        System.out.println(&quot;SEARCH RECORD : &quot; + lsSQL);</span>
+<span class="nc bnc" id="L239" title="All 2 branches missed.">        poJSON = ShowDialogFX.Browse(poGRider,</span>
+                lsSQL,
+                value,
+                &quot;Employee ID»Salesman&quot;,
+                &quot;sEmployID»sFullName&quot;,
+                &quot;a.sEmployID»concat(a.sLastName,', ',a.sFrstName, ' ',a.sMiddName)&quot;,
+                byCode ? 0 : 1);
+
+<span class="nc bnc" id="L247" title="All 2 branches missed.">        if (poJSON != null) {</span>
+<span class="nc" id="L248">            return poModel.openRecord((String) poJSON.get(&quot;sEmployID&quot;));</span>
+        } else {
+<span class="nc" id="L250">            poJSON = new JSONObject();</span>
+<span class="nc" id="L251">            poJSON.put(&quot;result&quot;, &quot;error&quot;);</span>
+<span class="nc" id="L252">            poJSON.put(&quot;message&quot;, &quot;No record loaded.&quot;);</span>
+<span class="nc" id="L253">            return poJSON;</span>
+        }
+    }
+    /**
+     * Searches for an employee/salesman record based on the specified search
+     * value, search mode, and branch code.
+     *
+     * &lt;p&gt;The search is restricted to the specified branch. If a record status
+     * filter is configured through {@code psRecdStat}, the search is further
+     * restricted based on the configured record status values. Multiple record
+     * status values are handled using an SQL {@code IN} condition, while a single
+     * record status value is handled using an SQL equality condition.&lt;/p&gt;
+     *
+     * &lt;p&gt;The method displays a browse dialog containing the Employee ID and
+     * Salesman name. The search column is determined by the {@code byCode}
+     * parameter:&lt;/p&gt;
+     *
+     * &lt;ul&gt;
+     *     &lt;li&gt;{@code true} - searches by Employee ID.&lt;/li&gt;
+     *     &lt;li&gt;{@code false} - searches by Salesman name.&lt;/li&gt;
+     * &lt;/ul&gt;
+     *
+     * &lt;p&gt;If a record is selected, the employee record is loaded through the
+     * underlying model using the selected employee ID. If no record is selected,
+     * an error JSON object is returned indicating that no record was loaded.&lt;/p&gt;
+     *
+     * @param value
+     *        the value to be used when searching for an employee or salesman
+     * @param byCode
+     *        indicates whether the search is performed by employee ID
+     *        ({@code true}) or salesman name ({@code false})
+     * @param branch
+     *        the branch code used to restrict the employee/salesman search
+     *
+     * @return a {@link JSONObject} containing the selected employee record if a
+     *         record is successfully selected; otherwise, a JSON object
+     *         containing an error result and message
+     *
+     * @throws SQLException
+     *         if a database access error occurs while executing the search or
+     *         loading the selected record
+     * @throws GuanzonException
+     *         if an application-specific error occurs while processing the
+     *         employee record
+     */
+    public JSONObject searchRecord(String value, boolean byCode, String branch) throws SQLException, GuanzonException {
+<span class="nc" id="L299">        String lsCondition = &quot;&quot;;</span>
+<span class="nc bnc" id="L300" title="All 2 branches missed.">        if (psRecdStat != null) {</span>
+<span class="nc bnc" id="L301" title="All 2 branches missed.">            if (psRecdStat.length() &gt; 1) {</span>
+<span class="nc bnc" id="L302" title="All 2 branches missed.">                for (int lnCtr = 0; lnCtr &lt;= psRecdStat.length() - 1; lnCtr++) {</span>
+<span class="nc" id="L303">                    lsCondition += &quot;, &quot; + SQLUtil.toSQL(Character.toString(psRecdStat.charAt(lnCtr)));</span>
+                }
+<span class="nc" id="L305">                lsCondition = &quot; AND a.cRecdStat IN (&quot; + lsCondition.substring(2) + &quot;)&quot;;</span>
+            } else {
+<span class="nc" id="L307">                lsCondition = &quot; AND a.cRecdStat = &quot; + SQLUtil.toSQL(psRecdStat);</span>
+            }
+        }
+
+<span class="nc" id="L311">        String lsSQL = MiscUtil.addCondition(getSQ_Browse(), &quot;a.sBranchCd = &quot; + SQLUtil.toSQL(branch));</span>
+<span class="nc bnc" id="L312" title="All 4 branches missed.">        if(lsCondition != null &amp;&amp; !&quot;&quot;.equals(lsCondition)){</span>
+<span class="nc" id="L313">            lsSQL = lsSQL + lsCondition;</span>
+        }
+
+<span class="nc" id="L316">        System.out.println(&quot;SEARCH RECORD : &quot; + lsSQL);</span>
+<span class="nc bnc" id="L317" title="All 2 branches missed.">        poJSON = ShowDialogFX.Browse(poGRider,</span>
+                lsSQL,
+                value,
+                &quot;Employee ID»Salesman&quot;,
+                &quot;sEmployID»sFullName&quot;,
+                &quot;a.sEmployID»concat(a.sLastName,', ',a.sFrstName, ' ',a.sMiddName)&quot;,
+                byCode ? 0 : 1);
+
+<span class="nc bnc" id="L325" title="All 2 branches missed.">        if (poJSON != null) {</span>
+<span class="nc" id="L326">            return poModel.openRecord((String) poJSON.get(&quot;sEmployID&quot;));</span>
+        } else {
+<span class="nc" id="L328">            poJSON = new JSONObject();</span>
+<span class="nc" id="L329">            poJSON.put(&quot;result&quot;, &quot;error&quot;);</span>
+<span class="nc" id="L330">            poJSON.put(&quot;message&quot;, &quot;No record loaded.&quot;);</span>
+<span class="nc" id="L331">            return poJSON;</span>
+        }
+    }
+    /**
+     * Searches for a salesman record based on the specified search value and
+     * search mode.
+     *
+     * &lt;p&gt;The search query is generated using {@link SalesVehicleReleaseQueries#getSQL_Salesman()} and is
+     * optionally filtered by the configured record status in {@code psRecdStat}.
+     * If multiple record status values are configured, an SQL {@code IN}
+     * condition is used; otherwise, a single equality condition is applied.&lt;/p&gt;
+     *
+     * &lt;p&gt;The method displays a browse dialog containing the Employee ID and
+     * Salesman name. The search column is determined by the {@code byCode}
+     * parameter:&lt;/p&gt;
+     *
+     * &lt;ul&gt;
+     *     &lt;li&gt;{@code true} - searches by Employee ID.&lt;/li&gt;
+     *     &lt;li&gt;{@code false} - searches by Salesman name.&lt;/li&gt;
+     * &lt;/ul&gt;
+     *
+     * &lt;p&gt;If a salesman is selected, the corresponding employee record is loaded
+     * through the model using the selected employee ID. If no record is selected,
+     * an error JSON object is returned indicating that no record was loaded.&lt;/p&gt;
+     *
+     * @param value
+     *        the value to be used when searching for a salesman
+     * @param byCode
+     *        indicates whether the search is performed by Employee ID
+     *        ({@code true}) or Salesman name ({@code false})
+     *
+     * @return a {@link JSONObject} containing the selected salesman record if a
+     *         record is successfully selected; otherwise, a JSON object
+     *         containing an error result and message
+     *
+     * @throws SQLException
+     *         if a database access error occurs while executing the search or
+     *         loading the selected record
+     * @throws GuanzonException
+     *         if an application-specific error occurs while processing the
+     *         salesman record
+     */
+    public JSONObject searchSalesMan(String value, boolean byCode) throws SQLException, GuanzonException {
+<span class="nc" id="L374">        String lsCondition = &quot;&quot;;</span>
+<span class="nc bnc" id="L375" title="All 2 branches missed.">        if (psRecdStat != null) {</span>
+<span class="nc bnc" id="L376" title="All 2 branches missed.">            if (psRecdStat.length() &gt; 1) {</span>
+<span class="nc bnc" id="L377" title="All 2 branches missed.">                for (int lnCtr = 0; lnCtr &lt;= psRecdStat.length() - 1; lnCtr++) {</span>
+<span class="nc" id="L378">                    lsCondition += &quot;, &quot; + SQLUtil.toSQL(Character.toString(psRecdStat.charAt(lnCtr)));</span>
+                }
+<span class="nc" id="L380">                lsCondition = &quot; a.cRecdStat IN (&quot; + lsCondition.substring(2) + &quot;)&quot;;</span>
+            } else {
+<span class="nc" id="L382">                lsCondition = &quot; a.cRecdStat = &quot; + SQLUtil.toSQL(psRecdStat);</span>
+            }
+        }
+<span class="nc" id="L385">        String lsSQL = MiscUtil.addCondition(SalesVehicleReleaseQueries.getSQL_Salesman(), lsCondition);</span>
+<span class="nc" id="L386">        System.out.println(&quot;SEARCH SALESMAN: &quot; + lsSQL);</span>
+<span class="nc bnc" id="L387" title="All 2 branches missed.">        poJSON = ShowDialogFX.Browse(poGRider,</span>
+                lsSQL,
+                value,
+                &quot;Employee ID»Salesman&quot;,
+                &quot;sEmployID»sFullName&quot;,
+                &quot;a.sEmployID»concat(a.sLastName,', ',a.sFrstName, ' ',a.sMiddName)&quot;,
+                byCode ? 0 : 1);
+<span class="nc bnc" id="L394" title="All 2 branches missed.">        if (poJSON != null) {</span>
+<span class="nc" id="L395">            return poModel.openRecord((String) poJSON.get(&quot;sEmployID&quot;));</span>
+        } else {
+<span class="nc" id="L397">            poJSON = new JSONObject();</span>
+<span class="nc" id="L398">            poJSON.put(&quot;result&quot;, &quot;error&quot;);</span>
+<span class="nc" id="L399">            poJSON.put(&quot;message&quot;, &quot;No record loaded.&quot;);</span>
+<span class="nc" id="L400">            return poJSON;</span>
+        }
+    }
+    /**
+     * Retrieves VSP records that are available for release, optionally filtered
+     * by customer name and/or sales person.
+     *
+     * &lt;p&gt;The base SQL statement is obtained from {@link SalesVehicleReleaseQueries#getSQL_ForRelease()}.
+     * When a customer name is provided, the result is filtered using a partial
+     * match against the customer's company name. When a sales person is
+     * provided, the result is filtered using a partial match against the sales
+     * person's company name.&lt;/p&gt;
+     *
+     * &lt;p&gt;If both filters are provided, the conditions are combined using an
+     * SQL {@code AND} operator. The resulting records are sorted by transaction
+     * date in ascending order.&lt;/p&gt;
+     *
+     * &lt;p&gt;Each retrieved record is converted into a {@link JSONObject} containing
+     * the transaction number, customer name, transaction date, and sales person.
+     * The resulting records are returned as a {@link JSONArray} under the
+     * {@code payload} property.&lt;/p&gt;
+     *
+     * &lt;p&gt;If matching records are found, the returned JSON object contains a
+     * {@code success} result. If no records are found, an {@code error} result
+     * is returned with {@code continue} set to {@code true} and an empty
+     * payload.&lt;/p&gt;
+     *
+     * @param customerName
+     *        the customer name to use as an optional partial-match filter;
+     *        {@code null} or blank values are ignored
+     * @param salesPerson
+     *        the sales person name to use as an optional partial-match filter;
+     *        {@code null} or blank values are ignored
+     *
+     * @return a {@link JSONObject} containing the search result, status message,
+     *         and retrieved records in the {@code payload} property
+     *
+     * @throws SQLException
+     *         if a database access error occurs while executing the query or
+     *         retrieving the records
+     * @throws GuanzonException
+     *         if an application-specific error occurs while processing the
+     *         request
+     */
+    public JSONObject RetreiveForReleaseVSP(String customerName,String salesPerson)
+            throws SQLException, GuanzonException {
+
+<span class="nc" id="L447">        JSONObject loJSON = new JSONObject();</span>
+<span class="nc" id="L448">        JSONArray loArray = new JSONArray();</span>
+
+<span class="nc" id="L450">        String lsSQL = SalesVehicleReleaseQueries.getSQL_ForRelease();</span>
+
+<span class="nc" id="L452">        List&lt;String&gt; loCondition = new ArrayList&lt;&gt;();</span>
+
+<span class="nc bnc" id="L454" title="All 4 branches missed.">        if (customerName != null &amp;&amp; !customerName.trim().isEmpty()) {</span>
+<span class="nc" id="L455">            loCondition.add(</span>
+<span class="nc" id="L456">                    &quot;b.sCompnyNm LIKE &quot; + SQLUtil.toSQL(&quot;%&quot; + customerName.trim() + &quot;%&quot;)</span>
+            );
+        }
+
+<span class="nc bnc" id="L460" title="All 4 branches missed.">        if (salesPerson != null &amp;&amp; !salesPerson.trim().isEmpty()) {</span>
+<span class="nc" id="L461">            loCondition.add(</span>
+<span class="nc" id="L462">                    &quot;e.sCompnyNm LIKE &quot; + SQLUtil.toSQL(&quot;%&quot; + salesPerson.trim() + &quot;%&quot;)</span>
+            );
+        }
+
+<span class="nc bnc" id="L466" title="All 2 branches missed.">        if (!loCondition.isEmpty()) {</span>
+<span class="nc" id="L467">            lsSQL = MiscUtil.addCondition(</span>
+                    lsSQL,
+<span class="nc" id="L469">                    String.join(&quot; AND &quot;, loCondition)</span>
+            );
+        }
+
+<span class="nc" id="L473">        lsSQL += &quot; ORDER BY a.dTransact ASC &quot;;</span>
+<span class="nc" id="L474">        System.out.println(&quot;RETRIEVE FOR RELEASE VSP :&quot;);</span>
+<span class="nc" id="L475">        System.out.println(lsSQL);</span>
+<span class="nc" id="L476">        ResultSet loRS = poGRider.executeQuery(lsSQL);</span>
+
+        try {
+<span class="nc bnc" id="L479" title="All 2 branches missed.">            while (loRS.next()) {</span>
+<span class="nc" id="L480">                JSONObject loData = new JSONObject();</span>
+<span class="nc" id="L481">                loData.put(&quot;sTransNox&quot;, loRS.getString(&quot;sTransNox&quot;));</span>
+<span class="nc" id="L482">                loData.put(&quot;CustomerName&quot;, loRS.getString(&quot;CustomerName&quot;));</span>
+<span class="nc" id="L483">                loData.put(&quot;dTransact&quot;, loRS.getString(&quot;dTransact&quot;));</span>
+<span class="nc" id="L484">                loData.put(&quot;SalesPerson&quot;, loRS.getString(&quot;SalesPerson&quot;));</span>
+<span class="nc" id="L485">                loArray.add(loData);</span>
+<span class="nc" id="L486">            }</span>
+        } finally {
+<span class="nc" id="L488">            MiscUtil.close(loRS);</span>
+        }
+
+<span class="nc bnc" id="L491" title="All 2 branches missed.">        if (!loArray.isEmpty()) {</span>
+<span class="nc" id="L492">            loJSON.put(&quot;result&quot;, &quot;success&quot;);</span>
+<span class="nc" id="L493">            loJSON.put(&quot;message&quot;, &quot;Record loaded successfully.&quot;);</span>
+<span class="nc" id="L494">            loJSON.put(&quot;payload&quot;, loArray);</span>
+        } else {
+<span class="nc" id="L496">            loJSON.put(&quot;result&quot;, &quot;error&quot;);</span>
+<span class="nc" id="L497">            loJSON.put(&quot;continue&quot;, true);</span>
+<span class="nc" id="L498">            loJSON.put(&quot;message&quot;, &quot;No record found.&quot;);</span>
+<span class="nc" id="L499">            loJSON.put(&quot;payload&quot;, new JSONArray());</span>
+        }
+
+<span class="nc" id="L502">        return loJSON;</span>
+    }
+    /**
+     * Retrieves add-on records associated with the specified VSP transaction.
+     *
+     * &lt;p&gt;
+     * The query retrieves Giveaway, Labor, and Parts records associated with
+     * the specified transaction number. The records are returned in the order
+     * of Giveaway, Labor, and Parts.
+     * &lt;/p&gt;
+     *
+     * &lt;p&gt;
+     * Each retrieved record is converted into a {@link JSONObject} containing
+     * the add-on number, add-on type, transaction number, barcode, description,
+     * quantity, and status. Fields that are not applicable to Labor or Parts
+     * are returned as {@code &quot;-&quot;}.
+     * &lt;/p&gt;
+     *
+     * &lt;p&gt;
+     * If matching records are found, the returned JSON object contains a
+     * {@code success} result. If no records are found, an {@code error}
+     * result is returned with {@code continue} set to {@code true} and an
+     * empty payload.
+     * &lt;/p&gt;
+     *
+     * @param transNo
+     *        the VSP transaction number used to retrieve the associated
+     *        add-on records
+     *
+     * @return a {@link JSONObject} containing the search result, status
+     *         message, and retrieved records in the {@code payload} property
+     *
+     * @throws SQLException
+     *         if a database access error occurs while executing the query
+     *         or retrieving the records
+     * @throws GuanzonException
+     *         if an application-specific error occurs while processing
+     *         the request
+     */
+    public JSONObject RetreiveForReleaseVSPAddOns(String transNo)
+            throws SQLException, GuanzonException {
+
+<span class="nc" id="L544">        JSONObject loJSON = new JSONObject();</span>
+<span class="nc" id="L545">        JSONArray loArray = new JSONArray();</span>
+
+<span class="nc" id="L547">        String lsSQL = SalesVehicleReleaseQueries.getSQL_AddOns();</span>
+
+<span class="nc" id="L549">        lsSQL = lsSQL.replace(</span>
+                &quot;:sTransNox&quot;,
+<span class="nc" id="L551">                SQLUtil.toSQL(transNo.trim())</span>
+        );
+
+<span class="nc" id="L554">        System.out.println(&quot;RETRIEVE VSP ADD ONS :&quot;);</span>
+<span class="nc" id="L555">        System.out.println(lsSQL);</span>
+
+<span class="nc" id="L557">        ResultSet loRS = poGRider.executeQuery(lsSQL);</span>
+
+        try {
+<span class="nc bnc" id="L560" title="All 2 branches missed.">            while (loRS.next()) {</span>
+<span class="nc" id="L561">                JSONObject loData = new JSONObject();</span>
+<span class="nc" id="L562">                loData.put(&quot;AddOnType&quot;, loRS.getString(&quot;AddOnType&quot;));</span>
+<span class="nc" id="L563">                loData.put(&quot;TransactionNo&quot;, loRS.getString(&quot;TransactionNo&quot;));</span>
+<span class="nc" id="L564">                loData.put(&quot;Barcode&quot;, loRS.getString(&quot;Barcode&quot;));</span>
+<span class="nc" id="L565">                loData.put(&quot;Description&quot;, loRS.getString(&quot;Description&quot;));</span>
+<span class="nc" id="L566">                loData.put(&quot;Qty&quot;, loRS.getBigDecimal(&quot;Qty&quot;));</span>
+<span class="nc" id="L567">                loData.put(&quot;Status&quot;, loRS.getString(&quot;Status&quot;));</span>
+
+<span class="nc" id="L569">                loArray.add(loData);</span>
+<span class="nc" id="L570">            }</span>
+        } finally {
+<span class="nc" id="L572">            MiscUtil.close(loRS);</span>
+        }
+
+<span class="nc bnc" id="L575" title="All 2 branches missed.">        if (!loArray.isEmpty()) {</span>
+<span class="nc" id="L576">            loJSON.put(&quot;result&quot;, &quot;success&quot;);</span>
+<span class="nc" id="L577">            loJSON.put(&quot;message&quot;, &quot;Record loaded successfully.&quot;);</span>
+<span class="nc" id="L578">            loJSON.put(&quot;payload&quot;, loArray);</span>
+        } else {
+<span class="nc" id="L580">            loJSON.put(&quot;result&quot;, &quot;error&quot;);</span>
+<span class="nc" id="L581">            loJSON.put(&quot;continue&quot;, true);</span>
+<span class="nc" id="L582">            loJSON.put(&quot;message&quot;, &quot;No record found.&quot;);</span>
+<span class="nc" id="L583">            loJSON.put(&quot;payload&quot;, new JSONArray());</span>
+        }
+
+<span class="nc" id="L586">        return loJSON;</span>
+    }
+    /**
+     * Opens an existing VSP transaction and transfers the relevant customer and
+     * transaction information to the current model.
+     *
+     * &lt;p&gt;The method initializes a new {@link VSP} transaction controller through
+     * {@link SalesControllers}, then attempts to open the transaction identified
+     * by the specified transaction number. If the transaction cannot be opened,
+     * the error result and message returned by the VSP controller are propagated
+     * to the caller.&lt;/p&gt;
+     *
+     * &lt;p&gt;When the transaction is successfully opened, the method retrieves the
+     * client ID, address ID, contact ID, and transaction number from the VSP
+     * master record and sets them in the current model using the corresponding
+     * model setter methods.&lt;/p&gt;
+     *
+     * &lt;p&gt;The returned JSON object contains a {@code success} result when the
+     * transaction is successfully opened and its related information is loaded.&lt;/p&gt;
+     *
+     * @param fsTransNox
+     *        the unique transaction number identifying the VSP transaction to
+     *        open
+     *
+     * @return a {@link JSONObject} containing the result of the operation and,
+     *         when successful, the related transaction information; otherwise,
+     *         an error result and message
+     *
+     * @throws CloneNotSupportedException
+     *         if an error occurs while cloning an object required by the VSP
+     *         transaction processing
+     * @throws SQLException
+     *         if a database access error occurs while initializing or opening
+     *         the VSP transaction
+     * @throws GuanzonException
+     *         if an application-specific error occurs during VSP transaction
+     *         processing
+     */
+    public JSONObject OpenVSPTransaction(String fsTransNox) throws CloneNotSupportedException, SQLException, GuanzonException {
+<span class="nc" id="L625">        poJSON = new JSONObject();</span>
+
+        VSP poVSP;
+<span class="nc" id="L628">        poVSP = new SalesControllers(poGRider, logwrapr).VSP();</span>
+<span class="nc" id="L629">        poJSON = poVSP.InitTransaction();</span>
+<span class="nc" id="L630">        poJSON = poVSP.OpenTransaction(fsTransNox);</span>
+<span class="nc bnc" id="L631" title="All 2 branches missed.">        if (&quot;error&quot;.equals(poJSON.get(&quot;result&quot;))) {</span>
+<span class="nc" id="L632">            poJSON.put(&quot;result&quot;, &quot;error&quot;);</span>
+<span class="nc" id="L633">            poJSON.put(&quot;message&quot;, (String) poJSON.get(&quot;message&quot;));</span>
+<span class="nc" id="L634">            return poJSON;</span>
+        }
+
+<span class="nc" id="L637">        poJSON = poModel.setClientId(poVSP.Master().getClientId());</span>
+<span class="nc" id="L638">        poJSON = poModel.setAddressId(poVSP.Master().getAddressId());</span>
+<span class="nc" id="L639">        poJSON = poModel.setContactId(poVSP.Master().getContactId());</span>
+<span class="nc" id="L640">        poJSON = poModel.setSourceNo(poVSP.Master().getTransactionNo());</span>
+//        poJSON = poModel.setSourceCode(poVSP.Master().gets());
+<span class="nc" id="L642">        poJSON.put(&quot;result&quot;, &quot;success&quot;);</span>
+<span class="nc" id="L643">        return poJSON;</span>
+    }
+    /**
+     * Retrieves giveaway transactions available for release.
+     *
+     * &lt;p&gt;The method retrieves giveaway transaction details together with
+     * the corresponding inventory barcode and description. Optional filters
+     * may be applied using the source code and source number.&lt;/p&gt;
+     *
+     * &lt;p&gt;The retrieved records include the transaction number, entry number,
+     * stock ID, given quantity, issued quantity, giveaway status, source code,
+     * source number, barcode, and item description.&lt;/p&gt;
+     *
+     * @param sourceCode the source code used to filter giveaway transactions;
+     *                   may be {@code null} or empty to ignore this filter
+     * @param sourceNo the source number used to filter giveaway transactions;
+     *                 may be {@code null} or empty to ignore this filter
+     * @return a {@link JSONObject} containing the result status, message,
+     *         and retrieved giveaway records
+     * @throws SQLException if an error occurs while executing the SQL query
+     * @throws GuanzonException if a business or application error occurs
+     */
+    public JSONObject RetrieveForReleaseGiveaways(
+            String sourceCode,
+            String sourceNo
+    ) throws SQLException, GuanzonException {
+
+<span class="nc" id="L670">        JSONObject loJSON = new JSONObject();</span>
+<span class="nc" id="L671">        JSONArray loArray = new JSONArray();</span>
+
+<span class="nc" id="L673">        String lsSQL = SalesVehicleReleaseQueries.getSQL_Giveaways();</span>
+<span class="nc" id="L674">        List&lt;String&gt; loCondition = new ArrayList&lt;&gt;();</span>
+
+<span class="nc bnc" id="L676" title="All 4 branches missed.">        if (sourceCode != null &amp;&amp; !sourceCode.trim().isEmpty()) {</span>
+<span class="nc" id="L677">            loCondition.add(</span>
+<span class="nc" id="L678">                    &quot;a.sSourceCD = &quot; + SQLUtil.toSQL(sourceCode.trim())</span>
+            );
+        }
+
+<span class="nc bnc" id="L682" title="All 4 branches missed.">        if (sourceNo != null &amp;&amp; !sourceNo.trim().isEmpty()) {</span>
+<span class="nc" id="L683">            loCondition.add(</span>
+<span class="nc" id="L684">                    &quot;a.sSourceNo = &quot; + SQLUtil.toSQL(sourceNo.trim())</span>
+            );
+        }
+
+<span class="nc bnc" id="L688" title="All 2 branches missed.">        if (!loCondition.isEmpty()) {</span>
+<span class="nc" id="L689">            lsSQL = MiscUtil.addCondition(</span>
+                    lsSQL,
+<span class="nc" id="L691">                    String.join(&quot; AND &quot;, loCondition)</span>
+            );
+        }
+
+<span class="nc" id="L695">        lsSQL += &quot; ORDER BY a.sTransNox, a.nEntryNox ASC &quot;;</span>
+
+<span class="nc" id="L697">        System.out.println(&quot;Retrieve For ReleaseGiveaways :&quot;);</span>
+<span class="nc" id="L698">        System.out.println(lsSQL);</span>
+
+<span class="nc" id="L700">        ResultSet loRS = poGRider.executeQuery(lsSQL);</span>
+
+        try {
+<span class="nc bnc" id="L703" title="All 2 branches missed.">            while (loRS.next()) {</span>
+<span class="nc" id="L704">                JSONObject loData = new JSONObject();</span>
+
+<span class="nc" id="L706">                loData.put(&quot;sTransNox&quot;, loRS.getString(&quot;sTransNox&quot;));</span>
+<span class="nc" id="L707">                loData.put(&quot;nEntryNox&quot;, loRS.getInt(&quot;nEntryNox&quot;));</span>
+<span class="nc" id="L708">                loData.put(&quot;sStockIDx&quot;, loRS.getString(&quot;sStockIDx&quot;));</span>
+<span class="nc" id="L709">                loData.put(&quot;nGivenxxx&quot;, loRS.getBigDecimal(&quot;nGivenxxx&quot;));</span>
+<span class="nc" id="L710">                loData.put(&quot;nIssuedxx&quot;, loRS.getBigDecimal(&quot;nIssuedxx&quot;));</span>
+<span class="nc" id="L711">                loData.put(&quot;GiveawayStatus&quot;, loRS.getString(&quot;GiveawayStatus&quot;));</span>
+<span class="nc" id="L712">                loData.put(&quot;sSourceCD&quot;, loRS.getString(&quot;sSourceCD&quot;));</span>
+<span class="nc" id="L713">                loData.put(&quot;sSourceNo&quot;, loRS.getString(&quot;sSourceNo&quot;));</span>
+<span class="nc" id="L714">                loData.put(&quot;sBarCodex&quot;, loRS.getString(&quot;sBarCodex&quot;));</span>
+<span class="nc" id="L715">                loData.put(&quot;sDescript&quot;, loRS.getString(&quot;sDescript&quot;));</span>
+
+<span class="nc" id="L717">                loArray.add(loData);</span>
+<span class="nc" id="L718">            }</span>
+        } finally {
+<span class="nc" id="L720">            MiscUtil.close(loRS);</span>
+        }
+
+<span class="nc bnc" id="L723" title="All 2 branches missed.">        if (!loArray.isEmpty()) {</span>
+<span class="nc" id="L724">            loJSON.put(&quot;result&quot;, &quot;success&quot;);</span>
+<span class="nc" id="L725">            loJSON.put(&quot;message&quot;, &quot;Record loaded successfully.&quot;);</span>
+<span class="nc" id="L726">            loJSON.put(&quot;payload&quot;, loArray);</span>
+        } else {
+<span class="nc" id="L728">            loJSON.put(&quot;result&quot;, &quot;error&quot;);</span>
+<span class="nc" id="L729">            loJSON.put(&quot;continue&quot;, true);</span>
+<span class="nc" id="L730">            loJSON.put(&quot;message&quot;, &quot;No record found.&quot;);</span>
+<span class="nc" id="L731">            loJSON.put(&quot;payload&quot;, new JSONArray());</span>
+        }
+<span class="nc" id="L733">        return loJSON;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

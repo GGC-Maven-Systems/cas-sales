@@ -1,0 +1,326 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Model_Sales_Inquiry_Requirements.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">cas-sales</a> &gt; <a href="index.source.html" class="el_package">ph.com.guanzongroup.cas.sales.model</a> &gt; <span class="el_source">Model_Sales_Inquiry_Requirements.java</span></div><h1>Model_Sales_Inquiry_Requirements.java</h1><pre class="source lang-java linenums">/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package ph.com.guanzongroup.cas.sales.model;
+
+import static com.sun.corba.se.impl.activation.ServerMain.logError;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import org.guanzon.appdriver.agent.services.Model;
+import org.guanzon.appdriver.base.GuanzonException;
+import org.guanzon.appdriver.base.MiscUtil;
+import org.guanzon.appdriver.base.SQLUtil;
+import org.guanzon.appdriver.constant.EditMode;
+import org.json.simple.JSONObject;
+import ph.com.guanzongroup.cas.sales.services.SalesModels;
+
+/**
+ *
+ * @author Arsiela
+ */
+<span class="nc" id="L29">public class Model_Sales_Inquiry_Requirements extends Model {</span>
+    
+    //reference objects
+    
+    Model_Requirement_Source_PerGroup poRequirementsPerGroup;
+    Model_Requirement_Source poRequirementsSource;
+    Model_Salesman poSalesPerson;
+
+    @Override
+    public void initialize() {
+        try {
+<span class="nc" id="L40">            poEntity = MiscUtil.xml2ResultSet(System.getProperty(&quot;sys.default.path.metadata&quot;) + XML, getTable());</span>
+
+<span class="nc" id="L42">            poEntity.last();</span>
+<span class="nc" id="L43">            poEntity.moveToInsertRow();</span>
+
+<span class="nc" id="L45">            MiscUtil.initRowSet(poEntity);</span>
+            
+            //assign default values
+//            poEntity.updateObject(&quot;dModified&quot;, SQLUtil.toDate(&quot;1900-01-01&quot;, SQLUtil.FORMAT_SHORT_DATE));
+//            poEntity.updateObject(&quot;dReceived&quot;, SQLUtil.toDate(&quot;1900-01-01&quot;, SQLUtil.FORMAT_SHORT_DATE));
+<span class="nc" id="L50">            poEntity.updateNull(&quot;dModified&quot;);</span>
+<span class="nc" id="L51">            poEntity.updateNull(&quot;dReceived&quot;);</span>
+<span class="nc" id="L52">            poEntity.updateObject(&quot;nEntryNox&quot;, 0);</span>
+            //end - assign default values
+
+<span class="nc" id="L55">            poEntity.insertRow();</span>
+<span class="nc" id="L56">            poEntity.moveToCurrentRow();</span>
+<span class="nc" id="L57">            poEntity.absolute(1);</span>
+
+<span class="nc" id="L59">            ID = &quot;sTransNox&quot;;</span>
+<span class="nc" id="L60">            ID2 = &quot;nEntryNox&quot;;</span>
+
+            //initialize reference objects
+<span class="nc" id="L63">            SalesModels sales = new SalesModels(poGRider);</span>
+<span class="nc" id="L64">            poRequirementsPerGroup = sales.RequirementSourcePerGroup();</span>
+<span class="nc" id="L65">            poRequirementsSource = sales.RequirementSource();</span>
+<span class="nc" id="L66">            poSalesPerson = sales.Salesman();</span>
+            
+//            end - initialize reference objects
+
+<span class="nc" id="L70">            pnEditMode = EditMode.UNKNOWN;</span>
+<span class="nc" id="L71">        } catch (SQLException e) {</span>
+<span class="nc" id="L72">            logwrapr.severe(e.getMessage());</span>
+<span class="nc" id="L73">            System.exit(1);</span>
+<span class="nc" id="L74">        }</span>
+<span class="nc" id="L75">    }</span>
+
+    public JSONObject setTransactionNo(String transactionNo) {
+<span class="nc" id="L78">        return setValue(&quot;sTransNox&quot;, transactionNo);</span>
+    }
+
+    public String getTransactionNo() {
+<span class="nc" id="L82">        return (String) getValue(&quot;sTransNox&quot;);</span>
+    }
+
+    public JSONObject setEntryNo(int entryNo) {
+<span class="nc" id="L86">        return setValue(&quot;nEntryNox&quot;, entryNo);</span>
+    }
+
+    public int getEntryNo() {
+<span class="nc bnc" id="L90" title="All 4 branches missed.">        if (getValue(&quot;nEntryNox&quot;) == null || &quot;&quot;.equals(getValue(&quot;nEntryNox&quot;))) {</span>
+<span class="nc" id="L91">            return 0;</span>
+        }
+<span class="nc" id="L93">        return (int) getValue(&quot;nEntryNox&quot;);</span>
+    }
+
+    public JSONObject setRequirementCode(String requirementCode) {
+<span class="nc" id="L97">        return setValue(&quot;sRqrmtCde&quot;, requirementCode);</span>
+    }
+
+    public String getRequirementCode() {
+<span class="nc" id="L101">        return (String) getValue(&quot;sRqrmtCde&quot;);</span>
+    }
+    
+    public JSONObject isRequired(boolean isRequired) {
+<span class="nc bnc" id="L105" title="All 2 branches missed.">        return setValue(&quot;cRequired&quot;, isRequired ? &quot;1&quot; : &quot;0&quot;);</span>
+    }
+
+    public boolean isRequired() {
+<span class="nc" id="L109">        return ((String) getValue(&quot;cRequired&quot;)).equals(&quot;1&quot;);</span>
+    }
+    
+    public JSONObject isSubmitted(boolean isSubmitted) {
+<span class="nc bnc" id="L113" title="All 2 branches missed.">        return setValue(&quot;cSubmittd&quot;, isSubmitted ? &quot;1&quot; : &quot;0&quot;);</span>
+    }
+
+    public boolean isSubmitted() {
+<span class="nc" id="L117">        return ((String) getValue(&quot;cSubmittd&quot;)).equals(&quot;1&quot;);</span>
+    }
+
+    public JSONObject setCustomerGroup(String customerGroup) {
+<span class="nc" id="L121">        return setValue(&quot;cCustGrpx&quot;, customerGroup);</span>
+    }
+
+    public String getCustomerGroup() {
+<span class="nc" id="L125">        return (String) getValue(&quot;cCustGrpx&quot;);</span>
+    }
+    
+    public JSONObject setReceivedBy(String receivedBy) {
+<span class="nc" id="L129">        return setValue(&quot;sReceived&quot;, receivedBy);</span>
+    }
+
+    public String getReceivedBy() {
+<span class="nc" id="L133">        return (String) getValue(&quot;sReceived&quot;);</span>
+    }
+    
+    public JSONObject setReceivedDate(Date receivedDate) {
+<span class="nc bnc" id="L137" title="All 2 branches missed.">      if (receivedDate == null) {</span>
+            try {
+<span class="nc" id="L139">                poEntity.updateNull(&quot;dReceived&quot;);</span>
+<span class="nc" id="L140">            } catch (SQLException ex) {</span>
+<span class="nc" id="L141">                Logger.getLogger(getClass().getName())</span>
+<span class="nc" id="L142">                        .log(Level.SEVERE, MiscUtil.getException(ex), ex);</span>
+<span class="nc" id="L143">            }</span>
+
+<span class="nc" id="L145">            return new JSONObject();</span>
+        }
+<span class="nc" id="L147">        return setValue(&quot;dReceived&quot;, receivedDate);</span>
+    }
+
+//    public Date getReceivedDate() {
+////        System.out.println(&quot;Datetime &quot; + getValue(&quot;dReceived&quot;));
+////        System.out.println(&quot;Date &quot; + (Date) getValue(&quot;dReceived&quot;));
+//        
+//        
+////        try {
+////            System.out.println(&quot;getDate &quot; + poEntity.getDate(&quot;dReceived&quot;));
+////            return poEntity.getDate(&quot;dReceived&quot;);
+////        } catch (SQLException e) {
+////            logError(getReceivedDate() + &quot;»&quot; + e.getMessage());
+////        }
+//        
+////        try {
+////            System.out.println(&quot;get date : &quot; + poEntity.getString(&quot;dReceived&quot;));
+////            System.out.println(&quot;toDate : &quot; + SQLUtil.toDate(poEntity.getString(&quot;dReceived&quot;), SQLUtil.FORMAT_TIMESTAMP));
+////            return SQLUtil.toDate(poEntity.getString(&quot;dReceived&quot;), SQLUtil.FORMAT_TIMESTAMP);
+////        } catch (SQLException e) {
+////            logError(getReceivedDate() + &quot;»&quot; + e.getMessage());
+////        }
+////        
+////        return null;
+//        System.out.println(&quot;receive date getValue : &quot; + getValue(&quot;dReceived&quot;));
+//        return (Date) getValue(&quot;dReceived&quot;);
+//    }
+    public Date getReceivedDate() {
+<span class="nc bnc" id="L175" title="All 6 branches missed.">        if((Date) getValue(&quot;dReceived&quot;) == null &amp;&amp; getReceivedBy() != null &amp;&amp; !&quot;&quot;.equals(getReceivedBy()) ){</span>
+            try {
+<span class="nc" id="L177">                String lsSQL = MiscUtil.addCondition(MiscUtil.makeSelect(this), </span>
+<span class="nc" id="L178">                                    &quot; sTransNox = &quot; + SQLUtil.toSQL((String) getValue(&quot;sTransNox&quot;))</span>
+                                    );
+<span class="nc" id="L180">                ResultSet loRS = poGRider.executeQuery(lsSQL);</span>
+<span class="nc bnc" id="L181" title="All 2 branches missed.">                if (loRS.next()) {</span>
+<span class="nc" id="L182">                    setReceivedDate(loRS.getTimestamp(&quot;dReceived&quot;));</span>
+                }
+<span class="nc" id="L184">            } catch (SQLException e) {</span>
+<span class="nc" id="L185">                return (Date) getValue(&quot;dReceived&quot;);</span>
+<span class="nc" id="L186">            } </span>
+        }
+<span class="nc" id="L188">        return (Date) getValue(&quot;dReceived&quot;);</span>
+    }
+    
+    public JSONObject setModifyingId(String modifiedBy) {
+<span class="nc" id="L192">        return setValue(&quot;sModified&quot;, modifiedBy);</span>
+    }
+
+    public String getModifyingId() {
+<span class="nc" id="L196">        return (String) getValue(&quot;sModified&quot;);</span>
+    }
+
+    public JSONObject setModifiedDate(Date modifiedDate) {
+<span class="nc" id="L200">        return setValue(&quot;dModified&quot;, modifiedDate);</span>
+    }
+
+    public Date getModifiedDate() {
+<span class="nc" id="L204">        return (Date) getValue(&quot;dModified&quot;);</span>
+    }
+
+    @Override
+    public String getNextCode() {
+<span class="nc" id="L209">        return  &quot;&quot;; //MiscUtil.getNextCode(this.getTable(), ID, true, poGRider.getGConnection().getConnection(), poGRider.getBranchCode());</span>
+    }
+
+    //reference object models
+    public Model_Requirement_Source_PerGroup RequirementSourcePerGroup(String paymentMode) throws SQLException, GuanzonException {
+<span class="nc bnc" id="L214" title="All 2 branches missed.">        if (!&quot;&quot;.equals((String) getValue(&quot;sRqrmtCde&quot;))) {</span>
+<span class="nc bnc" id="L215" title="All 2 branches missed.">            if (poRequirementsPerGroup.getEditMode() == EditMode.READY</span>
+<span class="nc bnc" id="L216" title="All 2 branches missed.">                    &amp;&amp; poRequirementsPerGroup.getRequirementCode().equals((String) getValue(&quot;sRqrmtCde&quot;))) {</span>
+<span class="nc" id="L217">                return poRequirementsPerGroup;</span>
+            } else {
+<span class="nc" id="L219">                poJSON = poRequirementsPerGroup.openRecord((String) getValue(&quot;sRqrmtCde&quot;), paymentMode);</span>
+
+<span class="nc bnc" id="L221" title="All 2 branches missed.">                if (&quot;success&quot;.equals((String) poJSON.get(&quot;result&quot;))) {</span>
+<span class="nc" id="L222">                    return poRequirementsPerGroup;</span>
+                } else {
+<span class="nc" id="L224">                    poRequirementsPerGroup.initialize();</span>
+<span class="nc" id="L225">                    return poRequirementsPerGroup;</span>
+                }
+            }
+        } else {
+<span class="nc" id="L229">            poRequirementsPerGroup.initialize();</span>
+<span class="nc" id="L230">            return poRequirementsPerGroup;</span>
+        }
+    }
+    
+    public Model_Requirement_Source RequirementSource() throws SQLException, GuanzonException {
+<span class="nc bnc" id="L235" title="All 2 branches missed.">        if (!&quot;&quot;.equals((String) getValue(&quot;sRqrmtCde&quot;))) {</span>
+<span class="nc bnc" id="L236" title="All 2 branches missed.">            if (poRequirementsSource.getEditMode() == EditMode.READY</span>
+<span class="nc bnc" id="L237" title="All 2 branches missed.">                    &amp;&amp; poRequirementsSource.getRequirementCode().equals((String) getValue(&quot;sRqrmtCde&quot;))) {</span>
+<span class="nc" id="L238">                return poRequirementsSource;</span>
+            } else {
+<span class="nc" id="L240">                poJSON = poRequirementsSource.openRecord((String) getValue(&quot;sRqrmtCde&quot;));</span>
+
+<span class="nc bnc" id="L242" title="All 2 branches missed.">                if (&quot;success&quot;.equals((String) poJSON.get(&quot;result&quot;))) {</span>
+<span class="nc" id="L243">                    return poRequirementsSource;</span>
+                } else {
+<span class="nc" id="L245">                    poRequirementsSource.initialize();</span>
+<span class="nc" id="L246">                    return poRequirementsSource;</span>
+                }
+            }
+        } else {
+<span class="nc" id="L250">            poRequirementsSource.initialize();</span>
+<span class="nc" id="L251">            return poRequirementsSource;</span>
+        }
+    }
+    public Model_Salesman SalesPerson() throws SQLException, GuanzonException {
+<span class="nc bnc" id="L255" title="All 2 branches missed.">        if (!&quot;&quot;.equals((String) getValue(&quot;sReceived&quot;))) {</span>
+<span class="nc" id="L256">            String lsUserID = getSysUser((String) getValue(&quot;sReceived&quot;));</span>
+<span class="nc bnc" id="L257" title="All 2 branches missed.">            if(!&quot;&quot;.equals(lsUserID)){</span>
+<span class="nc bnc" id="L258" title="All 2 branches missed.">                if (poSalesPerson.getEditMode() == EditMode.READY</span>
+<span class="nc bnc" id="L259" title="All 2 branches missed.">                        &amp;&amp; poSalesPerson.getEmployeeId().equals(lsUserID)) {</span>
+<span class="nc" id="L260">                    return poSalesPerson;</span>
+                } else {
+<span class="nc" id="L262">                    poJSON = poSalesPerson.openRecord(lsUserID);</span>
+
+<span class="nc bnc" id="L264" title="All 2 branches missed.">                    if (&quot;success&quot;.equals((String) poJSON.get(&quot;result&quot;))) {</span>
+<span class="nc" id="L265">                        return poSalesPerson;</span>
+                    } else {
+<span class="nc" id="L267">                        poSalesPerson.initialize();</span>
+<span class="nc" id="L268">                        return poSalesPerson;</span>
+                    }
+                }
+            } else {
+<span class="nc" id="L272">                poSalesPerson.initialize();</span>
+<span class="nc" id="L273">                return poSalesPerson;</span>
+            }
+        } else {
+<span class="nc" id="L276">            poSalesPerson.initialize();</span>
+<span class="nc" id="L277">            return poSalesPerson;</span>
+        }
+    }
+    
+    public String getSysUser(String fsId) throws SQLException, GuanzonException {
+<span class="nc" id="L282">        String lsEntry = &quot;&quot;;</span>
+<span class="nc" id="L283">        String lsSQL =   &quot; SELECT a.sEmployNo from xxxSysUser a &quot;</span>
+                + &quot; LEFT JOIN Client_Master b ON b.sClientID = a.sEmployNo &quot;;
+<span class="nc" id="L285">        lsSQL = MiscUtil.addCondition(lsSQL, &quot; a.sUserIDxx =  &quot; + SQLUtil.toSQL(fsId)) ;</span>
+<span class="nc" id="L286">        System.out.println(&quot;SQL &quot; + lsSQL);</span>
+<span class="nc" id="L287">        ResultSet loRS = poGRider.executeQuery(lsSQL);</span>
+        try {
+<span class="nc bnc" id="L289" title="All 2 branches missed.">            if (MiscUtil.RecordCount(loRS) &gt; 0L) {</span>
+<span class="nc bnc" id="L290" title="All 2 branches missed.">                if (loRS.next()) {</span>
+<span class="nc" id="L291">                    lsEntry = loRS.getString(&quot;sEmployNo&quot;);</span>
+                }
+            }
+<span class="nc" id="L294">            MiscUtil.close(loRS);</span>
+<span class="nc" id="L295">        } catch (SQLException e) {</span>
+<span class="nc" id="L296">            poJSON.put(&quot;result&quot;, &quot;error&quot;);</span>
+<span class="nc" id="L297">            poJSON.put(&quot;message&quot;, e.getMessage());</span>
+<span class="nc" id="L298">        }</span>
+<span class="nc" id="L299">        return lsEntry;</span>
+    }
+    
+    //end - reference object models
+    
+    public JSONObject deleteRecord() throws SQLException, GuanzonException{
+<span class="nc" id="L305">        poJSON = new JSONObject();</span>
+        
+<span class="nc" id="L307">        String lsSQL = &quot; DELETE FROM &quot;+getTable()+&quot; WHERE &quot;</span>
+<span class="nc" id="L308">                    + &quot; sTransNox = &quot; + SQLUtil.toSQL(getTransactionNo())</span>
+<span class="nc" id="L309">                    + &quot; AND sRqrmtCde = &quot; + SQLUtil.toSQL(getRequirementCode());</span>
+<span class="nc bnc" id="L310" title="All 2 branches missed.">        if (!lsSQL.isEmpty()) {</span>
+<span class="nc" id="L311">            System.out.println(&quot;Executing SQL: &quot; + lsSQL);</span>
+<span class="nc bnc" id="L312" title="All 2 branches missed.">            if (poGRider.executeQuery(lsSQL, getTable(), poGRider.getBranchCode(), &quot;&quot;, poGRider.getDivisionCode()) &lt;= 0L) {</span>
+<span class="nc" id="L313">                System.out.println(&quot;Record deleted successfully.&quot;);</span>
+<span class="nc" id="L314">                poJSON.put(&quot;result&quot;, &quot;success&quot;);</span>
+<span class="nc" id="L315">                poJSON.put(&quot;message&quot;, &quot;Record deleted successfully.&quot;);</span>
+            } else {
+<span class="nc" id="L317">                poJSON.put(&quot;result&quot;, &quot;error&quot;);</span>
+<span class="nc" id="L318">                poJSON.put(&quot;continue&quot;, true);</span>
+<span class="nc" id="L319">                poJSON.put(&quot;message&quot;, poGRider.getMessage());</span>
+            }
+        }
+<span class="nc" id="L322">        return poJSON;</span>
+    }
+    
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

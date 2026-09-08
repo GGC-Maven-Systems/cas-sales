@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Model_Sales_Agent.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">cas-sales</a> &gt; <a href="index.source.html" class="el_package">ph.com.guanzongroup.cas.sales.model</a> &gt; <span class="el_source">Model_Sales_Agent.java</span></div><h1>Model_Sales_Agent.java</h1><pre class="source lang-java linenums">/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package ph.com.guanzongroup.cas.sales.model;
+
+import java.sql.SQLException;
+import java.util.Date;
+import org.guanzon.appdriver.agent.services.Model;
+import org.guanzon.appdriver.base.GuanzonException;
+import org.guanzon.appdriver.base.MiscUtil;
+import org.guanzon.appdriver.base.SQLUtil;
+import org.guanzon.appdriver.constant.EditMode;
+import org.guanzon.appdriver.constant.Logical;
+import org.guanzon.appdriver.constant.RecordStatus;
+import org.guanzon.cas.client.model.*;
+import org.guanzon.cas.client.services.ClientModels;
+import org.json.simple.JSONObject;
+
+/**
+ *
+ * @author Arsiela
+ */
+<span class="nc" id="L25">public class Model_Sales_Agent extends Model {</span>
+
+    //reference objects
+    Model_Client_Master poClient;
+    Model_Client_Address poClientAddess;
+    Model_Client_Mobile poClientContact;
+    Model_Client_Mail poClientEmail;
+    Model_Client_Social_Media poSocmed;
+    @Override
+    public void initialize() {
+        try {
+<span class="nc" id="L36">            poEntity = MiscUtil.xml2ResultSet(System.getProperty(&quot;sys.default.path.metadata&quot;) + XML, getTable());</span>
+
+<span class="nc" id="L38">            poEntity.last();</span>
+<span class="nc" id="L39">            poEntity.moveToInsertRow();</span>
+
+<span class="nc" id="L41">            MiscUtil.initRowSet(poEntity);</span>
+
+            //assign default values
+<span class="nc" id="L44">            poEntity.updateObject(&quot;dModified&quot;, SQLUtil.toDate(&quot;1900-01-01&quot;, SQLUtil.FORMAT_SHORT_DATE));</span>
+<span class="nc" id="L45">            poEntity.updateString(&quot;cRecdStat&quot;,&quot;0&quot; );</span>
+            //end - assign default values
+
+<span class="nc" id="L48">            poEntity.insertRow();</span>
+<span class="nc" id="L49">            poEntity.moveToCurrentRow();</span>
+<span class="nc" id="L50">            poEntity.absolute(1);</span>
+
+<span class="nc" id="L52">            ID = &quot;sClientID&quot;;</span>
+
+            //initialize reference objects
+<span class="nc" id="L55">            ClientModels clientModel = new ClientModels(poGRider);</span>
+<span class="nc" id="L56">            poClient = clientModel.ClientMaster();</span>
+<span class="nc" id="L57">            poClientAddess = clientModel.ClientAddress();</span>
+<span class="nc" id="L58">            poClientEmail = clientModel.ClientMail();</span>
+<span class="nc" id="L59">            poClientContact = clientModel.ClientMobile();</span>
+<span class="nc" id="L60">            poSocmed = clientModel.ClientSocMed();</span>
+
+//            end - initialize reference objects
+
+<span class="nc" id="L64">            pnEditMode = EditMode.UNKNOWN;</span>
+<span class="nc" id="L65">        } catch (SQLException e) {</span>
+<span class="nc" id="L66">            logwrapr.severe(e.getMessage());</span>
+<span class="nc" id="L67">            System.exit(1);</span>
+<span class="nc" id="L68">        }</span>
+<span class="nc" id="L69">    }</span>
+
+    public JSONObject setClientId(String clientId) {
+<span class="nc" id="L72">        return setValue(&quot;sClientID&quot;, clientId);</span>
+    }
+
+    public String getClientId() {
+<span class="nc" id="L76">        return (String) getValue(&quot;sClientID&quot;);</span>
+    }
+
+    public JSONObject setProfession(String profession) {
+<span class="nc" id="L80">        return setValue(&quot;sProfessn&quot;, profession);</span>
+    }
+
+    public String getProfession() {
+<span class="nc" id="L84">        return (String) getValue(&quot;sProfessn&quot;);</span>
+    }
+
+    public JSONObject setCompany(String company) {
+<span class="nc" id="L88">        return setValue(&quot;sCompanyx&quot;, company);</span>
+    }
+
+    public String getCompany() {
+<span class="nc" id="L92">        return (String) getValue(&quot;sCompanyx&quot;);</span>
+    }
+
+    public JSONObject setPosition(String position) {
+<span class="nc" id="L96">        return setValue(&quot;sPosition&quot;, position);</span>
+    }
+
+    public String getPosition() {
+<span class="nc" id="L100">        return (String) getValue(&quot;sPosition&quot;);</span>
+    }
+
+    public JSONObject setRecordStatus(String recordStatus){
+<span class="nc" id="L104">        return setValue(&quot;cRecdStat&quot;, recordStatus);</span>
+    }
+
+    public String getRecordStatus() {
+<span class="nc" id="L108">        return (String) getValue(&quot;cRecdStat&quot;);</span>
+    }
+
+    public JSONObject setModifyingId(String modifiedBy) {
+<span class="nc" id="L112">        return setValue(&quot;sModified&quot;, modifiedBy);</span>
+    }
+
+    public String getModifyingId() {
+<span class="nc" id="L116">        return (String) getValue(&quot;sModified&quot;);</span>
+    }
+
+    public JSONObject setModifiedDate(Date modifiedDate) {
+<span class="nc" id="L120">        return setValue(&quot;dModified&quot;, modifiedDate);</span>
+    }
+
+    public Date getModifiedDate() {
+<span class="nc" id="L124">        return (Date) getValue(&quot;dModified&quot;);</span>
+    }
+
+    @Override
+    public String getNextCode() {
+<span class="nc" id="L129">        return &quot;&quot;;</span>
+    }
+
+    //reference object models
+    public Model_Client_Master Client() throws SQLException, GuanzonException {
+<span class="nc bnc" id="L134" title="All 2 branches missed.">        if (!&quot;&quot;.equals((String) getValue(&quot;sClientID&quot;))) {</span>
+<span class="nc bnc" id="L135" title="All 2 branches missed.">            if (poClient.getEditMode() == EditMode.READY</span>
+<span class="nc bnc" id="L136" title="All 2 branches missed.">                    &amp;&amp; poClient.getClientId().equals((String) getValue(&quot;sClientID&quot;))) {</span>
+<span class="nc" id="L137">                return poClient;</span>
+            } else {
+<span class="nc" id="L139">                poJSON = poClient.openRecord((String) getValue(&quot;sClientID&quot;));</span>
+
+<span class="nc bnc" id="L141" title="All 2 branches missed.">                if (&quot;success&quot;.equals((String) poJSON.get(&quot;result&quot;))) {</span>
+<span class="nc" id="L142">                    return poClient;</span>
+                } else {
+<span class="nc" id="L144">                    poClient.initialize();</span>
+<span class="nc" id="L145">                    return poClient;</span>
+                }
+            }
+        } else {
+<span class="nc" id="L149">            poClient.initialize();</span>
+<span class="nc" id="L150">            return poClient;</span>
+        }
+    }
+    //end - reference object models
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

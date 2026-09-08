@@ -1,6 +1,6 @@
-DROP TABLE IF EXISTS `client_mobile`;
+DROP TABLE IF EXISTS `Client_Mobile`;
 
-CREATE TABLE `client_mobile` (
+CREATE TABLE `Client_Mobile` (
   `sMobileID` char(12) NOT NULL,
   `sClientID` char(12) DEFAULT NULL,
   `sMobileNo` varchar(20) DEFAULT NULL,

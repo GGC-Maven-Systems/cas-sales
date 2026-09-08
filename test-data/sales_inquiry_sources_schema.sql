@@ -1,6 +1,6 @@
-DROP TABLE IF EXISTS `sales_inquiry_sources`;
+DROP TABLE IF EXISTS `Sales_Inquiry_Sources`;
 
-CREATE TABLE `sales_inquiry_sources` (
+CREATE TABLE `Sales_Inquiry_Sources` (
   `sSourceID` char(3) NOT NULL,
   `sDescript` char(32) DEFAULT NULL,
   `cRecdStat` char(1) DEFAULT NULL,

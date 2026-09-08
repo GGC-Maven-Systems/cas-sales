@@ -1,6 +1,6 @@
-DROP TABLE IF EXISTS `sales_inquiry_detail`;
+DROP TABLE IF EXISTS `Sales_Inquiry_Detail`;
 
-CREATE TABLE `sales_inquiry_detail` (
+CREATE TABLE `Sales_Inquiry_Detail` (
   `sTransNox` char(12) NOT NULL,
   `nEntryNox` smallint(6) NOT NULL,
   `nPriority` smallint(6) DEFAULT NULL,
@@ -12,9 +12,5 @@ CREATE TABLE `sales_inquiry_detail` (
   `nSelPrice` decimal(14,4) DEFAULT NULL,
   `dModified` datetime DEFAULT NULL,
   `dTimeStmp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`sTransNox`,`nEntryNox`),
-  KEY `sStockIDx` (`sStockIDx`),
-  KEY `sModelIDx` (`sModelIDx`),
-  KEY `sColorIDx` (`sColorIDx`),
-  KEY `sVrntIDxx` (`sVrntIDxx`)
+  PRIMARY KEY (`sTransNox`,`nEntryNox`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;

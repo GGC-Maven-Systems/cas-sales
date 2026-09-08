@@ -1,6 +1,6 @@
-DROP TABLE IF EXISTS `sales_inquiry_requirements`;
+DROP TABLE IF EXISTS `Sales_Inquiry_Requirements`;
 
-CREATE TABLE `sales_inquiry_requirements` (
+CREATE TABLE `Sales_Inquiry_Requirements` (
   `sTransNox` char(12) NOT NULL,
   `nEntryNox` smallint(6) NOT NULL,
   `cCustGrpx` char(1) DEFAULT NULL,

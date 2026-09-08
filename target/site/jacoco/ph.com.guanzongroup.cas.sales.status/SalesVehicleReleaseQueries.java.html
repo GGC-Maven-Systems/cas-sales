@@ -1,0 +1,313 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SalesVehicleReleaseQueries.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">cas-sales</a> &gt; <a href="index.source.html" class="el_package">ph.com.guanzongroup.cas.sales.status</a> &gt; <span class="el_source">SalesVehicleReleaseQueries.java</span></div><h1>SalesVehicleReleaseQueries.java</h1><pre class="source lang-java linenums">package ph.com.guanzongroup.cas.sales.status;
+
+/**
+ * Provides centralized SQL statements for the Sales Vehicle Release module.
+ *
+ * &lt;p&gt;
+ * This class contains SQL queries used to retrieve salesman information,
+ * vehicle release transactions, giveaway transactions, and vehicle
+ * add-on information such as labor and parts.
+ * &lt;/p&gt;
+ *
+ * &lt;p&gt;
+ * The class serves only as a centralized repository for SQL statements.
+ * It does not execute queries, perform database operations, or manage
+ * database connections. Query execution is handled by the appropriate
+ * data-access or business-logic classes.
+ * &lt;/p&gt;
+ *
+ * &lt;p&gt;
+ * &lt;strong&gt;Queries provided:&lt;/strong&gt;
+ * &lt;/p&gt;
+ *
+ * &lt;ul&gt;
+ *     &lt;li&gt;
+ *         {@link #getSQL_Browse()} -
+ *         Retrieves salesman records for browsing.
+ *     &lt;/li&gt;
+ *     &lt;li&gt;
+ *         {@link #getSQL_Salesman()} -
+ *         Retrieves detailed salesman information, including employee,
+ *         client, branch, department, and position details.
+ *     &lt;/li&gt;
+ *     &lt;li&gt;
+ *         {@link #getSQL_ForRelease()} -
+ *         Retrieves VSP transactions available for vehicle release,
+ *         including customer and sales person information.
+ *     &lt;/li&gt;
+ *     &lt;li&gt;
+ *         {@link #getSQL_Giveaways()} -
+ *         Retrieves giveaway transactions together with their
+ *         corresponding inventory information.
+ *     &lt;/li&gt;
+ *     &lt;li&gt;
+ *         {@link #getSQL_AddOns()} -
+ *         Retrieves and combines giveaway, labor, and parts
+ *         add-on transactions into a single result set.
+ *     &lt;/li&gt;
+ * &lt;/ul&gt;
+ *
+ * &lt;hr&gt;
+ *
+ * &lt;p&gt;
+ * &lt;strong&gt;Author:&lt;/strong&gt; TEEJEI DE CELIS&lt;br&gt;
+ * &lt;strong&gt;Date:&lt;/strong&gt; August 20, 2026&lt;br&gt;
+ * &lt;strong&gt;Module:&lt;/strong&gt; Vehicle Release&lt;br&gt;
+ * &lt;strong&gt;Since:&lt;/strong&gt; 1.0
+ * &lt;/p&gt;
+ */
+<span class="nc" id="L59">public class SalesVehicleReleaseQueries {</span>
+    /**
+     * Returns the SQL statement used to retrieve salesman records for browsing.
+     *
+     * &lt;p&gt;
+     * The query retrieves the employee ID, branch code, employee name
+     * components, record status, and concatenated full name from the
+     * {@code Salesman} table.
+     * &lt;/p&gt;
+     *
+     * @return the SQL query used for the salesman browse operation
+     */
+    public static String getSQL_Browse() {
+<span class="nc" id="L72">        return &quot; SELECT &quot;</span>
+                + &quot;    a.sEmployID &quot;
+                + &quot;  , a.sBranchCd &quot;
+                + &quot;  , a.sLastName &quot;
+                + &quot;  , a.sFrstName &quot;
+                + &quot;  , a.sMiddName &quot;
+                + &quot;  , a.cRecdStat &quot;
+                + &quot;  , CONCAT(a.sLastName,', ',a.sFrstName, ' ',a.sMiddName) AS sFullName &quot;
+                + &quot; FROM Salesman a &quot;;
+    }
+    /**
+     * Returns the SQL statement used to retrieve detailed salesman information.
+     *
+     * &lt;p&gt;
+     * The query retrieves salesman information together with the associated
+     * employee, client, branch, department, and position details. The related
+     * records are joined using {@code LEFT JOIN} so that the salesman record
+     * remains available even when one or more related records are missing.
+     * &lt;/p&gt;
+     *
+     * &lt;p&gt;
+     * The returned query includes the following information:
+     * &lt;/p&gt;
+     *
+     * &lt;ul&gt;
+     *     &lt;li&gt;Employee ID&lt;/li&gt;
+     *     &lt;li&gt;Branch code and branch name&lt;/li&gt;
+     *     &lt;li&gt;Salesman full name&lt;/li&gt;
+     *     &lt;li&gt;Record status&lt;/li&gt;
+     *     &lt;li&gt;Client/company name&lt;/li&gt;
+     *     &lt;li&gt;Department name&lt;/li&gt;
+     *     &lt;li&gt;Position name&lt;/li&gt;
+     * &lt;/ul&gt;
+     *
+     * @return the SQL query used to retrieve detailed salesman information
+     */
+    public static String getSQL_Salesman() {
+<span class="nc" id="L109">        return &quot; SELECT &quot;</span>
+                + &quot;    a.sEmployID &quot;
+                + &quot;  , a.sBranchCd &quot;
+                + &quot;  , CONCAT(a.sLastName,', ',a.sFrstName, ' ',a.sMiddName) AS sFullName &quot;
+                + &quot;  , a.cRecdStat &quot;
+                + &quot;  , c.sCompnyNm &quot;
+                + &quot;  , e.sDeptName &quot;
+                + &quot;  , d.sBranchNm &quot;
+                + &quot;  , f.sPositnNm &quot;
+                + &quot; FROM Salesman a &quot;
+                + &quot; LEFT JOIN Employee_Master001 b &quot;
+                + &quot;        ON a.sEmployID = b.sEmployID &quot;
+                + &quot; LEFT JOIN Client_Master c &quot;
+                + &quot;        ON a.sEmployID = c.sClientID &quot;
+                + &quot; LEFT JOIN Branch d &quot;
+                + &quot;        ON d.sBranchCd = a.sBranchCd &quot;
+                + &quot; LEFT JOIN Department e &quot;
+                + &quot;        ON b.sDeptIDxx = e.sDeptIDxx &quot;
+                + &quot; LEFT JOIN Position f &quot;
+                + &quot;        ON b.sPositnID = f.sPositnID &quot;;
+    }
+    /**
+     * Returns the SQL statement used to retrieve VSP transactions that are
+     * available for release.
+     *
+     * &lt;p&gt;
+     * The query retrieves the VSP transaction number and transaction date,
+     * together with the associated customer and sales person information.
+     * &lt;/p&gt;
+     *
+     * &lt;p&gt;
+     * The query joins the VSP master record with the client master,
+     * sales inquiry master, salesman, and client master tables to obtain
+     * the customer and sales person names.
+     * &lt;/p&gt;
+     *
+     * @return the SQL query used to retrieve VSP transactions for release
+     */
+    public static String getSQL_ForRelease() {
+<span class="nc" id="L148">        return &quot; SELECT &quot;</span>
+                + &quot;    a.sTransNox &quot;
+                + &quot;  , b.sCompnyNm AS CustomerName &quot;
+                + &quot;  , a.dTransact &quot;
+                + &quot;  , e.sCompnyNm AS SalesPerson &quot;
+                + &quot; FROM Vsp_Master a &quot;
+                + &quot; LEFT JOIN Client_Master b &quot;
+                + &quot;        ON b.sClientID = a.sClientID &quot;
+                + &quot; LEFT JOIN Sales_Inquiry_Master c &quot;
+                + &quot;        ON c.sTransNox = a.sInqryIDx &quot;
+                + &quot; LEFT JOIN Salesman d &quot;
+                + &quot;        ON d.sEmployID = c.sSalesman &quot;
+                + &quot; LEFT JOIN Client_Master e &quot;
+                + &quot;        ON e.sClientID = d.sEmployID &quot;;
+    }
+    /**
+     * Returns the SQL statement used to retrieve giveaway transactions
+     * together with their corresponding inventory information.
+     *
+     * &lt;p&gt;
+     * The query retrieves the transaction number, entry number, stock ID,
+     * giveaway quantity, issued quantity, giveaway status, source code,
+     * and source number from the {@code Sales_Giveaways} table.
+     * &lt;/p&gt;
+     *
+     * &lt;p&gt;
+     * The query also joins the {@code Inventory} table to retrieve the
+     * barcode and description of the corresponding giveaway item.
+     * &lt;/p&gt;
+     *
+     * @return the SQL query used to retrieve giveaway transactions and
+     *         their associated inventory information
+     */
+    public static String getSQL_Giveaways() {
+<span class="nc" id="L182">        return &quot; SELECT &quot;</span>
+                + &quot;    a.sTransNox &quot;
+                + &quot;  , a.nEntryNox &quot;
+                + &quot;  , a.sStockIDx &quot;
+                + &quot;  , a.nGivenxxx &quot;
+                + &quot;  , a.nIssuedxx &quot;
+                + &quot;  , a.cGAwyStat AS GiveawayStatus &quot;
+                + &quot;  , a.sSourceCD &quot;
+                + &quot;  , a.sSourceNo &quot;
+                + &quot;  , b.sBarCodex &quot;
+                + &quot;  , b.sDescript &quot;
+                + &quot; FROM Sales_Giveaways a &quot;
+                + &quot; LEFT JOIN Inventory b &quot;
+                + &quot;        ON b.sStockIDx = a.sStockIDx &quot;;
+    }
+    /**
+     * Returns the SQL statement used to retrieve add-on transactions
+     * together with their corresponding inventory and labor information.
+     *
+     * &lt;p&gt;
+     * The query combines Giveaway, Labor, and Parts transactions into
+     * a single result set. The records are ordered by add-on type using
+     * the add-on type identifiers defined in
+     * {@link SalesVehicleReleaseStatic.AddOnType}.
+     * &lt;/p&gt;
+     *
+     * &lt;p&gt;
+     * Giveaway records are retrieved from the {@code Sales_Giveaways}
+     * table and joined with the {@code Inventory} table to retrieve the
+     * barcode and description of the corresponding item. The add-on type
+     * is displayed using the Giveaway description defined in
+     * {@link SalesVehicleReleaseStatic.AddOnType#ADD_ON_DESC_GIVEAWAYS}.
+     * &lt;/p&gt;
+     *
+     * &lt;p&gt;
+     * Labor records are retrieved from the
+     * {@code Joborder_Estimate_Labor} table and joined with the
+     * {@code Labor} table to retrieve the labor description. Since
+     * labor records do not have a barcode or status, their values are
+     * returned as {@code &quot;-&quot;}. The add-on type is displayed using the
+     * Labor description defined in
+     * {@link SalesVehicleReleaseStatic.AddOnType#ADD_ON_DESC_LABOR}.
+     * &lt;/p&gt;
+     *
+     * &lt;p&gt;
+     * Parts records are retrieved from the
+     * {@code Joborder_Estimate_Parts} table and joined with the
+     * {@code Inventory} table to retrieve the barcode and description
+     * of the corresponding item. Since parts records do not have a
+     * status, the status value is returned as {@code &quot;-&quot;}. The add-on
+     * type is displayed using the Parts description defined in
+     * {@link SalesVehicleReleaseStatic.AddOnType#ADD_ON_DESC_PARTS}.
+     * &lt;/p&gt;
+     *
+     * &lt;p&gt;
+     * The query uses the {@code :sTransNox} named parameter to filter
+     * records belonging to the specified transaction. A sequential row
+     * number is generated for each result based on the add-on type order
+     * and transaction number.
+     * &lt;/p&gt;
+     *
+     * @return the SQL query used to retrieve Giveaway, Labor, and Parts
+     *         add-on transactions and their associated information
+     */
+    public static String getSQL_AddOns() {
+<span class="nc" id="L247">        return &quot; SELECT &quot;</span>
+//                + &quot;    ROW_NUMBER() OVER ( &quot;
+//                + &quot;        ORDER BY AddOnOrder, TransactionNo &quot;
+//                + &quot;    ) AS No &quot;
+                + &quot;  , AddOnType &quot;
+                + &quot;  , TransactionNo &quot;
+                + &quot;  , Barcode &quot;
+                + &quot;  , Description &quot;
+                + &quot;  , Qty &quot;
+                + &quot;  , Status &quot;
+                + &quot; FROM ( &quot;
+                + &quot;    /* GIVEAWAY */ &quot;
+                + &quot;    SELECT &quot;
+                + &quot;        &quot; + SalesVehicleReleaseStatic.AddOnType.ADD_ON_TYPE_GIVEAWAYS + &quot; AS AddOnOrder &quot;
+                + &quot;      , '&quot; + SalesVehicleReleaseStatic.AddOnType.ADD_ON_DESC_GIVEAWAYS + &quot;' AS AddOnType &quot;
+                + &quot;      , a.sTransNox AS TransactionNo &quot;
+                + &quot;      , b.sBarCodex AS Barcode &quot;
+                + &quot;      , b.sDescript AS Description &quot;
+                + &quot;      , a.nGivenxxx AS Qty &quot;
+                + &quot;      , a.cGAwyStat AS Status &quot;
+                + &quot;    FROM Sales_Giveaways a &quot;
+                + &quot;    LEFT JOIN Inventory b &quot;
+                + &quot;        ON b.sStockIDx = a.sStockIDx &quot;
+                + &quot;    WHERE a.sSourceNo = :sTransNox &quot;
+                + &quot; &quot;
+                + &quot;    UNION ALL &quot;
+                + &quot; &quot;
+                + &quot;    /* LABOR */ &quot;
+                + &quot;    SELECT &quot;
+                + &quot;        &quot; + SalesVehicleReleaseStatic.AddOnType.ADD_ON_TYPE_LABOR + &quot; AS AddOnOrder &quot;
+                + &quot;      , '&quot; + SalesVehicleReleaseStatic.AddOnType.ADD_ON_DESC_LABOR + &quot;' AS AddOnType &quot;
+                + &quot;      , a.sTransNox AS TransactionNo &quot;
+                + &quot;      , '-' AS Barcode &quot;
+                + &quot;      , e.sLaborNme AS Description &quot;
+                + &quot;      , a.nQuantity AS Qty &quot;
+                + &quot;      , '-' AS Status &quot;
+                + &quot;    FROM Joborder_Estimate_Labor a &quot;
+                + &quot;    LEFT JOIN Joborder_Estimate_Master m &quot;
+                + &quot;        ON m.sTransNox = a.sTransNox &quot;
+                + &quot;    LEFT JOIN Labor e &quot;
+                + &quot;        ON e.sLaborIDx = a.sLaborCde &quot;
+                + &quot;    WHERE m.sSourceNo = :sTransNox &quot;
+                + &quot; &quot;
+                + &quot;    UNION ALL &quot;
+                + &quot; &quot;
+                + &quot;    /* PARTS */ &quot;
+                + &quot;    SELECT &quot;
+                + &quot;        &quot; + SalesVehicleReleaseStatic.AddOnType.ADD_ON_TYPE_PARTS + &quot; AS AddOnOrder &quot;
+                + &quot;      , '&quot; + SalesVehicleReleaseStatic.AddOnType.ADD_ON_DESC_PARTS + &quot;' AS AddOnType &quot;
+                + &quot;      , p.sTransNox AS TransactionNo &quot;
+                + &quot;      , b.sBarCodex AS Barcode &quot;
+                + &quot;      , b.sDescript AS Description &quot;
+                + &quot;      , p.nQuantity AS Qty &quot;
+                + &quot;      , '-' AS Status &quot;
+                + &quot;    FROM Joborder_Estimate_Parts p &quot;
+                + &quot;    LEFT JOIN Joborder_Estimate_Master m &quot;
+                + &quot;        ON m.sTransNox = p.sTransNox &quot;
+                + &quot;    LEFT JOIN Inventory b &quot;
+                + &quot;        ON b.sStockIDx = p.sStockIDx &quot;
+                + &quot;    WHERE m.sSourceNo = :sTransNox &quot;
+                + &quot; ) x &quot;
+                + &quot; ORDER BY &quot;
+                + &quot;    AddOnOrder &quot;
+                + &quot;  , TransactionNo &quot;;
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

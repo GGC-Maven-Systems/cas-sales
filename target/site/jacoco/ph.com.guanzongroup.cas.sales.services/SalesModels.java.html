@@ -1,0 +1,374 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SalesModels.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">cas-sales</a> &gt; <a href="index.source.html" class="el_package">ph.com.guanzongroup.cas.sales.services</a> &gt; <span class="el_source">SalesModels.java</span></div><h1>SalesModels.java</h1><pre class="source lang-java linenums">/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package ph.com.guanzongroup.cas.sales.services;
+
+import ph.com.guanzongroup.cas.sales.model.*;
+import org.guanzon.appdriver.base.GRiderCAS;
+
+/**
+ *
+ * @author MIS-PC
+ */
+public class SalesModels {
+    
+<span class="fc" id="L17">    public SalesModels(GRiderCAS applicationDriver){</span>
+<span class="fc" id="L18">        poGRider = applicationDriver;</span>
+<span class="fc" id="L19">    }</span>
+    
+    public Model_Sales_Inquiry_Master SalesInquiryMaster(){
+<span class="pc bpc" id="L22" title="1 of 2 branches missed.">        if (poGRider == null){</span>
+<span class="nc" id="L23">            System.err.println(&quot;SalesModels.SalesInquiryMaster: Application driver is not set.&quot;);</span>
+<span class="nc" id="L24">            return null;</span>
+        }
+        
+<span class="pc bpc" id="L27" title="1 of 2 branches missed.">        if (poSalesInquiryMaster == null){</span>
+<span class="fc" id="L28">            poSalesInquiryMaster = new Model_Sales_Inquiry_Master();</span>
+<span class="fc" id="L29">            poSalesInquiryMaster.setApplicationDriver(poGRider);</span>
+<span class="fc" id="L30">            poSalesInquiryMaster.setXML(&quot;Model_Sales_Inquiry_Master&quot;);</span>
+<span class="fc" id="L31">            poSalesInquiryMaster.setTableName(&quot;Sales_Inquiry_Master&quot;);</span>
+<span class="fc" id="L32">            poSalesInquiryMaster.initialize();</span>
+        }
+
+<span class="fc" id="L35">        return poSalesInquiryMaster;</span>
+    }
+    
+    public Model_Sales_Inquiry_Detail SalesInquiryDetails(){
+<span class="pc bpc" id="L39" title="1 of 2 branches missed.">        if (poGRider == null){</span>
+<span class="nc" id="L40">            System.err.println(&quot;SalesModels.SalesInquiryDetails: Application driver is not set.&quot;);</span>
+<span class="nc" id="L41">            return null;</span>
+        }
+        
+<span class="pc bpc" id="L44" title="1 of 2 branches missed.">        if (poSalesInquiryDetail == null){</span>
+<span class="fc" id="L45">            poSalesInquiryDetail = new Model_Sales_Inquiry_Detail();</span>
+<span class="fc" id="L46">            poSalesInquiryDetail.setApplicationDriver(poGRider);</span>
+<span class="fc" id="L47">            poSalesInquiryDetail.setXML(&quot;Model_Sales_Inquiry_Detail&quot;);</span>
+<span class="fc" id="L48">            poSalesInquiryDetail.setTableName(&quot;Sales_Inquiry_Detail&quot;);</span>
+<span class="fc" id="L49">            poSalesInquiryDetail.initialize();</span>
+        }
+
+<span class="fc" id="L52">        return poSalesInquiryDetail;</span>
+    }
+    
+    public Model_Sales_Inquiry_Sources SalesInquirySources(){
+<span class="pc bpc" id="L56" title="1 of 2 branches missed.">        if (poGRider == null){</span>
+<span class="nc" id="L57">            System.err.println(&quot;SalesModels.SalesInquirySources: Application driver is not set.&quot;);</span>
+<span class="nc" id="L58">            return null;</span>
+        }
+        
+<span class="pc bpc" id="L61" title="1 of 2 branches missed.">        if (poSalesInquirySources == null){</span>
+<span class="fc" id="L62">            poSalesInquirySources = new Model_Sales_Inquiry_Sources();</span>
+<span class="fc" id="L63">            poSalesInquirySources.setApplicationDriver(poGRider);</span>
+<span class="fc" id="L64">            poSalesInquirySources.setXML(&quot;Model_Sales_Inquiry_Sources&quot;);</span>
+<span class="fc" id="L65">            poSalesInquirySources.setTableName(&quot;Sales_Inquiry_Sources&quot;);</span>
+<span class="fc" id="L66">            poSalesInquirySources.initialize();</span>
+        }
+
+<span class="fc" id="L69">        return poSalesInquirySources;</span>
+    }
+    
+    public Model_Salesman Salesman(){
+<span class="pc bpc" id="L73" title="1 of 2 branches missed.">        if (poGRider == null){</span>
+<span class="nc" id="L74">            System.err.println(&quot;SalesModels.Salesman: Application driver is not set.&quot;);</span>
+<span class="nc" id="L75">            return null;</span>
+        }
+        
+<span class="pc bpc" id="L78" title="1 of 2 branches missed.">        if (poSalesman == null){</span>
+<span class="fc" id="L79">            poSalesman = new Model_Salesman();</span>
+<span class="fc" id="L80">            poSalesman.setApplicationDriver(poGRider);</span>
+<span class="fc" id="L81">            poSalesman.setXML(&quot;Model_Salesman&quot;);</span>
+<span class="fc" id="L82">            poSalesman.setTableName(&quot;Salesman&quot;);</span>
+<span class="fc" id="L83">            poSalesman.initialize();</span>
+        }
+
+<span class="fc" id="L86">        return poSalesman;</span>
+    }
+    
+    public Model_Sales_Agent SalesAgent(){
+<span class="nc bnc" id="L90" title="All 2 branches missed.">        if (poGRider == null){</span>
+<span class="nc" id="L91">            System.err.println(&quot;SalesModels.SalesAgent: Application driver is not set.&quot;);</span>
+<span class="nc" id="L92">            return null;</span>
+        }
+        
+<span class="nc bnc" id="L95" title="All 2 branches missed.">        if (poSalesAgent == null){</span>
+<span class="nc" id="L96">            poSalesAgent = new Model_Sales_Agent();</span>
+<span class="nc" id="L97">            poSalesAgent.setApplicationDriver(poGRider);</span>
+<span class="nc" id="L98">            poSalesAgent.setXML(&quot;Model_Sales_Agent&quot;);</span>
+<span class="nc" id="L99">            poSalesAgent.setTableName(&quot;Sales_Agent&quot;);</span>
+<span class="nc" id="L100">            poSalesAgent.initialize();</span>
+        }
+
+<span class="nc" id="L103">        return poSalesAgent;</span>
+    }
+
+    public Model_Sales_Giveaways_Master SalesGiveawaysMaster(){
+<span class="pc bpc" id="L107" title="1 of 2 branches missed.">        if (poGRider == null){</span>
+<span class="nc" id="L108">            System.err.println(&quot;SalesModels.SalesGiveawaysMaster: Application driver is not set.&quot;);</span>
+<span class="nc" id="L109">            return null;</span>
+        }
+
+<span class="pc bpc" id="L112" title="1 of 2 branches missed.">        if (poSalesGiveawaysMaster == null){</span>
+<span class="fc" id="L113">            poSalesGiveawaysMaster = new Model_Sales_Giveaways_Master();</span>
+<span class="fc" id="L114">            poSalesGiveawaysMaster.setApplicationDriver(poGRider);</span>
+<span class="fc" id="L115">            poSalesGiveawaysMaster.setXML(&quot;Model_Sales_Giveaways_Master&quot;);</span>
+<span class="fc" id="L116">            poSalesGiveawaysMaster.setTableName(&quot;Sales_Giveaways_Master&quot;);</span>
+<span class="fc" id="L117">            poSalesGiveawaysMaster.initialize();</span>
+        }
+
+<span class="fc" id="L120">        return poSalesGiveawaysMaster;</span>
+    }
+
+    public Model_Sales_Giveaways_Item SalesGiveawaysItem(){
+<span class="pc bpc" id="L124" title="1 of 2 branches missed.">        if (poGRider == null){</span>
+<span class="nc" id="L125">            System.err.println(&quot;SalesModels.SalesGiveawaysItem: Application driver is not set.&quot;);</span>
+<span class="nc" id="L126">            return null;</span>
+        }
+
+<span class="pc bpc" id="L129" title="1 of 2 branches missed.">        if (poSalesGiveawaysItem == null){</span>
+<span class="fc" id="L130">            poSalesGiveawaysItem = new Model_Sales_Giveaways_Item();</span>
+<span class="fc" id="L131">            poSalesGiveawaysItem.setApplicationDriver(poGRider);</span>
+<span class="fc" id="L132">            poSalesGiveawaysItem.setXML(&quot;Model_Sales_Giveaways_Item&quot;);</span>
+<span class="fc" id="L133">            poSalesGiveawaysItem.setTableName(&quot;Sales_Giveaways_Item&quot;);</span>
+<span class="fc" id="L134">            poSalesGiveawaysItem.initialize();</span>
+        }
+
+<span class="fc" id="L137">        return poSalesGiveawaysItem;</span>
+    }
+
+    public Model_Sales_Inquiry_Requirements SalesInquiryRequirements(){
+<span class="nc bnc" id="L141" title="All 2 branches missed.">        if (poGRider == null){</span>
+<span class="nc" id="L142">            System.err.println(&quot;SalesModels.SalesInquiryRequirements: Application driver is not set.&quot;);</span>
+<span class="nc" id="L143">            return null;</span>
+        }
+        
+<span class="nc bnc" id="L146" title="All 2 branches missed.">        if (poSalesInquiryRequirements == null){</span>
+<span class="nc" id="L147">            poSalesInquiryRequirements = new Model_Sales_Inquiry_Requirements();</span>
+<span class="nc" id="L148">            poSalesInquiryRequirements.setApplicationDriver(poGRider);</span>
+<span class="nc" id="L149">            poSalesInquiryRequirements.setXML(&quot;Model_Sales_Inquiry_Requirements&quot;);</span>
+<span class="nc" id="L150">            poSalesInquiryRequirements.setTableName(&quot;Sales_Inquiry_Requirements&quot;);</span>
+<span class="nc" id="L151">            poSalesInquiryRequirements.initialize();</span>
+        }
+
+<span class="nc" id="L154">        return poSalesInquiryRequirements;</span>
+    }
+    
+    public Model_Bank_Application BankApplication(){
+<span class="nc bnc" id="L158" title="All 2 branches missed.">        if (poGRider == null){</span>
+<span class="nc" id="L159">            System.err.println(&quot;SalesModels.BankApplication: Application driver is not set.&quot;);</span>
+<span class="nc" id="L160">            return null;</span>
+        }
+        
+<span class="nc bnc" id="L163" title="All 2 branches missed.">        if (poBankApplication == null){</span>
+<span class="nc" id="L164">            poBankApplication = new Model_Bank_Application();</span>
+<span class="nc" id="L165">            poBankApplication.setApplicationDriver(poGRider);</span>
+<span class="nc" id="L166">            poBankApplication.setXML(&quot;Model_Bank_Application&quot;);</span>
+<span class="nc" id="L167">            poBankApplication.setTableName(&quot;Bank_Application&quot;);</span>
+<span class="nc" id="L168">            poBankApplication.initialize();</span>
+        }
+
+<span class="nc" id="L171">        return poBankApplication;</span>
+    }
+    
+    public Model_Requirement_Source RequirementSource(){
+<span class="nc bnc" id="L175" title="All 2 branches missed.">        if (poGRider == null){</span>
+<span class="nc" id="L176">            System.err.println(&quot;SalesModels.RequirementSource: Application driver is not set.&quot;);</span>
+<span class="nc" id="L177">            return null;</span>
+        }
+        
+<span class="nc bnc" id="L180" title="All 2 branches missed.">        if (poRequirementSource == null){</span>
+<span class="nc" id="L181">            poRequirementSource = new Model_Requirement_Source();</span>
+<span class="nc" id="L182">            poRequirementSource.setApplicationDriver(poGRider);</span>
+<span class="nc" id="L183">            poRequirementSource.setXML(&quot;Model_Requirement_Source&quot;);</span>
+<span class="nc" id="L184">            poRequirementSource.setTableName(&quot;Requirement_Source&quot;);</span>
+<span class="nc" id="L185">            poRequirementSource.initialize();</span>
+        }
+
+<span class="nc" id="L188">        return poRequirementSource;</span>
+    }
+    
+    public Model_Requirement_Source_PerGroup RequirementSourcePerGroup(){
+<span class="nc bnc" id="L192" title="All 2 branches missed.">        if (poGRider == null){</span>
+<span class="nc" id="L193">            System.err.println(&quot;SalesModels.RequirementSourcePerGroup: Application driver is not set.&quot;);</span>
+<span class="nc" id="L194">            return null;</span>
+        }
+        
+<span class="nc bnc" id="L197" title="All 2 branches missed.">        if (poRequirementSourcePerGroup == null){</span>
+<span class="nc" id="L198">            poRequirementSourcePerGroup = new Model_Requirement_Source_PerGroup();</span>
+<span class="nc" id="L199">            poRequirementSourcePerGroup.setApplicationDriver(poGRider);</span>
+<span class="nc" id="L200">            poRequirementSourcePerGroup.setXML(&quot;Model_Requirement_Source_PerGroup&quot;);</span>
+<span class="nc" id="L201">            poRequirementSourcePerGroup.setTableName(&quot;Requirement_Source_PerGroup&quot;);</span>
+<span class="nc" id="L202">            poRequirementSourcePerGroup.initialize();</span>
+        }
+
+<span class="nc" id="L205">        return poRequirementSourcePerGroup;</span>
+    }
+
+    public Model_Customer_Inquiry_FollowUp CustomerInquiryFollowUp(){
+<span class="pc bpc" id="L209" title="1 of 2 branches missed.">        if (poGRider == null){</span>
+<span class="nc" id="L210">            System.err.println(&quot;SalesModels.CustomerInquiryFollowUp: Application driver is not set.&quot;);</span>
+<span class="nc" id="L211">            return null;</span>
+        }
+
+<span class="pc bpc" id="L214" title="1 of 2 branches missed.">        if (poSalesInquiryFollowUp == null){</span>
+<span class="fc" id="L215">            poSalesInquiryFollowUp = new Model_Customer_Inquiry_FollowUp();</span>
+<span class="fc" id="L216">            poSalesInquiryFollowUp.setApplicationDriver(poGRider);</span>
+<span class="fc" id="L217">            poSalesInquiryFollowUp.setXML(&quot;Model_Customer_Inquiry_FollowUp&quot;);</span>
+<span class="fc" id="L218">            poSalesInquiryFollowUp.setTableName(&quot;Customer_Inquiry_FollowUp&quot;);</span>
+<span class="fc" id="L219">            poSalesInquiryFollowUp.initialize();</span>
+        }
+
+<span class="fc" id="L222">        return poSalesInquiryFollowUp;</span>
+    }
+
+    public Model_Sales_Commitment_Master SalesCommitmentMaster(){
+<span class="nc bnc" id="L226" title="All 2 branches missed.">        if (poGRider == null){</span>
+<span class="nc" id="L227">            System.err.println(&quot;SalesModels.SalesCommitmentMaster: Application driver is not set.&quot;);</span>
+<span class="nc" id="L228">            return null;</span>
+        }
+        
+<span class="nc bnc" id="L231" title="All 2 branches missed.">        if (poSalesCommitmentMaster == null){</span>
+<span class="nc" id="L232">            poSalesCommitmentMaster = new Model_Sales_Commitment_Master();</span>
+<span class="nc" id="L233">            poSalesCommitmentMaster.setApplicationDriver(poGRider);</span>
+<span class="nc" id="L234">            poSalesCommitmentMaster.setXML(&quot;Model_Sales_Commitment_Master&quot;);</span>
+<span class="nc" id="L235">            poSalesCommitmentMaster.setTableName(&quot;Sales_Commitment_Master&quot;);</span>
+<span class="nc" id="L236">            poSalesCommitmentMaster.initialize();</span>
+        }
+
+<span class="nc" id="L239">        return poSalesCommitmentMaster;</span>
+    }
+    
+    public Model_Sales_Commitment_Detail SalesCommitmentDetail(){
+<span class="nc bnc" id="L243" title="All 2 branches missed.">        if (poGRider == null){</span>
+<span class="nc" id="L244">            System.err.println(&quot;SalesModels.SalesCommitmentDetail: Application driver is not set.&quot;);</span>
+<span class="nc" id="L245">            return null;</span>
+        }
+        
+<span class="nc bnc" id="L248" title="All 2 branches missed.">        if (poSalesCommitmentDetail == null){</span>
+<span class="nc" id="L249">            poSalesCommitmentDetail = new Model_Sales_Commitment_Detail();</span>
+<span class="nc" id="L250">            poSalesCommitmentDetail.setApplicationDriver(poGRider);</span>
+<span class="nc" id="L251">            poSalesCommitmentDetail.setXML(&quot;Model_Sales_Commitment_Detail&quot;);</span>
+<span class="nc" id="L252">            poSalesCommitmentDetail.setTableName(&quot;Sales_Commitment_Detail&quot;);</span>
+<span class="nc" id="L253">            poSalesCommitmentDetail.initialize();</span>
+        }
+
+<span class="nc" id="L256">        return poSalesCommitmentDetail;</span>
+    }
+
+    public Model_Vehicle_Release_Master VehicleReleaseMaster(){
+<span class="nc bnc" id="L260" title="All 2 branches missed.">        if (poGRider == null){</span>
+<span class="nc" id="L261">            System.err.println(&quot;SalesModels.VehicleReleaseMaster: Application driver is not set.&quot;);</span>
+<span class="nc" id="L262">            return null;</span>
+        }
+
+<span class="nc bnc" id="L265" title="All 2 branches missed.">        if (poVehicleReleaseMaster == null){</span>
+<span class="nc" id="L266">            poVehicleReleaseMaster = new Model_Vehicle_Release_Master();</span>
+<span class="nc" id="L267">            poVehicleReleaseMaster.setApplicationDriver(poGRider);</span>
+<span class="nc" id="L268">            poVehicleReleaseMaster.setXML(&quot;Model_Vehicle_Release_Master&quot;);</span>
+<span class="nc" id="L269">            poVehicleReleaseMaster.setTableName(&quot;Vehicle_Release_Master&quot;);</span>
+<span class="nc" id="L270">            poVehicleReleaseMaster.initialize();</span>
+        }
+
+<span class="nc" id="L273">        return poVehicleReleaseMaster;</span>
+    }
+    public Model_Vsp_Master VspMaster(){
+<span class="nc bnc" id="L276" title="All 2 branches missed.">        if (poGRider == null){</span>
+<span class="nc" id="L277">            System.err.println(&quot;SalesModels.Vsp: Application driver is not set.&quot;);</span>
+<span class="nc" id="L278">            return null;</span>
+        }
+
+<span class="nc bnc" id="L281" title="All 2 branches missed.">        if (poVspMaster == null){</span>
+<span class="nc" id="L282">            poVspMaster = new Model_Vsp_Master();</span>
+<span class="nc" id="L283">            poVspMaster.setApplicationDriver(poGRider);</span>
+<span class="nc" id="L284">            poVspMaster.setXML(&quot;Model_Vsp_Master&quot;);</span>
+<span class="nc" id="L285">            poVspMaster.setTableName(&quot;Vsp_Master&quot;);</span>
+<span class="nc" id="L286">            poVspMaster.initialize();</span>
+        }
+
+<span class="nc" id="L289">        return poVspMaster;</span>
+    }
+
+    public Model_Sales_Reservation_Master Sales_Reservation_Master(){
+<span class="pc bpc" id="L293" title="1 of 2 branches missed.">        if (poGRider == null){</span>
+<span class="nc" id="L294">            System.err.println(&quot;CashflowModels.Sales Reservation Master: Application driver is not set.&quot;);</span>
+<span class="nc" id="L295">            return null;</span>
+        }
+
+<span class="pc bpc" id="L298" title="1 of 2 branches missed.">        if (poSalesReservationMaster == null){</span>
+<span class="fc" id="L299">            poSalesReservationMaster = new Model_Sales_Reservation_Master();</span>
+<span class="fc" id="L300">            poSalesReservationMaster.setApplicationDriver(poGRider);</span>
+<span class="fc" id="L301">            poSalesReservationMaster.setXML(&quot;Model_Sales_Reservation_Master&quot;);</span>
+<span class="fc" id="L302">            poSalesReservationMaster.setTableName(&quot;Sales_Reservation_Master&quot;);</span>
+<span class="fc" id="L303">            poSalesReservationMaster.initialize();</span>
+        }
+
+<span class="fc" id="L306">        return poSalesReservationMaster;</span>
+    }
+
+    public Model_Sales_Reservation_Detail Sales_Reservation_Detail(){
+<span class="pc bpc" id="L310" title="1 of 2 branches missed.">        if (poGRider == null){</span>
+<span class="nc" id="L311">            System.err.println(&quot;CashflowModels.Sales Reservation Detail: Application driver is not set.&quot;);</span>
+<span class="nc" id="L312">            return null;</span>
+        }
+
+<span class="pc bpc" id="L315" title="1 of 2 branches missed.">        if (poSalesReservationDetail == null){</span>
+<span class="fc" id="L316">            poSalesReservationDetail = new Model_Sales_Reservation_Detail();</span>
+<span class="fc" id="L317">            poSalesReservationDetail.setApplicationDriver(poGRider);</span>
+<span class="fc" id="L318">            poSalesReservationDetail.setXML(&quot;Model_Sales_Reservation_Detail&quot;);</span>
+<span class="fc" id="L319">            poSalesReservationDetail.setTableName(&quot;Sales_Reservation_Detail&quot;);</span>
+<span class="fc" id="L320">            poSalesReservationDetail.initialize();</span>
+        }
+
+<span class="fc" id="L323">        return poSalesReservationDetail;</span>
+    }
+    
+    @Override
+    protected void finalize() throws Throwable {
+        try {                    
+<span class="fc" id="L329">            poSalesInquiryMaster = null;</span>
+<span class="fc" id="L330">            poSalesInquiryDetail = null;</span>
+<span class="fc" id="L331">            poSalesInquirySources = null;</span>
+<span class="fc" id="L332">            poSalesman = null;</span>
+<span class="fc" id="L333">            poSalesAgent = null;</span>
+<span class="fc" id="L334">            poSalesInquiryRequirements = null;</span>
+<span class="fc" id="L335">            poSalesGiveawaysMaster = null;</span>
+<span class="fc" id="L336">            poSalesGiveawaysItem = null;</span>
+<span class="fc" id="L337">            poRequirementSource = null;</span>
+<span class="fc" id="L338">            poRequirementSourcePerGroup = null;</span>
+<span class="fc" id="L339">            poSalesInquiryFollowUp = null;</span>
+<span class="fc" id="L340">            poSalesCommitmentMaster = null;</span>
+<span class="fc" id="L341">            poSalesCommitmentDetail = null;</span>
+<span class="fc" id="L342">            poVehicleReleaseMaster = null;</span>
+<span class="fc" id="L343">            poVspMaster = null;</span>
+<span class="fc" id="L344">            poSalesReservationMaster = null;</span>
+<span class="fc" id="L345">            poSalesReservationDetail = null;</span>
+
+<span class="fc" id="L347">            poGRider = null;</span>
+        } finally {
+<span class="fc" id="L349">            super.finalize();</span>
+        }
+<span class="fc" id="L351">    }</span>
+    
+    private GRiderCAS poGRider;
+
+    private Model_Sales_Inquiry_Master poSalesInquiryMaster;
+    private Model_Sales_Inquiry_Detail poSalesInquiryDetail;
+    private Model_Sales_Inquiry_Sources poSalesInquirySources;
+    private Model_Salesman poSalesman;
+    private Model_Sales_Agent poSalesAgent;
+    private Model_Sales_Inquiry_Requirements poSalesInquiryRequirements;
+    private Model_Sales_Giveaways_Master poSalesGiveawaysMaster;
+    private Model_Sales_Giveaways_Item poSalesGiveawaysItem;
+    private Model_Bank_Application poBankApplication;
+    private Model_Requirement_Source poRequirementSource;
+    private Model_Requirement_Source_PerGroup poRequirementSourcePerGroup;
+    private Model_Customer_Inquiry_FollowUp poSalesInquiryFollowUp;
+    private Model_Sales_Commitment_Master poSalesCommitmentMaster;
+    private Model_Sales_Commitment_Detail poSalesCommitmentDetail;
+    private Model_Vehicle_Release_Master poVehicleReleaseMaster;
+    private Model_Vsp_Master poVspMaster;
+    private Model_Sales_Reservation_Master poSalesReservationMaster;
+    private Model_Sales_Reservation_Detail poSalesReservationDetail;
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

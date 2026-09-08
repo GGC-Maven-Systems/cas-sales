@@ -1,10 +1,12 @@
+testNewTransaction.class
+testUnifiedSourceList.class
 testSalesInquirySources.class
 testRequirementSourcePerGroup.class
 testSalesInquiry.class
 testSalesAgent.class
 testRequirementSource.class
+SalesReservationTest.class
 testSalesBankApplication.class
 SalesGiveawaysTest.class
 testSalesman.class
-SalesCommitmentTest.class
 CustomerInquiryFollowUpTest.class

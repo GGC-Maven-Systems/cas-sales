@@ -1,0 +1,328 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>RequirementsSourcePerGroup.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">cas-sales</a> &gt; <a href="index.source.html" class="el_package">ph.com.guanzongroup.cas.sales</a> &gt; <span class="el_source">RequirementsSourcePerGroup.java</span></div><h1>RequirementsSourcePerGroup.java</h1><pre class="source lang-java linenums">/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package ph.com.guanzongroup.cas.sales;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import org.guanzon.appdriver.agent.ShowDialogFX;
+import org.guanzon.appdriver.agent.services.Model;
+import org.guanzon.appdriver.agent.services.Parameter;
+import org.guanzon.appdriver.base.GuanzonException;
+import org.guanzon.appdriver.base.MiscUtil;
+import org.guanzon.appdriver.base.SQLUtil;
+import org.guanzon.appdriver.constant.EditMode;
+import org.guanzon.appdriver.constant.RecordStatus;
+import org.guanzon.appdriver.constant.UserRight;
+import org.json.simple.JSONObject;
+import ph.com.guanzongroup.cas.sales.model.Model_Requirement_Source_PerGroup;
+import ph.com.guanzongroup.cas.sales.services.SalesControllers;
+import ph.com.guanzongroup.cas.sales.services.SalesModels;
+
+/**
+ *
+ * @author Arsiela
+ */
+<span class="nc" id="L32">public class RequirementsSourcePerGroup extends Parameter {</span>
+    Model_Requirement_Source_PerGroup poModel;
+    public List&lt;Model&gt; paModel;
+     @Override
+    public void initialize() throws SQLException, GuanzonException {
+<span class="nc" id="L37">        psRecdStat = RecordStatus.ACTIVE;</span>
+<span class="nc" id="L38">        poModel = new SalesModels(poGRider).RequirementSourcePerGroup();</span>
+<span class="nc" id="L39">        paModel = new ArrayList&lt;&gt;();</span>
+      
+<span class="nc" id="L41">      super.initialize();</span>
+<span class="nc" id="L42">    }</span>
+
+    @Override
+    public Model_Requirement_Source_PerGroup getModel() {
+<span class="nc" id="L46">        return poModel;</span>
+    }
+    
+    private Model_Requirement_Source_PerGroup RequirementsSourcePerGroup() {
+<span class="nc" id="L50">        return new SalesModels(poGRider).RequirementSourcePerGroup();</span>
+    }
+    
+    public Model_Requirement_Source_PerGroup ParameterList(int row) {
+<span class="nc" id="L54">        return (Model_Requirement_Source_PerGroup) paModel.get(row);</span>
+    }
+
+    public int getParameterCount() {
+<span class="nc" id="L58">        return this.paModel.size();</span>
+    }
+    
+    public JSONObject DeactivateRecord()
+            throws SQLException,
+            GuanzonException,
+            CloneNotSupportedException {
+<span class="nc" id="L65">        poJSON = deactivateRecord();</span>
+<span class="nc bnc" id="L66" title="All 2 branches missed.">        if (&quot;error&quot;.equals(poJSON.get(&quot;result&quot;))) {</span>
+<span class="nc" id="L67">            return poJSON;</span>
+        }
+<span class="nc" id="L69">        poJSON.put(&quot;result&quot;, &quot;success&quot;);</span>
+<span class="nc" id="L70">        poJSON.put(&quot;message&quot;, &quot;Record deactivated successfully.&quot;);</span>
+<span class="nc" id="L71">        return poJSON;</span>
+    }
+    
+    public JSONObject ActivateRecord()
+            throws SQLException,
+            GuanzonException,
+            CloneNotSupportedException {
+<span class="nc" id="L78">        poJSON = activateRecord();</span>
+<span class="nc bnc" id="L79" title="All 2 branches missed.">        if (&quot;error&quot;.equals(poJSON.get(&quot;result&quot;))) {</span>
+<span class="nc" id="L80">            return poJSON;</span>
+        }
+<span class="nc" id="L82">        poJSON.put(&quot;result&quot;, &quot;success&quot;);</span>
+<span class="nc" id="L83">        poJSON.put(&quot;message&quot;, &quot;Record activated successfully.&quot;);</span>
+<span class="nc" id="L84">        return poJSON;</span>
+    }
+  
+    @Override
+    public JSONObject isEntryOkay() throws SQLException, GuanzonException {
+<span class="nc" id="L89">      poJSON = new JSONObject();</span>
+      
+<span class="nc bnc" id="L91" title="All 2 branches missed.">        if (poGRider.getUserLevel() &lt; UserRight.SYSADMIN) {</span>
+<span class="nc" id="L92">            poJSON.put(&quot;result&quot;, &quot;error&quot;);</span>
+<span class="nc" id="L93">            poJSON.put(&quot;message&quot;, &quot;User is not allowed to save record.&quot;);</span>
+<span class="nc" id="L94">            return poJSON;</span>
+        } else {
+<span class="nc bnc" id="L96" title="All 2 branches missed.">            if (poModel.getRequirementId().isEmpty()) {</span>
+<span class="nc" id="L97">                poJSON.put(&quot;result&quot;, &quot;error&quot;);</span>
+<span class="nc" id="L98">                poJSON.put(&quot;message&quot;, &quot;Requirement id must not be empty.&quot;);</span>
+<span class="nc" id="L99">                return poJSON;</span>
+            }
+<span class="nc bnc" id="L101" title="All 2 branches missed.">            if (poModel.getRequirementCode().isEmpty()) {</span>
+<span class="nc" id="L102">                poJSON.put(&quot;result&quot;, &quot;error&quot;);</span>
+<span class="nc" id="L103">                poJSON.put(&quot;message&quot;, &quot;Requirement code must not be empty.&quot;);</span>
+<span class="nc" id="L104">                return poJSON;</span>
+            }
+<span class="nc bnc" id="L106" title="All 2 branches missed.">            if (poModel.getCustomerGroup().isEmpty()) {</span>
+<span class="nc" id="L107">                poJSON.put(&quot;result&quot;, &quot;error&quot;);</span>
+<span class="nc" id="L108">                poJSON.put(&quot;message&quot;, &quot;Customer Group cannot be empty.&quot;);</span>
+<span class="nc" id="L109">                return poJSON;</span>
+            } 
+<span class="nc bnc" id="L111" title="All 2 branches missed.">            if (poModel.getPaymentMode().isEmpty()) {</span>
+<span class="nc" id="L112">                poJSON.put(&quot;result&quot;, &quot;error&quot;);</span>
+<span class="nc" id="L113">                poJSON.put(&quot;message&quot;, &quot;Payment mode cannot be empty.&quot;);</span>
+<span class="nc" id="L114">                return poJSON;</span>
+            } 
+
+<span class="nc bnc" id="L117" title="All 2 branches missed.">            if(getEditMode() == EditMode.ADDNEW){</span>
+<span class="nc" id="L118">                poJSON = checkExistingSource();</span>
+<span class="nc bnc" id="L119" title="All 2 branches missed.">                if(&quot;error&quot;.equals((String) poJSON.get(&quot;result&quot;))){</span>
+<span class="nc" id="L120">                    return poJSON;</span>
+                }
+            }
+        }
+        
+<span class="nc" id="L125">        poModel.setModifyingId(poGRider.Encrypt(poGRider.getUserID()));</span>
+<span class="nc" id="L126">        poModel.setModifiedDate(poGRider.getServerDate());</span>
+<span class="nc" id="L127">        poJSON.put(&quot;result&quot;, &quot;success&quot;);</span>
+<span class="nc" id="L128">        return poJSON;</span>
+    }
+    
+    private JSONObject checkExistingSource() throws SQLException, GuanzonException{
+<span class="nc" id="L132">        poJSON = new JSONObject();</span>
+<span class="nc" id="L133">        String lsSQL = MiscUtil.addCondition(getSQ_Browse(), &quot; a.cPayModex = &quot; +  SQLUtil.toSQL(poModel.getPaymentMode())</span>
+<span class="nc" id="L134">                                                            + &quot; AND a.cCustGrpx = &quot; +  SQLUtil.toSQL(poModel.getCustomerGroup())</span>
+<span class="nc" id="L135">                                                            + &quot; AND a.sRqrmtCde = &quot; +  SQLUtil.toSQL(poModel.getRequirementCode()));</span>
+<span class="nc" id="L136">        System.out.println(&quot;Execute SQL : &quot; + lsSQL);</span>
+<span class="nc" id="L137">        ResultSet loRS = poGRider.executeQuery(lsSQL);</span>
+<span class="nc bnc" id="L138" title="All 2 branches missed.">        if (MiscUtil.RecordCount(loRS) &gt;= 0) {</span>
+<span class="nc bnc" id="L139" title="All 2 branches missed.">            while (loRS.next()) {</span>
+                // Print the result set
+<span class="nc" id="L141">                System.out.println(&quot;sRqrmtIDx: &quot; + loRS.getString(&quot;sRqrmtIDx&quot;));</span>
+<span class="nc" id="L142">                System.out.println(&quot;sRqrmtCde: &quot; + loRS.getString(&quot;sRqrmtCde&quot;));</span>
+<span class="nc" id="L143">                System.out.println(&quot;------------------------------------------------------------------------------&quot;);</span>
+
+<span class="nc" id="L145">                poJSON.put(&quot;result&quot;, &quot;error&quot;);</span>
+<span class="nc" id="L146">                poJSON.put(&quot;message&quot;, poModel.RequirementSource().getDescription()+ &quot; already exists.&quot;);</span>
+            }
+        } else {
+<span class="nc" id="L149">            poJSON.put(&quot;result&quot;, &quot;success&quot;);</span>
+<span class="nc" id="L150">            poJSON.put(&quot;continue&quot;, true);</span>
+<span class="nc" id="L151">            poJSON.put(&quot;message&quot;, &quot;No record found.&quot;);</span>
+        }
+<span class="nc" id="L153">        MiscUtil.close(loRS);</span>
+        
+<span class="nc" id="L155">        return poJSON;</span>
+    
+    }
+    
+    @Override
+    public JSONObject searchRecord(String value, boolean byCode) throws SQLException, GuanzonException {
+<span class="nc" id="L161">        String lsCondition = &quot;&quot;;</span>
+<span class="nc bnc" id="L162" title="All 2 branches missed.">        if (psRecdStat != null) {</span>
+<span class="nc bnc" id="L163" title="All 2 branches missed.">            if (psRecdStat.length() &gt; 1) {</span>
+<span class="nc bnc" id="L164" title="All 2 branches missed.">                for (int lnCtr = 0; lnCtr &lt;= psRecdStat.length() - 1; lnCtr++) {</span>
+<span class="nc" id="L165">                    lsCondition += &quot;, &quot; + SQLUtil.toSQL(Character.toString(psRecdStat.charAt(lnCtr)));</span>
+                }
+<span class="nc" id="L167">                lsCondition = &quot; a.cRecdStat IN (&quot; + lsCondition.substring(2) + &quot;)&quot;;</span>
+            } else {
+<span class="nc" id="L169">                lsCondition = &quot; a.cRecdStat = &quot; + SQLUtil.toSQL(psRecdStat);</span>
+            }
+        }
+        
+<span class="nc" id="L173">        String lsSQL = getSQ_Browse();</span>
+<span class="nc bnc" id="L174" title="All 2 branches missed.">        if(!lsCondition.isEmpty()){</span>
+<span class="nc" id="L175">            lsSQL = MiscUtil.addCondition(lsSQL, lsCondition);</span>
+        }
+
+<span class="nc" id="L178">        System.out.println(&quot;Executing SQL: &quot; + lsSQL);</span>
+<span class="nc" id="L179">        poJSON = ShowDialogFX.Browse(poGRider,</span>
+                lsSQL,
+                value,
+                &quot;Requirement ID»Description»Customer Group»Payment Mode&quot;,
+                &quot;sRqrmtIDx»sDescript»Customer_Group»PaymentMode&quot;,
+<span class="nc bnc" id="L184" title="All 2 branches missed.">                &quot;a.sRqrmtIDx»b.sDescript»&quot;+getCustomerGroupCase()+&quot;»&quot; + getPaymentModeCase(),</span>
+                byCode ? 0 : 1);
+
+<span class="nc bnc" id="L187" title="All 2 branches missed.">        if (poJSON != null) {</span>
+<span class="nc" id="L188">            return poModel.openRecord((String) poJSON.get(&quot;sRqrmtIDx&quot;));</span>
+        } else {
+<span class="nc" id="L190">            poJSON = new JSONObject();</span>
+<span class="nc" id="L191">            poJSON.put(&quot;result&quot;, &quot;error&quot;);</span>
+<span class="nc" id="L192">            poJSON.put(&quot;message&quot;, &quot;No record loaded.&quot;);</span>
+<span class="nc" id="L193">            return poJSON;</span>
+        }
+    }
+    
+     public JSONObject SearchRequirmentSource(String value, boolean byCode)
+            throws SQLException,
+            GuanzonException {
+<span class="nc" id="L200">        poJSON = new JSONObject();</span>
+
+<span class="nc" id="L202">        RequirementsSource object = new SalesControllers(poGRider, logwrapr).RequirementsSource();</span>
+<span class="nc" id="L203">        object.setRecordStatus(RecordStatus.ACTIVE);</span>
+<span class="nc" id="L204">        poJSON = object.searchRecord(value, byCode);</span>
+<span class="nc bnc" id="L205" title="All 2 branches missed.">        if (&quot;success&quot;.equals((String) poJSON.get(&quot;result&quot;))) {</span>
+<span class="nc" id="L206">            getModel().setRequirementCode(object.getModel().getRequirementCode());</span>
+        }
+
+<span class="nc" id="L209">        return poJSON;</span>
+    }
+     
+    /**
+     * Load parameter list
+     * @param fsCustomerType
+     * @param fsPaymentMode
+     * @return 
+     */
+    public JSONObject loadParameterList(String fsCustomerType, String fsPaymentMode){
+<span class="nc" id="L219">        poJSON = new JSONObject();</span>
+        try {
+<span class="nc bnc" id="L221" title="All 4 branches missed.">            fsCustomerType = (fsCustomerType == null || &quot;-1&quot;.equals(fsCustomerType)) ? &quot;&quot; : fsCustomerType;</span>
+<span class="nc bnc" id="L222" title="All 4 branches missed.">            fsPaymentMode = (fsPaymentMode == null || &quot;-1&quot;.equals(fsPaymentMode)) ? &quot;&quot; : fsPaymentMode;</span>
+            
+<span class="nc" id="L224">            String lsSQL = MiscUtil.addCondition(getSQ_Browse(),</span>
+<span class="nc" id="L225">                    &quot; a.cCustGrpx LIKE &quot; + SQLUtil.toSQL(&quot;%&quot;+fsCustomerType)</span>
+<span class="nc" id="L226">                + &quot; AND a.cPayModex LIKE &quot; + SQLUtil.toSQL(&quot;%&quot;+fsPaymentMode)</span>
+            );
+            
+<span class="nc" id="L229">            String lsStatus = &quot;&quot;;</span>
+<span class="nc bnc" id="L230" title="All 2 branches missed.">            if (psRecdStat != null) {</span>
+<span class="nc bnc" id="L231" title="All 2 branches missed.">                if (psRecdStat.length() &gt; 1) {</span>
+<span class="nc bnc" id="L232" title="All 2 branches missed.">                    for (int lnCtr = 0; lnCtr &lt;= psRecdStat.length() - 1; lnCtr++) {</span>
+<span class="nc" id="L233">                        lsStatus += &quot;, &quot; + SQLUtil.toSQL(Character.toString(psRecdStat.charAt(lnCtr)));</span>
+                    }
+<span class="nc" id="L235">                    lsStatus = &quot; AND a.cRecdStat IN (&quot; + lsStatus.substring(2) + &quot;)&quot;;</span>
+                } else {
+<span class="nc" id="L237">                    lsStatus = &quot; AND a.cRecdStat = &quot; + SQLUtil.toSQL(psRecdStat);</span>
+                }
+            }
+
+<span class="nc" id="L241">            lsSQL = lsSQL + &quot;&quot; + lsStatus +&quot; GROUP BY a.sRqrmtIDx ORDER BY a.cCustGrpx, a.cPayModex ASC &quot;;</span>
+
+<span class="nc" id="L243">            System.out.println(&quot;Executing SQL: &quot; + lsSQL);</span>
+<span class="nc" id="L244">            ResultSet loRS = poGRider.executeQuery(lsSQL);</span>
+<span class="nc" id="L245">            poJSON = new JSONObject();</span>
+
+<span class="nc" id="L247">            int lnctr = 0;</span>
+
+<span class="nc bnc" id="L249" title="All 2 branches missed.">            if (MiscUtil.RecordCount(loRS) &gt;= 0) {</span>
+<span class="nc" id="L250">                paModel = new ArrayList&lt;&gt;();</span>
+<span class="nc bnc" id="L251" title="All 2 branches missed.">                while (loRS.next()) {</span>
+                    // Print the result set
+<span class="nc" id="L253">                    System.out.println(&quot;sRqrmtIDx: &quot; + loRS.getString(&quot;sRqrmtIDx&quot;));</span>
+<span class="nc" id="L254">                    System.out.println(&quot;cCustGrpx: &quot; + loRS.getString(&quot;cCustGrpx&quot;));</span>
+<span class="nc" id="L255">                    System.out.println(&quot;cPayModex: &quot; + loRS.getString(&quot;cPayModex&quot;));</span>
+<span class="nc" id="L256">                    System.out.println(&quot;sDescript: &quot; + loRS.getString(&quot;sDescript&quot;));</span>
+<span class="nc" id="L257">                    System.out.println(&quot;------------------------------------------------------------------------------&quot;);</span>
+
+<span class="nc" id="L259">                    paModel.add(RequirementsSourcePerGroup());</span>
+<span class="nc" id="L260">                    paModel.get(paModel.size() - 1).openRecord(loRS.getString(&quot;sRqrmtIDx&quot;));</span>
+<span class="nc" id="L261">                    lnctr++;</span>
+                }
+
+<span class="nc" id="L264">                System.out.println(&quot;Records found: &quot; + lnctr);</span>
+<span class="nc" id="L265">                poJSON.put(&quot;result&quot;, &quot;success&quot;);</span>
+<span class="nc" id="L266">                poJSON.put(&quot;message&quot;, &quot;Record loaded successfully.&quot;);</span>
+            } else {
+<span class="nc" id="L268">                paModel = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L269">                paModel.add(RequirementsSourcePerGroup());</span>
+<span class="nc" id="L270">                poJSON.put(&quot;result&quot;, &quot;error&quot;);</span>
+<span class="nc" id="L271">                poJSON.put(&quot;continue&quot;, true);</span>
+<span class="nc" id="L272">                poJSON.put(&quot;message&quot;, &quot;No record found.&quot;);</span>
+            }
+<span class="nc" id="L274">            MiscUtil.close(loRS);</span>
+<span class="nc" id="L275">        }catch (GuanzonException | SQLException ex) {</span>
+<span class="nc" id="L276">            Logger.getLogger(getClass().getName()).log(Level.SEVERE, MiscUtil.getException(ex), ex);</span>
+<span class="nc" id="L277">            poJSON.put(&quot;result&quot;, &quot;error&quot;);</span>
+<span class="nc" id="L278">            poJSON.put(&quot;message&quot;, MiscUtil.getException(ex));</span>
+<span class="nc" id="L279">        }</span>
+<span class="nc" id="L280">        poJSON.put(&quot;result&quot;, &quot;success&quot;);</span>
+<span class="nc" id="L281">        return poJSON;</span>
+    }
+     
+    private String getPaymentModeCase(){
+<span class="nc" id="L285">        return &quot; CASE 					 &quot;</span>
+                + &quot;   WHEN a.cPayModex = '0' THEN 'Cash'         &quot;
+                + &quot;   WHEN a.cPayModex = '1' THEN 'Cash Balance' &quot;
+                + &quot;   WHEN a.cPayModex = '2' THEN 'Installment'  &quot;
+                + &quot;   WHEN a.cPayModex = '3' THEN 'PO'           &quot;
+                + &quot;   WHEN a.cPayModex = '4' THEN 'Financing'    &quot;
+                + &quot;   WHEN a.cPayModex = '5' THEN 'Insurance'    &quot;
+                + &quot;   WHEN a.cPayModex = '6' THEN 'Term'         &quot;
+                + &quot;   ELSE ''            &quot;
+                + &quot; END &quot;;
+    }
+     
+    private String getCustomerGroupCase(){
+<span class="nc" id="L298">        return &quot; CASE                 &quot;</span>
+            + &quot;   WHEN a.cCustGrpx = '0' THEN 'Any'        &quot;
+            + &quot;   WHEN a.cCustGrpx = '1' THEN 'Employee'   &quot;
+            + &quot;   WHEN a.cCustGrpx = '2' THEN 'OFW'        &quot;
+            + &quot;   WHEN a.cCustGrpx = '3' THEN 'Seaman'     &quot;
+            + &quot;   WHEN a.cCustGrpx = '4' THEN 'Business'   &quot;
+            + &quot;   ELSE ''          &quot;
+            + &quot; END &quot;;
+    }
+    
+    @Override
+    public String getSQ_Browse() {
+<span class="nc" id="L310">        return    &quot; SELECT &quot;</span>
+                + &quot;   a.sRqrmtIDx, &quot;
+                + &quot;   a.cPayModex, &quot;
+                + &quot;   a.cCustGrpx, &quot;
+<span class="nc" id="L314">                + getPaymentModeCase() + &quot; AS PaymentMode ,&quot;</span>
+<span class="nc" id="L315">                + getCustomerGroupCase() + &quot; AS Customer_Group,&quot;</span>
+                + &quot;   a.sRqrmtCde,         &quot;
+                + &quot;   a.cRequired,         &quot;
+                + &quot;   a.cRecdStat,         &quot;
+                + &quot;   a.sModified,         &quot;
+                + &quot;   a.dModified,         &quot;
+                + &quot;   b.sDescript          &quot;
+                + &quot; FROM requirement_source_pergroup a  &quot;
+                + &quot; LEFT JOIN requirement_source b ON b.sRqrmtCde = a.sRqrmtCde &quot;;
+    }
+    
+}
+
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

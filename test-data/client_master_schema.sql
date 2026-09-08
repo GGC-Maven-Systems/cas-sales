@@ -1,6 +1,6 @@
-DROP TABLE IF EXISTS `client_master`;
+DROP TABLE IF EXISTS `Client_Master`;
 
-CREATE TABLE `client_master` (
+CREATE TABLE `Client_Master` (
   `sClientID` char(12) NOT NULL,
   `cClientTp` char(1) DEFAULT NULL,
   `sLastName` varchar(60) DEFAULT NULL,

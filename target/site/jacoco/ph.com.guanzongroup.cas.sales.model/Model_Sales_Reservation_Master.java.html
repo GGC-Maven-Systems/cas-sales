@@ -1,0 +1,427 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Model_Sales_Reservation_Master.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">cas-sales</a> &gt; <a href="index.source.html" class="el_package">ph.com.guanzongroup.cas.sales.model</a> &gt; <span class="el_source">Model_Sales_Reservation_Master.java</span></div><h1>Model_Sales_Reservation_Master.java</h1><pre class="source lang-java linenums">/*
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
+ */
+package ph.com.guanzongroup.cas.sales.model;
+
+import org.guanzon.appdriver.agent.services.Model;
+import org.guanzon.appdriver.base.GuanzonException;
+import org.guanzon.appdriver.base.MiscUtil;
+import org.guanzon.appdriver.base.SQLUtil;
+import org.guanzon.appdriver.constant.EditMode;
+import org.guanzon.cas.client.model.Model_Client_Address;
+import org.guanzon.cas.client.model.Model_Client_Master;
+import org.guanzon.cas.client.model.Model_Client_Mobile;
+import org.guanzon.cas.client.services.ClientModels;
+import org.guanzon.cas.parameter.model.Model_Branch;
+import org.guanzon.cas.parameter.model.Model_Company;
+import org.guanzon.cas.parameter.model.Model_Industry;
+import org.guanzon.cas.parameter.services.ParamModels;
+import org.json.simple.JSONObject;
+import ph.com.guanzongroup.cas.sales.constant.Sales_Reservation_Static;
+
+import java.sql.SQLException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
+
+/**
+ *
+ * @author User
+ */
+<span class="fc" id="L32">public class Model_Sales_Reservation_Master extends Model {</span>
+
+    Model_Branch poBranch;
+    Model_Company poCompany;
+    Model_Industry poIndustry;
+    
+    Model_Client_Master poClientMaster;
+    Model_Client_Address poClientAddress;
+    Model_Client_Mobile poClientMobile;
+    @Override
+    public void initialize() {
+        try {
+<span class="fc" id="L44">            poEntity = MiscUtil.xml2ResultSet(System.getProperty(&quot;sys.default.path.metadata&quot;) + XML, getTable());</span>
+
+<span class="fc" id="L46">            poEntity.last();</span>
+<span class="fc" id="L47">            poEntity.moveToInsertRow();</span>
+            
+<span class="fc" id="L49">            Date dTransact = SQLUtil.toDate(xsDateShort(poGRider.getServerDate()), SQLUtil.FORMAT_SHORT_DATE);</span>
+<span class="fc" id="L50">            poEntity.updateObject(&quot;dTransact&quot;, dTransact);</span>
+
+
+<span class="fc" id="L53">            Calendar cal = Calendar.getInstance();</span>
+<span class="fc" id="L54">            cal.setTime(dTransact);</span>
+<span class="fc" id="L55">            cal.add(Calendar.MONTH, 1);</span>
+            
+<span class="fc" id="L57">            MiscUtil.initRowSet(poEntity);</span>
+<span class="fc" id="L58">            poEntity.updateObject(&quot;dTransact&quot;, SQLUtil.toDate(xsDateShort(poGRider.getServerDate()), SQLUtil.FORMAT_SHORT_DATE));</span>
+<span class="fc" id="L59">            poEntity.updateObject(&quot;dExpected&quot;, SQLUtil.toDate(xsDateShort(cal.getTime()), SQLUtil.FORMAT_SHORT_DATE));</span>
+<span class="fc" id="L60">            poEntity.updateObject(&quot;nEntryNox&quot;, Sales_Reservation_Static.DefaultValues.default_zero_integer);</span>
+<span class="fc" id="L61">            poEntity.updateObject(&quot;nTranTotl&quot;, Sales_Reservation_Static.DefaultValues.default_zero_amount_double);            </span>
+<span class="fc" id="L62">            poEntity.updateObject(&quot;nRefundxx&quot;, Sales_Reservation_Static.DefaultValues.default_zero_amount_double);</span>
+<span class="fc" id="L63">            poEntity.updateObject(&quot;nAmtPaidx&quot;, Sales_Reservation_Static.DefaultValues.default_zero_amount_double);</span>
+<span class="fc" id="L64">            poEntity.updateObject(&quot;nAppliedx&quot;, Sales_Reservation_Static.DefaultValues.default_zero_amount_double);</span>
+<span class="fc" id="L65">            poEntity.updateString(&quot;cTranStat&quot;, Sales_Reservation_Static.OPEN);</span>
+            
+<span class="fc" id="L67">            poEntity.updateNull(&quot;dEntryDte&quot;);</span>
+
+<span class="fc" id="L69">            poEntity.insertRow();</span>
+<span class="fc" id="L70">            poEntity.moveToCurrentRow();</span>
+
+<span class="fc" id="L72">            poEntity.absolute(1);</span>
+<span class="fc" id="L73">            ID = &quot;sTransNox&quot;;</span>
+
+<span class="fc" id="L75">            ClientModels modelClient = new ClientModels(poGRider);</span>
+<span class="fc" id="L76">            poClientMaster = modelClient.ClientMaster();</span>
+<span class="fc" id="L77">            poClientAddress = modelClient.ClientAddress();</span>
+//            poAPClient = model.ClientMaster();
+            
+<span class="fc" id="L80">            ParamModels model = new ParamModels(poGRider);</span>
+<span class="fc" id="L81">            poBranch = model.Branch();</span>
+<span class="fc" id="L82">            poCompany = model.Company();</span>
+<span class="fc" id="L83">            poIndustry = model.Industry();</span>
+
+<span class="fc" id="L85">            pnEditMode = EditMode.UNKNOWN;</span>
+<span class="nc" id="L86">        } catch (SQLException e) {</span>
+<span class="nc" id="L87">            logwrapr.severe(e.getMessage());</span>
+<span class="nc" id="L88">            System.exit(1);</span>
+<span class="fc" id="L89">        }</span>
+<span class="fc" id="L90">    }</span>
+
+    private static String xsDateShort(Date fdValue) {
+<span class="fc" id="L93">        SimpleDateFormat sdf = new SimpleDateFormat(&quot;yyyy-MM-dd&quot;);</span>
+<span class="fc" id="L94">        String date = sdf.format(fdValue);</span>
+<span class="fc" id="L95">        return date;</span>
+    }
+
+    public JSONObject setTransactionNo(String transactionNo) {
+<span class="nc" id="L99">        return setValue(&quot;sTransNox&quot;, transactionNo);</span>
+    }
+
+    public String getTransactionNo() {
+<span class="fc" id="L103">        return (String) getValue(&quot;sTransNox&quot;);</span>
+    }
+
+    public JSONObject setIndustryID(String industryID) {
+<span class="fc" id="L107">        return setValue(&quot;sIndstCdx&quot;, industryID);</span>
+    }
+
+    public String getIndustryID() {
+<span class="fc" id="L111">        return (String) getValue(&quot;sIndstCdx&quot;);</span>
+    }
+    
+    public JSONObject setCompanyID(String companyID) {
+<span class="fc" id="L115">        return setValue(&quot;sCompnyID&quot;, companyID);</span>
+    }
+
+    public String getCompanyID() {
+<span class="fc" id="L119">        return (String) getValue(&quot;sCompnyID&quot;);</span>
+    }
+
+    public JSONObject setBranchCode(String branchCode) {
+<span class="fc" id="L123">        return setValue(&quot;sBranchCd&quot;, branchCode);</span>
+    }
+
+    public String getBranchCode() {
+<span class="fc" id="L127">        return (String) getValue(&quot;sBranchCd&quot;);</span>
+    }
+    
+    public JSONObject setCategoryCode(String categoryCode) {
+<span class="fc" id="L131">        return setValue(&quot;sCategrCd&quot;, categoryCode);</span>
+    }
+
+    public String getCategoryCode() {
+<span class="fc" id="L135">        return (String) getValue(&quot;sCategrCd&quot;);</span>
+    }
+    
+    public JSONObject setTransactionDate(Date transactionDate) {
+<span class="fc" id="L139">        return setValue(&quot;dTransact&quot;, transactionDate);</span>
+    }
+
+    public Date getTransactionDate() {
+<span class="fc" id="L143">        return (Date) getValue(&quot;dTransact&quot;);</span>
+    }
+    
+    public JSONObject setExpectedDate(Date transactionDate) {
+<span class="fc" id="L147">        return setValue(&quot;dExpected&quot;, transactionDate);</span>
+    }
+
+    public Date getExpectedDate() {
+<span class="fc" id="L151">        return (Date) getValue(&quot;dExpected&quot;);</span>
+    }
+    
+    public JSONObject setClientID(String clientID) {
+<span class="fc" id="L155">        return setValue(&quot;sClientID&quot;, clientID);</span>
+    }
+
+    public String getClientID() {
+<span class="fc" id="L159">        return (String) getValue(&quot;sClientID&quot;);</span>
+    }
+        
+    public JSONObject setAddressID(String addressID) {
+<span class="fc" id="L163">        return setValue(&quot;sAddrssID&quot;, addressID);</span>
+    }
+
+    public String getAddressID() {
+<span class="fc" id="L167">        return (String) getValue(&quot;sAddrssID&quot;);</span>
+    }
+        
+    public JSONObject setContactID(String contactID) {
+<span class="fc" id="L171">        return setValue(&quot;sContctID&quot;, contactID);</span>
+    }
+
+    public String getContactID() {
+<span class="fc" id="L175">        return (String) getValue(&quot;sContctID&quot;);</span>
+    }
+        
+    public JSONObject setReferenceNo(String referenceNo) {
+<span class="nc" id="L179">        return setValue(&quot;sReferNox&quot;, referenceNo);</span>
+    }
+
+    public String getReferenceNo() {
+<span class="nc" id="L183">        return (String) getValue(&quot;sReferNox&quot;);</span>
+    }    
+            
+    public JSONObject setRemarks(String remarks) {
+<span class="fc" id="L187">        return setValue(&quot;sRemarksx&quot;, remarks);</span>
+    }
+
+    public String getRemarks() {
+<span class="fc" id="L191">        return (String) getValue(&quot;sRemarksx&quot;);</span>
+    }
+    
+    public JSONObject setTransactionTotal(double transactionTotal) {
+<span class="nc" id="L195">        return setValue(&quot;nTranTotl&quot;, transactionTotal);</span>
+    }
+
+    public double getTransactionTotal() {
+<span class="nc" id="L199">        return Double.parseDouble(String.valueOf(getValue(&quot;nTranTotl&quot;)));</span>
+    }
+      
+    public JSONObject setAmountPaid(double amountPaid) {
+<span class="nc" id="L203">        return setValue(&quot;nAmtPaidx&quot;, amountPaid);</span>
+    }
+
+    public double getAmountPaid() {
+<span class="nc" id="L207">        return Double.parseDouble(String.valueOf(getValue(&quot;nAmtPaidx&quot;)));</span>
+    }
+          
+    public JSONObject setApplied(double applied) {
+<span class="nc" id="L211">        return setValue(&quot;nAppliedx&quot;, applied);</span>
+    }
+
+    public double getApplied() {
+<span class="nc" id="L215">        return Double.parseDouble(String.valueOf(getValue(&quot;nAppliedx&quot;)));</span>
+    }
+          
+    public JSONObject setRefund(double refund) {
+<span class="nc" id="L219">        return setValue(&quot;nRefundxx&quot;, refund);</span>
+    }
+
+    public double getRefund() {
+<span class="nc" id="L223">        return Double.parseDouble(String.valueOf(getValue(&quot;nRefundxx&quot;)));</span>
+    }
+    
+    public JSONObject isPreOrder(boolean isPreOrder) {
+<span class="nc bnc" id="L227" title="All 2 branches missed.">        return setValue(&quot;cPreOrder&quot;, isPreOrder ? &quot;1&quot; : &quot;0&quot;);</span>
+    }
+
+    public boolean isPreOrder() {
+<span class="nc" id="L231">        return ((String) getValue(&quot;cPreOrder&quot;)).equals(&quot;1&quot;);</span>
+    }
+    
+            
+    public JSONObject setPayload(JSONObject payload) {
+<span class="nc" id="L236">        return setValue(&quot;sPayLoadx&quot;, payload);</span>
+    }
+
+    public JSONObject getPayload() {
+<span class="nc" id="L240">        return (JSONObject) getValue(&quot;sPayLoadx&quot;);</span>
+    }
+
+    public JSONObject setSourceCode(String sourceCode) {
+<span class="fc" id="L244">        return setValue(&quot;sSourceCd&quot;, sourceCode);</span>
+    }
+
+    public String getSourceCode() {
+<span class="fc" id="L248">        return (String) getValue(&quot;sSourceCd&quot;);</span>
+    }
+
+    public JSONObject setSourceNo(String sourceNo) {
+<span class="fc" id="L252">        return setValue(&quot;sSourceNo&quot;, sourceNo);</span>
+    }
+
+    public String getSourceNo() {
+<span class="fc" id="L256">        return (String) getValue(&quot;sSourceNo&quot;);</span>
+    }
+    
+    public JSONObject setPaymentType(String paymentType) {
+<span class="nc" id="L260">        return setValue(&quot;cPaymType&quot;, paymentType);</span>
+    }
+
+    public String getPaymentType() {
+<span class="nc" id="L264">        return (String) getValue(&quot;cPaymType&quot;);</span>
+    } 
+    
+    public JSONObject setEntryNo(int entryNo) {
+<span class="fc" id="L268">        return setValue(&quot;nEntryNox&quot;, entryNo);</span>
+    }
+
+    public int getEntryNo() {
+<span class="fc" id="L272">        return (int) getValue(&quot;nEntryNox&quot;);</span>
+    }
+    
+    public JSONObject setEntryBy(String entryBy) {
+<span class="nc" id="L276">        return setValue(&quot;sEntryByx&quot;, entryBy);</span>
+    }
+
+    public String getEntryBy() {
+<span class="nc" id="L280">        return (String) getValue(&quot;sEntryByx&quot;);</span>
+    }
+
+    public JSONObject setEntryDate(Date entryDate) {
+<span class="fc" id="L284">        return setValue(&quot;dEntryDte&quot;, entryDate);</span>
+    }
+
+    public Date getEntryDate() {
+<span class="fc" id="L288">        return (Date) getValue(&quot;dEntryDte&quot;);</span>
+    }
+
+    public JSONObject setTransactionStatus(String transactionStatus) {
+<span class="fc" id="L292">        return setValue(&quot;cTranStat&quot;, transactionStatus);</span>
+    }
+
+    public String getTransactionStatus() {
+<span class="fc" id="L296">        return (String) getValue(&quot;cTranStat&quot;);</span>
+    }
+
+    public JSONObject setModifyingId(String modifyingId) {
+<span class="nc" id="L300">        return setValue(&quot;sModified&quot;, modifyingId);</span>
+    }
+
+    public String getModifyingId() {
+<span class="nc" id="L304">        return (String) getValue(&quot;sModified&quot;);</span>
+    }
+
+    public JSONObject setModifiedDate(Date modifiedDate) {
+<span class="fc" id="L308">        return setValue(&quot;dModified&quot;, modifiedDate);</span>
+    }
+
+    public Date getModifiedDate() {
+<span class="nc" id="L312">        return (Date) getValue(&quot;dModified&quot;);</span>
+    }
+
+    @Override
+    public String getNextCode() {
+<span class="fc" id="L317">        return MiscUtil.getNextCode(this.getTable(), ID, true, poGRider.getGConnection().getConnection(), poGRider.getBranchCode());</span>
+    }
+
+
+    public Model_Branch Branch() throws GuanzonException, SQLException {
+<span class="nc bnc" id="L322" title="All 2 branches missed.">        if (!&quot;&quot;.equals((String) getValue(&quot;sBranchCd&quot;))) {</span>
+<span class="nc bnc" id="L323" title="All 2 branches missed.">            if (poBranch.getEditMode() == EditMode.READY</span>
+<span class="nc bnc" id="L324" title="All 2 branches missed.">                    &amp;&amp; poBranch.getBranchCode().equals((String) getValue(&quot;sBranchCd&quot;))) {</span>
+<span class="nc" id="L325">                return poBranch;</span>
+            } else {
+<span class="nc" id="L327">                poJSON = poBranch.openRecord((String) getValue(&quot;sBranchCd&quot;));</span>
+<span class="nc bnc" id="L328" title="All 2 branches missed.">                if (&quot;success&quot;.equals((String) poJSON.get(&quot;result&quot;))) {</span>
+<span class="nc" id="L329">                    return poBranch;</span>
+                } else {
+<span class="nc" id="L331">                    poBranch.initialize();</span>
+<span class="nc" id="L332">                    return poBranch;</span>
+                }
+            }
+        } else {
+<span class="nc" id="L336">            poBranch.initialize();</span>
+<span class="nc" id="L337">            return poBranch;</span>
+        }
+    }
+
+    public Model_Company Company() throws SQLException, GuanzonException {
+<span class="nc bnc" id="L342" title="All 2 branches missed.">        if (!&quot;&quot;.equals((String) getValue(&quot;sCompnyID&quot;))) {</span>
+<span class="nc bnc" id="L343" title="All 2 branches missed.">            if (poCompany.getEditMode() == EditMode.READY</span>
+<span class="nc bnc" id="L344" title="All 2 branches missed.">                    &amp;&amp; poCompany.getCompanyId().equals((String) getValue(&quot;sCompnyID&quot;))) {</span>
+<span class="nc" id="L345">                return poCompany;</span>
+            } else {
+<span class="nc" id="L347">                poJSON = poCompany.openRecord((String) getValue(&quot;sCompnyID&quot;));</span>
+
+<span class="nc bnc" id="L349" title="All 2 branches missed.">                if (&quot;success&quot;.equals((String) poJSON.get(&quot;result&quot;))) {</span>
+<span class="nc" id="L350">                    return poCompany;</span>
+                } else {
+<span class="nc" id="L352">                    poCompany.initialize();</span>
+<span class="nc" id="L353">                    return poCompany;</span>
+                }
+            }
+        } else {
+<span class="nc" id="L357">            poCompany.initialize();</span>
+<span class="nc" id="L358">            return poCompany;</span>
+        }
+    }
+
+    public Model_Industry Industry() throws SQLException, GuanzonException {
+<span class="nc bnc" id="L363" title="All 2 branches missed.">        if (!&quot;&quot;.equals((String) getValue(&quot;sIndstCdx&quot;))) {</span>
+<span class="nc bnc" id="L364" title="All 2 branches missed.">            if (poIndustry.getEditMode() == EditMode.READY</span>
+<span class="nc bnc" id="L365" title="All 2 branches missed.">                    &amp;&amp; poIndustry.getIndustryId().equals((String) getValue(&quot;sIndstCdx&quot;))) {</span>
+<span class="nc" id="L366">                return poIndustry;</span>
+            } else {
+<span class="nc" id="L368">                poJSON = poIndustry.openRecord((String) getValue(&quot;sIndstCdx&quot;));</span>
+
+<span class="nc bnc" id="L370" title="All 2 branches missed.">                if (&quot;success&quot;.equals((String) poJSON.get(&quot;result&quot;))) {</span>
+<span class="nc" id="L371">                    return poIndustry;</span>
+                } else {
+<span class="nc" id="L373">                    poIndustry.initialize();</span>
+<span class="nc" id="L374">                    return poIndustry;</span>
+                }
+            }
+        } else {
+<span class="nc" id="L378">            poIndustry.initialize();</span>
+<span class="nc" id="L379">            return poIndustry;</span>
+        }
+    }
+
+    public Model_Client_Master Client_Master() throws SQLException, GuanzonException {
+<span class="nc bnc" id="L384" title="All 2 branches missed.">        if (!&quot;&quot;.equals((String) getValue(&quot;sClientID&quot;))) {</span>
+<span class="nc bnc" id="L385" title="All 2 branches missed.">            if (poClientMaster.getEditMode() == EditMode.READY</span>
+<span class="nc bnc" id="L386" title="All 2 branches missed.">                    &amp;&amp; poClientMaster.getClientId().equals((String) getValue(&quot;sClientID&quot;))) {</span>
+<span class="nc" id="L387">                return poClientMaster;</span>
+            } else {
+<span class="nc" id="L389">                poJSON = poClientMaster.openRecord((String) getValue(&quot;sClientID&quot;));</span>
+
+<span class="nc bnc" id="L391" title="All 2 branches missed.">                if (&quot;success&quot;.equals((String) poJSON.get(&quot;result&quot;))) {</span>
+<span class="nc" id="L392">                    return poClientMaster;</span>
+                } else {
+<span class="nc" id="L394">                    poClientMaster.initialize();</span>
+<span class="nc" id="L395">                    return poClientMaster;</span>
+                }
+            }
+        } else {
+<span class="nc" id="L399">            poClientMaster.initialize();</span>
+<span class="nc" id="L400">            return poClientMaster;</span>
+        }
+    }
+    public Model_Client_Address Client_Address() throws SQLException, GuanzonException {
+<span class="nc bnc" id="L404" title="All 2 branches missed.">        if (!&quot;&quot;.equals((String) getValue(&quot;sClientID&quot;))) {</span>
+<span class="nc bnc" id="L405" title="All 2 branches missed.">            if (poClientAddress.getEditMode() == EditMode.READY</span>
+<span class="nc bnc" id="L406" title="All 2 branches missed.">                    &amp;&amp; poClientAddress.getClientId().equals((String) getValue(&quot;sAddressID&quot;))) {</span>
+<span class="nc" id="L407">                return poClientAddress;</span>
+            } else {
+<span class="nc" id="L409">                poJSON = poClientAddress.openRecord((String) getValue(&quot;sClientID&quot;));</span>
+
+<span class="nc bnc" id="L411" title="All 2 branches missed.">                if (&quot;success&quot;.equals((String) poJSON.get(&quot;result&quot;))) {</span>
+<span class="nc" id="L412">                    return poClientAddress;</span>
+                } else {
+<span class="nc" id="L414">                    poClientAddress.initialize();</span>
+<span class="nc" id="L415">                    return poClientAddress;</span>
+                }
+            }
+        } else {
+<span class="nc" id="L419">            poClientAddress.initialize();</span>
+<span class="nc" id="L420">            return poClientAddress;</span>
+        }
+    }
+
+    
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

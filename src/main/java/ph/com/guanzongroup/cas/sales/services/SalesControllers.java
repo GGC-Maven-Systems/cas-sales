@@ -5,7 +5,8 @@
  */
 package ph.com.guanzongroup.cas.sales.services;
 
-import ph.com.guanzongroup.cas.sales.CustomerInquiryFollowUp;
+import ph.com.guanzongroup.cas.sales.*;
+
 import java.sql.SQLException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -13,15 +14,6 @@ import org.guanzon.appdriver.base.GRiderCAS;
 import org.guanzon.appdriver.base.GuanzonException;
 import org.guanzon.appdriver.base.LogWrapper;
 import org.guanzon.appdriver.base.MiscUtil;
-import ph.com.guanzongroup.cas.sales.RequirementsSource;
-import ph.com.guanzongroup.cas.sales.RequirementsSourcePerGroup;
-import ph.com.guanzongroup.cas.sales.SalesAgent;
-import ph.com.guanzongroup.cas.sales.SalesBankApplication;
-import ph.com.guanzongroup.cas.sales.SalesCommitment;
-import ph.com.guanzongroup.cas.sales.SalesGiveaways;
-import ph.com.guanzongroup.cas.sales.SalesInquiry;
-import ph.com.guanzongroup.cas.sales.SalesInquirySources;
-import ph.com.guanzongroup.cas.sales.Salesman;
 
 /**
  *
@@ -234,6 +226,44 @@ public class SalesControllers {
 
         return poSalesCommitment;
     }
+
+    public VSP VSP(){
+        if (poGRider == null) {
+            poLogWrapper.severe("SalesControllers.VSP: Application driver is not set.");
+            return null;
+        }
+
+        if (poVSP != null){
+            return poVSP;
+        }
+
+        poVSP = new VSP();
+        poVSP.setApplicationDriver(poGRider);
+        poVSP.setBranchCode(poGRider.getBranchCode());
+        poVSP.setVerifyEntryNo(false);
+        poVSP.setWithParent(false);
+        poVSP.setLogWrapper(poLogWrapper);
+
+        return poVSP;
+    }
+    public SalesReservation SalesReservation() throws SQLException, GuanzonException {
+        if (poGRider == null) {
+            poLogWrapper.severe("GLControllers.Disbursement: Application driver is not set.");
+            return null;
+        }
+
+        if (poSalesReservation != null) {
+            return poSalesReservation;
+        }
+
+        poSalesReservation = new SalesReservation();
+        poSalesReservation.setApplicationDriver(poGRider);
+        poSalesReservation.setBranchCode(poGRider.getBranchCode());
+        poSalesReservation.setLogWrapper(poLogWrapper);
+        poSalesReservation.setVerifyEntryNo(true);
+        poSalesReservation.setWithParent(false);
+        return poSalesReservation;
+    }
     
     @Override
     protected void finalize() throws Throwable {
@@ -247,6 +277,9 @@ public class SalesControllers {
             poRequirementSourcePerGroup = null;
             poCustomerInquiryFollowUp = null;
             poSalesCommitment = null;
+            poVSP = null;
+            poSalesReservation = null;
+
             poLogWrapper = null;
             poGRider = null;
         } finally {
@@ -267,4 +300,6 @@ public class SalesControllers {
     private SalesBankApplication poSalesBankApp;
     private CustomerInquiryFollowUp poCustomerInquiryFollowUp;
     private SalesCommitment poSalesCommitment;
+    private VSP poVSP;
+    private SalesReservation poSalesReservation;
 }

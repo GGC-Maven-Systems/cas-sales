@@ -1,0 +1,539 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Model_Vehicle_Release_Master.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">cas-sales</a> &gt; <a href="index.source.html" class="el_package">ph.com.guanzongroup.cas.sales.model</a> &gt; <span class="el_source">Model_Vehicle_Release_Master.java</span></div><h1>Model_Vehicle_Release_Master.java</h1><pre class="source lang-java linenums">/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package ph.com.guanzongroup.cas.sales.model;
+
+import org.guanzon.appdriver.agent.services.Model;
+import org.guanzon.appdriver.base.GuanzonException;
+import org.guanzon.appdriver.base.MiscUtil;
+import org.guanzon.appdriver.constant.EditMode;
+import org.guanzon.cas.client.model.Model_Client_Address;
+import org.guanzon.cas.client.model.Model_Client_Master;
+import org.guanzon.cas.client.model.Model_Client_Mobile;
+import org.guanzon.cas.client.model.Model_Client_Social_Media;
+import org.guanzon.cas.client.services.ClientModels;
+import org.json.simple.JSONObject;
+import ph.com.guanzongroup.cas.sales.services.SalesModels;
+import ph.com.guanzongroup.cas.sales.status.SalesInquiryStatic;
+
+import java.sql.SQLException;
+import java.util.Date;
+
+/**
+ * Model class for the Vehicle Release Master transaction.
+ *
+ * &lt;p&gt;
+ * This class represents the master record of a Vehicle Release transaction
+ * within the CAS Sales module. It encapsulates the transaction data,
+ * initializes default values, provides access to database fields through
+ * getter and setter methods, and manages related reference models used
+ * throughout the transaction lifecycle.
+ * &lt;/p&gt;
+ *
+ * &lt;p&gt;
+ * In addition to maintaining the Vehicle Release record, this model provides
+ * convenient access to its associated reference objects, including:
+ * &lt;/p&gt;
+ * &lt;ul&gt;
+ *     &lt;li&gt;Client Master&lt;/li&gt;
+ *     &lt;li&gt;Client Address&lt;/li&gt;
+ *     &lt;li&gt;Client Mobile&lt;/li&gt;
+ *     &lt;li&gt;Client Social Media&lt;/li&gt;
+ *     &lt;li&gt;Salesperson&lt;/li&gt;
+ * &lt;/ul&gt;
+ *
+ * &lt;p&gt;
+ * Upon initialization, the model loads its metadata, assigns default values,
+ * initializes its reference objects, and prepares the entity for create,
+ * retrieve, update, and save operations.
+ * &lt;/p&gt;
+ *
+ * @author TEEJEI DE CELIS
+ * @date August 7, 2026
+ * @module Vehicle Release
+ * @since 1.0
+ */
+<span class="nc" id="L58">public class Model_Vehicle_Release_Master extends Model {</span>
+
+<span class="nc" id="L60">    String psClientType = &quot;&quot;;</span>
+
+    //reference objects
+//    Model_Branch poBranch;
+//    Model_Industry poIndustry;
+//    Model_Company poCompany;
+    Model_Client_Master poClient;
+    Model_Client_Address poClientAddress;
+    Model_Client_Social_Media poClientSocMed;
+    Model_Client_Mobile poClientMobile;
+    //    Model_Client_Master poAgent;
+    Model_Salesman poSalesPerson;
+//    Model_Sales_Inquiry_Sources poSource;
+
+    @Override
+    public void initialize() {
+        try {
+<span class="nc" id="L77">            poEntity = MiscUtil.xml2ResultSet(System.getProperty(&quot;sys.default.path.metadata&quot;) + XML, getTable());</span>
+
+<span class="nc" id="L79">            poEntity.last();</span>
+<span class="nc" id="L80">            poEntity.moveToInsertRow();</span>
+
+<span class="nc" id="L82">            MiscUtil.initRowSet(poEntity);</span>
+
+            //assign default values
+//            poEntity.updateObject(&quot;dTransact&quot;, SQLUtil.toDate(&quot;1900-01-01&quot;, SQLUtil.FORMAT_SHORT_DATE));
+//            poEntity.updateObject(&quot;dModified&quot;, SQLUtil.toDate(&quot;1900-01-01&quot;, SQLUtil.FORMAT_SHORT_DATE));
+//            poEntity.updateObject(&quot;dTargetxx&quot;, SQLUtil.toDate(&quot;1900-01-01&quot;, SQLUtil.FORMAT_SHORT_DATE));
+//            poEntity.updateObject(&quot;dFollowUp&quot;, SQLUtil.toDate(&quot;1900-01-01&quot;, SQLUtil.FORMAT_SHORT_DATE));
+
+<span class="nc" id="L90">            poEntity.updateObject(&quot;dTransact&quot;, poGRider.getServerDate());</span>
+<span class="nc" id="L91">            poEntity.updateNull(&quot;dModified&quot;);</span>
+<span class="nc" id="L92">            poEntity.updateNull(&quot;dTargetxx&quot;);</span>
+<span class="nc" id="L93">            poEntity.updateNull(&quot;dFollowUp&quot;);</span>
+
+<span class="nc" id="L95">            poEntity.updateString(&quot;cProcessd&quot;, &quot;0&quot;);</span>
+<span class="nc" id="L96">            poEntity.updateObject(&quot;nEntryNox&quot;, 0);</span>
+<span class="nc" id="L97">            poEntity.updateString(&quot;cInqrStat&quot;, SalesInquiryStatic.OPEN);</span>
+<span class="nc" id="L98">            poEntity.updateString(&quot;cTranStat&quot;, SalesInquiryStatic.OPEN);</span>
+<span class="nc" id="L99">            psClientType = &quot;0&quot;;</span>
+            //end - assign default values
+
+<span class="nc" id="L102">            poEntity.insertRow();</span>
+<span class="nc" id="L103">            poEntity.moveToCurrentRow();</span>
+<span class="nc" id="L104">            poEntity.absolute(1);</span>
+
+<span class="nc" id="L106">            ID = &quot;sTransNox&quot;;</span>
+
+            //initialize reference objects
+//            ParamModels model = new ParamModels(poGRider);
+//            poBranch = model.Branch();
+//            poIndustry = model.Industry();
+//            poCompany = model.Company();
+//
+<span class="nc" id="L114">            ClientModels clientModel = new ClientModels(poGRider);</span>
+<span class="nc" id="L115">            poClient = clientModel.ClientMaster();</span>
+<span class="nc" id="L116">            poClientAddress = clientModel.ClientAddress();</span>
+<span class="nc" id="L117">            poClientMobile = clientModel.ClientMobile();</span>
+<span class="nc" id="L118">            poClientSocMed = clientModel.ClientSocMed();</span>
+//
+<span class="nc" id="L120">            SalesModels sales = new SalesModels(poGRider);</span>
+<span class="nc" id="L121">            poSalesPerson = sales.Salesman();</span>
+
+//            end - initialize reference objects
+
+//            pnEditMode = EditMode.UNKNOWN;
+<span class="nc" id="L126">        } catch (SQLException e) {</span>
+<span class="nc" id="L127">            logwrapr.severe(e.getMessage());</span>
+<span class="nc" id="L128">            System.exit(1);</span>
+<span class="nc" id="L129">        }</span>
+<span class="nc" id="L130">    }</span>
+
+    public JSONObject setTransactionNo(String transactionNo) {
+<span class="nc" id="L133">        return setValue(&quot;sTransNox&quot;, transactionNo);</span>
+    }
+
+    public String getTransactionNo() {
+<span class="nc" id="L137">        return (String) getValue(&quot;sTransNox&quot;);</span>
+    }
+
+    public JSONObject setTransactionDate(Date transactionDate) {
+<span class="nc" id="L141">        return setValue(&quot;dTransact&quot;, transactionDate);</span>
+    }
+
+    public Date getTransactionDate() {
+<span class="nc" id="L145">        return (Date) getValue(&quot;dTransact&quot;);</span>
+    }
+
+    public JSONObject setReferenceNo(String referenceNo) {
+<span class="nc" id="L149">        return setValue(&quot;sReferNox&quot;, referenceNo);</span>
+    }
+
+    public String getReferenceNo() {
+<span class="nc" id="L153">        return (String) getValue(&quot;sReferNox&quot;);</span>
+    }
+
+    public JSONObject setClientId(String clientId) {
+<span class="nc" id="L157">        return setValue(&quot;sClientID&quot;, clientId);</span>
+    }
+
+    public String getClientId() {
+<span class="nc" id="L161">        return (String) getValue(&quot;sClientID&quot;);</span>
+    }
+
+    public JSONObject setAddressId(String addressId) {
+<span class="nc" id="L165">        return setValue(&quot;sAddrssID&quot;, addressId);</span>
+    }
+
+    public String getAddressId() {
+<span class="nc" id="L169">        return (String) getValue(&quot;sAddrssID&quot;);</span>
+    }
+
+    public JSONObject setContactId(String contactId) {
+<span class="nc" id="L173">        return setValue(&quot;sContctID&quot;, contactId);</span>
+    }
+
+    public String getContactId() {
+<span class="nc" id="L177">        return (String) getValue(&quot;sContctID&quot;);</span>
+    }
+
+    public JSONObject setRemarks(String remarks) {
+<span class="nc" id="L181">        return setValue(&quot;sRemarksx&quot;, remarks);</span>
+    }
+
+    public String getRemarks() {
+<span class="nc" id="L185">        return (String) getValue(&quot;sRemarksx&quot;);</span>
+    }
+
+    public JSONObject setSourceCode(String sourceCode) {
+<span class="nc" id="L189">        return setValue(&quot;sSourceCD&quot;, sourceCode);</span>
+    }
+
+    public String getSourceCode() {
+<span class="nc" id="L193">        return (String) getValue(&quot;sSourceCD&quot;);</span>
+    }
+
+    public JSONObject setSourceNo(String sourceNo) {
+<span class="nc" id="L197">        return setValue(&quot;sSourceNo&quot;, sourceNo);</span>
+    }
+
+    public String getSourceNo() {
+<span class="nc" id="L201">        return (String) getValue(&quot;sSourceNo&quot;);</span>
+    }
+
+    public JSONObject setTransactionStatus(String transactionStatus) {
+<span class="nc" id="L205">        return setValue(&quot;cTranStat&quot;, transactionStatus);</span>
+    }
+
+    public String getTransactionStatus() {
+<span class="nc" id="L209">        return (String) getValue(&quot;cTranStat&quot;);</span>
+    }
+
+    public JSONObject setModifyingId(String modifiedBy) {
+<span class="nc" id="L213">        return setValue(&quot;sModified&quot;, modifiedBy);</span>
+    }
+
+    public String getModifyingId() {
+<span class="nc" id="L217">        return (String) getValue(&quot;sModified&quot;);</span>
+    }
+
+    public JSONObject setModifiedDate(Date modifiedDate) {
+<span class="nc" id="L221">        return setValue(&quot;dModified&quot;, modifiedDate);</span>
+    }
+
+    public Date getModifiedDate() {
+<span class="nc" id="L225">        return (Date) getValue(&quot;dModified&quot;);</span>
+    }
+
+    @Override
+    public String getNextCode() {
+<span class="nc" id="L230">        return MiscUtil.getNextCode(this.getTable(), ID, true, poGRider.getGConnection().getConnection(), poGRider.getBranchCode());</span>
+    }
+
+    //reference object models
+//    public Model_Branch Branch() throws SQLException, GuanzonException {
+//        if (!&quot;&quot;.equals((String) getValue(&quot;sBranchCd&quot;))) {
+//            if (poBranch.getEditMode() == EditMode.READY
+//                    &amp;&amp; poBranch.getBranchCode().equals((String) getValue(&quot;sBranchCd&quot;))) {
+//                return poBranch;
+//            } else {
+//                poJSON = poBranch.openRecord((String) getValue(&quot;sBranchCd&quot;));
+//
+//                if (&quot;success&quot;.equals((String) poJSON.get(&quot;result&quot;))) {
+//                    return poBranch;
+//                } else {
+//                    poBranch.initialize();
+//                    return poBranch;
+//                }
+//            }
+//        } else {
+//            poBranch.initialize();
+//            return poBranch;
+//        }
+//    }
+//
+//    public Model_Industry Industry() throws SQLException, GuanzonException {
+//        if (!&quot;&quot;.equals((String) getValue(&quot;sIndstCdx&quot;))) {
+//            if (poIndustry.getEditMode() == EditMode.READY
+//                    &amp;&amp; poIndustry.getIndustryId().equals((String) getValue(&quot;sIndstCdx&quot;))) {
+//                return poIndustry;
+//            } else {
+//                poJSON = poIndustry.openRecord((String) getValue(&quot;sIndstCdx&quot;));
+//
+//                if (&quot;success&quot;.equals((String) poJSON.get(&quot;result&quot;))) {
+//                    return poIndustry;
+//                } else {
+//                    poIndustry.initialize();
+//                    return poIndustry;
+//                }
+//            }
+//        } else {
+//            poIndustry.initialize();
+//            return poIndustry;
+//        }
+//    }
+//
+//    public Model_Company Company() throws SQLException, GuanzonException {
+//        if (!&quot;&quot;.equals((String) getValue(&quot;sCompnyID&quot;))) {
+//            if (poCompany.getEditMode() == EditMode.READY
+//                    &amp;&amp; poCompany.getCompanyId().equals((String) getValue(&quot;sCompnyID&quot;))) {
+//                return poCompany;
+//            } else {
+//                poJSON = poCompany.openRecord((String) getValue(&quot;sCompnyID&quot;));
+//
+//                if (&quot;success&quot;.equals((String) poJSON.get(&quot;result&quot;))) {
+//                    return poCompany;
+//                } else {
+//                    poCompany.initialize();
+//                    return poCompany;
+//                }
+//            }
+//        } else {
+//            poCompany.initialize();
+//            return poCompany;
+//        }
+//    }
+
+    /**
+     * Retrieves the client associated with the current Vehicle Release transaction.
+     *
+     * &lt;p&gt;
+     * If a Client ID has been assigned, this method attempts to return the
+     * currently loaded client model. If the model is not loaded or does not
+     * match the current Client ID, the corresponding client record is retrieved
+     * from the database. If the client cannot be found, an initialized empty
+     * client model is returned.
+     * &lt;/p&gt;
+     *
+     * @return the {@link Model_Client_Master} associated with the current
+     *         transaction; otherwise, an initialized empty client model.
+     *
+     * @throws SQLException if a database access error occurs while retrieving
+     *         the client record.
+     * @throws GuanzonException if an application-specific error occurs while
+     *         loading the client information.
+     *
+     * @author TEEJEI DE CELIS
+     * @date August 7, 2026
+     */
+    public Model_Client_Master Client() throws SQLException, GuanzonException {
+<span class="nc bnc" id="L320" title="All 2 branches missed.">        if (!&quot;&quot;.equals((String) getValue(&quot;sClientID&quot;))) {</span>
+<span class="nc bnc" id="L321" title="All 2 branches missed.">            if (poClient.getEditMode() == EditMode.READY</span>
+<span class="nc bnc" id="L322" title="All 2 branches missed.">                    &amp;&amp; poClient.getClientId().equals((String) getValue(&quot;sClientID&quot;))) {</span>
+<span class="nc" id="L323">                return poClient;</span>
+            } else {
+<span class="nc" id="L325">                poJSON = poClient.openRecord((String) getValue(&quot;sClientID&quot;));</span>
+
+<span class="nc bnc" id="L327" title="All 2 branches missed.">                if (&quot;success&quot;.equals((String) poJSON.get(&quot;result&quot;))) {</span>
+<span class="nc" id="L328">                    return poClient;</span>
+                } else {
+<span class="nc" id="L330">                    poClient.initialize();</span>
+<span class="nc" id="L331">                    return poClient;</span>
+                }
+            }
+        } else {
+<span class="nc" id="L335">            poClient.initialize();</span>
+<span class="nc" id="L336">            return poClient;</span>
+        }
+    }
+    /**
+     * Retrieves the primary address of the client associated with the current
+     * Vehicle Release transaction.
+     *
+     * &lt;p&gt;
+     * If a Client ID has been assigned, this method loads the corresponding
+     * client address record. When the address has already been loaded and
+     * matches the current Client ID, the cached instance is returned.
+     * Otherwise, the address is retrieved from the database. If no address
+     * exists, an initialized empty address model is returned.
+     * &lt;/p&gt;
+     *
+     * @return the {@link Model_Client_Address} associated with the current
+     *         client; otherwise, an initialized empty address model.
+     *
+     * @throws SQLException if a database access error occurs while retrieving
+     *         the client address.
+     * @throws GuanzonException if an application-specific error occurs while
+     *         loading the client address.
+     *
+     * @author TEEJEI DE CELIS
+     * @date August 7, 2026
+     */
+    public Model_Client_Address ClientAddress() throws SQLException, GuanzonException {
+<span class="nc bnc" id="L363" title="All 2 branches missed.">        if (!&quot;&quot;.equals((String) getValue(&quot;sClientID&quot;))) {</span>
+<span class="nc bnc" id="L364" title="All 2 branches missed.">            if (poClientAddress.getEditMode() == EditMode.READY</span>
+<span class="nc bnc" id="L365" title="All 2 branches missed.">                    &amp;&amp; poClientAddress.getClientId().equals((String) getValue(&quot;sClientID&quot;))) {</span>
+<span class="nc" id="L366">                return poClientAddress;</span>
+            } else {
+<span class="nc" id="L368">                poJSON = poClientAddress.openRecord((String) getValue(&quot;sClientID&quot;)); //sAddrssID</span>
+
+<span class="nc bnc" id="L370" title="All 2 branches missed.">                if (&quot;success&quot;.equals((String) poJSON.get(&quot;result&quot;))) {</span>
+<span class="nc" id="L371">                    return poClientAddress;</span>
+                } else {
+<span class="nc" id="L373">                    poClientAddress.initialize();</span>
+<span class="nc" id="L374">                    return poClientAddress;</span>
+                }
+            }
+        } else {
+<span class="nc" id="L378">            poClientAddress.initialize();</span>
+<span class="nc" id="L379">            return poClientAddress;</span>
+        }
+    }
+    /**
+     * Retrieves the social media information of the client associated with the
+     * current Vehicle Release transaction.
+     *
+     * &lt;p&gt;
+     * If a Client ID has been assigned, this method returns the corresponding
+     * social media record. When the record is already loaded and matches the
+     * current Client ID, the cached instance is returned. Otherwise, the record
+     * is retrieved from the database. If no social media information exists,
+     * an initialized empty model is returned.
+     * &lt;/p&gt;
+     *
+     * @return the {@link Model_Client_Social_Media} associated with the current
+     *         client; otherwise, an initialized empty social media model.
+     *
+     * @throws SQLException if a database access error occurs while retrieving
+     *         the client's social media information.
+     * @throws GuanzonException if an application-specific error occurs while
+     *         loading the social media information.
+     *
+     * @author TEEJEI DE CELIS
+     * @date August 7, 2026
+     */
+    public Model_Client_Social_Media ClientSocMed() throws SQLException, GuanzonException {
+<span class="nc bnc" id="L406" title="All 2 branches missed.">        if (!&quot;&quot;.equals((String) getValue(&quot;sClientID&quot;))) {</span>
+<span class="nc bnc" id="L407" title="All 2 branches missed.">            if (poClientSocMed.getEditMode() == EditMode.READY</span>
+<span class="nc bnc" id="L408" title="All 2 branches missed.">                    &amp;&amp; poClientSocMed.getClientId().equals((String) getValue(&quot;sClientID&quot;))) {</span>
+<span class="nc" id="L409">                return poClientSocMed;</span>
+            } else {
+<span class="nc" id="L411">                poJSON = poClientSocMed.openRecord((String) getValue(&quot;sClientID&quot;)); //sAddrssID</span>
+
+<span class="nc bnc" id="L413" title="All 2 branches missed.">                if (&quot;success&quot;.equals((String) poJSON.get(&quot;result&quot;))) {</span>
+<span class="nc" id="L414">                    return poClientSocMed;</span>
+                } else {
+<span class="nc" id="L416">                    poClientSocMed.initialize();</span>
+<span class="nc" id="L417">                    return poClientSocMed;</span>
+                }
+            }
+        } else {
+<span class="nc" id="L421">            poClientSocMed.initialize();</span>
+<span class="nc" id="L422">            return poClientSocMed;</span>
+        }
+    }
+
+    /**
+     * Retrieves the mobile contact information associated with the current
+     * Vehicle Release transaction.
+     *
+     * &lt;p&gt;
+     * If a Contact ID has been assigned, this method returns the corresponding
+     * mobile record. When the record is already loaded and matches the current
+     * Contact ID, the cached instance is returned. Otherwise, the mobile record
+     * is retrieved from the database. If no mobile information exists, an
+     * initialized empty model is returned.
+     * &lt;/p&gt;
+     *
+     * @return the {@link Model_Client_Mobile} associated with the current
+     *         transaction; otherwise, an initialized empty mobile model.
+     *
+     * @throws SQLException if a database access error occurs while retrieving
+     *         the mobile contact information.
+     * @throws GuanzonException if an application-specific error occurs while
+     *         loading the mobile contact information.
+     *
+     * @author TEEJEI DE CELIS
+     * @date August 7, 2026
+     */
+    public Model_Client_Mobile ClientMobile() throws SQLException, GuanzonException {
+<span class="nc bnc" id="L450" title="All 2 branches missed.">        if (!&quot;&quot;.equals((String) getValue(&quot;sContctID&quot;))) {</span>
+<span class="nc bnc" id="L451" title="All 2 branches missed.">            if (poClientMobile.getEditMode() == EditMode.READY</span>
+<span class="nc bnc" id="L452" title="All 2 branches missed.">                    &amp;&amp; poClientMobile.getClientId().equals((String) getValue(&quot;sContctID&quot;))) {</span>
+<span class="nc" id="L453">                return poClientMobile;</span>
+            } else {
+<span class="nc" id="L455">                poJSON = poClientMobile.openRecord((String) getValue(&quot;sContctID&quot;));</span>
+
+<span class="nc bnc" id="L457" title="All 2 branches missed.">                if (&quot;success&quot;.equals((String) poJSON.get(&quot;result&quot;))) {</span>
+<span class="nc" id="L458">                    return poClientMobile;</span>
+                } else {
+<span class="nc" id="L460">                    poClientMobile.initialize();</span>
+<span class="nc" id="L461">                    return poClientMobile;</span>
+                }
+            }
+        } else {
+<span class="nc" id="L465">            poClientMobile.initialize();</span>
+<span class="nc" id="L466">            return poClientMobile;</span>
+        }
+    }
+
+    /**
+     * Retrieves the salesperson associated with the current Vehicle Release
+     * transaction.
+     *
+     * &lt;p&gt;
+     * If a Salesperson ID has been assigned, this method returns the
+     * corresponding salesperson record. When the record is already loaded and
+     * matches the current Salesperson ID, the cached instance is returned.
+     * Otherwise, the salesperson record is retrieved from the database. If the
+     * salesperson cannot be found, an initialized empty model is returned.
+     * &lt;/p&gt;
+     *
+     * @return the {@link Model_Salesman} associated with the current
+     *         transaction; otherwise, an initialized empty salesperson model.
+     *
+     * @throws SQLException if a database access error occurs while retrieving
+     *         the salesperson record.
+     * @throws GuanzonException if an application-specific error occurs while
+     *         loading the salesperson information.
+     *
+     * @author TEEJEI DE CELIS
+     * @date August 7, 2026
+     */
+    public Model_Salesman SalesPerson() throws SQLException, GuanzonException {
+<span class="nc bnc" id="L494" title="All 2 branches missed.">        if (!&quot;&quot;.equals((String) getValue(&quot;sSalesman&quot;))) {</span>
+<span class="nc bnc" id="L495" title="All 2 branches missed.">            if (poSalesPerson.getEditMode() == EditMode.READY</span>
+<span class="nc bnc" id="L496" title="All 2 branches missed.">                    &amp;&amp; poSalesPerson.getEmployeeId().equals((String) getValue(&quot;sSalesman&quot;))) {</span>
+<span class="nc" id="L497">                return poSalesPerson;</span>
+            } else {
+<span class="nc" id="L499">                poJSON = poSalesPerson.openRecord((String) getValue(&quot;sSalesman&quot;));</span>
+
+<span class="nc bnc" id="L501" title="All 2 branches missed.">                if (&quot;success&quot;.equals((String) poJSON.get(&quot;result&quot;))) {</span>
+<span class="nc" id="L502">                    return poSalesPerson;</span>
+                } else {
+<span class="nc" id="L504">                    poSalesPerson.initialize();</span>
+<span class="nc" id="L505">                    return poSalesPerson;</span>
+                }
+            }
+        } else {
+<span class="nc" id="L509">            poSalesPerson.initialize();</span>
+<span class="nc" id="L510">            return poSalesPerson;</span>
+        }
+    }
+
+//    public Model_Client_Master ReferralAgent() throws SQLException, GuanzonException {
+//        if (!&quot;&quot;.equals((String) getValue(&quot;sAgentIDx&quot;))) {
+//            if (poAgent.getEditMode() == EditMode.READY
+//                    &amp;&amp; poAgent.getClientId().equals((String) getValue(&quot;sAgentIDx&quot;))) {
+//                return poAgent;
+//            } else {
+//                poJSON = poAgent.openRecord((String) getValue(&quot;sAgentIDx&quot;));
+//
+//                if (&quot;success&quot;.equals((String) poJSON.get(&quot;result&quot;))) {
+//                    return poAgent;
+//                } else {
+//                    poAgent.initialize();
+//                    return poAgent;
+//                }
+//            }
+//        } else {
+//            poAgent.initialize();
+//            return poAgent;
+//        }
+//    }
+
+
+    //end - reference object models
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

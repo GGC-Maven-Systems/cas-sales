@@ -1,0 +1,724 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CustomCommonUtil.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">cas-sales</a> &gt; <a href="index.source.html" class="el_package">ph.com.guanzongroup.cas.sales.utility</a> &gt; <span class="el_source">CustomCommonUtil.java</span></div><h1>CustomCommonUtil.java</h1><pre class="source lang-java linenums">/*
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
+ */
+package ph.com.guanzongroup.cas.sales.utility;
+
+import javafx.beans.value.ChangeListener;
+import javafx.scene.Node;
+import javafx.scene.control.*;
+import javafx.scene.effect.DropShadow;
+import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.StackPane;
+import javafx.scene.paint.Color;
+
+import java.text.DecimalFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.util.Date;
+import java.util.regex.Pattern;
+
+/**
+ *
+ * @author
+ */
+/**
+ * Utility class providing various common methods for date formatting, text
+ * manipulation, and other utilities.
+ */
+<span class="nc" id="L32">public class CustomCommonUtil {</span>
+
+    /* DATE FORMATTER UTILITY SECTION */
+    /**
+     * Converts a string representing a date in &quot;yyyy-MM-dd&quot; format to a
+     * {@link LocalDate} object.
+     *
+     * This method takes a date in string format (e.g., &quot;2024-10-01&quot;) and
+     * converts it to a {@link LocalDate}. It expects the input string to follow
+     * the &quot;yyyy-MM-dd&quot; format. If the input cannot be parsed, a
+     * {@link DateTimeParseException} will be thrown.
+     *
+     * @param fsDateValue
+     * @param fsPattern The date string in &quot;yyyy-MM-dd&quot; format.
+     * @return A {@link LocalDate} object representing the date.
+     *
+     * &lt;b&gt;Example:&lt;/b&gt;
+     * &lt;pre&gt;{@code
+     * String dateStr = &quot;2024-10-01&quot;;
+     * LocalDate date = parseDateStringToLocalDate(dateStr, &quot;yyyy-MM-dd&quot;);
+     * System.out.println(date); // Outputs: 2024-10-01
+     * }&lt;/pre&gt;
+     */
+    public static LocalDate parseDateStringToLocalDate(String fsDateValue, String fsPattern) {
+<span class="nc" id="L56">        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern(fsPattern);</span>
+<span class="nc" id="L57">        return LocalDate.parse(fsDateValue, dateFormatter);</span>
+    }
+
+    /**
+     * Converts a {@link Date} object to a string in &quot;yyyy-MM-dd&quot; format.
+     *
+     * This method formats a {@link Date} object (e.g., from a timestamp) to a
+     * string in the &quot;yyyy-MM-dd&quot; format, commonly used for database entries or
+     * display.
+     *
+     * @param foDateValue The {@link Date} object to be formatted.
+     * @return A string representing the date in &quot;yyyy-MM-dd&quot; format.
+     *
+     * &lt;b&gt;Example:&lt;/b&gt;
+     * &lt;pre&gt;{@code
+     * Date now = new Date();
+     * String formattedDate = formatDateToShortString(now);
+     * System.out.println(formattedDate); // Outputs: Current date in yyyy-MM-dd format
+     * }&lt;/pre&gt;
+     */
+    public static String formatDateToShortString(Date foDateValue) {
+<span class="nc bnc" id="L78" title="All 2 branches missed.">        if(foDateValue == null){</span>
+<span class="nc" id="L79">            return &quot;1900-01-01&quot;;</span>
+        }
+        
+<span class="nc" id="L82">        SimpleDateFormat sdf = new SimpleDateFormat(&quot;yyyy-MM-dd&quot;);</span>
+<span class="nc" id="L83">        return sdf.format(foDateValue);</span>
+    }
+
+    /**
+     * Converts a {@link Date} object to a string in &quot;yyyy-MM-dd&quot; format.
+     *
+     * This method formats a {@link Date} object (e.g., from a timestamp) to a
+     * string in the &quot;yyyy-MM-dd&quot; format, commonly used for database entries or
+     * display.
+     *
+     * @param foLocalDate The {@link Date} object to be formatted.
+     * @return A string representing the date in &quot;yyyy-MM-dd&quot; format.
+     *
+     * &lt;b&gt;Example:&lt;/b&gt;
+     * &lt;pre&gt;{@code
+     * LocalDate now = new LocalDate();
+     * String formattedDate = formatLocalDateToShortString(now);
+     * System.out.println(formattedDate); // Outputs: Current date in yyyy-MM-dd format
+     * }&lt;/pre&gt;
+     */
+    public static String formatLocalDateToShortString(LocalDate foLocalDate) {
+<span class="nc" id="L104">        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(&quot;yyyy-MM-dd&quot;);</span>
+<span class="nc" id="L105">        return foLocalDate.format(formatter);</span>
+    }
+
+    /**
+     * Converts a date string from the &quot;MMMM dd, yyyy&quot; format to &quot;yyyy-MM-dd&quot;.
+     *
+     * This method takes a string formatted with the month name (e.g., &quot;October
+     * 02, 2024&quot;) and converts it into the standard &quot;yyyy-MM-dd&quot; format. If the
+     * input string cannot be parsed, it throws a {@link ParseException}.
+     *
+     * @param fsLongDateString The date string in &quot;MMMM dd, yyyy&quot; format.
+     * @return A string representing the date in &quot;yyyy-MM-dd&quot; format.
+     * @throws ParseException If the input string cannot be parsed into a valid
+     * date.
+     *
+     * &lt;b&gt;Example:&lt;/b&gt;
+     * &lt;pre&gt;{@code
+     * String dateStr = &quot;October 02, 2024&quot;;
+     * String formattedDate = convertLongDateStringToShort(dateStr);
+     * System.out.println(formattedDate); // Outputs: 2024-10-02
+     * }&lt;/pre&gt;
+     */
+    public static String convertLongDateStringToShort(String fsLongDateString) throws ParseException {
+<span class="nc" id="L128">        SimpleDateFormat fromUser = new SimpleDateFormat(&quot;MMMM dd, yyyy&quot;);</span>
+<span class="nc" id="L129">        SimpleDateFormat myFormat = new SimpleDateFormat(&quot;yyyy-MM-dd&quot;);</span>
+<span class="nc" id="L130">        return myFormat.format(fromUser.parse(fsLongDateString));</span>
+    }
+
+    /**
+     * Formats a {@link Date} object into a string with the month name and day
+     * in the &quot;MMMM dd, yyyy&quot; format.
+     *
+     * This method converts a {@link Date} object into a more human-readable
+     * format, where the month name is displayed in full, such as &quot;October 02,
+     * 2024&quot;.
+     *
+     * @param foDateValue The {@link Date} object to be formatted.
+     * @return A string representing the date in &quot;MMMM dd, yyyy&quot; format.
+     *
+     * &lt;b&gt;Example:&lt;/b&gt;
+     * &lt;pre&gt;{@code
+     * Date now = new Date();
+     * String formattedDate = formatDateWithMonthName(now);
+     * System.out.println(formattedDate); // Outputs: October 02, 2024 (or current date)
+     * }&lt;/pre&gt;
+     */
+    public static String formatDateWithMonthName(Date foDateValue) {
+<span class="nc" id="L152">        SimpleDateFormat sdf = new SimpleDateFormat(&quot;MMMM dd, yyyy&quot;);</span>
+<span class="nc" id="L153">        return sdf.format(foDateValue);</span>
+    }
+
+    /**
+     * Adds a text limiter to a {@link TextField} to restrict its length to a
+     * specified maximum number of characters.
+     *
+     * @param foTextField The {@link TextField} to which the limiter will be
+     * applied.
+     * @param fnMaxLength The maximum length of text allowed.
+     */
+    @SuppressWarnings(&quot;unchecked&quot;)
+    public static void setTextFieldValueLimit(TextField foTextField, int fnMaxLength) {
+<span class="nc bnc" id="L166" title="All 2 branches missed.">        if (foTextField.getProperties().get(&quot;textLimiter&quot;) != null) {</span>
+<span class="nc" id="L167">            foTextField.textProperty().removeListener((ChangeListener&lt;String&gt;) foTextField.getProperties().get(&quot;textLimiter&quot;));</span>
+        }
+
+<span class="nc" id="L170">        final boolean[] isUpdating = {false};</span>
+
+<span class="nc" id="L172">        ChangeListener&lt;String&gt; textLimiter = (observable, oldValue, newValue) -&gt; {</span>
+<span class="nc bnc" id="L173" title="All 2 branches missed.">            if (isUpdating[0]) {</span>
+<span class="nc" id="L174">                return;</span>
+            }
+
+<span class="nc bnc" id="L177" title="All 2 branches missed.">            if (newValue.length() &gt; fnMaxLength) {</span>
+<span class="nc" id="L178">                isUpdating[0] = true;</span>
+<span class="nc" id="L179">                foTextField.setText(oldValue);</span>
+<span class="nc" id="L180">                isUpdating[0] = false;</span>
+            }
+<span class="nc" id="L182">        };</span>
+
+<span class="nc" id="L184">        foTextField.textProperty().addListener(textLimiter);</span>
+<span class="nc" id="L185">        foTextField.getProperties().put(&quot;textLimiter&quot;, textLimiter);</span>
+<span class="nc" id="L186">    }</span>
+
+    /**
+     * Extracts the first initial from a given full name and appends the last
+     * name.
+     *
+     * This method takes a full name in the format &quot;FirstName LastName&quot; and
+     * returns a formatted string containing the first letter of the first name
+     * followed by a period and the last name.
+     *
+     * &lt;p&gt;
+     * Example:
+     * &lt;pre&gt;{@code
+     * String formattedName = formatInitialAndLastName(&quot;John Doe&quot;);
+     * System.out.println(formattedName); // Outputs: J. Doe
+     * }&lt;/pre&gt;
+     *
+     * @param fsFullName The full name in &quot;FirstName LastName&quot; format.
+     * @return A formatted string with the first initial and last name.
+     * @throws IllegalArgumentException If the input is null, empty, or does not
+     * contain at least two words.
+     */
+    public static String formatInitialAndLastName(String fsFullName) {
+<span class="nc bnc" id="L209" title="All 4 branches missed.">        if (fsFullName == null || fsFullName.trim().isEmpty()) {</span>
+<span class="nc" id="L210">            throw new IllegalArgumentException(&quot;Full name cannot be null or empty.&quot;);</span>
+        }
+
+<span class="nc" id="L213">        String[] nameParts = fsFullName.trim().split(&quot;\\s+&quot;); // Handles multiple spaces</span>
+<span class="nc bnc" id="L214" title="All 2 branches missed.">        if (nameParts.length &lt; 2) {</span>
+<span class="nc" id="L215">            throw new IllegalArgumentException(&quot;Full name must contain at least first and last name.&quot;);</span>
+        }
+
+<span class="nc" id="L218">        String firstNameInitial = nameParts[0].substring(0, 1);</span>
+<span class="nc" id="L219">        String lastName = nameParts[nameParts.length - 1];</span>
+
+<span class="nc" id="L221">        return firstNameInitial + &quot;. &quot; + lastName;</span>
+    }
+
+    /**
+     * @param foTxtFields The {@link TextField} to apply the behavior to.
+     *
+     * &lt;b&gt;Example:&lt;/b&gt;
+     * &lt;pre&gt;{@code
+     * TextField textField1 = new TextField();
+     * TextField textField2 = new TextField();
+     * inputDecimalOnly(textField1,textField2);
+     * }&lt;/pre&gt;
+     */
+    public static void inputDecimalOnly(TextField... foTxtFields) {
+<span class="nc" id="L235">        Pattern pattern = Pattern.compile(&quot;[0-9,.]*&quot;);</span>
+<span class="nc bnc" id="L236" title="All 2 branches missed.">        for (TextField txtField : foTxtFields) {</span>
+<span class="nc bnc" id="L237" title="All 2 branches missed.">            if (txtField != null) {</span>
+<span class="nc" id="L238">                txtField.setTextFormatter(new TextFormaterUtil(pattern));</span>
+            }
+        }
+<span class="nc" id="L241">    }</span>
+
+    /**
+     * @param foTxtFields The {@link TextField} to apply the behavior to.
+     *
+     * &lt;b&gt;Example:&lt;/b&gt;
+     * &lt;pre&gt;{@code
+     * TextField textField1 = new TextField();
+     * TextField textField2 = new TextField();
+     * inputIntegersOnly(textField1,textField2);
+     * }&lt;/pre&gt;
+     */
+    public static void inputIntegersOnly(TextField... foTxtFields) {
+<span class="nc" id="L254">        Pattern pattern = Pattern.compile(&quot;[0-9,]*&quot;);</span>
+<span class="nc bnc" id="L255" title="All 2 branches missed.">        for (TextField txtField : foTxtFields) {</span>
+<span class="nc bnc" id="L256" title="All 2 branches missed.">            if (txtField != null) {</span>
+<span class="nc" id="L257">                txtField.setTextFormatter(new TextFormaterUtil(pattern));</span>
+            }
+        }
+<span class="nc" id="L260">    }</span>
+
+    /**
+     *
+     * @param foTxtFields The {@link TextField} to apply the behavior to.
+     *
+     * &lt;b&gt;Example:&lt;/b&gt;
+     * &lt;pre&gt;{@code
+     * TextField textField1 = new TextField();
+     * TextField textField2 = new TextField();
+     * inputLettersOnly(textField1,textField2);
+     * }&lt;/pre&gt;
+     */
+    public static void inputLettersOnly(TextField... foTxtFields) {
+<span class="nc" id="L274">        Pattern pattern = Pattern.compile(&quot;[a-zA-Z]*&quot;);</span>
+<span class="nc bnc" id="L275" title="All 2 branches missed.">        for (TextField txtField : foTxtFields) {</span>
+<span class="nc bnc" id="L276" title="All 2 branches missed.">            if (txtField != null) {</span>
+<span class="nc" id="L277">                txtField.setTextFormatter(new TextFormaterUtil(pattern));</span>
+            }
+        }
+<span class="nc" id="L280">    }</span>
+
+    /**
+     *
+     * @param foTxtFields The {@link TextField} to apply the behavior to.
+     *
+     * &lt;b&gt;Example:&lt;/b&gt;
+     * &lt;pre&gt;{@code
+     * TextField textField1 = new TextField();
+     * TextField textField2 = new TextField();
+     * inputLettersAndNumbersOnly(textField1,textField2);
+     * }&lt;/pre&gt;
+     */
+    public static void inputLettersAndNumbersOnly(TextField... foTxtFields) {
+<span class="nc" id="L294">        Pattern pattern = Pattern.compile(&quot;[a-zA-Z0-9]*&quot;);</span>
+<span class="nc bnc" id="L295" title="All 2 branches missed.">        for (TextField txtField : foTxtFields) {</span>
+<span class="nc bnc" id="L296" title="All 2 branches missed.">            if (txtField != null) {</span>
+<span class="nc" id="L297">                txtField.setTextFormatter(new TextFormaterUtil(pattern));</span>
+            }
+        }
+<span class="nc" id="L300">    }</span>
+
+    /**
+     * Formats an integer or numeric value into a decimal format with two
+     * decimal places.
+     *
+     * &lt;p&gt;
+     * This method takes an input object, attempts to convert it to a numeric
+     * value, and formats it to a string representation with thousands
+     * separators and two decimal places.&lt;/p&gt;
+     *
+     * &lt;p&gt;
+     * If the input is invalid (e.g., non-numeric), it returns &quot;0.00&quot; as a
+     * default value.&lt;/p&gt;
+     *
+     * @param foObject The input object containing a numeric value (Integer,
+     * Double, String, etc.).
+     * @return A formatted string representation of the number (e.g.,
+     * &quot;1,000.00&quot;). Returns &quot;0.00&quot; if the input is invalid or null.
+     *
+     * &lt;b&gt;Example Usage:&lt;/b&gt;
+     * &lt;pre&gt;{@code
+     * System.out.println(setIntegerValueToDecimalFormat(1000));      // Outputs: &quot;1,000.00&quot;
+     * System.out.println(setIntegerValueToDecimalFormat(1234567));  // Outputs: &quot;1,234,567.00&quot;
+     * System.out.println(setIntegerValueToDecimalFormat(&quot;5000&quot;));   // Outputs: &quot;5,000.00&quot;
+     * System.out.println(setIntegerValueToDecimalFormat(&quot;abc&quot;));    // Outputs: &quot;0.00&quot; (Invalid input)
+     * System.out.println(setIntegerValueToDecimalFormat(null));     // Outputs: &quot;0.00&quot; (Null input)
+     * }&lt;/pre&gt;
+     */
+    public static String setIntegerValueToDecimalFormat(Object foObject) {
+<span class="nc" id="L330">        DecimalFormat format = new DecimalFormat(&quot;#,##0.00&quot;);</span>
+        try {
+<span class="nc bnc" id="L332" title="All 2 branches missed.">            if (foObject != null) {</span>
+<span class="nc" id="L333">                return format.format(Double.parseDouble(String.valueOf(foObject)));</span>
+            }
+<span class="nc" id="L335">        } catch (NumberFormatException e) {</span>
+<span class="nc" id="L336">            System.err.println(&quot;Error: Invalid number format for input - &quot; + foObject);</span>
+<span class="nc" id="L337">        } catch (Exception e) {</span>
+<span class="nc" id="L338">            System.err.println(&quot;An unexpected error occurred: &quot; + e.getMessage());</span>
+<span class="nc" id="L339">        }</span>
+<span class="nc" id="L340">        return &quot;0.00&quot;;</span>
+    }
+
+    public static String setIntegerValueToDecimalFormat(double fnValue) {
+<span class="nc" id="L344">        DecimalFormat format = new DecimalFormat(&quot;#,##0.00&quot;);</span>
+        try {
+<span class="nc" id="L346">            return format.format(Double.parseDouble(String.valueOf(fnValue)));</span>
+<span class="nc" id="L347">        } catch (NumberFormatException e) {</span>
+<span class="nc" id="L348">            System.err.println(&quot;Error: Invalid number format for input - &quot; + fnValue);</span>
+<span class="nc" id="L349">        } catch (Exception e) {</span>
+<span class="nc" id="L350">            System.err.println(&quot;An unexpected error occurred: &quot; + e.getMessage());</span>
+<span class="nc" id="L351">        }</span>
+<span class="nc" id="L352">        return &quot;0.00&quot;;</span>
+    }
+
+    /**
+     * Formats a given numeric object into a string using either a 2-decimal or
+     * 4-decimal format.
+     *
+     * &lt;p&gt;
+     * This method attempts to parse the given object to a {@code double} and
+     * format it using {@link DecimalFormat}. If the object is
+     * {@code null} or parsing fails, it returns a default formatted value
+     * (&quot;0.00&quot; or &quot;0.0000&quot; depending on the flag).&lt;/p&gt;
+     *
+     * @param foObject the numeric object to be formatted (e.g., {@code Double},
+     * {@code Integer}, {@code String} that can be parsed as a number)
+     * @param fbIs4Decimal if {@code true}, formats using 4 decimal places
+     * (&quot;#,##0.0000&quot;); if {@code false}, formats using 2 decimal places
+     * (&quot;#,##0.00&quot;)
+     * @return the formatted string representation of the number, or
+     * &quot;0.0000&quot;/&quot;0.00&quot; if input is null or invalid
+     */
+    public static String setIntegerValueToDecimalFormat(Object foObject, boolean fbIs4Decimal) {
+<span class="nc bnc" id="L374" title="All 2 branches missed.">        String lsDecimalFormat = fbIs4Decimal ? &quot;#,##0.0000&quot; : &quot;#,##0.00&quot;;</span>
+<span class="nc" id="L375">        DecimalFormat format = new DecimalFormat(lsDecimalFormat);</span>
+        try {
+<span class="nc bnc" id="L377" title="All 2 branches missed.">            if (foObject != null) {</span>
+<span class="nc" id="L378">                return format.format(Double.parseDouble(String.valueOf(foObject)));</span>
+            }
+<span class="nc" id="L380">        } catch (NumberFormatException e) {</span>
+<span class="nc" id="L381">            System.err.println(&quot;Error: Invalid number format for input - &quot; + foObject);</span>
+<span class="nc" id="L382">        } catch (Exception e) {</span>
+<span class="nc" id="L383">            System.err.println(&quot;An unexpected error occurred: &quot; + e.getMessage());</span>
+<span class="nc" id="L384">        }</span>
+<span class="nc bnc" id="L385" title="All 2 branches missed.">        return fbIs4Decimal ? &quot;0.0000&quot; : &quot;0.00&quot;;</span>
+    }
+
+    /**
+     * Formats a given numeric object into a string using either a 2-decimal or
+     * 4-decimal format.
+     *
+     * &lt;p&gt;
+     * This method attempts to parse the given object to a {@code double} and
+     * format it using {@link DecimalFormat}. If the object is
+     * {@code null} or parsing fails, it returns a default formatted value
+     * (&quot;0.00&quot; or &quot;0.0000&quot; depending on the flag).&lt;/p&gt;
+     *
+     * @param fnValue
+     * @param fbIs4Decimal if {@code true}, formats using 4 decimal places
+     * (&quot;#,##0.0000&quot;); if {@code false}, formats using 2 decimal places
+     * (&quot;#,##0.00&quot;)
+     * @return the formatted string representation of the number, or
+     * &quot;0.0000&quot;/&quot;0.00&quot; if input is null or invalid
+     */
+    public static String setIntegerValueToDecimalFormat(double fnValue, boolean fbIs4Decimal) {
+<span class="nc bnc" id="L406" title="All 2 branches missed.">        String lsDecimalFormat = fbIs4Decimal ? &quot;#,##0.0000&quot; : &quot;#,##0.00&quot;;</span>
+<span class="nc" id="L407">        DecimalFormat format = new DecimalFormat(lsDecimalFormat);</span>
+        try {
+<span class="nc" id="L409">            return format.format(Double.parseDouble(String.valueOf(fnValue)));</span>
+<span class="nc" id="L410">        } catch (NumberFormatException e) {</span>
+<span class="nc" id="L411">            System.err.println(&quot;Error: Invalid number format for input - &quot; + fnValue);</span>
+<span class="nc" id="L412">        } catch (Exception e) {</span>
+<span class="nc" id="L413">            System.err.println(&quot;An unexpected error occurred: &quot; + e.getMessage());</span>
+<span class="nc" id="L414">        }</span>
+<span class="nc bnc" id="L415" title="All 2 branches missed.">        return fbIs4Decimal ? &quot;0.0000&quot; : &quot;0.00&quot;;</span>
+    }
+
+    public static String setDecimalValueToIntegerFormat(double fnValue) {
+<span class="nc" id="L419">        DecimalFormat format = new DecimalFormat(&quot;#,##0&quot;);</span>
+        try {
+<span class="nc" id="L421">            return format.format(Math.round(fnValue)); // You can use Math.round() if you want to round the number</span>
+            // return format.format((int) fnValue); // Use this if you want to just drop decimals without rounding
+<span class="nc" id="L423">        } catch (NumberFormatException e) {</span>
+<span class="nc" id="L424">            System.err.println(&quot;Error: Invalid number format for input - &quot; + fnValue);</span>
+<span class="nc" id="L425">        } catch (Exception e) {</span>
+<span class="nc" id="L426">            System.err.println(&quot;An unexpected error occurred: &quot; + e.getMessage());</span>
+<span class="nc" id="L427">        }</span>
+<span class="nc" id="L428">        return &quot;0&quot;;</span>
+    }
+
+    /* DATE FORMATTER UTILITY SECTION */
+    /**
+     * Converts a string representing a date in &quot;yyyy-MM-dd&quot; format to a
+     * {@link LocalDate} object.
+     *
+     * This method takes a date in string format (e.g., &quot;2024-10-01&quot;) and
+     * converts it to a {@link LocalDate}. It expects the input string to follow
+     * the &quot;yyyy-MM-dd&quot; format. If the input cannot be parsed, a
+     * {@link DateTimeParseException} will be thrown.
+     *
+     * @param fsDateValue
+     * @return A {@link LocalDate} object representing the date.
+     *
+     * &lt;b&gt;Example:&lt;/b&gt;
+     * &lt;pre&gt;{@code
+     * String dateStr = &quot;2024-10-01&quot;;
+     * LocalDate date = parseDateStringToLocalDate(dateStr, &quot;yyyy-MM-dd&quot;);
+     * System.out.println(date); // Outputs: 2024-10-01
+     * }&lt;/pre&gt;
+     */
+    public static LocalDate parseDateStringToLocalDate(String fsDateValue) {
+<span class="nc bnc" id="L452" title="All 4 branches missed.">        if (fsDateValue == null || fsDateValue.trim().isEmpty()) {</span>
+<span class="nc" id="L453">            return null;</span>
+        }
+
+<span class="nc" id="L456">        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern(&quot;yyyy-MM-dd&quot;);</span>
+        try {
+<span class="nc" id="L458">            return LocalDate.parse(fsDateValue.trim(), dateFormatter);</span>
+<span class="nc" id="L459">        } catch (DateTimeParseException e) {</span>
+<span class="nc" id="L460">            return null; // or log the error if needed</span>
+        }
+    }
+
+    /**
+     * Sets the disabled state for the given nodes.
+     *
+     * &lt;p&gt;
+     * For example, to disable multiple nodes:&lt;/p&gt;
+     * &lt;pre&gt;
+     * {@code
+     * Button button = new Button(&quot;Submit&quot;);
+     * TextField textField = new TextField();
+     * setDisable(true, button, textField);  // This will disable both the button and the text field
+     * }
+     * &lt;/pre&gt;
+     *
+     * @param disable if {@code true}, disables the nodes; otherwise, enables
+     * them.
+     * @param nodes the nodes to be disabled or enabled.
+     */
+    public static void setDisable(boolean disable, Node... nodes) {
+<span class="nc bnc" id="L482" title="All 2 branches missed.">        for (Node node : nodes) {</span>
+<span class="nc bnc" id="L483" title="All 2 branches missed.">            if (node != null) {</span>
+<span class="nc" id="L484">                node.setDisable(disable);</span>
+            }
+        }
+<span class="nc" id="L487">    }</span>
+
+    /**
+     * Sets the visibility state for the given nodes.
+     *
+     * &lt;p&gt;
+     * For example, to hide or show multiple nodes:&lt;/p&gt;
+     * &lt;pre&gt;
+     * {@code
+     * Label label = new Label(&quot;Hidden Label&quot;);
+     * Button button = new Button(&quot;Click Me&quot;);
+     * setVisible(false, label, button);  // This will hide both the label and the button
+     * }
+     * &lt;/pre&gt;
+     *
+     * @param visible if {@code true}, makes the nodes visible; otherwise, hides
+     * them.
+     * @param nodes the nodes to be shown or hidden.
+     */
+    public static void setVisible(boolean visible, Node... nodes) {
+<span class="nc bnc" id="L507" title="All 2 branches missed.">        for (Node node : nodes) {</span>
+<span class="nc bnc" id="L508" title="All 2 branches missed.">            if (node != null) {</span>
+<span class="nc" id="L509">                node.setVisible(visible);</span>
+            }
+        }
+<span class="nc" id="L512">    }</span>
+
+    /**
+     * Sets the managed state for the given nodes.A managed node is included in
+     * the layout calculations, so setting it to {@code false} will exclude it
+     * from layout, but the node will still exist in the scene graph.&lt;p&gt;
+     * For example, to remove nodes from layout calculations:&lt;/p&gt;
+     * &lt;pre&gt;
+     * {
+     *
+     * @param managed if {@code true}, includes the nodes in layout; otherwise,
+     * excludes them.
+     * @param nodes the nodes to be included or excluded from the layout.
+     * TextField&quot;); Label label = new Label(&quot;Managed Label&quot;); setManaged(false,
+     * textField, label); // These nodes will no longer be part of the layout }
+     * &lt;/pre&gt;
+     *
+     *
+     */
+    public static void setManaged(boolean managed, Node... nodes) {
+<span class="nc bnc" id="L532" title="All 2 branches missed.">        for (Node node : nodes) {</span>
+<span class="nc bnc" id="L533" title="All 2 branches missed.">            if (node != null) {</span>
+<span class="nc" id="L534">                node.setManaged(managed);</span>
+            }
+        }
+<span class="nc" id="L537">    }</span>
+
+    /**
+     * Sets the provided text value to multiple {@link TextField} elements.
+     *
+     * @param fsValue the text value to be set for each TextField
+     * @param txtFields one or more TextField objects to set the text for
+     *
+     * Example usage:      &lt;pre&gt;
+     * {@code
+     * TextField txtField1 = new TextField();
+     * TextField txtField2 = new TextField();
+     * setText(&quot;Sample Text&quot;, txtField1, txtField2);
+     * }
+     * &lt;/pre&gt;
+     */
+    public static void setText(String fsValue, TextField... txtFields) {
+<span class="nc bnc" id="L554" title="All 2 branches missed.">        for (TextField txtField : txtFields) {</span>
+<span class="nc bnc" id="L555" title="All 2 branches missed.">            if (txtField != null) {</span>
+<span class="nc" id="L556">                txtField.setText(fsValue);</span>
+            }
+        }
+<span class="nc" id="L559">    }</span>
+
+    /**
+     * Sets the provided text value to multiple {@link TextArea} elements.
+     *
+     * @param fsValue the text value to be set for each TextArea
+     * @param txtAreas one or more TextArea objects to set the text for
+     *
+     * Example usage:      &lt;pre&gt;
+     * {@code
+     * TextArea txtAreas1 = new TextArea();
+     * TextArea txtAreas2 = new TextArea();
+     * setText(&quot;Sample Text&quot;, txtAreas1, txtAreas2);
+     * }
+     * &lt;/pre&gt;
+     */
+    public static void setText(String fsValue, TextArea... txtAreas) {
+<span class="nc bnc" id="L576" title="All 2 branches missed.">        for (TextArea txtArea : txtAreas) {</span>
+<span class="nc bnc" id="L577" title="All 2 branches missed.">            if (txtArea != null) {</span>
+<span class="nc" id="L578">                txtArea.setText(fsValue);</span>
+            }
+        }
+<span class="nc" id="L581">    }</span>
+
+    /**
+     * Sets the provided value to multiple {@link ComboBox} elements.
+     *
+     * @param fsValue the value to be set for each ComboBox
+     * @param comboBoxes one or more ComboBox objects to set the value for
+     *
+     * Example usage:      &lt;pre&gt;
+     * {@code
+     * ComboBox&lt;String&gt; comboBox1 = new ComboBox&lt;&gt;();
+     * ComboBox&lt;String&gt; comboBox2 = new ComboBox&lt;&gt;();
+     * setValue(&quot;Option1&quot;, comboBox1, comboBox2);
+     * }
+     * &lt;/pre&gt;
+     */
+    @SuppressWarnings(&quot;unchecked&quot;)
+    public static void setValue(String fsValue, ComboBox... comboBoxes) {
+<span class="nc bnc" id="L599" title="All 2 branches missed.">        for (ComboBox comboBox : comboBoxes) {</span>
+<span class="nc bnc" id="L600" title="All 2 branches missed.">            if (comboBox != null) {</span>
+<span class="nc" id="L601">                comboBox.setValue(fsValue);</span>
+            }
+        }
+<span class="nc" id="L604">    }</span>
+
+    /**
+     * Sets the provided text value to multiple {@link Label} elements.
+     *
+     * @param fsValue the text value to be set for each Label
+     * @param labels one or more Label objects to set the text for
+     *
+     * Example usage:      &lt;pre&gt;
+     * {@code
+     * Label label1 = new Label();
+     * Label label2 = new Label();
+     * setText(&quot;Sample Text&quot;, label1, label2);
+     * }
+     * &lt;/pre&gt;
+     */
+    public static void setText(String fsValue, Label... labels) {
+<span class="nc bnc" id="L621" title="All 2 branches missed.">        for (Label label : labels) {</span>
+<span class="nc bnc" id="L622" title="All 2 branches missed.">            if (label != null) {</span>
+<span class="nc" id="L623">                label.setText(fsValue);</span>
+            }
+        }
+<span class="nc" id="L626">    }</span>
+
+    /**
+     * Sets the selected state for a variable number of CheckBox components.
+     *
+     * @param fbValue The value to set for the selected state (true to select,
+     * false to deselect).
+     * @param checkBoxes The CheckBox components to modify.
+     *
+     * &lt;p&gt;
+     * Example usage:&lt;/p&gt;
+     * &lt;pre&gt;
+     * CheckBox checkBox1 = new CheckBox(&quot;Option 1&quot;);
+     * CheckBox checkBox2 = new CheckBox(&quot;Option 2&quot;);
+     *
+     * // Select all checkboxes
+     * UIUtils.setSelected(true, checkBox1, checkBox2);
+     *
+     * // Deselect all checkboxes
+     * UIUtils.setSelected(false, checkBox1, checkBox2);
+     * &lt;/pre&gt;
+     */
+    public static void setSelected(boolean fbValue, CheckBox... checkBoxes) {
+<span class="nc bnc" id="L649" title="All 2 branches missed.">        for (CheckBox checkBox : checkBoxes) {</span>
+<span class="nc bnc" id="L650" title="All 2 branches missed.">            if (checkBox != null) {</span>
+<span class="nc" id="L651">                checkBox.setSelected(fbValue);</span>
+            }
+        }
+<span class="nc" id="L654">    }</span>
+
+    /**
+     * Sets the selected state for a variable number of RadioButton components.
+     *
+     * @param fbValue The value to set for the selected state (true to select,
+     * false to deselect).
+     * @param radioButtons The RadioButton components to modify.
+     *
+     * &lt;p&gt;
+     * Example usage:&lt;/p&gt;
+     * &lt;pre&gt;
+     * RadioButton radioBtn1 = new RadioButton(&quot;Option A&quot;);
+     * RadioButton radioBtn2 = new RadioButton(&quot;Option B&quot;);
+     *
+     * // Select the first radio button
+     * UIUtils.setSelected(true, radioBtn1);
+     *
+     * // Deselect the first radio button
+     * UIUtils.setSelected(false, radioBtn1);
+     * &lt;/pre&gt;
+     */
+    public static void setSelected(boolean fbValue, RadioButton... radioButtons) {
+<span class="nc bnc" id="L677" title="All 2 branches missed.">        for (RadioButton radioBtn : radioButtons) {</span>
+<span class="nc bnc" id="L678" title="All 2 branches missed.">            if (radioBtn != null) {</span>
+<span class="nc" id="L679">                radioBtn.setSelected(fbValue);</span>
+            }
+        }
+<span class="nc" id="L682">    }</span>
+
+    public static void setDropShadow(AnchorPane anchorPane, StackPane stackPane) {
+        // Set the AnchorPane background to transparent
+<span class="nc" id="L686">        anchorPane.setStyle(&quot;-fx-background-color: transparent;&quot;);</span>
+
+        // Set the StackPane background to white
+<span class="nc" id="L689">        stackPane.setStyle(&quot;-fx-background-color: white;&quot;);</span>
+
+        // Configure and apply DropShadow to StackPane
+<span class="nc" id="L692">        DropShadow dropShadow = new DropShadow();</span>
+<span class="nc" id="L693">        dropShadow.setWidth(23.45);</span>
+<span class="nc" id="L694">        dropShadow.setHeight(21.01);</span>
+<span class="nc" id="L695">        dropShadow.setRadius(10.62);</span>
+<span class="nc" id="L696">        dropShadow.setSpread(0.4);</span>
+<span class="nc" id="L697">        dropShadow.setColor(Color.color(0, 0, 0, 0.36)); // Black with 36% opacity</span>
+
+<span class="nc" id="L699">        stackPane.setEffect(dropShadow);</span>
+
+        // Add constraints for StackPane: all sides 10
+<span class="nc" id="L702">        AnchorPane.setTopAnchor(stackPane, 10.0);</span>
+<span class="nc" id="L703">        AnchorPane.setBottomAnchor(stackPane, 10.0);</span>
+<span class="nc" id="L704">        AnchorPane.setLeftAnchor(stackPane, 10.0);</span>
+<span class="nc" id="L705">        AnchorPane.setRightAnchor(stackPane, 10.0);</span>
+<span class="nc" id="L706">    }</span>
+
+    /**
+     *
+     *
+     * @param foTab the tab from parent tabpane
+     * @param foTabPane this is the parent of tab&lt;pre&gt;
+     * Example usage:{@code
+     * switchToTab(tab1 , TabPane);
+     * }
+     * &lt;/pre&gt;
+     */
+    public static void switchToTab(Tab foTab, TabPane foTabPane) {
+<span class="nc" id="L719">        foTabPane.getSelectionModel().select(foTab);</span>
+<span class="nc" id="L720">    }</span>
+    //test
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

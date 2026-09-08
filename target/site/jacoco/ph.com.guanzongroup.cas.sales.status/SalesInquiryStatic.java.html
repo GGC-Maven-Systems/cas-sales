@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SalesInquiryStatic.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">cas-sales</a> &gt; <a href="index.source.html" class="el_package">ph.com.guanzongroup.cas.sales.status</a> &gt; <span class="el_source">SalesInquiryStatic.java</span></div><h1>SalesInquiryStatic.java</h1><pre class="source lang-java linenums">/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package ph.com.guanzongroup.cas.sales.status;
+
+/**
+ *
+ * @author Arsiela
+ */
+<span class="nc" id="L12">public class SalesInquiryStatic {</span>
+    public static final String OPEN = &quot;0&quot;; //Open/default 
+    public static final  String CONFIRMED = &quot;1&quot;; //contacted
+    public static final  String QUOTED = &quot;2&quot;; //quoted
+    public static final  String CANCELLED = &quot;3&quot;; //Converted to Sale
+    public static final  String VOID = &quot;5&quot;; //Lost/Declined
+    public static final  String SALE = &quot;4&quot;; //Converted TO Sale
+    public static final  String LOST = &quot;6&quot;; //Lost/Declined
+    
+<span class="nc" id="L21">    public static class CategoryCode  {</span>
+        //Category
+        public static final String MOBILEPHONE = &quot;0000001&quot;;   //Cellphone    
+        public static final String APPLIANCES  = &quot;0000002&quot;;   //Appliances   
+        public static final String MOTORCYCLE  = &quot;0000003&quot;;   //Motorcycle   
+        public static final String SPMC        = &quot;0000004&quot;;   //Motorcycle SP
+        public static final String CAR         = &quot;0000005&quot;;   //CAR          
+        public static final String SPCAR       = &quot;0000006&quot;;   //CAR SP       
+        public static final String GENERAL     = &quot;0000007&quot;;   //General      
+        public static final String FOOD        = &quot;0000008&quot;;   //Food         
+        public static final String HOSPITALITY = &quot;0000009&quot;;   //Hospitality/MonarchFood 0009
+    }
+    
+    //Industry Arsiela 08-07-2026 Data for industry must be configure and finalize to prevent frequently changes.
+    /*
+    01 MC
+    02 MP
+    03 CAR
+    04 Monarch
+    05 Auto Group - Nissan (need to ask ito later. sa existing system, ginagamit siya for payrol)
+    06 Auto Group - Any (need to ask ito later. sa existing system, ginagamit siya for payrol)
+    07 Guanzon Service office - (need to ask ito later. sa existing system, ginagamit siya for payrol)
+    08 Main Office (gamit ng finance sa CAS)
+    09 General (PSD &amp; engineering)
+    10 Engineering (ask ito kung para saan)
+    11 Appliances
+    12 Pedritos
+    */
+<span class="nc" id="L49">    public static class Industry  {</span>
+        public static final String MOTORCYCLE  = &quot;01&quot;;   //Motorcycle   / SP MC
+        public static final String MOBILEPHONE = &quot;02&quot;;   //Cellphone    
+        public static final String CAR         = &quot;03&quot;;   //CAR  / SP CAR / Honda
+        public static final String HOSPITALITY = &quot;04&quot;;   //Hospitality       
+        public static final String CAR_Nissan  = &quot;05&quot;;   //Auto Group - Nissan 
+        public static final String CAR_Any     = &quot;06&quot;;   //Auto Group - Any 
+        public static final String GUANZON_Service     = &quot;07&quot;;   //Guanzon Service office 
+        public static final String MAINOFFICE  = &quot;08&quot;;   //MainOffice
+        public static final String GENERAL     = &quot;09&quot;;   //General     
+        public static final String ENGINEERING = &quot;10&quot;;   //General         
+        public static final String APPLIANCES  = &quot;11&quot;;   //Appliances      
+        public static final String LPFOOD      = &quot;12&quot;;   //Food         
+    }
+    
+<span class="nc" id="L64">    public static class ClientType  {</span>
+        //Client Type
+        public static final  String INDIVIDUAL = &quot;0&quot;; //Individual
+        public static final  String CORPORATE = &quot;1&quot;;  //Corporate
+    }
+    
+<span class="nc" id="L70">    public static class PurchaseType  {</span>
+        //Purchase Type:  0 = cash, 1 = cash balance, 2 = Installment, 3 = PO, 4 = financing,5 = insurance, 6=Term
+        public static final  String CASH = &quot;0&quot;; 
+        public static final  String CASH_BALANCE = &quot;1&quot;;  
+        public static final  String INSTALLMENT = &quot;2&quot;;  
+        public static final  String PO = &quot;3&quot;;  
+        public static final  String FINANCING = &quot;4&quot;;  
+        public static final  String INSURANCE = &quot;5&quot;;  
+        public static final  String TERM = &quot;6&quot;;  
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

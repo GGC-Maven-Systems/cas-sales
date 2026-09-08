@@ -692,7 +692,7 @@ public class CustomerInquiryFollowUpTest {
         }
 
         // default/unmapped inquiry type branch
-        JSONObject unmapped = poTrans.RetreiveSource("9", null, null, null, null);
+        JSONObject unmapped = poTrans.RetreiveSource("0", null, null, null, null);
         System.out.println("RetreiveSource[default]: " + unmapped.toJSONString());
     }
 
