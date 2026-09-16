@@ -82,6 +82,14 @@ public class FinancingRates extends Parameter {
         return this.paModel.size();
     }
     
+    public Model_Vehicle_Financing_Rates StandardFinancingRateList(int row) {
+        return (Model_Vehicle_Financing_Rates) paStandardRate.get(row);
+    }
+    
+    public int getStandardFinancingRateListCount() {
+        return this.paStandardRate.size();
+    }
+    
     public JSONObject ActivateRecord(String remarks)
             throws SQLException,
             GuanzonException,
