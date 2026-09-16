@@ -66,8 +66,8 @@ public class FinancingRates extends Parameter {
         psCompanyId = companyId; 
         getModel().setCompanyId(companyId);
     }
-    public void setBank(String bank) { psBank = bank; }
-    public String getBank() { return psBank; }
+    public void setSearchBank(String bank) { psBank = bank; }
+    public String getSearchBank() { return psBank; }
     
     /**
      * Converts a financing status code into its display label.
@@ -356,7 +356,7 @@ public class FinancingRates extends Parameter {
         }
         if (isJSONSuccess(poJSON)) {
             if(isSearch){
-                setBank(getModel().Bank().getBankName());
+                setSearchBank(getModel().Bank().getBankName());
             } else {
                 poJSON = checkExistingBank(object.getModel().getBankID());
                 if ("error".equals((String) poJSON.get("result"))) {
