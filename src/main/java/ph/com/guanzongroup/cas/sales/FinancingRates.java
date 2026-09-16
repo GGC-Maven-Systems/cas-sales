@@ -356,7 +356,7 @@ public class FinancingRates extends Parameter {
         }
         if (isJSONSuccess(poJSON)) {
             if(isSearch){
-                setSearchBank(getModel().Bank().getBankName());
+                setSearchBank(object.getModel().getBankName());
             } else {
                 poJSON = checkExistingBank(object.getModel().getBankID());
                 if ("error".equals((String) poJSON.get("result"))) {
