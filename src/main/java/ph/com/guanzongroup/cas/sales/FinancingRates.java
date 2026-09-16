@@ -82,11 +82,11 @@ public class FinancingRates extends Parameter {
         return this.paModel.size();
     }
     
-    public Model_Vehicle_Financing_Rates StandardFinancingRateList(int row) {
+    public Model_Vehicle_Financing_Rates StandardRateList(int row) {
         return (Model_Vehicle_Financing_Rates) paStandardRate.get(row);
     }
     
-    public int getStandardFinancingRateListCount() {
+    public int getStandardRateListCount() {
         return this.paStandardRate.size();
     }
     
