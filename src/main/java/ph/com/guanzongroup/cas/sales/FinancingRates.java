@@ -39,6 +39,7 @@ public class FinancingRates extends Parameter {
     ArrayList<Model_Vehicle_Financing_Rates> paStandardRate;
    
     private String psCompanyId = "";
+    private String psBank = "";
 
     /**
      * Initializes the financing rate controller and its default models.
@@ -52,6 +53,7 @@ public class FinancingRates extends Parameter {
       poModel = new SalesModels(poGRider).FinancingRateMaster();
       paModel = new ArrayList<>();
       paStandardRate = new ArrayList<>();
+      psBank = "";
       super.initialize();
     }
     
@@ -64,6 +66,8 @@ public class FinancingRates extends Parameter {
         psCompanyId = companyId; 
         getModel().setCompanyId(companyId);
     }
+    public void setBank(String bank) { psBank = bank; }
+    public String getBank() { return psBank; }
     
     /**
      * Converts a financing status code into its display label.
@@ -343,29 +347,26 @@ public class FinancingRates extends Parameter {
             GuanzonException {
         poJSON = new JSONObject();
         
-        if(isSearch){
-            poJSON = loadRecord(value);
-            if (!isJSONSuccess(poJSON)) {
-                return poJSON;
-            }
+        Banks object = new ParamControllers(poGRider, logwrapr).Banks();
+        object.setRecordStatus(RecordStatus.ACTIVE);
+        if(pbWithUI){
+            poJSON = object.searchRecord(value, byCode);
         } else {
-            Banks object = new ParamControllers(poGRider, logwrapr).Banks();
-            object.setRecordStatus(RecordStatus.ACTIVE);
-            if(pbWithUI){
-                poJSON = object.searchRecord(value, byCode);
+            object.openRecord(value);
+        }
+        if (isJSONSuccess(poJSON)) {
+            if(isSearch){
+                setBank(getModel().Bank().getBankName());
             } else {
-                object.openRecord(value);
-            }
-            if (isJSONSuccess(poJSON)) {
                 poJSON = checkExistingBank(object.getModel().getBankID());
                 if ("error".equals((String) poJSON.get("result"))) {
                     return poJSON;
                 }
                 getModel().setBankId(object.getModel().getBankID());
             }
-
-            System.out.println("Bank Name : " + getModel().Bank().getBankName());
         }
+
+        System.out.println("Bank Name : " + getModel().Bank().getBankName());
         return poJSON;
     }
     
