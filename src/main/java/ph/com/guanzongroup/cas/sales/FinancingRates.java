@@ -74,6 +74,14 @@ public class FinancingRates extends Parameter {
         return poModel;
     }
     
+    public Model_Financing_Rate_Master RecordList(int row) {
+        return (Model_Financing_Rate_Master) paModel.get(row);
+    }
+    
+    public int getRecordListCount() {
+        return this.paModel.size();
+    }
+    
     public JSONObject ActivateRecord(String remarks)
             throws SQLException,
             GuanzonException,
