@@ -312,7 +312,7 @@ public class FinancingRates extends Parameter {
         try {
             String lsSQL = MiscUtil.addCondition(getSQ_Browse(),
                     " b.sBankName LIKE " + SQLUtil.toSQL("%"+fsBankName+"%")
-                    + " AND a.cRecdStat = " + SQLUtil.toSQL(FinancingRateStatus.VOID)
+                    + " AND a.cRecdStat != " + SQLUtil.toSQL(FinancingRateStatus.VOID)
                     );
             System.out.println("Executing SQL: " + lsSQL);
             ResultSet loRS = poGRider.executeQuery(lsSQL);
@@ -335,7 +335,7 @@ public class FinancingRates extends Parameter {
     public JSONObject loadStandardRates() throws SQLException, GuanzonException {
         paStandardRate = new ArrayList<>();
         try {
-            String lsSQL = MiscUtil.addCondition(MiscUtil.makeSQL(new SalesModels(poGRider).VehicleFinancingRates()),
+            String lsSQL = MiscUtil.addCondition(MiscUtil.makeSelect(new SalesModels(poGRider).VehicleFinancingRates()),
                                                     " cRecdStat = " + SQLUtil.toSQL(RecordStatus.ACTIVE)
                                                     );
             System.out.println("Executing SQL: " + lsSQL);
