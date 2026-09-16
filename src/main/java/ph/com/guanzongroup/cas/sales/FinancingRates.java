@@ -39,6 +39,13 @@ public class FinancingRates extends Parameter {
     ArrayList<Model_Vehicle_Financing_Rates> paStandardRate;
    
     private String psCompanyId = "";
+
+    /**
+     * Initializes the financing rate controller and its default models.
+     *
+     * @throws SQLException if a database error occurs
+     * @throws GuanzonException if application initialization fails
+     */
      @Override
     public void initialize() throws SQLException, GuanzonException {
       psRecdStat = FinancingRateStatus.OPEN;
@@ -48,11 +55,22 @@ public class FinancingRates extends Parameter {
       super.initialize();
     }
     
-    public void setCompanyId(String companyId) { 
+    /**
+     * Sets the company id for the current financing rate record.
+     *
+     * @param companyId company identifier to assign
+     */
+    public void setCompanyId(String companyId) {
         psCompanyId = companyId; 
         getModel().setCompanyId(companyId);
     }
     
+    /**
+     * Converts a financing status code into its display label.
+     *
+     * @param lsStatus status code to evaluate
+     * @return readable status text
+     */
     public String getStatus(String lsStatus) {
         switch (lsStatus) {
             case FinancingRateStatus.OPEN:
@@ -69,27 +87,63 @@ public class FinancingRates extends Parameter {
     }
     
 
+    /**
+     * Returns the active financing rate master model.
+     *
+     * @return current financing rate model
+     */
     @Override
     public Model_Financing_Rate_Master getModel() {
         return poModel;
     }
     
+    /**
+     * Gets a financing rate record from the loaded record list.
+     *
+     * @param row zero-based row index
+     * @return financing rate record at the given index
+     */
     public Model_Financing_Rate_Master RecordList(int row) {
         return (Model_Financing_Rate_Master) paModel.get(row);
     }
     
+    /**
+     * Returns the number of loaded financing rate records.
+     *
+     * @return record list size
+     */
     public int getRecordListCount() {
         return this.paModel.size();
     }
     
+    /**
+     * Gets a standard financing rate entry from the loaded list.
+     *
+     * @param row zero-based row index
+     * @return standard financing rate at the given index
+     */
     public Model_Vehicle_Financing_Rates StandardRateList(int row) {
         return (Model_Vehicle_Financing_Rates) paStandardRate.get(row);
     }
     
+    /**
+     * Returns the number of loaded standard financing rates.
+     *
+     * @return standard rate list size
+     */
     public int getStandardRateListCount() {
         return this.paStandardRate.size();
     }
     
+    /**
+     * Activates the currently loaded financing rate record.
+     *
+     * @param remarks remarks to save with the status change
+     * @return JSON result of the activation request
+     * @throws SQLException if a database error occurs
+     * @throws GuanzonException if the activation fails
+     * @throws CloneNotSupportedException if model cloning is not supported
+     */
     public JSONObject ActivateRecord(String remarks)
             throws SQLException,
             GuanzonException,
@@ -104,6 +158,16 @@ public class FinancingRates extends Parameter {
         return poJSON;
     }
     
+    /**
+     * Deactivates the currently loaded financing rate record.
+     *
+     * @param remarks remarks to save with the status change
+     * @return JSON result of the deactivation request
+     * @throws ParseException if status history parsing fails
+     * @throws SQLException if a database error occurs
+     * @throws GuanzonException if the deactivation fails
+     * @throws CloneNotSupportedException if model cloning is not supported
+     */
     public JSONObject DeactivateRecord(String remarks)
               throws ParseException,
             SQLException,
@@ -139,6 +203,16 @@ public class FinancingRates extends Parameter {
         return poJSON;
     }
     
+    /**
+     * Voids the currently loaded financing rate record.
+     *
+     * @param remarks remarks to save with the status change
+     * @return JSON result of the void request
+     * @throws ParseException if status history parsing fails
+     * @throws SQLException if a database error occurs
+     * @throws GuanzonException if the void operation fails
+     * @throws CloneNotSupportedException if model cloning is not supported
+     */
     public JSONObject VoidRecord(String remarks)
               throws ParseException,
             SQLException,
@@ -174,6 +248,13 @@ public class FinancingRates extends Parameter {
         return poJSON;
     }
   
+    /**
+     * Validates the current financing rate entry before saving or updating.
+     *
+     * @return JSON result indicating whether the entry is valid
+     * @throws SQLException if a database error occurs
+     * @throws GuanzonException if validation cannot be completed
+     */
     @Override
     public JSONObject isEntryOkay() throws SQLException, GuanzonException {
       poJSON = new JSONObject();
@@ -215,6 +296,13 @@ public class FinancingRates extends Parameter {
         return poJSON;
     }
     
+    /**
+     * Checks whether a financing rate already exists for the selected bank.
+     *
+     * @return JSON result indicating whether a duplicate record was found
+     * @throws SQLException if a database error occurs
+     * @throws GuanzonException if lookup processing fails
+     */
     private JSONObject checkExistingFinancingRate() throws SQLException, GuanzonException{
         poJSON = new JSONObject();
         String lsSQL = MiscUtil.addCondition(getSQ_Browse(), " a.sBankIDxx = " +  SQLUtil.toSQL(poModel.getBankId()));
@@ -240,6 +328,16 @@ public class FinancingRates extends Parameter {
     
     }
     
+    /**
+     * Searches for a bank or loads financing records filtered by bank name.
+     *
+     * @param value search text or bank identifier
+     * @param byCode true to search by code, false to search by description
+     * @param isSearch true to load financing records, false to search banks
+     * @return JSON result of the search operation
+     * @throws SQLException if a database error occurs
+     * @throws GuanzonException if the search operation fails
+     */
     public JSONObject SearchBank(String value, boolean byCode, boolean isSearch)
             throws SQLException,
             GuanzonException {
@@ -272,10 +370,10 @@ public class FinancingRates extends Parameter {
     }
     
     /**
-     * Check Existing Bank
-     * @param bankId
-     * @param row
-     * @return JSONObject success or error
+     * Checks whether the selected bank already has a conflicting rate record.
+     *
+     * @param bankId bank identifier to validate
+     * @return JSON result indicating whether the bank can be used
      */
     private JSONObject checkExistingBank(String bankId){
         poJSON = new JSONObject();
@@ -307,6 +405,14 @@ public class FinancingRates extends Parameter {
         return poJSON;
     }
     
+    /**
+     * Loads financing rate records that match the provided bank name.
+     *
+     * @param fsBankName bank name filter
+     * @return JSON result of the load operation
+     * @throws SQLException if a database error occurs
+     * @throws GuanzonException if record loading fails
+     */
     public JSONObject loadRecord(String fsBankName) throws SQLException, GuanzonException {
         paModel = new ArrayList<>();
         try {
@@ -332,6 +438,13 @@ public class FinancingRates extends Parameter {
         return poJSON;
     }
     
+    /**
+     * Loads all active standard vehicle financing rates.
+     *
+     * @return JSON result of the load operation
+     * @throws SQLException if a database error occurs
+     * @throws GuanzonException if record loading fails
+     */
     public JSONObject loadStandardRates() throws SQLException, GuanzonException {
         paStandardRate = new ArrayList<>();
         try {
@@ -356,6 +469,15 @@ public class FinancingRates extends Parameter {
         return poJSON;
     }
     
+    /**
+     * Searches for a financing rate record using the configured record status.
+     *
+     * @param value search text or code
+     * @param byCode true to search by code, false to search by description
+     * @return JSON result of the record search
+     * @throws SQLException if a database error occurs
+     * @throws GuanzonException if the search operation fails
+     */
     @Override
     public JSONObject searchRecord(String value, boolean byCode) throws SQLException, GuanzonException {
         String lsCondition = "";
@@ -406,6 +528,11 @@ public class FinancingRates extends Parameter {
         }
     }
     
+    /**
+     * Builds the browse query for financing rate records.
+     *
+     * @return SQL browse statement
+     */
     @Override
     public String getSQ_Browse() {
         return  "SELECT " +
@@ -424,6 +551,12 @@ public class FinancingRates extends Parameter {
         
     }
     
+    /**
+     * Loads the status history of the current record into a cached row set.
+     *
+     * @return cached row set containing status history rows
+     * @throws SQLException if a database error occurs
+     */
     protected CachedRowSet getStatusHistoryTest() throws SQLException {
         String lsSQL = "SELECT  a.sTableNme, a.sSourceNo, a.sRemarksx, a.cRefrStat cTranStat, IFNULL(c.sCompnyNm, '-') xModified, IFNULL(e.sCompnyNm, '-') xApproved, a.dModified, a.dApproved, a.sModified, a.sApproved " +
                     " FROM Parameter_Status_History a " +
