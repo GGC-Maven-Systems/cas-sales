@@ -52,6 +52,22 @@ public class FinancingRates extends Parameter {
         psCompanyId = companyId; 
         getModel().setCompanyId(companyId);
     }
+    
+    public String getStatus(String lsStatus) {
+        switch (lsStatus) {
+            case FinancingRateStatus.OPEN:
+                return "Open";
+            case FinancingRateStatus.ACTIVE:
+                return "Active";
+            case FinancingRateStatus.DEACTIVATE:
+                return "Inactive";
+            case FinancingRateStatus.VOID:
+                return "Void";
+            default:
+                return "Unknown";
+        }
+    }
+    
 
     @Override
     public Model_Financing_Rate_Master getModel() {
