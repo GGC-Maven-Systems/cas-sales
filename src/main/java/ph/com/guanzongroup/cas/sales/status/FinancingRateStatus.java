@@ -14,4 +14,10 @@ public class FinancingRateStatus {
     public static final String ACTIVE = "1";
     public static final String DEACTIVATE = "2";
     public static final String VOID = "3";
+    
+    public static class StandardRateType  {
+        public static final  String INTEREST_RATE = "0"; 
+        public static final  String DOWNPAYMENT_RATE = "1";  
+    }
+    
 }
