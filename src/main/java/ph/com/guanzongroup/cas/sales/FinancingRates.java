@@ -490,6 +490,7 @@ public class FinancingRates extends Parameter {
      * @throws GuanzonException if record loading fails
      */
     public JSONObject loadRecord(String fsBankName) throws SQLException, GuanzonException {
+        poJSON = new JSONObject();
         paModel = new ArrayList<>();
         try {
             String lsSQL = MiscUtil.addCondition(getSQ_Browse(),
@@ -522,6 +523,7 @@ public class FinancingRates extends Parameter {
      * @throws GuanzonException if record loading fails
      */
     public JSONObject loadStandardRates() throws SQLException, GuanzonException {
+        poJSON = new JSONObject();
         paStandardRate = new ArrayList<>();
         try {
             String lsSQL = MiscUtil.addCondition(MiscUtil.makeSelect(new SalesModels(poGRider).VehicleFinancingRates()),
@@ -556,6 +558,7 @@ public class FinancingRates extends Parameter {
      */
     @Override
     public JSONObject searchRecord(String value, boolean byCode) throws SQLException, GuanzonException {
+        poJSON = new JSONObject();
         String lsCondition = "";
         if (psRecdStat != null) {
             if (psRecdStat.length() > 1) {
@@ -606,6 +609,7 @@ public class FinancingRates extends Parameter {
     
     @Override
     public JSONObject willSave(){
+        poJSON = new JSONObject();
         if(FinancingRateStatus.ACTIVE.equals(getModel().getRecordStatus())){
             if(!pbWthParent){
                 psApprover = poGRider.getUserID();
