@@ -102,7 +102,7 @@ public class StandardFinancingRates extends Parameter {
         poJSON = new JSONObject();
         
         poJSON = newRecord();
-        if (!"success".equals((String) poJSON.get("result"))) {
+        if (!isJSONSuccess(poJSON)) {
             return poJSON;
         }
          

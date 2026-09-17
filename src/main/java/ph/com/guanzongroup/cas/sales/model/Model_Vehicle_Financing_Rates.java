@@ -108,12 +108,12 @@ public class Model_Vehicle_Financing_Rates extends Model {
         return (Date) getValue("dThruDate");
     }
 
-    public JSONObject setRecordStatus(boolean recordStatus) {
-        return setValue("cRecdStat", recordStatus ? "1" : "0");
+    public JSONObject setRecordStatus(String recordStatus) {
+        return setValue("cRecdStat", recordStatus);
     }
 
-    public boolean getRecordStatus() {
-        return ((String) getValue("cRecdStat")).equals("1");
+    public String getRecordStatus() {
+        return (String) getValue("cRecdStat");
     }
 
     public JSONObject setModifiedBy(String modifiedBy) {
