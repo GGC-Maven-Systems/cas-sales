@@ -204,12 +204,37 @@ public class StandardFinancingRates extends Parameter {
                 return poJSON;
             }
         }
+        
+        poGRider.beginTrans("UPDATE STATUS", "DeactivateRecord", SOURCE_CODE, getModel().getStandardRateId());
+       
+        Date loToDate = getModel().getThruDate();
+        if(loToDate == null || "1900-01-01".equals(xsDateShort(loToDate))){
+            Model_Vehicle_Financing_Rates loObject = new SalesModels(poGRider).VehicleFinancingRates();
+            loObject.initialize();
+            poJSON = loObject.openRecord(getModel().getStandardRateId());
+            if (!isJSONSuccess(poJSON)) {
+                return poJSON;
+            }
+            
+            poJSON = loObject.updateRecord();
+            if (!isJSONSuccess(poJSON)) {
+                return poJSON;
+            }
+
+            loObject.setThruDate(SQLUtil.toDate(xsDateShort(poGRider.getServerDate()), SQLUtil.FORMAT_SHORT_DATE));
+            poJSON = loObject.saveRecord();
+            if (!isJSONSuccess(poJSON)) {
+                return poJSON;
+            }
+        }
 
         //change status
-        poJSON = statusChange(poModel.getTable(), (String) poModel.getValue("sStdRteID"), remarks, lsStatus, false);
+        poJSON = statusChange(poModel.getTable(), (String) poModel.getValue("sStdRteID"), remarks, lsStatus, false, true);
         if (!isJSONSuccess(poJSON)) {
             return poJSON;
         }
+        
+        poGRider.commitTrans();
 
         poJSON = setJSON("success", "Record deactivated successfully.");
         return poJSON;
@@ -322,24 +347,26 @@ public class StandardFinancingRates extends Parameter {
             poJSON.put("message", "Invalid From date.");
             return poJSON;
         }
-        if (loToDate == null) {
-            poJSON.put("result", "error");
-            poJSON.put("message", "Invalid Due date.");
-            return poJSON;
-        }
-
-        if ("1900-01-01".equals(xsDateShort(loToDate))) {
-            poJSON.put("result", "error");
-            poJSON.put("message", "Invalid To date.");
-            return poJSON;
-        }
+//        if (loToDate == null) {
+//            poJSON.put("result", "error");
+//            poJSON.put("message", "Invalid Due date.");
+//            return poJSON;
+//        }
+//
+//        if ("1900-01-01".equals(xsDateShort(loToDate))) {
+//            poJSON.put("result", "error");
+//            poJSON.put("message", "Invalid To date.");
+//            return poJSON;
+//        }
         
-        LocalDate lldFromDate = strToDate(xsDateShort(loFromDate));
-        LocalDate lldToDate = strToDate(xsDateShort(loToDate));
-        if (lldToDate.isBefore(lldFromDate)) {
-            poJSON.put("result", "error");
-            poJSON.put("message", "To date cannot be before the from date.");
-            return poJSON;
+        if(loToDate != null && !"1900-01-01".equals(xsDateShort(loToDate))){
+            LocalDate lldFromDate = strToDate(xsDateShort(loFromDate));
+            LocalDate lldToDate = strToDate(xsDateShort(loToDate));
+            if (lldToDate.isBefore(lldFromDate)) {
+                poJSON.put("result", "error");
+                poJSON.put("message", "To date cannot be before the from date.");
+                return poJSON;
+            }
         }
         
         if (poModel.getRateType() == null || "".equals(poModel.getRateType())) {
@@ -393,12 +420,22 @@ public class StandardFinancingRates extends Parameter {
         poJSON = new JSONObject();
         String lsSQL = MiscUtil.addCondition(getSQ_Browse(), " a.sStdRteID != " +  SQLUtil.toSQL(poModel.getStandardRateId())
                         + " AND a.sRateType = " +  SQLUtil.toSQL(poModel.getRateType())
-//                        + " AND a.nDuration = " +  SQLUtil.toSQL(poModel.getDuration())
                         + " AND a.nRateValx = " +  SQLUtil.toSQL(poModel.getRate())
-                        + " AND a.dFromDate = " +  SQLUtil.toSQL(xsDateShort(poModel.getFromDate()))
-                        + " AND a.dThruDate = " +  SQLUtil.toSQL(xsDateShort(poModel.getThruDate()))
+                        + " AND " +  SQLUtil.toSQL(xsDateShort(poModel.getFromDate()))
+                        + "  BETWEEN dFromDate AND dThruDate "
                         );
         
+        Date loToDate = getModel().getThruDate();
+        if(loToDate != null && !"1900-01-01".equals(xsDateShort(loToDate))){
+            lsSQL = lsSQL + " AND " +  SQLUtil.toSQL(xsDateShort(poModel.getThruDate()))
+                    + "  BETWEEN dFromDate AND dThruDate ";
+        } else {
+            lsSQL = lsSQL + " AND ( " +  SQLUtil.toSQL(xsDateShort(poGRider.getServerDate()))
+                    + "  BETWEEN dFromDate AND dThruDate "
+                    + " OR dThruDate IS NULL)";
+        }
+        
+        System.out.println("checkExistingFinancingRate SQL : " + lsSQL);
         ResultSet loRS = poGRider.executeQuery(lsSQL);
         if (MiscUtil.RecordCount(loRS) >= 0) {
             if (loRS.next()) {
