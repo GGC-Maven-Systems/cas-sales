@@ -98,6 +98,20 @@ public class StandardFinancingRates extends Parameter {
         return poJSON;
     }
     
+    public JSONObject NewRecord() throws SQLException, GuanzonException{
+        poJSON = new JSONObject();
+        
+        poJSON = newRecord();
+        if (!"success".equals((String) poJSON.get("result"))) {
+            return poJSON;
+        }
+         
+        getModel().setFromDate(SQLUtil.toDate(xsDateShort(poGRider.getServerDate()), SQLUtil.FORMAT_SHORT_DATE));
+        
+        poJSON = setJSON("success","success");
+        return poJSON;
+     }
+    
     /**
      * Activates the currently loaded financing rate record.
      *
