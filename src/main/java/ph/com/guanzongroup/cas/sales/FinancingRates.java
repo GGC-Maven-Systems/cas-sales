@@ -81,7 +81,7 @@ public class FinancingRates extends Parameter {
                 return "Open";
             case FinancingRateStatus.ACTIVE:
                 return "Active";
-            case FinancingRateStatus.DEACTIVATE:
+            case FinancingRateStatus.INACTIVE:
                 return "Inactive";
             case FinancingRateStatus.VOID:
                 return "Void";
@@ -153,7 +153,26 @@ public class FinancingRates extends Parameter {
             GuanzonException,
             CloneNotSupportedException {
         
-        poJSON = activateRecord();
+        String lsStatus = FinancingRateStatus.ACTIVE;
+
+        if (getEditMode() != EditMode.READY) {
+            poJSON = setJSON("error",  "No transacton was loaded.");
+            return poJSON;
+        }
+
+        if (lsStatus.equals((String) poModel.getValue("cRecdStat"))) {
+            poJSON = setJSON("error", "Record was already active.");
+            return poJSON;
+        }
+
+        //validator
+        poJSON = isEntryOkay();
+        if (!"success".equals((String) poJSON.get("result"))) {
+            return poJSON;
+        }
+
+        //change status
+        poJSON = statusChange(poModel.getTable(), (String) poModel.getValue("sRateIDxx"), remarks, lsStatus, false);
         if (!isJSONSuccess(poJSON)) {
             return poJSON;
         }
@@ -179,7 +198,7 @@ public class FinancingRates extends Parameter {
             CloneNotSupportedException {
         poJSON = new JSONObject();
 
-        String lsStatus = FinancingRateStatus.DEACTIVATE;
+        String lsStatus = FinancingRateStatus.INACTIVE;
 
         if (getEditMode() != EditMode.READY) {
             poJSON = setJSON("error",  "No transacton was loaded.");
@@ -379,16 +398,20 @@ public class FinancingRates extends Parameter {
     private JSONObject checkExistingBank(String bankId){
         poJSON = new JSONObject();
         boolean lbExist = false;
+        String lsRateId = "";
         try {
             String lsSQL = MiscUtil.addCondition(getSQ_Browse(),
                     " a.sBankIDxx = " + SQLUtil.toSQL(bankId)
-                    + " AND a.cRecdStat = " + SQLUtil.toSQL(FinancingRateStatus.VOID)
+                    + " AND a.cRecdStat != " + SQLUtil.toSQL(FinancingRateStatus.VOID)
                     );
             System.out.println("Executing SQL: " + lsSQL);
             ResultSet loRS = poGRider.executeQuery(lsSQL);
             poJSON = new JSONObject();
             if (MiscUtil.RecordCount(loRS) >= 0) {
-                lbExist = loRS.next();
+                if(loRS.next()){
+                    lbExist = true;
+                    lsRateId = loRS.getString("sRateIDxx");
+                }
             }
             MiscUtil.close(loRS);
         } catch (SQLException e) {
@@ -398,7 +421,8 @@ public class FinancingRates extends Parameter {
         }
         
         if(lbExist){
-            poJSON = setJSON("error", "Found existing financing rate for the selected bank.");
+            poJSON = setJSON("error", "Found existing financing rate for the selected bank."
+                    + "\n Rate ID : " + lsRateId);
             return poJSON;
         }
         
@@ -610,7 +634,7 @@ public class FinancingRates extends Parameter {
                 case FinancingRateStatus.ACTIVE:
                     crs.updateString("cRefrStat", "ACTIVE");
                     break;
-                case FinancingRateStatus.DEACTIVATE:
+                case FinancingRateStatus.INACTIVE:
                     crs.updateString("cRefrStat", "INACTIVE");
                     break;
                 default:
@@ -627,7 +651,7 @@ public class FinancingRates extends Parameter {
                         case FinancingRateStatus.ACTIVE:
                             crs.updateString("cRefrStat", "ACTIVE");
                             break;
-                        case FinancingRateStatus.DEACTIVATE:
+                        case FinancingRateStatus.INACTIVE:
                             crs.updateString("cRefrStat", "INACTIVE");
                             break;
                     }

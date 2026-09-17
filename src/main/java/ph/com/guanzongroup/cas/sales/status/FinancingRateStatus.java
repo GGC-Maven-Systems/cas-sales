@@ -12,7 +12,7 @@ package ph.com.guanzongroup.cas.sales.status;
 public class FinancingRateStatus {
     public static final String OPEN = "0";
     public static final String ACTIVE = "1";
-    public static final String DEACTIVATE = "2";
+    public static final String INACTIVE = "2";
     public static final String VOID = "3";
     
     public static class StandardRateType  {
