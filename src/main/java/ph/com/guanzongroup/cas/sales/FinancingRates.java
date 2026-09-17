@@ -20,6 +20,7 @@ import org.guanzon.appdriver.base.MiscUtil;
 import org.guanzon.appdriver.base.SQLUtil;
 import org.guanzon.appdriver.constant.EditMode;
 import org.guanzon.appdriver.constant.RecordStatus;
+import org.guanzon.appdriver.constant.UserRight;
 import org.guanzon.cas.parameter.Banks;
 import org.guanzon.cas.parameter.services.ParamControllers;
 import org.json.simple.JSONObject;
@@ -38,6 +39,7 @@ public class FinancingRates extends Parameter {
     ArrayList<Model_Financing_Rate_Master> paModel;
     ArrayList<Model_Vehicle_Financing_Rates> paStandardRate;
    
+    private String psApprover = "";
     private String psCompanyId = "";
     private String psBank = "";
 
@@ -68,6 +70,31 @@ public class FinancingRates extends Parameter {
     }
     public void setSearchBank(String bank) { psBank = bank; }
     public String getSearchBank() { return psBank; }
+    
+    /**
+    * Requests user approval for the current transaction.
+    *
+    * @return JSONObject containing approval result and message
+    */
+    public JSONObject callApproval(){
+        poJSON = new JSONObject();
+        if (poGRider.getUserLevel() <= UserRight.ENCODER) {
+            poJSON = ShowDialogFX.getUserApproval(poGRider);
+            if (!isJSONSuccess(poJSON)) {
+                return poJSON;
+            }
+            String lsUserIDxx = poJSON.get("sUserIDxx").toString();
+            if (Integer.parseInt(poJSON.get("nUserLevl").toString()) <= UserRight.ENCODER) {
+                poJSON = setJSON("error", "User is not an authorized approving officer.");
+                return poJSON;
+            }
+//            setApproving(lsUserIDxx);
+            psApprover = lsUserIDxx;
+        }   
+        
+        poJSON = setJSON("success","success");
+        return poJSON;
+    }
     
     /**
      * Converts a financing status code into its display label.
@@ -170,6 +197,14 @@ public class FinancingRates extends Parameter {
         if (!"success".equals((String) poJSON.get("result"))) {
             return poJSON;
         }
+        
+        if(!pbWthParent){
+            psApprover = poGRider.getUserID();
+            poJSON = callApproval();
+            if (!isJSONSuccess(poJSON)) {
+                return poJSON;
+            }
+        }
 
         //change status
         poJSON = statusChange(poModel.getTable(), (String) poModel.getValue("sRateIDxx"), remarks, lsStatus, false);
@@ -214,6 +249,14 @@ public class FinancingRates extends Parameter {
         poJSON = isEntryOkay();
         if (!"success".equals((String) poJSON.get("result"))) {
             return poJSON;
+        }
+        
+        if(!pbWthParent){
+            psApprover = poGRider.getUserID();
+            poJSON = callApproval();
+            if (!isJSONSuccess(poJSON)) {
+                return poJSON;
+            }
         }
 
         //change status
@@ -260,6 +303,14 @@ public class FinancingRates extends Parameter {
         if (!isJSONSuccess(poJSON)) {
             return poJSON;
         }
+        
+        if(!pbWthParent){
+            psApprover = poGRider.getUserID();
+            poJSON = callApproval();
+            if (!isJSONSuccess(poJSON)) {
+                return poJSON;
+            }
+        }
 
         //change status
         poJSON = statusChange(poModel.getTable(), (String) poModel.getValue("sRateIDxx"), remarks, lsStatus, false);
@@ -280,8 +331,8 @@ public class FinancingRates extends Parameter {
      */
     @Override
     public JSONObject isEntryOkay() throws SQLException, GuanzonException {
-      poJSON = new JSONObject();
-      
+        poJSON = new JSONObject();
+        
         if (poModel.getRateId() == null || "".equals(poModel.getRateId())) {
             poJSON = setJSON("error", "Rate Id must not be empty.");
             return poJSON;
@@ -551,6 +602,22 @@ public class FinancingRates extends Parameter {
             poJSON = setJSON("error", "No record loaded.");
             return poJSON;
         }
+    }
+    
+    @Override
+    public JSONObject willSave(){
+        if(FinancingRateStatus.ACTIVE.equals(getModel().getRecordStatus())){
+            if(!pbWthParent){
+                psApprover = poGRider.getUserID();
+                poJSON = callApproval();
+                if (!isJSONSuccess(poJSON)) {
+                    return poJSON;
+                }
+            }
+        }
+    
+        poJSON = setJSON("success", "success");
+        return poJSON;
     }
     
     /**
