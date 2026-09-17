@@ -10,6 +10,7 @@ import java.util.Date;
 import org.guanzon.appdriver.agent.services.Model;
 import org.guanzon.appdriver.base.MiscUtil;
 import org.guanzon.appdriver.constant.EditMode;
+import org.guanzon.appdriver.constant.Logical;
 import org.guanzon.appdriver.constant.RecordStatus;
 import org.json.simple.JSONObject;
 
@@ -33,6 +34,7 @@ public class Model_Vehicle_Financing_Rates extends Model {
             poEntity.updateNull("dModified");
             poEntity.updateNull("dFromDate");
             poEntity.updateNull("dThruDate");
+            poEntity.updateString("sRateType", Logical.NO);
             poEntity.updateString("cRecdStat", RecordStatus.ACTIVE);
             // end - assign default values
 
