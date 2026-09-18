@@ -15,6 +15,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.script.ScriptException;
 import javax.sql.rowset.CachedRowSet;
 import javax.sql.rowset.RowSetFactory;
@@ -22,6 +24,8 @@ import javax.sql.rowset.RowSetProvider;
 import org.guanzon.appdriver.agent.ShowDialogFX;
 import org.guanzon.appdriver.agent.services.Model;
 import org.guanzon.appdriver.agent.services.Transaction;
+import org.guanzon.appdriver.agent.systables.SysTableContollers;
+import org.guanzon.appdriver.agent.systables.TransactionStatusHistory;
 import org.guanzon.appdriver.base.GuanzonException;
 import org.guanzon.appdriver.base.MiscUtil;
 import org.guanzon.appdriver.base.SQLUtil;
@@ -104,13 +108,143 @@ public class VehicleFinancingPrice extends Transaction {
     public JSONObject OpenTransaction(String transactionNo) throws CloneNotSupportedException, SQLException, GuanzonException, ScriptException {
         return openTransaction(transactionNo);
     }
+    
+    @Override
+    protected JSONObject openTransaction(String transactionNo) throws CloneNotSupportedException, SQLException, GuanzonException {
+        this.poGRider.ensureConnected();
+        this.poJSON = this.poMaster.openRecord(transactionNo);
+        if (!"success".equals((String)this.poJSON.get("result"))) {
+            this.poJSON.put("message", "Unable to open transaction master record.");
+            this.clear();
+            return this.poJSON;
+        } else {
+            this.paDetail.clear();
+            
+            String sql = "SELECT sVhclFIDx FROM " + this.poDetail.getTable() + " WHERE sValidIDx = " + SQLUtil.toSQL(transactionNo) + " ORDER BY sVhclFIDx";
+            ResultSet rs = this.poGRider.executeQuery(sql);
 
+            while(rs.next()) {
+                Model loDetail = (Model)this.poDetail.clone();
+                loDetail.newRecord();
+                this.poJSON = loDetail.openRecord(transactionNo, rs.getString("sVhclFIDx"));
+                if (!"success".equals((String)this.poJSON.get("result"))) {
+                    this.poJSON.put("message", "Unable to open transaction detail record.");
+                    this.clear();
+                    return this.poJSON;
+                }
+
+                this.paDetail.add(loDetail);
+            }
+
+            this.pnEditMode = 1;
+            this.pbRecordExist = true;
+            this.poJSON = new JSONObject();
+            this.poJSON.put("result", "success");
+            return this.poJSON;
+        }
+    }
+    
     public JSONObject UpdateTransaction() throws SQLException, GuanzonException, CloneNotSupportedException, ScriptException {
         return updateTransaction();
     }
     
     public JSONObject SaveTransaction() throws SQLException, GuanzonException, CloneNotSupportedException {
         return saveTransaction();
+    }
+    
+    @Override
+    protected JSONObject saveTransaction() throws CloneNotSupportedException, SQLException, GuanzonException {
+        this.poJSON = new JSONObject();
+        if (!this.pbInitTran) {
+            this.poJSON.put("result", "error");
+            this.poJSON.put("message", "Object is not initialized.");
+            return this.poJSON;
+        } else if (this.pnEditMode == 1) {
+            this.poJSON.put("result", "error");
+            this.poJSON.put("message", "Saving of unmodified transaction is not allowed.");
+            return this.poJSON;
+        } else {
+            this.poGRider.ensureConnected();
+            this.poJSON = this.willSave();
+            if ("error".equals((String)this.poJSON.get("result"))) {
+                return this.poJSON;
+            } else {
+                if (this.getEditMode() == 0) {
+                    this.pdModified = this.poGRider.getServerDate();
+                    this.poMaster.setValue("sModified", this.poGRider.Encrypt(this.poGRider.getUserID()));
+                }
+
+                if (!this.pbWthParent) {
+                    this.poGRider.beginTrans((String)this.poEvent.get("event"), this.poMaster.getTable(), this.SOURCE_CODE, String.valueOf(this.poMaster.getValue(1)));
+                }
+
+                this.poJSON = this.save();
+                if ("success".equals((String)this.poJSON.get("result"))) {
+                    if (this.pbVerifyEntryNo) {
+                        this.poMaster.setValue("nEntryNox", this.paDetail.size());
+                    }
+
+                    if (this.pnEditMode != 0 && this.pnEditMode != 2) {
+                        if (!this.pbWthParent) {
+                            this.poGRider.rollbackTrans();
+                        }
+
+                        this.poJSON.put("result", "error");
+                        this.poJSON.put("message", "Edit mode is not allowed to save transaction.");
+                        return this.poJSON;
+                    } else {
+                        this.poMaster.setValue("dModified", this.pdModified);
+                        this.poJSON = this.poMaster.saveRecord();
+                        if ("error".equals((String)this.poJSON.get("result"))) {
+                            if (!this.pbWthParent) {
+                                this.poGRider.rollbackTrans();
+                            }
+
+                            return this.poJSON;
+                        } else {
+                            for(int lnCtr = 0; lnCtr <= this.paDetail.size() - 1; ++lnCtr) {
+                                ((Model)this.paDetail.get(lnCtr)).setValue("dModified", this.pdModified);
+                                this.poJSON = ((Model)this.paDetail.get(lnCtr)).saveRecord();
+                                if ("error".equals((String)this.poJSON.get("result"))) {
+                                    if (!this.pbWthParent) {
+                                        this.poGRider.rollbackTrans();
+                                    }
+
+                                    return this.poJSON;
+                                }
+                            }
+
+                            this.poJSON = this.saveOthers();
+                            if ("error".equals((String)this.poJSON.get("result"))) {
+                                if (!this.pbWthParent) {
+                                    this.poGRider.rollbackTrans();
+                                }
+
+                                return this.poJSON;
+                            } else {
+                                if (!this.pbWthParent) {
+                                    this.poGRider.commitTrans();
+                                }
+
+                                this.saveComplete();
+                                this.pnEditMode = -1;
+                                this.pbRecordExist = true;
+                                this.poJSON = new JSONObject();
+                                this.poJSON.put("result", "success");
+                                this.poJSON.put("message", "Transaction saved successfully.");
+                                return this.poJSON;
+                            }
+                        }
+                    }
+                } else {
+                    if (!this.pbWthParent) {
+                        this.poGRider.rollbackTrans();
+                    }
+
+                    return this.poJSON;
+                }
+            }
+        }
     }
     
     /**
@@ -189,7 +323,7 @@ public class VehicleFinancingPrice extends Transaction {
         }
         
         //change status
-        poJSON = statusChange(Master().getTable(), (String) Master().getValue("sTransNox"),"", lsStatus, false);
+        poJSON = statusChange(Master().getTable(), (String) Master().getValue("sValidIDx"),"", lsStatus, false, false);
         if (!isJSONSuccess(poJSON)) {
             return poJSON;
         }
@@ -233,7 +367,7 @@ public class VehicleFinancingPrice extends Transaction {
         }
         
         //change status
-        poJSON = statusChange(Master().getTable(), (String) Master().getValue("sTransNox"),"", lsStatus, false);
+        poJSON = statusChange(Master().getTable(), (String) Master().getValue("sValidIDx"),"", lsStatus, false, false);
         if (!isJSONSuccess(poJSON)) {
             return poJSON;
         }
@@ -284,7 +418,7 @@ public class VehicleFinancingPrice extends Transaction {
         }
         
         //change status
-        poJSON = statusChange(Master().getTable(), (String) Master().getValue("sTransNox"),"", lsStatus, false);
+        poJSON = statusChange(Master().getTable(), (String) Master().getValue("sValidIDx"),"", lsStatus, false, false);
         if (!isJSONSuccess(poJSON)) {
             return poJSON;
         }
@@ -294,24 +428,112 @@ public class VehicleFinancingPrice extends Transaction {
         return poJSON;
     }
     
+    @Override
+     protected JSONObject statusChange(String tableName, String sourceNo, String remarks, String statusRequest, boolean needConfirmation, boolean withParent) throws SQLException, GuanzonException, CloneNotSupportedException {
+        this.poGRider.ensureConnected();
+        if (remarks.isEmpty() && this.pbWithUI) {
+            try {
+                remarks = ShowDialogFX.getStatusChangeNotes();
+            } catch (Exception e) {
+                this.poJSON = new JSONObject();
+                this.poJSON.put("result", "error");
+                this.poJSON.put("message", e.getMessage());
+                return this.poJSON;
+            }
+        }
+
+        if (!withParent) {
+            this.poGRider.beginTrans("UPDATE STATUS", remarks, "TSHx", sourceNo);
+        }
+
+        TransactionStatusHistory loStatus = (new SysTableContollers(this.poGRider, this.logwrapr)).TransactionStatusHistory();
+        loStatus.setWithParentClass(true);
+        this.poJSON = loStatus.newRecord();
+        if (!"success".equals((String)this.poJSON.get("result"))) {
+            if (!withParent) {
+                this.poGRider.rollbackTrans();
+            }
+
+            return this.poJSON;
+        } else {
+            String lsApproved;
+            if (this.psApproved != null && !this.psApproved.isEmpty()) {
+                lsApproved = this.poGRider.Encrypt(this.psApproved);
+                this.psApproved = "";
+            } else {
+                lsApproved = this.poGRider.Encrypt(this.poGRider.getUserID());
+            }
+
+            loStatus.getModel().setTransactionTable(tableName);
+            loStatus.getModel().setSourceNo(sourceNo);
+            loStatus.getModel().setRemarks(remarks);
+            loStatus.getModel().setStatusRequest(statusRequest);
+            loStatus.getModel().setTransactionStatus(needConfirmation ? "0" : "1");
+            loStatus.getModel().setModifyingId(lsApproved);
+            this.poJSON = loStatus.saveRecord();
+            if (!"success".equals((String)this.poJSON.get("result"))) {
+                if (!withParent) {
+                    this.poGRider.rollbackTrans();
+                }
+
+                return this.poJSON;
+            } else {
+                if (!needConfirmation) {
+                    this.poJSON = this.updateMasterStatus(statusRequest);
+                    if (!"success".equals((String)this.poJSON.get("result"))) {
+                        if (!withParent) {
+                            this.poGRider.rollbackTrans();
+                        }
+
+                        return this.poJSON;
+                    }
+                }
+
+                if (!withParent) {
+                    this.poGRider.commitTrans();
+                }
+
+                this.poJSON = new JSONObject();
+                this.poJSON.put("result", "success");
+                this.poJSON.put("notes", remarks);
+                return this.poJSON;
+            }
+        }
+    }
+    
+    private JSONObject updateMasterStatus(String statusRequest) throws SQLException, GuanzonException {
+        String lsSQL = "UPDATE " + this.poMaster.getTable() + " SET cRecdStat = " + SQLUtil.toSQL(statusRequest) + " WHERE sValidIDx = " + SQLUtil.toSQL((String)this.poMaster.getValue("sValidIDx"));
+        if (this.poGRider.executeQuery(lsSQL, this.poMaster.getTable(), this.psBranchCode, this.psDestination, "") <= 0L) {
+            this.poJSON = new JSONObject();
+            this.poJSON.put("result", "error");
+            this.poJSON.put("message", "Error updating the transaction status.");
+            return this.poJSON;
+        } else {
+            return this.poJSON;
+        }
+    }
+    
     /*Search Master References*/
-    public JSONObject SearchTransaction() throws CloneNotSupportedException, SQLException, GuanzonException, ScriptException{
+    public JSONObject SearchTransaction(String fsValue, boolean fbByCode) throws CloneNotSupportedException, SQLException, GuanzonException, ScriptException{
         poJSON = new JSONObject();
 
         initSQL();
         String lsSQL = MiscUtil.addCondition(SQL_BROWSE,
                 " a.sCompnyID = " + SQLUtil.toSQL(psCompanyId));
         
-        lsSQL = lsSQL + " GROUP BY a.sTransNox ";
+        lsSQL = lsSQL + " GROUP BY a.sValidIDx ";
         System.out.println("Executing SQL: " + lsSQL);
-        poJSON = ShowDialogFX.Browse(poGRider,
-                lsSQL,
-                "",
-                "Validity ID»Description»From Date»Thru Date",
-                "sValidIDx»sValidDsc»dFromDate»dThruDate",
-                "a.sValidIDx»a.sValidDsc»a.dFromDate»a.dThruDate",
-                0);
-
+        if(pbWithUI){
+            poJSON = ShowDialogFX.Browse(poGRider,
+                    lsSQL,
+                    "",
+                    "Validity ID»Description»From Date»Thru Date",
+                    "sValidIDx»sValidDsc»dFromDate»dThruDate",
+                    "a.sValidIDx»a.sValidDsc»a.dFromDate»a.dThruDate",
+                    fbByCode ? 0 : 1);
+        } else {
+            poJSON.put("sValidIDx", fsValue);
+        }
         if (poJSON != null) {
             return OpenTransaction((String) poJSON.get("sValidIDx"));
         } else {
@@ -329,12 +551,12 @@ public class VehicleFinancingPrice extends Transaction {
         ArrayList<Double> laStandardDownpaymentRate = loadStandardDownpaymentRates();
         
         if(laStandardInterestRate.size() <= 0){
-            poJSON = setJSON("error", "No standard interest rate.");
+            poJSON = setJSON("error", "No active standard interest rate.");
             return poJSON;
         }
         
         if(laStandardDownpaymentRate.size() <= 0){
-            poJSON = setJSON("error", "No standard downpayment rate.");
+            poJSON = setJSON("error", "No active standard downpayment rate.");
             return poJSON;
         }
         
@@ -354,9 +576,10 @@ public class VehicleFinancingPrice extends Transaction {
         System.out.println("populateVehicleList SQL: " + lsSQL);
         ResultSet loRS = poGRider.executeQuery(lsSQL);
         if (MiscUtil.RecordCount(loRS) <= 0) {
-            poJSON = setJSON("error", "No record found.");
+            poJSON = setJSON("error", "No vehicle model variant available.");
             return poJSON;
         }
+        
         ReloadDetail();
         
         while (loRS.next()) {
@@ -365,6 +588,13 @@ public class VehicleFinancingPrice extends Transaction {
                 Detail(getDetailCount() - 1).setSRPAmount(loRS.getDouble("nSelPrice"));
                 Detail(getDetailCount() - 1).setDownPaymentRate(laStandardDownpaymentRate.get(lnCtr));
                 ReloadDetail();
+                if(!pbWithUI){
+                    break;
+                }
+            }
+            
+            if(!pbWithUI){
+                break;
             }
         }
         MiscUtil.close(loRS);
@@ -418,10 +648,18 @@ public class VehicleFinancingPrice extends Transaction {
                                                     + " AND sRateType = " + SQLUtil.toSQL(FinancingRateStatus.StandardRateType.DOWNPAYMENT_RATE)
                                                     + " AND " +  SQLUtil.toSQL(xsDateShort(Master().getFromDate()))
                                                     + " BETWEEN dFromDate AND dThruDate "
-                                                    + " AND ( " +  SQLUtil.toSQL(xsDateShort(Master().getThruDate()))
-                                                    + " BETWEEN dFromDate AND dThruDate "
-                                                    + " OR dThruDate IS NULL ) "
                                                     );
+            
+            Date loToDate = Master().getThruDate();
+            if(loToDate != null && !"1900-01-01".equals(xsDateShort(loToDate))){
+                lsSQL = lsSQL + " AND " +  SQLUtil.toSQL(xsDateShort(Master().getThruDate()))
+                        + "  BETWEEN dFromDate AND dThruDate ";
+            } else {
+                lsSQL = lsSQL + " AND ( " +  SQLUtil.toSQL(xsDateShort(poGRider.getServerDate()))
+                        + "  BETWEEN dFromDate AND dThruDate "
+                        + " OR dThruDate IS NULL)";
+            }
+            
             System.out.println("Executing SQL: " + lsSQL);
             ResultSet loRS = poGRider.executeQuery(lsSQL);
             poJSON = new JSONObject();
@@ -465,11 +703,17 @@ public class VehicleFinancingPrice extends Transaction {
                                                     + " AND sRateType = " + SQLUtil.toSQL(FinancingRateStatus.StandardRateType.INTEREST_RATE)
                                                     + " AND " +  SQLUtil.toSQL(xsDateShort(Master().getFromDate()))
                                                     + " BETWEEN dFromDate AND dThruDate "
-                                                    + " AND ( " +  SQLUtil.toSQL(xsDateShort(Master().getThruDate()))
-                                                    + " BETWEEN dFromDate AND dThruDate "
-                                                    + " OR dThruDate IS NULL )"
                                                     );
             
+            Date loToDate = Master().getThruDate();
+            if(loToDate != null && !"1900-01-01".equals(xsDateShort(loToDate))){
+                lsSQL = lsSQL + " AND " +  SQLUtil.toSQL(xsDateShort(Master().getThruDate()))
+                        + "  BETWEEN dFromDate AND dThruDate ";
+            } else {
+                lsSQL = lsSQL + " AND ( " +  SQLUtil.toSQL(xsDateShort(poGRider.getServerDate()))
+                        + "  BETWEEN dFromDate AND dThruDate "
+                        + " OR dThruDate IS NULL)";
+            }
             
             System.out.println("Executing SQL: " + lsSQL);
             ResultSet loRS = poGRider.executeQuery(lsSQL);
@@ -477,7 +721,7 @@ public class VehicleFinancingPrice extends Transaction {
             if (MiscUtil.RecordCount(loRS) >= 0) {
                 while(loRS.next()){
                     loJSON = new JSONObject();
-                    loJSON.put("nDuration", loRS.getDouble("nDuration"));
+                    loJSON.put("nDuration", loRS.getInt("nDuration"));
                     loJSON.put("nRateValx", loRS.getDouble("nRateValx"));
                     loJSONArray.add(loJSON);
                 }
@@ -542,10 +786,16 @@ public class VehicleFinancingPrice extends Transaction {
      */
     @Override
     public JSONObject initFields() {
-        //Put initial model values here/
         poJSON = new JSONObject();
         
-        Master().setCompanyId(psCompanyId);
+        try {
+            //Put initial model values here/
+            Master().setCompanyId(psCompanyId);
+            Master().setFromDate(SQLUtil.toDate(xsDateShort(poGRider.getServerDate()), SQLUtil.FORMAT_SHORT_DATE));
+            
+        } catch (SQLException ex) {
+            Logger.getLogger(VehicleFinancingPrice.class.getName()).log(Level.SEVERE, null, ex);
+        }
         
         poJSON.put("result", "success");
         return poJSON;
@@ -599,7 +849,9 @@ public class VehicleFinancingPrice extends Transaction {
 
         for (int lnCtr = 0; lnCtr <= getDetailCount() - 1; lnCtr++) {
             Detail(lnCtr).setValidityId(Master().getValidityId());
-            Detail(lnCtr).setVehicleFinancingId(Detail(lnCtr).getNextCode());
+            if(Detail(lnCtr).getEditMode() == EditMode.ADDNEW){
+                Detail(lnCtr).setVehicleFinancingId(Detail(lnCtr).getNextCode());
+            }
             Detail(lnCtr).setModifiedBy(poGRider.Encrypt(poGRider.getUserID()));
             Detail(lnCtr).setModifiedDate(poGRider.getServerDate());
         }
@@ -763,7 +1015,9 @@ public class VehicleFinancingPrice extends Transaction {
             entryDate = (String) loJSON.get("sEntryDte");
         }
 
-        showStatusHistoryUI("Vehicle Financing Price", (String) poMaster.getValue("sValidIDx"), entryBy, entryDate, crs);
+        if(pbWithUI){
+            showStatusHistoryUI("Vehicle Financing Promo", (String) poMaster.getValue("sValidIDx"), entryBy, entryDate, crs);
+        }
     }
     /**
      * Retrieves the user and timestamp of who created the current transaction.

@@ -113,7 +113,7 @@ public class FinancingRates extends Parameter {
             case FinancingRateStatus.INACTIVE:
                 return "Inactive";
             case FinancingRateStatus.VOID:
-                return "Void";
+                return "Voided";
             default:
                 return "Unknown";
         }

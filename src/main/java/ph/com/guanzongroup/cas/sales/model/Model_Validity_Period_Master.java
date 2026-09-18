@@ -39,7 +39,7 @@ public class Model_Validity_Period_Master extends Model {
             poEntity.updateNull("dFromDate");
             poEntity.updateNull("dThruDate");
             poEntity.updateNull("dModified");
-            poEntity.updateString("cRecdStat", ValidityPeriodStatus.APPROVED);
+            poEntity.updateString("cRecdStat", ValidityPeriodStatus.OPEN);
             // end - assign default values
 
             poEntity.insertRow();
