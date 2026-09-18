@@ -7,9 +7,11 @@ package ph.com.guanzongroup.cas.sales;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Date;
 import javax.sql.rowset.CachedRowSet;
 import javax.sql.rowset.RowSetFactory;
 import javax.sql.rowset.RowSetProvider;
@@ -516,6 +518,17 @@ public class FinancingRates extends Parameter {
     }
     
     /**
+     * Formats a {@link Date} value into a yyyy-MM-dd string.
+     *
+     * @param fdValue date to format
+     * @return formatted date string
+     */
+    private static String xsDateShort(Date fdValue) {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        String date = sdf.format(fdValue);
+        return date;
+    }
+    /**
      * Loads all active standard vehicle financing rates.
      *
      * @return JSON result of the load operation
@@ -528,6 +541,9 @@ public class FinancingRates extends Parameter {
         try {
             String lsSQL = MiscUtil.addCondition(MiscUtil.makeSelect(new SalesModels(poGRider).VehicleFinancingRates()),
                                                     " cRecdStat = " + SQLUtil.toSQL(RecordStatus.ACTIVE)
+                                                    + " AND ( " +  SQLUtil.toSQL(xsDateShort(poGRider.getServerDate()))
+                                                    + " BETWEEN dFromDate AND dThruDate "
+                                                    + " OR dThruDate IS NULL )"
                                                     );
             lsSQL = lsSQL + " ORDER BY sRateType, nDuration, nRateValx ";
             System.out.println("Executing SQL: " + lsSQL);
