@@ -660,6 +660,7 @@ public class VehicleFinancingPrice extends Transaction {
                         + " OR dThruDate IS NULL)";
             }
             
+            lsSQL = lsSQL + " ORDER BY nRateValx ASC ";
             System.out.println("Executing SQL: " + lsSQL);
             ResultSet loRS = poGRider.executeQuery(lsSQL);
             poJSON = new JSONObject();
@@ -715,6 +716,7 @@ public class VehicleFinancingPrice extends Transaction {
                         + " OR dThruDate IS NULL)";
             }
             
+            lsSQL = lsSQL + " ORDER BY nDuration, nRateValx ASC ";
             System.out.println("Executing SQL: " + lsSQL);
             ResultSet loRS = poGRider.executeQuery(lsSQL);
             poJSON = new JSONObject();
@@ -743,7 +745,7 @@ public class VehicleFinancingPrice extends Transaction {
          * SRP - Downpayment Amount = Balance
          * Balance x Interest Rate / Duration = Monthly Amortization Amount
          */
-        ldblDownpaymentAmount = Detail(fnRow).getSRPAmount() * Detail(fnRow).getDownPaymentRate();
+        ldblDownpaymentAmount = Detail(fnRow).getSRPAmount() * (Detail(fnRow).getDownPaymentRate()/100);
         ldblBalance = Detail(fnRow).getSRPAmount() - ldblDownpaymentAmount;
         ldblMontlyAmortizationAmt = (ldblBalance * (fdblInterestRate / 100)) / fnDuration;
         
@@ -830,20 +832,28 @@ public class VehicleFinancingPrice extends Transaction {
         }
         
         Iterator<Model> detail = Detail().iterator();
+        int lnDetailRow = 1;
         while (detail.hasNext()) {
             Model item = detail.next(); // Store the item before checking conditions
             String lsDetail = (String) item.getValue("sVrntIDxx");
             double ldblSRP = Double.parseDouble(String.valueOf(item.getValue("nSRPAmntx")));
+            double ldblRSVAmt = Double.parseDouble(String.valueOf(item.getValue("nRsrvAmtx")));
+            
             if ((ldblSRP == 0.0000 || (lsDetail == null || "".equals(lsDetail)))){
                 if(item.getEditMode() == EditMode.ADDNEW){
                     detail.remove(); // Correctly remove the item
+                } 
+            } else {
+                if(ldblRSVAmt <= 0.00){
+                    poJSON = setJSON("error", "Reservation amount cannot be zero at row "+lnDetailRow+".");
+                    return poJSON;
                 }
+                lnDetailRow++;
             }
         }
 
         if (getDetailCount() <= 0) {
-            poJSON.put("result", "error");
-            poJSON.put("message", "No record detail to be save.");
+            poJSON = setJSON("error", "No record detail to be save.");
             return poJSON;
         }
 

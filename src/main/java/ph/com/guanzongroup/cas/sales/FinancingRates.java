@@ -545,7 +545,7 @@ public class FinancingRates extends Parameter {
                                                     + " BETWEEN dFromDate AND dThruDate "
                                                     + " OR dThruDate IS NULL )"
                                                     );
-            lsSQL = lsSQL + " ORDER BY sRateType, nDuration, nRateValx ";
+            lsSQL = lsSQL + " ORDER BY sRateType, nDuration, nRateValx ASC ";
             System.out.println("Executing SQL: " + lsSQL);
             ResultSet loRS = poGRider.executeQuery(lsSQL);
             poJSON = new JSONObject();
