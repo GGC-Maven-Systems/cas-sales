@@ -373,19 +373,19 @@ public class StandardFinancingRates extends Parameter {
             poJSON = setJSON("error", "Rate type must not be empty.");
             return poJSON;
         } 
+            
+        if(getEditMode() == EditMode.ADDNEW){
+            poJSON = checkExistingFinancingRate();
+            if(!isJSONSuccess(poJSON)){
+                return poJSON;
+            }
+        }
         
         if(FinancingRateStatus.StandardRateType.INTEREST_RATE.equals(getModel().getRateType())){
             if (poModel.getDuration() <= 0) {
                 poJSON = setJSON("error", "Invalid duration value.");
                 return poJSON;
             } 
-            
-            if(getEditMode() == EditMode.ADDNEW){
-                poJSON = checkExistingFinancingRate();
-                if(!isJSONSuccess(poJSON)){
-                    return poJSON;
-                }
-            }
             
             poJSON = checkBankFinancingRate();
             if(!isJSONSuccess(poJSON)){
@@ -421,6 +421,7 @@ public class StandardFinancingRates extends Parameter {
         String lsSQL = MiscUtil.addCondition(getSQ_Browse(), " a.sStdRteID != " +  SQLUtil.toSQL(poModel.getStandardRateId())
                         + " AND a.sRateType = " +  SQLUtil.toSQL(poModel.getRateType())
                         + " AND a.nRateValx = " +  SQLUtil.toSQL(poModel.getRate())
+                        + " AND a.nDuration = " +  SQLUtil.toSQL(poModel.getDuration())
                         + " AND " +  SQLUtil.toSQL(xsDateShort(poModel.getFromDate()))
                         + "  BETWEEN dFromDate AND dThruDate "
                         );
@@ -474,10 +475,10 @@ public class StandardFinancingRates extends Parameter {
         ResultSet loRS = poGRider.executeQuery(lsSQL);
         if (MiscUtil.RecordCount(loRS) >= 0) {
             if (!loRS.next()) {
-                poJSON = setJSON("error", "Financing rate does not exists in bank rates.");
+                poJSON = setJSON("error", "No active bank financing rate matches the entered duration and rate.");
             } 
         }  else {
-            poJSON = setJSON("error", "Financing rate does not exists in bank rates.");
+            poJSON = setJSON("error", "No active bank financing rate matches the entered duration and rate.");
         }
         MiscUtil.close(loRS);
         

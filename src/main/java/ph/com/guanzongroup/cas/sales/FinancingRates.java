@@ -389,7 +389,7 @@ public class FinancingRates extends Parameter {
                 System.out.println("------------------------------------------------------------------------------");
 
                 poJSON = setJSON("error", poModel.Bank().getBankName() + " financing rate already exists."
-                        + "\nRate ID: " + loRS.getString("sRateIDxx"));
+                                                + "\nRate ID: " + loRS.getString("sRateIDxx"));
                 MiscUtil.close(loRS);
                 return poJSON;
             }
@@ -473,7 +473,7 @@ public class FinancingRates extends Parameter {
         
         if(lbExist){
             poJSON = setJSON("error", "Found existing financing rate for the selected bank."
-                    + "\n Rate ID : " + lsRateId);
+                    + "\nRate ID : " + lsRateId);
             return poJSON;
         }
         
@@ -529,6 +529,7 @@ public class FinancingRates extends Parameter {
             String lsSQL = MiscUtil.addCondition(MiscUtil.makeSelect(new SalesModels(poGRider).VehicleFinancingRates()),
                                                     " cRecdStat = " + SQLUtil.toSQL(RecordStatus.ACTIVE)
                                                     );
+            lsSQL = lsSQL + " ORDER BY sRateType, nDuration, nRateValx ";
             System.out.println("Executing SQL: " + lsSQL);
             ResultSet loRS = poGRider.executeQuery(lsSQL);
             poJSON = new JSONObject();
