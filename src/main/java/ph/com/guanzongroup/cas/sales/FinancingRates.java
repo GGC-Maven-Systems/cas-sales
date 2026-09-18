@@ -32,7 +32,7 @@ import ph.com.guanzongroup.cas.sales.status.FinancingRateStatus;
 
 /**
  *
- * @author Arsiela
+ * @author Arsiela 09162026
  */
 public class FinancingRates extends Parameter {
     Model_Financing_Rate_Master poModel;
