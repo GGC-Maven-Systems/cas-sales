@@ -7,6 +7,8 @@ package ph.com.guanzongroup.cas.sales.model;
 
 import java.sql.SQLException;
 import java.util.Date;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.guanzon.appdriver.agent.services.Model;
 import org.guanzon.appdriver.base.GuanzonException;
 import org.guanzon.appdriver.base.MiscUtil;
@@ -82,7 +84,21 @@ public class Model_Validity_Period_Master extends Model {
     }
 
     public JSONObject setFromDate(Date fromDate) {
-        return setValue("dFromDate", fromDate);
+        JSONObject loJSON = new JSONObject();
+        if(fromDate == null){
+            try {
+                poEntity.updateNull("dFromDate");
+            } catch (SQLException ex) {
+                Logger.getLogger(getClass().getName()).log(Level.SEVERE, MiscUtil.getException(ex), ex);
+            }
+        } else {
+            return setValue("dFromDate", fromDate);
+        }
+        
+        loJSON.put("result", "success");
+        loJSON.put("message", "success");
+        return loJSON;
+        
     }
 
     public Date getFromDate() {
@@ -90,7 +106,20 @@ public class Model_Validity_Period_Master extends Model {
     }
 
     public JSONObject setThruDate(Date thruDate) {
-        return setValue("dThruDate", thruDate);
+        JSONObject loJSON = new JSONObject();
+        if(thruDate == null){
+            try {
+                poEntity.updateNull("dThruDate");
+            } catch (SQLException ex) {
+                Logger.getLogger(getClass().getName()).log(Level.SEVERE, MiscUtil.getException(ex), ex);
+            }
+        } else {
+            return setValue("dThruDate", thruDate);
+        }
+        
+        loJSON.put("result", "success");
+        loJSON.put("message", "success");
+        return loJSON;
     }
 
     public Date getThruDate() {
