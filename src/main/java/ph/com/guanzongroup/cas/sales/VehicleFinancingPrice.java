@@ -248,9 +248,6 @@ public class VehicleFinancingPrice extends Transaction {
 
                 this.poJSON = this.save();
                 if ("success".equals((String)this.poJSON.get("result"))) {
-                    if (this.pbVerifyEntryNo) {
-                        this.poMaster.setValue("nEntryNox", this.paDetail.size());
-                    }
 
                     if (this.pnEditMode != 0 && this.pnEditMode != 2) {
                         if (!this.pbWthParent) {
@@ -797,19 +794,20 @@ public class VehicleFinancingPrice extends Transaction {
             String lsSQL = MiscUtil.addCondition(MiscUtil.makeSelect(new SalesModels(poGRider).VehicleFinancingRates()),
                                                     " cRecdStat = " + SQLUtil.toSQL(RecordStatus.ACTIVE)
                                                     + " AND sRateType = " + SQLUtil.toSQL(FinancingRateStatus.StandardRateType.DOWNPAYMENT_RATE)
-                                                    + " AND " +  SQLUtil.toSQL(xsDateShort(Master().getFromDate()))
-                                                    + " BETWEEN dFromDate AND dThruDate "
                                                     );
             
             Date loToDate = Master().getThruDate();
             if(loToDate != null && !"1900-01-01".equals(xsDateShort(loToDate))){
-                lsSQL = lsSQL + " AND " +  SQLUtil.toSQL(xsDateShort(Master().getThruDate()))
-                        + "  BETWEEN dFromDate AND dThruDate ";
+                lsSQL = lsSQL   + " AND " +  SQLUtil.toSQL(xsDateShort(Master().getFromDate()))
+                                + " BETWEEN dFromDate AND dThruDate "
+                                + " AND " +  SQLUtil.toSQL(xsDateShort(Master().getThruDate()))
+                                + "  BETWEEN dFromDate AND dThruDate ";
             } else {
-                lsSQL = lsSQL + " AND ( " +  SQLUtil.toSQL(xsDateShort(poGRider.getServerDate()))
+                lsSQL = lsSQL + " AND ( " +  SQLUtil.toSQL(xsDateShort(Master().getFromDate()))
                         + "  BETWEEN dFromDate AND dThruDate "
                         + " OR dThruDate IS NULL)";
             }
+            
             
             lsSQL = lsSQL + " ORDER BY nRateValx ASC ";
             System.out.println("Executing SQL: " + lsSQL);
@@ -853,16 +851,16 @@ public class VehicleFinancingPrice extends Transaction {
             String lsSQL = MiscUtil.addCondition(MiscUtil.makeSelect(new SalesModels(poGRider).VehicleFinancingRates()),
                                                     " cRecdStat = " + SQLUtil.toSQL(RecordStatus.ACTIVE)
                                                     + " AND sRateType = " + SQLUtil.toSQL(FinancingRateStatus.StandardRateType.INTEREST_RATE)
-                                                    + " AND " +  SQLUtil.toSQL(xsDateShort(Master().getFromDate()))
-                                                    + " BETWEEN dFromDate AND dThruDate "
                                                     );
             
             Date loToDate = Master().getThruDate();
             if(loToDate != null && !"1900-01-01".equals(xsDateShort(loToDate))){
-                lsSQL = lsSQL + " AND " +  SQLUtil.toSQL(xsDateShort(Master().getThruDate()))
-                        + "  BETWEEN dFromDate AND dThruDate ";
+                lsSQL = lsSQL   + " AND " +  SQLUtil.toSQL(xsDateShort(Master().getFromDate()))
+                                + " BETWEEN dFromDate AND dThruDate "
+                                + " AND " +  SQLUtil.toSQL(xsDateShort(Master().getThruDate()))
+                                + "  BETWEEN dFromDate AND dThruDate ";
             } else {
-                lsSQL = lsSQL + " AND ( " +  SQLUtil.toSQL(xsDateShort(poGRider.getServerDate()))
+                lsSQL = lsSQL + " AND ( " +  SQLUtil.toSQL(xsDateShort(Master().getFromDate()))
                         + "  BETWEEN dFromDate AND dThruDate "
                         + " OR dThruDate IS NULL)";
             }
@@ -907,12 +905,14 @@ public class VehicleFinancingPrice extends Transaction {
          */
         ldblDownpaymentAmount = Detail(fnRow).getSRPAmount() * (Detail(fnRow).getDownPaymentRate()/100);
         ldblBalance = Detail(fnRow).getSRPAmount() - ldblDownpaymentAmount;
-        ldblMontlyAmortizationAmt = (ldblBalance * (fdblInterestRate / 100)) / fnDuration;
+        fdblInterestRate = ((fdblInterestRate/100)+1);
+        ldblMontlyAmortizationAmt = ((ldblBalance * fdblInterestRate) / fnDuration)+2;
         
         String lsDecimalFormat = "###0.00";
         DecimalFormat format = new DecimalFormat(lsDecimalFormat);
         ldblMontlyAmortizationAmt = Double.parseDouble(format.format(ldblMontlyAmortizationAmt));
-         
+        ldblMontlyAmortizationAmt = Double.parseDouble(String.valueOf(Math.round(ldblMontlyAmortizationAmt)));
+        
         return ldblMontlyAmortizationAmt;
     }
     
@@ -1030,6 +1030,7 @@ public class VehicleFinancingPrice extends Transaction {
         while (detail.hasNext()) {
             Model item = detail.next(); // Store the item before checking conditions
             String lsDetail = (String) item.getValue("sVrntIDxx");
+            String lsRecStat = (String) item.getValue("cRecdStat");
             double ldblSRP = Double.parseDouble(String.valueOf(item.getValue("nSRPAmntx")));
             double ldblRSVAmt = Double.parseDouble(String.valueOf(item.getValue("nRsrvAmtx")));
             
@@ -1038,7 +1039,7 @@ public class VehicleFinancingPrice extends Transaction {
                     detail.remove(); // Correctly remove the item
                 } 
             } else {
-                if(ldblRSVAmt <= 0.00){
+                if(ldblRSVAmt <= 0.00 && RecordStatus.ACTIVE.equals(lsRecStat)){
                     poJSON = setJSON("error", "Reservation amount cannot be zero at row "+lnDetailRow+".");
                     return poJSON;
                 }
