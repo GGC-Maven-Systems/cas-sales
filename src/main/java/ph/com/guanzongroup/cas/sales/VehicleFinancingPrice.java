@@ -694,7 +694,6 @@ public class VehicleFinancingPrice extends Transaction {
      */
     public JSONObject populateVehicleList() throws SQLException, GuanzonException, CloneNotSupportedException {
         poJSON = new JSONObject();
-        paDetail = new ArrayList<>();
         JSONArray laStandardInterestRate = loadStandardInterestRates();
         ArrayList<Double> laStandardDownpaymentRate = loadStandardDownpaymentRates();
         
@@ -729,20 +728,39 @@ public class VehicleFinancingPrice extends Transaction {
         }
         
         ReloadDetail();
-        
+        boolean lbExist = false;
+        String lsVariantId = "";
+        double ldblDownpaymentRate = 0.00;
+        double ldblSelPrice= 0.00;
         while (loRS.next()) {
-            for(int lnCtr = 0; lnCtr < laStandardDownpaymentRate.size();lnCtr++){
-                Detail(getDetailCount() - 1).setVariantId(loRS.getString("sVrntIDxx"));
-                Detail(getDetailCount() - 1).setSRPAmount(loRS.getDouble("nSelPrice"));
-                Detail(getDetailCount() - 1).setDownPaymentRate(laStandardDownpaymentRate.get(lnCtr));
-                ReloadDetail();
+            lsVariantId = loRS.getString("sVrntIDxx");
+            ldblSelPrice = loRS.getDouble("nSelPrice");
+            if(lsVariantId != null && !"".equals(lsVariantId)){
+                for(int lnCtr = 0; lnCtr < laStandardDownpaymentRate.size();lnCtr++){
+                    lbExist = false;
+                    ldblDownpaymentRate = laStandardDownpaymentRate.get(lnCtr);
+                    for(int lnRow = 0; lnRow < getDetailCount(); lnRow++){
+                        if(lsVariantId.equals(Detail(lnRow).getVariantId())
+                            && ldblDownpaymentRate == Detail(lnRow).getDownPaymentRate()){
+                            lbExist = true;
+                            break;
+                        }
+                    }
+                    
+                    if(!lbExist){
+                        Detail(getDetailCount() - 1).setVariantId(lsVariantId);
+                        Detail(getDetailCount() - 1).setSRPAmount(ldblSelPrice);
+                        Detail(getDetailCount() - 1).setDownPaymentRate(ldblDownpaymentRate);
+                        ReloadDetail();
+                        if(!pbWithUI){
+                            break;
+                        }
+                    }
+                }
+
                 if(!pbWithUI){
                     break;
                 }
-            }
-            
-            if(!pbWithUI){
-                break;
             }
         }
         MiscUtil.close(loRS);
