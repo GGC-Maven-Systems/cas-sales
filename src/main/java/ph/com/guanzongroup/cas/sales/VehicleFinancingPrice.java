@@ -1131,7 +1131,7 @@ public class VehicleFinancingPrice extends Transaction {
                 "  a.dModified, " +
                 "  a.sModified " +
                 "FROM Validity_Period_Master a " +
-                "INNER JOIN Vehicle_Financing_Price b ON b.sValidIDx = a.sValidIDx";
+                "INNER JOIN Vehicle_AddOn_Master b ON b.sValidIDx = a.sValidIDx";
         if(lsCondition != null && !"".equals(lsCondition)){
             SQL_BROWSE = MiscUtil.addCondition(SQL_BROWSE, lsCondition);
         }
