@@ -45,15 +45,28 @@ import ph.com.guanzongroup.cas.sales.status.ValidityPeriodStatus;
 import ph.com.guanzongroup.cas.sales.validator.ValidityMasterValidator;
 
 /**
+ * Manages vehicle financing price transactions including approval, voiding, and cancellation.
+ * Handles master and detail records for vehicle financing pricing with validity period management.
  *
  * @author Arsiela 09182026
  */
 public class VehicleFinancingPrice extends Transaction {
+    /** Company ID for filtering and transaction context */
     public String psCompanyId = "";
+    /** User ID of the approving officer */
     public String psApprover = "";
-    
+
+    /** List of master records for batch operations */
     public List<Model> paMaster;
     
+    /**
+     * Initializes the transaction with source code and loads required models.
+     * Sets up master validity period and vehicle financing price details.
+     *
+     * @return JSONObject containing initialization result with "result" and "message" fields
+     * @throws SQLException if a database error occurs
+     * @throws GuanzonException if application-specific error occurs
+     */
     public JSONObject InitTransaction() throws SQLException, GuanzonException {
         SOURCE_CODE = "Vhpm";
 
@@ -66,11 +79,19 @@ public class VehicleFinancingPrice extends Transaction {
         return initialize();
     }
 
-    //Transaction Source Code 
+    /**
+     * Returns the transaction source code.
+     *
+     * @return the source code for this transaction ("Vhpm" for Vehicle Financing Price)
+     */
     @Override
     public String getSourceCode() { return SOURCE_CODE; }
     
-    //Set value for private strings used in searching / filtering data
+    /**
+     * Sets the company ID for filtering and transaction context.
+     *
+     * @param companyId the company ID to set
+     */
     public void setCompanyId(String companyId) { psCompanyId = companyId; }
     /**
     * Creates a JSONObject with "result" and "message" fields.
@@ -99,16 +120,44 @@ public class VehicleFinancingPrice extends Transaction {
     }
     
     
+    /**
+     * Creates a new transaction in memory.
+     * Delegates to the parent class newTransaction() method.
+     *
+     * @return JSONObject containing the new transaction result
+     * @throws CloneNotSupportedException if detail cloning fails
+     * @throws SQLException if a database error occurs
+     * @throws GuanzonException if application-specific error occurs
+     */
     public JSONObject NewTransaction()
             throws CloneNotSupportedException, SQLException, GuanzonException {
         return newTransaction();
     }
     
-    
+    /**
+     * Opens an existing transaction by its transaction number.
+     * Delegates to the parent class openTransaction() method.
+     *
+     * @param transactionNo the validity ID/transaction number to open
+     * @return JSONObject containing the operation result
+     * @throws CloneNotSupportedException if detail cloning fails
+     * @throws SQLException if a database error occurs
+     * @throws GuanzonException if application-specific error occurs
+     * @throws ScriptException if script processing fails
+     */
     public JSONObject OpenTransaction(String transactionNo) throws CloneNotSupportedException, SQLException, GuanzonException, ScriptException {
         return openTransaction(transactionNo);
     }
-    
+    /**
+     * Opens an existing transaction and loads all associated detail records.
+     * Sets edit mode to EDIT (mode 1) when successfully opened.
+     *
+     * @param transactionNo the validity ID to load
+     * @return JSONObject with "result" and optional "message" fields
+     * @throws CloneNotSupportedException if detail cloning fails
+     * @throws SQLException if a database error occurs
+     * @throws GuanzonException if application-specific error occurs
+     */
     @Override
     protected JSONObject openTransaction(String transactionNo) throws CloneNotSupportedException, SQLException, GuanzonException {
         this.poGRider.ensureConnected();
@@ -144,10 +193,29 @@ public class VehicleFinancingPrice extends Transaction {
         }
     }
     
+    /**
+     * Updates the current transaction.
+     * Delegates to the parent class updateTransaction() method.
+     *
+     * @return JSONObject containing the update result
+     * @throws SQLException if a database error occurs
+     * @throws GuanzonException if application-specific error occurs
+     * @throws CloneNotSupportedException if detail cloning fails
+     * @throws ScriptException if script processing fails
+     */
     public JSONObject UpdateTransaction() throws SQLException, GuanzonException, CloneNotSupportedException, ScriptException {
         return updateTransaction();
     }
     
+    /**
+     * Saves the current transaction to the database.
+     * Delegates to the parent class saveTransaction() method.
+     *
+     * @return JSONObject containing save result with success or error message
+     * @throws SQLException if a database error occurs
+     * @throws GuanzonException if application-specific error occurs
+     * @throws CloneNotSupportedException if detail cloning fails
+     */
     public JSONObject SaveTransaction() throws SQLException, GuanzonException, CloneNotSupportedException {
         return saveTransaction();
     }
@@ -272,6 +340,12 @@ public class VehicleFinancingPrice extends Transaction {
         return poJSON;
     }
     
+    /**
+     * Converts status code to human-readable status string.
+     *
+     * @param lsStatus the status code from ValidityPeriodStatus constants
+     * @return readable status string ("Approved", "Voided", "Cancelled", "Open", or "Unknown")
+     */
     public String getStatus(String lsStatus) {
         switch (lsStatus) {
             case ValidityPeriodStatus.VOID:
@@ -287,6 +361,17 @@ public class VehicleFinancingPrice extends Transaction {
         }
     }
     
+    /**
+     * Approves the current transaction after validation.
+     * Validates entry, requests approval if necessary, and updates transaction status to APPROVED.
+     *
+     * @return JSONObject with "result" and "message" indicating success or failure
+     * @throws ParseException if JSON parsing fails
+     * @throws SQLException if a database error occurs
+     * @throws GuanzonException if application-specific error occurs
+     * @throws CloneNotSupportedException if detail cloning fails
+     * @throws ScriptException if script processing fails
+     */
     public JSONObject ApproveTransaction() throws ParseException, SQLException, GuanzonException, CloneNotSupportedException, ScriptException {
         poJSON = new JSONObject();
         String lsStatus = ValidityPeriodStatus.APPROVED;
@@ -333,6 +418,17 @@ public class VehicleFinancingPrice extends Transaction {
         return poJSON;
     }
     
+    /**
+     * Voids the current transaction.
+     * Validates that transaction is in appropriate state and updates status to VOID.
+     *
+     * @return JSONObject with "result" and "message" indicating success or failure
+     * @throws ParseException if JSON parsing fails
+     * @throws SQLException if a database error occurs
+     * @throws GuanzonException if application-specific error occurs
+     * @throws CloneNotSupportedException if detail cloning fails
+     * @throws ScriptException if script processing fails
+     */
     public JSONObject VoidTransaction()
             throws ParseException,
             SQLException,
@@ -376,6 +472,17 @@ public class VehicleFinancingPrice extends Transaction {
         return poJSON;
     }
     
+    /**
+     * Cancels the current transaction.
+     * Validates transaction state, requests approval, and updates status to CANCELLED.
+     *
+     * @return JSONObject with "result" and "message" indicating success or failure
+     * @throws ParseException if JSON parsing fails
+     * @throws SQLException if a database error occurs
+     * @throws GuanzonException if application-specific error occurs
+     * @throws CloneNotSupportedException if detail cloning fails
+     * @throws ScriptException if script processing fails
+     */
     public JSONObject CancelTransaction()
             throws ParseException,
             SQLException,
@@ -428,6 +535,21 @@ public class VehicleFinancingPrice extends Transaction {
         return poJSON;
     }
     
+    /**
+     * Handles status change logic with transaction history tracking.
+     * Records status changes in Transaction_Status_History and optionally updates master status.
+     *
+     * @param tableName the name of the table being updated
+     * @param sourceNo the transaction source number
+     * @param remarks optional remarks for the status change
+     * @param statusRequest the new status code to apply
+     * @param needConfirmation whether status change requires confirmation before application
+     * @param withParent whether transaction is managed by parent class
+     * @return JSONObject with "result", "message", and optional "notes" fields
+     * @throws SQLException if a database error occurs
+     * @throws GuanzonException if application-specific error occurs
+     * @throws CloneNotSupportedException if record cloning fails
+     */
     @Override
      protected JSONObject statusChange(String tableName, String sourceNo, String remarks, String statusRequest, boolean needConfirmation, boolean withParent) throws SQLException, GuanzonException, CloneNotSupportedException {
         this.poGRider.ensureConnected();
@@ -501,6 +623,14 @@ public class VehicleFinancingPrice extends Transaction {
         }
     }
     
+    /**
+     * Updates the master transaction record status in the database.
+     *
+     * @param statusRequest the new status code to set
+     * @return JSONObject with "result" and optional "message" fields
+     * @throws SQLException if a database error occurs
+     * @throws GuanzonException if application-specific error occurs
+     */
     private JSONObject updateMasterStatus(String statusRequest) throws SQLException, GuanzonException {
         String lsSQL = "UPDATE " + this.poMaster.getTable() + " SET cRecdStat = " + SQLUtil.toSQL(statusRequest) + " WHERE sValidIDx = " + SQLUtil.toSQL((String)this.poMaster.getValue("sValidIDx"));
         if (this.poGRider.executeQuery(lsSQL, this.poMaster.getTable(), this.psBranchCode, this.psDestination, "") <= 0L) {
@@ -513,7 +643,18 @@ public class VehicleFinancingPrice extends Transaction {
         }
     }
     
-    /*Search Master References*/
+    /**
+     * Searches for and opens a transaction based on criteria.
+     * Displays browse dialog with filtered validity records or loads record by code directly.
+     *
+     * @param fsValue search value to filter results
+     * @param fbByCode if true, search by code; otherwise search by description
+     * @return JSONObject containing opened transaction data or error message
+     * @throws CloneNotSupportedException if detail cloning fails
+     * @throws SQLException if a database error occurs
+     * @throws GuanzonException if application-specific error occurs
+     * @throws ScriptException if script processing fails
+     */
     public JSONObject SearchTransaction(String fsValue, boolean fbByCode) throws CloneNotSupportedException, SQLException, GuanzonException, ScriptException{
         poJSON = new JSONObject();
 
@@ -544,6 +685,16 @@ public class VehicleFinancingPrice extends Transaction {
         }
     }
     
+    /**
+     * Populates detail rows with available vehicle variants and financing rates.
+     * Loads standard interest and downpayment rates, then creates detail entries
+     * for each vehicle variant with applicable rates.
+     *
+     * @return JSONObject with "result" and optional error "message"
+     * @throws SQLException if a database error occurs
+     * @throws GuanzonException if application-specific error occurs
+     * @throws CloneNotSupportedException if detail cloning fails
+     */
     public JSONObject populateVehicleList() throws SQLException, GuanzonException, CloneNotSupportedException {
         poJSON = new JSONObject();
         paDetail = new ArrayList<>();
@@ -736,6 +887,15 @@ public class VehicleFinancingPrice extends Transaction {
         return loJSONArray;
     }
     
+    /**
+     * Calculates the monthly amortization amount based on vehicle financing details.
+     * Formula: (SRP - DownPayment) × (InterestRate / 100) / Duration
+     *
+     * @param fnRow the detail row index
+     * @param fnDuration the loan duration in months
+     * @param fdblInterestRate the annual interest rate percentage
+     * @return calculated monthly amortization amount formatted to 2 decimal places
+     */
     public Double getMontlyAmortizationAmount(int fnRow, int fnDuration, Double fdblInterestRate) {
         Double ldblDownpaymentAmount = 0.00;
         Double ldblBalance = 0.00;
@@ -756,16 +916,33 @@ public class VehicleFinancingPrice extends Transaction {
         return ldblMontlyAmortizationAmt;
     }
     
+    /**
+     * Gets the master record as Model_Validity_Period_Master.
+     *
+     * @return the current master record cast to Model_Validity_Period_Master
+     */
     @Override
     public Model_Validity_Period_Master Master() { 
         return (Model_Validity_Period_Master) poMaster; 
     }
     
+    /**
+     * Gets a detail record by row index as Model_Vehicle_Financing_Price.
+     *
+     * @param row the index of the detail record to retrieve
+     * @return the detail record at the specified row cast to Model_Vehicle_Financing_Price
+     */
     @Override
     public Model_Vehicle_Financing_Price Detail(int row) {
         return (Model_Vehicle_Financing_Price) paDetail.get(row); 
     }
-    
+    /**
+     * Adds a new detail row with validation.
+     * Checks that the last row is not empty before adding a new row.
+     *
+     * @return JSONObject with "result" and optional error "message"
+     * @throws CloneNotSupportedException if detail cloning fails
+     */
     public JSONObject AddDetail() throws CloneNotSupportedException {
         if (getDetailCount() > 0) {
             if ((Detail(getDetailCount() - 1).getVariantId() == null || "".equals(Detail(getDetailCount() - 1).getVariantId()))){
@@ -803,6 +980,13 @@ public class VehicleFinancingPrice extends Transaction {
         return poJSON;
     }
 
+    /**
+     * Validates transaction entries based on status.
+     * Uses ValidityMasterValidator to perform comprehensive validation.
+     *
+     * @param status the transaction status to validate against
+     * @return JSONObject with "result" and optional "message" fields
+     */
     @Override
     protected JSONObject isEntryOkay(String status) {
         GValidator loValidator = new ValidityMasterValidator();
@@ -813,6 +997,16 @@ public class VehicleFinancingPrice extends Transaction {
         return poJSON;
     }
     
+    /**
+     * Performs pre-save validation and assignments.
+     * Generates new IDs for new records, validates all entries, removes invalid detail rows,
+     * and prepares records for database persistence.
+     *
+     * @return JSONObject with "result" and optional "message" fields
+     * @throws SQLException if a database error occurs
+     * @throws GuanzonException if application-specific error occurs
+     * @throws CloneNotSupportedException if record cloning fails
+     */
     @Override
     public JSONObject willSave() throws SQLException, GuanzonException, CloneNotSupportedException {
         poJSON = new JSONObject();
@@ -872,12 +1066,26 @@ public class VehicleFinancingPrice extends Transaction {
         return poJSON;
     }
     
+    /**
+     * Performs final save validation on transaction.
+     * Validates entry status against the OPEN status.
+     *
+     * @return JSONObject with "result" and optional "message" fields
+     * @throws CloneNotSupportedException if record cloning fails
+     * @throws SQLException if a database error occurs
+     * @throws GuanzonException if application-specific error occurs
+     */
     @Override
     public JSONObject save() throws CloneNotSupportedException, SQLException, GuanzonException {
         /*Put saving business rules here*/
         return isEntryOkay(ValidityPeriodStatus.OPEN);
     }
 
+    /**
+     * Initializes the SQL browse statement with appropriate filters.
+     * Builds SQL_BROWSE with status filtering based on psTranStat field.
+     * Joins master and detail tables for complete transaction view.
+     */
     @Override
     public void initSQL() {
         String lsCondition = "";
@@ -910,6 +1118,15 @@ public class VehicleFinancingPrice extends Transaction {
         }
     }
     
+    /**
+     * Retrieves the user and timestamp of the last status update.
+     * Queries transaction history to find who last updated to the specified status.
+     *
+     * @param fsStatus the status code to find update information for
+     * @return JSONObject with "result", "sUpdateByx" (user), and "sUpdateDte" (timestamp)
+     * @throws SQLException if a database error occurs
+     * @throws GuanzonException if application-specific error occurs
+     */
     public JSONObject getUpdateStatusBy(String fsStatus) throws SQLException, GuanzonException {
         String lsUpdateBy = "";
         String lsDate = "";
@@ -949,6 +1166,13 @@ public class VehicleFinancingPrice extends Transaction {
         return poJSON;
     }
     
+    /**
+     * Retrieves transaction status history as a cached row set.
+     * Used for testing; queries all status changes with user and approval information.
+     *
+     * @return CachedRowSet containing status history records ordered by modification date
+     * @throws SQLException if a database error occurs
+     */
     protected CachedRowSet getStatusHistoryTest() throws SQLException {
         String lsSQL = "SELECT  a.sTableNme, a.sSourceNo, a.sRemarksx, a.cRefrStat cTranStat, IFNULL(c.sCompnyNm, '-') xModified, IFNULL(e.sCompnyNm, '-') xApproved, a.dModified, a.dApproved, a.sModified, a.sApproved " +
                     " FROM Transaction_Status_History a " +
@@ -967,6 +1191,15 @@ public class VehicleFinancingPrice extends Transaction {
         return rowset;
     }
 
+    /**
+     * Displays the transaction status history with readable status values.
+     * Converts status codes to labels and displays in UI if available.
+     * Shows entry user and date information.
+     *
+     * @throws SQLException if a database error occurs
+     * @throws GuanzonException if application-specific error occurs
+     * @throws Exception if UI display fails
+     */
     public void ShowStatusHistory() throws SQLException, GuanzonException, Exception {
         CachedRowSet crs;
         if(pbWithUI){
@@ -1075,6 +1308,16 @@ public class VehicleFinancingPrice extends Transaction {
         return poJSON;
     }
     
+    /**
+     * Retrieves system user information by ID.
+     * Returns either employee ID or company name based on flag.
+     *
+     * @param fsId the system user ID to look up
+     * @param fbIsID if true, return employee ID; if false, return company name
+     * @return the requested user information, or empty string if not found
+     * @throws SQLException if a database error occurs
+     * @throws GuanzonException if application-specific error occurs
+     */
     public String getSysUser(String fsId, boolean fbIsID) throws SQLException, GuanzonException {
         String lsEntry = "";
         String lsSQL =   " SELECT b.sCompnyNm, a.sEmployNo from xxxSysUser a "
