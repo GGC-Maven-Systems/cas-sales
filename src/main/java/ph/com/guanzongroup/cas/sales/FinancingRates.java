@@ -541,12 +541,16 @@ public class FinancingRates extends Parameter {
         try {
             String lsSQL = MiscUtil.addCondition(MiscUtil.makeSelect(new SalesModels(poGRider).VehicleFinancingRates()),
                                                     " cRecdStat = " + SQLUtil.toSQL(RecordStatus.ACTIVE)
-                                                    + " AND ( " +  SQLUtil.toSQL(xsDateShort(poGRider.getServerDate()))
-                                                    + " BETWEEN dFromDate AND dThruDate "
-                                                    + " OR dThruDate IS NULL )"
+//                                                    + " AND ( " +  SQLUtil.toSQL(xsDateShort(poGRider.getServerDate()))
+//                                                    + " BETWEEN dFromDate AND dThruDate "
+//                                                    + " OR dThruDate IS NULL )"
                                                     );
+            lsSQL = lsSQL 
+                    + " AND ( dFromDate <= "+ SQLUtil.toSQL(xsDateShort(poGRider.getServerDate()))+")"
+                    + " AND ( dThruDate IS NULL OR dThruDate >= "+ SQLUtil.toSQL(xsDateShort(poGRider.getServerDate()))+")";
+
             lsSQL = lsSQL + " ORDER BY sRateType, nDuration, nRateValx ASC ";
-            System.out.println("Executing SQL: " + lsSQL);
+            System.out.println("loadStandardRates SQL: " + lsSQL);
             ResultSet loRS = poGRider.executeQuery(lsSQL);
             poJSON = new JSONObject();
             if (MiscUtil.RecordCount(loRS) >= 0) {

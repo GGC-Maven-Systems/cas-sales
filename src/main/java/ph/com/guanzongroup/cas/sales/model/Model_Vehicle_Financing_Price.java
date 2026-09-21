@@ -48,8 +48,8 @@ public class Model_Vehicle_Financing_Price extends Model {
             poEntity.moveToCurrentRow();
             poEntity.absolute(1);
 
-            ID = "sValidIDx";
-            ID2 = "sVhclFIDx";
+            ID2 = "sValidIDx";
+            ID = "sVhclFIDx";
             
             //initialize reference objects
             ParamModels model = new ParamModels(poGRider);
@@ -145,7 +145,7 @@ public class Model_Vehicle_Financing_Price extends Model {
     
     @Override
     public String getNextCode() {
-        return MiscUtil.getNextCode(this.getTable(), ID2, true, poGRider.getGConnection().getConnection(), poGRider.getBranchCode());
+        return MiscUtil.getNextCode(this.getTable(), ID, true, poGRider.getGConnection().getConnection(), poGRider.getBranchCode());
     }
     
     public Model_Model_Variant ModelVariant() throws SQLException, GuanzonException {

@@ -9,9 +9,11 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
@@ -175,7 +177,8 @@ public class VehicleFinancingPrice extends Transaction {
             while(rs.next()) {
                 Model loDetail = (Model)this.poDetail.clone();
                 loDetail.newRecord();
-                this.poJSON = loDetail.openRecord(transactionNo, rs.getString("sVhclFIDx"));
+//                this.poJSON = loDetail.openRecord(transactionNo, rs.getString("sVhclFIDx"));
+                this.poJSON = loDetail.openRecord( rs.getString("sVhclFIDx"),transactionNo);
                 if (!"success".equals((String)this.poJSON.get("result"))) {
                     this.poJSON.put("message", "Unable to open transaction detail record.");
                     this.clear();
@@ -204,7 +207,19 @@ public class VehicleFinancingPrice extends Transaction {
      * @throws ScriptException if script processing fails
      */
     public JSONObject UpdateTransaction() throws SQLException, GuanzonException, CloneNotSupportedException, ScriptException {
-        return updateTransaction();
+        poJSON = new JSONObject();
+        
+        poJSON = updateTransaction();
+        if(!isJSONSuccess(poJSON)){
+            return poJSON;
+        }
+        
+        poJSON = populateVehicleList();
+        if(!isJSONSuccess(poJSON)){
+            return poJSON;
+        }
+        
+        return poJSON;
     }
     
     /**
@@ -269,8 +284,12 @@ public class VehicleFinancingPrice extends Transaction {
                         } else {
                             for(int lnCtr = 0; lnCtr <= this.paDetail.size() - 1; ++lnCtr) {
                                 ((Model)this.paDetail.get(lnCtr)).setValue("dModified", this.pdModified);
+                                Detail(lnCtr).setValidityId(Master().getValidityId());
+                                if(((Model)this.paDetail.get(lnCtr)).getEditMode() == EditMode.ADDNEW){
+                                    ((Model)this.paDetail.get(lnCtr)).setValue("sVhclFIDx", Detail(lnCtr).getNextCode());
+                                }
                                 this.poJSON = ((Model)this.paDetail.get(lnCtr)).saveRecord();
-                                if ("error".equals((String)this.poJSON.get("result"))) {
+                                if ("error".equals((String)this.poJSON.get("rsearesult"))) {
                                     if (!this.pbWthParent) {
                                         this.poGRider.rollbackTrans();
                                     }
@@ -662,6 +681,7 @@ public class VehicleFinancingPrice extends Transaction {
         lsSQL = lsSQL + " GROUP BY a.sValidIDx ";
         System.out.println("Executing SQL: " + lsSQL);
         if(pbWithUI){
+
             poJSON = ShowDialogFX.Browse(poGRider,
                     lsSQL,
                     "",
@@ -673,6 +693,7 @@ public class VehicleFinancingPrice extends Transaction {
             poJSON.put("sValidIDx", fsValue);
         }
         if (poJSON != null) {
+
             return OpenTransaction((String) poJSON.get("sValidIDx"));
         } else {
             poJSON = new JSONObject();
@@ -694,6 +715,13 @@ public class VehicleFinancingPrice extends Transaction {
      */
     public JSONObject populateVehicleList() throws SQLException, GuanzonException, CloneNotSupportedException {
         poJSON = new JSONObject();
+        if(pnEditMode != EditMode.ADDNEW && pnEditMode != EditMode.UPDATE){
+            poJSON = new JSONObject();
+            poJSON.put("result", "success");
+            poJSON.put("message", "success");
+            return poJSON;
+        }
+        
         JSONArray laStandardInterestRate = loadStandardInterestRates();
         ArrayList<Double> laStandardDownpaymentRate = loadStandardDownpaymentRates();
         
@@ -717,6 +745,7 @@ public class VehicleFinancingPrice extends Transaction {
         lsSQL = MiscUtil.addCondition(lsSQL," a.sIndstCdx =  " + SQLUtil.toSQL(poGRider.getIndustry())
                        + " AND c.cEndOfLfe =  " + SQLUtil.toSQL(Logical.YES)
                        + " AND c.nSelPrice > 0.00 "
+                       + " AND c.cRecdStat =  " + SQLUtil.toSQL(RecordStatus.ACTIVE)
                     );
         
         lsSQL = lsSQL + " ORDER BY b.sDescript, c.sDescript ASC ";
@@ -748,6 +777,7 @@ public class VehicleFinancingPrice extends Transaction {
                     }
                     
                     if(!lbExist){
+                        Detail(getDetailCount() - 1).setVehicleFinancingId(Detail(getDetailCount() - 1).getNextCode());
                         Detail(getDetailCount() - 1).setVariantId(lsVariantId);
                         Detail(getDetailCount() - 1).setSRPAmount(ldblSelPrice);
                         Detail(getDetailCount() - 1).setDownPaymentRate(ldblDownpaymentRate);
@@ -764,6 +794,9 @@ public class VehicleFinancingPrice extends Transaction {
             }
         }
         MiscUtil.close(loRS);
+        poJSON = new JSONObject();
+        poJSON.put("result", "success");
+        poJSON.put("message", "success");
         return poJSON;
     }
     
@@ -809,26 +842,8 @@ public class VehicleFinancingPrice extends Transaction {
     public ArrayList loadStandardDownpaymentRates() throws SQLException, GuanzonException {
         ArrayList<Double> laStandardRate = new ArrayList<>();
         try {
-            String lsSQL = MiscUtil.addCondition(MiscUtil.makeSelect(new SalesModels(poGRider).VehicleFinancingRates()),
-                                                    " cRecdStat = " + SQLUtil.toSQL(RecordStatus.ACTIVE)
-                                                    + " AND sRateType = " + SQLUtil.toSQL(FinancingRateStatus.StandardRateType.DOWNPAYMENT_RATE)
-                                                    );
-            
-            Date loToDate = Master().getThruDate();
-            if(loToDate != null && !"1900-01-01".equals(xsDateShort(loToDate))){
-                lsSQL = lsSQL   + " AND " +  SQLUtil.toSQL(xsDateShort(Master().getFromDate()))
-                                + " BETWEEN dFromDate AND dThruDate "
-                                + " AND " +  SQLUtil.toSQL(xsDateShort(Master().getThruDate()))
-                                + "  BETWEEN dFromDate AND dThruDate ";
-            } else {
-                lsSQL = lsSQL + " AND ( " +  SQLUtil.toSQL(xsDateShort(Master().getFromDate()))
-                        + "  BETWEEN dFromDate AND dThruDate "
-                        + " OR dThruDate IS NULL)";
-            }
-            
-            
-            lsSQL = lsSQL + " ORDER BY nRateValx ASC ";
-            System.out.println("Executing SQL: " + lsSQL);
+            String lsSQL = getStandardRate(true);
+            System.out.println("Downpayment Rate SQL: " + lsSQL);
             ResultSet loRS = poGRider.executeQuery(lsSQL);
             poJSON = new JSONObject();
             if (MiscUtil.RecordCount(loRS) >= 0) {
@@ -855,6 +870,11 @@ public class VehicleFinancingPrice extends Transaction {
         String date = sdf.format(fdValue);
         return date;
     }
+    private LocalDate strToDate(String val) {
+        DateTimeFormatter date_formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        LocalDate localDate = LocalDate.parse(val, date_formatter);
+        return localDate;
+    }
     /**
      * Loads all active standard vehicle financing rates.
      *
@@ -866,30 +886,28 @@ public class VehicleFinancingPrice extends Transaction {
         JSONArray loJSONArray = new JSONArray();
         JSONObject loJSON = new JSONObject();
         try {
-            String lsSQL = MiscUtil.addCondition(MiscUtil.makeSelect(new SalesModels(poGRider).VehicleFinancingRates()),
-                                                    " cRecdStat = " + SQLUtil.toSQL(RecordStatus.ACTIVE)
-                                                    + " AND sRateType = " + SQLUtil.toSQL(FinancingRateStatus.StandardRateType.INTEREST_RATE)
-                                                    );
-            
-            Date loToDate = Master().getThruDate();
-            if(loToDate != null && !"1900-01-01".equals(xsDateShort(loToDate))){
-                lsSQL = lsSQL   + " AND " +  SQLUtil.toSQL(xsDateShort(Master().getFromDate()))
-                                + " BETWEEN dFromDate AND dThruDate "
-                                + " AND " +  SQLUtil.toSQL(xsDateShort(Master().getThruDate()))
-                                + "  BETWEEN dFromDate AND dThruDate ";
-            } else {
-                lsSQL = lsSQL + " AND ( " +  SQLUtil.toSQL(xsDateShort(Master().getFromDate()))
-                        + "  BETWEEN dFromDate AND dThruDate "
-                        + " OR dThruDate IS NULL)";
-            }
-            
-            lsSQL = lsSQL + " ORDER BY nDuration, nRateValx ASC ";
-            System.out.println("Executing SQL: " + lsSQL);
+            String lsSQL = getStandardRate(false);
+            System.out.println("Standard Rate SQL: " + lsSQL);
             ResultSet loRS = poGRider.executeQuery(lsSQL);
             poJSON = new JSONObject();
             if (MiscUtil.RecordCount(loRS) >= 0) {
                 while(loRS.next()){
                     loJSON = new JSONObject();
+//                    Date loVFromDate = Master().getFromDate();
+//                    Date loFromDate = loRS.getDate("dFromDate");
+//                    if (loFromDate != null) {
+//                        if (!"1900-01-01".equals(xsDateShort(loFromDate))) {
+//                            LocalDate lldVFromDate = strToDate(xsDateShort(loVFromDate));
+//                            LocalDate lldFromDate = strToDate(xsDateShort(loFromDate));
+//                            if (lldVFromDate.isBefore(lldFromDate)) {
+//                                loJSON.put("nDuration", loRS.getInt("nDuration"));
+//                                loJSON.put("nRateValx", loRS.getDouble("nRateValx"));
+//                                loJSONArray.add(loJSON);
+//                            }
+//                        }
+//                    }
+
+
                     loJSON.put("nDuration", loRS.getInt("nDuration"));
                     loJSON.put("nRateValx", loRS.getDouble("nRateValx"));
                     loJSONArray.add(loJSON);
@@ -901,6 +919,31 @@ public class VehicleFinancingPrice extends Transaction {
         }
         
         return loJSONArray;
+    }
+    
+    private String getStandardRate(boolean isDownpaymentRate) throws SQLException{
+        String lsSQL = MiscUtil.addCondition(MiscUtil.makeSelect(new SalesModels(poGRider).VehicleFinancingRates()),
+                                                    " cRecdStat = " + SQLUtil.toSQL(RecordStatus.ACTIVE)
+                                                    );
+        if(isDownpaymentRate){
+            lsSQL = lsSQL + " AND sRateType = " + SQLUtil.toSQL(FinancingRateStatus.StandardRateType.DOWNPAYMENT_RATE);
+        } else {
+            lsSQL = lsSQL + " AND sRateType = " + SQLUtil.toSQL(FinancingRateStatus.StandardRateType.INTEREST_RATE);
+        }
+                 
+        Date loToDate = Master().getThruDate();
+        if(loToDate != null && !"1900-01-01".equals(xsDateShort(loToDate))){
+            lsSQL = lsSQL 
+                    + " AND ((dFromDate between "+ SQLUtil.toSQL(xsDateShort(Master().getFromDate()))+" AND "+  SQLUtil.toSQL(xsDateShort(Master().getThruDate())) +") OR dFromDate <= "+ SQLUtil.toSQL(xsDateShort(Master().getFromDate()))+")"
+                    + " AND ((dThruDate between "+ SQLUtil.toSQL(xsDateShort(Master().getFromDate()))+" AND "+  SQLUtil.toSQL(xsDateShort(Master().getThruDate())) +") OR dThruDate IS NULL OR dThruDate >= "+ SQLUtil.toSQL(xsDateShort(Master().getFromDate()))+")";
+        } else {
+            lsSQL = lsSQL 
+                + " AND ( dFromDate <= "+ SQLUtil.toSQL(xsDateShort(Master().getFromDate()))+")"
+                + " AND ( dThruDate IS NULL OR dThruDate >= "+ SQLUtil.toSQL(xsDateShort(Master().getFromDate()))+")";
+        }
+
+        lsSQL = lsSQL + " GROUP BY nDuration, nRateValx  ORDER BY nDuration, nRateValx ASC ";
+        return lsSQL;
     }
     
     /**
@@ -988,7 +1031,19 @@ public class VehicleFinancingPrice extends Transaction {
         try {
             //Put initial model values here/
             Master().setCompanyId(psCompanyId);
-            Master().setFromDate(SQLUtil.toDate(xsDateShort(poGRider.getServerDate()), SQLUtil.FORMAT_SHORT_DATE));
+//            Master().setFromDate(SQLUtil.toDate(xsDateShort(poGRider.getServerDate()), SQLUtil.FORMAT_SHORT_DATE));
+            Date ldServerDate = poGRider.getServerDate();
+            Calendar loFromDate = Calendar.getInstance();
+            Calendar loToDate = Calendar.getInstance();
+            loFromDate.setTime(ldServerDate);
+            loToDate.setTime(ldServerDate);
+
+            // Set to the last day of the current month
+            loFromDate.set(Calendar.DAY_OF_MONTH,loFromDate.getActualMinimum(Calendar.DAY_OF_MONTH));
+            loToDate.set(Calendar.DAY_OF_MONTH,loToDate.getActualMaximum(Calendar.DAY_OF_MONTH));
+
+            Master().setFromDate(SQLUtil.toDate(xsDateShort(loFromDate.getTime()),SQLUtil.FORMAT_SHORT_DATE));
+            Master().setThruDate(SQLUtil.toDate(xsDateShort(loToDate.getTime()),SQLUtil.FORMAT_SHORT_DATE));
             
         } catch (SQLException ex) {
             Logger.getLogger(VehicleFinancingPrice.class.getName()).log(Level.SEVERE, null, ex);
@@ -1057,10 +1112,10 @@ public class VehicleFinancingPrice extends Transaction {
                     detail.remove(); // Correctly remove the item
                 } 
             } else {
-                if(ldblRSVAmt <= 0.00 && RecordStatus.ACTIVE.equals(lsRecStat)){
-                    poJSON = setJSON("error", "Reservation amount cannot be zero at row "+lnDetailRow+".");
-                    return poJSON;
-                }
+//                if(ldblRSVAmt <= 0.00 && RecordStatus.ACTIVE.equals(lsRecStat)){
+//                    poJSON = setJSON("error", "Reservation amount cannot be zero at row "+lnDetailRow+".");
+//                    return poJSON;
+//                }
                 lnDetailRow++;
             }
         }
@@ -1071,10 +1126,11 @@ public class VehicleFinancingPrice extends Transaction {
         }
 
         for (int lnCtr = 0; lnCtr <= getDetailCount() - 1; lnCtr++) {
-            Detail(lnCtr).setValidityId(Master().getValidityId());
+            System.out.println("Record Status : " + Detail(lnCtr).getRecordStatus());
             if(Detail(lnCtr).getEditMode() == EditMode.ADDNEW){
                 Detail(lnCtr).setVehicleFinancingId(Detail(lnCtr).getNextCode());
             }
+            Detail(lnCtr).setValidityId(Master().getValidityId());
             Detail(lnCtr).setModifiedBy(poGRider.Encrypt(poGRider.getUserID()));
             Detail(lnCtr).setModifiedDate(poGRider.getServerDate());
         }
@@ -1131,7 +1187,7 @@ public class VehicleFinancingPrice extends Transaction {
                 "  a.dModified, " +
                 "  a.sModified " +
                 "FROM Validity_Period_Master a " +
-                "INNER JOIN Vehicle_AddOn_Master b ON b.sValidIDx = a.sValidIDx";
+                "INNER JOIN Vehicle_Financing_Price b ON b.sValidIDx = a.sValidIDx";
         if(lsCondition != null && !"".equals(lsCondition)){
             SQL_BROWSE = MiscUtil.addCondition(SQL_BROWSE, lsCondition);
         }
@@ -1202,6 +1258,24 @@ public class VehicleFinancingPrice extends Transaction {
                     " WHERE a.sSourceNo = " + SQLUtil.toSQL(Master().getValidityId()) +
                     " AND a.sTableNme = " + SQLUtil.toSQL(Master().getTable()) + " ORDER BY a.dModified";
         System.out.println("STATUS HISTORY : " + lsSQL);
+        ResultSet loRS = this.poGRider.executeQuery(lsSQL);
+        RowSetFactory factory = RowSetProvider.newFactory();
+        CachedRowSet rowset = factory.createCachedRowSet();
+        rowset.populate(loRS);
+        MiscUtil.close(loRS);
+        return rowset;
+    }
+   
+    @Override
+    protected CachedRowSet getStatusHistory() throws SQLException {
+        this.poGRider.ensureConnected();
+        String lsSQL = "SELECT  a.sTableNme, a.sSourceNo, a.sRemarksx, a.cRefrStat cTranStat, IFNULL(c.sCompnyNm, '-') xModified, IFNULL(e.sCompnyNm, '-') xApproved, a.dModified, a.dApproved, a.sModified, a.sApproved "
+                + " FROM GCASys_DBF.Transaction_Status_History a "
+                + " LEFT JOIN GCASys_DBF.xxxSysUser b ON b.sUserIDxx = AES_DECRYPT(UNHEX(a.sModified), '08220326') "
+                + " LEFT JOIN GGC_ISysDBF.Client_Master c ON b.sEmployNo = c.sClientID "
+                + " LEFT JOIN GCASys_DBF.xxxSysUser d ON d.sUserIDxx = AES_DECRYPT(UNHEX(a.sApproved), '08220326') "
+                + " LEFT JOIN GGC_ISysDBF.Client_Master e ON d.sEmployNo = e.sClientID "
+                + " WHERE a.sSourceNo = " + SQLUtil.toSQL(Master().getValidityId()) + " AND a.sTableNme = " + SQLUtil.toSQL(Master().getTable()) + " ORDER BY a.dModified, a.sTransNox";
         ResultSet loRS = this.poGRider.executeQuery(lsSQL);
         RowSetFactory factory = RowSetProvider.newFactory();
         CachedRowSet rowset = factory.createCachedRowSet();
