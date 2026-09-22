@@ -1366,77 +1366,315 @@ public class VehicleFinancingPrice extends Transaction {
      * @throws SQLException If a database access error occurs.
      * @throws GuanzonException If transaction loading or validation fails.
      */
+//    public JSONObject printTransaction(String fsSelectedDPRate)
+//            throws CloneNotSupportedException, SQLException, GuanzonException {
+//        poJSON = new JSONObject();
+//        JasperReport jasperReport = null;
+//        pbIsPrinted = false;
+//        ArrayList<Double> loDPRate = loadStandardDownpaymentRates();
+//        
+//        if (fsSelectedDPRate == null) {
+//            poJSON.put("result", "error");
+//            poJSON.put("message", "Invalid downpayment rate selected.");
+//                ShowMessageFX.Warning(null, "Computerized Accounting System",
+//                        "Invalid downpayment rate selected.");
+//            return poJSON;
+//        } else {
+//            if ("--All--".equalsIgnoreCase(fsSelectedDPRate.trim())) {
+////                poJSON.put("result", "error");
+////                poJSON.put("message", "Invalid downpayment rate selected.");
+////                ShowMessageFX.Warning(null, "Computerized Accounting System",
+////                        "Invalid downpayment rate selected.");
+////                return poJSON;
+//            } else {
+//                loDPRate = new ArrayList<>();
+//                loDPRate.add(Double.valueOf(fsSelectedDPRate));
+//            }
+//            
+//        }
+//        
+//        //Load pages per downpayment rate
+//        
+//        Double ldblSelectedDPRate = Double.valueOf(fsSelectedDPRate);
+//        JSONArray laStandardInterestRate = loadStandardInterestRates();
+//        if(laStandardInterestRate.size() <= 0){
+//            poJSON = setJSON("error", "No active standard interest rate.");
+//            return poJSON;
+//        }
+// 
+//        try {
+//            String jrxmlPath = System.getProperty("sys.default.path.config") + "/Reports/VehicleFinancingPromo_dynamic.jrxml";
+//            jasperReport = JasperCompileManager.compileReport(jrxmlPath);
+//
+//            // 1. Prepare parameters
+//            Map<String, Object> parameters = new HashMap<>();
+//            parameters.put("sValidity", Master().getValidityId()+"-"+poGRider.getServerDate()); 
+//            parameters.put("sCompany", Master().Company().getCompanyName().toUpperCase()); 
+//            String lsAddress = Master().Company().getCompanyAddress() ;
+//            if(Master().Company().TownCity().getDescription() != null && !"".equals(Master().Company().TownCity().getDescription())){
+//                lsAddress = lsAddress + " " + Master().Company().TownCity().getDescription();
+//            }
+//            if(Master().Company().TownCity().Province().getDescription() != null && !"".equals(Master().Company().TownCity().Province().getDescription())){
+//                lsAddress = lsAddress  + ", " + Master().Company().TownCity().Province().getDescription();
+//            }
+//            
+//            parameters.put("sAddress", lsAddress.toUpperCase()); 
+//            parameters.put("sValidityDesc", Master().getValidityDescription().toUpperCase()); 
+//            parameters.put("nDPRatePct", ldblSelectedDPRate);
+//            List<Map<String, Object>> rows = buildSampleData(ldblSelectedDPRate,laStandardInterestRate);
+//            List<Map<String, ?>> data = new ArrayList<>(rows);
+//            JRMapCollectionDataSource dataSource = new JRMapCollectionDataSource(data);
+//            JasperPrint currentPrint = JasperFillManager.fillReport(jasperReport, parameters, dataSource);
+//            if (currentPrint != null) {
+//                CustomJasperViewer viewer = new CustomJasperViewer(currentPrint);
+//                viewer.setVisible(true);
+//                viewer.addWindowListener(new WindowAdapter() {
+//                    @Override
+//                    public void windowClosed(WindowEvent e) {
+//                        proceedAfterViewerClosed();
+//                    }
+//
+//                });
+//            }
+//
+//        } catch (JRException | SQLException | GuanzonException  ex) {
+//            poJSON.put("result", "error");
+//            poJSON.put("message", "Transaction print aborted!");
+//            Logger.getLogger(getClass().getName()).log(Level.SEVERE, null, ex);
+//        }
+//
+//        return poJSON;
+//    }
+
     public JSONObject printTransaction(String fsSelectedDPRate)
-            throws CloneNotSupportedException, SQLException, GuanzonException {
-        poJSON = new JSONObject();
-        JasperReport jasperReport = null;
-        pbIsPrinted = false;
-        if (fsSelectedDPRate == null) {
-            poJSON.put("result", "error");
-            poJSON.put("message", "Invalid downpayment rate selected.");
-                ShowMessageFX.Warning(null, "Computerized Accounting System",
-                        "Invalid downpayment rate selected.");
-            return poJSON;
-        } else {
-            if ("--All--".equalsIgnoreCase(fsSelectedDPRate.trim())) {
-                poJSON.put("result", "error");
-                poJSON.put("message", "Invalid downpayment rate selected.");
-                ShowMessageFX.Warning(null, "Computerized Accounting System",
-                        "Invalid downpayment rate selected.");
-                return poJSON;
-            }
-        }
+        throws CloneNotSupportedException, SQLException, GuanzonException {
 
-        Double ldblSelectedDPRate = Double.valueOf(fsSelectedDPRate);
-        JSONArray laStandardInterestRate = loadStandardInterestRates();
-        if(laStandardInterestRate.size() <= 0){
-            poJSON = setJSON("error", "No active standard interest rate.");
-            return poJSON;
-        }
- 
-        try {
-            String jrxmlPath = System.getProperty("sys.default.path.config") + "/Reports/VehicleFinancingPromo_dynamic.jrxml";
-            jasperReport = JasperCompileManager.compileReport(jrxmlPath);
+    poJSON = new JSONObject();
+    pbIsPrinted = false;
 
-            // 1. Prepare parameters
-            Map<String, Object> parameters = new HashMap<>();
-            parameters.put("sCompany", Master().Company().getCompanyName().toUpperCase()); 
-            String lsAddress = Master().Company().getCompanyAddress() ;
-            if(Master().Company().TownCity().getDescription() != null && !"".equals(Master().Company().TownCity().getDescription())){
-                lsAddress = lsAddress + " " + Master().Company().TownCity().getDescription();
-            }
-            if(Master().Company().TownCity().Province().getDescription() != null && !"".equals(Master().Company().TownCity().Province().getDescription())){
-                lsAddress = lsAddress  + ", " + Master().Company().TownCity().Province().getDescription();
-            }
-            
-            parameters.put("sAddress", lsAddress.toUpperCase()); 
-            parameters.put("sValidityDesc", Master().getValidityDescription().toUpperCase()); 
-            parameters.put("nDPRatePct", ldblSelectedDPRate);
-            List<Map<String, Object>> rows = buildSampleData(ldblSelectedDPRate,laStandardInterestRate);
-            List<Map<String, ?>> data = new ArrayList<>(rows);
-            JRMapCollectionDataSource dataSource = new JRMapCollectionDataSource(data);
-            JasperPrint currentPrint = JasperFillManager.fillReport(jasperReport, parameters, dataSource);
-            if (currentPrint != null) {
-                CustomJasperViewer viewer = new CustomJasperViewer(currentPrint);
-                viewer.setVisible(true);
-                viewer.addWindowListener(new WindowAdapter() {
-                    @Override
-                    public void windowClosed(WindowEvent e) {
-                        proceedAfterViewerClosed();
-                    }
+    ArrayList<Double> loDPRate = loadStandardDownpaymentRates();
 
-                });
-            }
+    // Validate selection
+    if (fsSelectedDPRate == null) {
+        poJSON.put("result", "error");
+        poJSON.put("message", "Invalid downpayment rate selected.");
 
-        } catch (JRException | SQLException | GuanzonException  ex) {
-            poJSON.put("result", "error");
-            poJSON.put("message", "Transaction print aborted!");
-            Logger.getLogger(getClass().getName()).log(Level.SEVERE, null, ex);
-        }
+        ShowMessageFX.Warning(
+                null,
+                "Computerized Accounting System",
+                "Invalid downpayment rate selected."
+        );
 
         return poJSON;
     }
 
+    // If a specific rate is selected, only load that rate
+    if (!"--All--".equalsIgnoreCase(fsSelectedDPRate.trim())) {
+
+        try {
+            loDPRate = new ArrayList<>();
+            loDPRate.add(Double.valueOf(fsSelectedDPRate));
+
+        } catch (NumberFormatException e) {
+
+            poJSON.put("result", "error");
+            poJSON.put("message", "Invalid downpayment rate selected.");
+
+            ShowMessageFX.Warning(
+                    null,
+                    "Computerized Accounting System",
+                    "Invalid downpayment rate selected."
+            );
+
+            return poJSON;
+        }
+    }
+
+    // Load standard interest rates
+    JSONArray laStandardInterestRate = loadStandardInterestRates();
+
+    if (laStandardInterestRate == null
+            || laStandardInterestRate.size() <= 0) {
+
+        poJSON = setJSON(
+                "error",
+                "No active standard interest rate."
+        );
+
+        return poJSON;
+    }
+
+    try {
+
+        String jrxmlPath =
+                System.getProperty("sys.default.path.config")
+                + "/Reports/VehicleFinancingPromo_dynamic.jrxml";
+
+        JasperReport jasperReport =
+                JasperCompileManager.compileReport(jrxmlPath);
+
+        /*
+         * Create the final JasperPrint.
+         * The first rate will initialize it.
+         */
+        JasperPrint finalPrint = null;
+
+        for (Double ldblDPRate : loDPRate) {
+
+            // ---------------------------------------------
+            // Parameters
+            // ---------------------------------------------
+
+            Map<String, Object> parameters = new HashMap<>();
+
+            parameters.put(
+                    "sValidity",
+                    Master().getValidityId()
+                    + "-"
+                    + poGRider.getServerDate()
+            );
+
+            parameters.put(
+                    "sCompany",
+                    Master().Company()
+                            .getCompanyName()
+                            .toUpperCase()
+            );
+
+            String lsAddress =
+                    Master().Company().getCompanyAddress();
+
+            if (Master().Company().TownCity().getDescription() != null
+                    && !"".equals(
+                            Master().Company()
+                                    .TownCity()
+                                    .getDescription())) {
+
+                lsAddress = lsAddress
+                        + " "
+                        + Master().Company()
+                                .TownCity()
+                                .getDescription();
+            }
+
+            if (Master().Company()
+                    .TownCity()
+                    .Province()
+                    .getDescription() != null
+                    && !"".equals(
+                            Master().Company()
+                                    .TownCity()
+                                    .Province()
+                                    .getDescription())) {
+
+                lsAddress = lsAddress
+                        + ", "
+                        + Master().Company()
+                                .TownCity()
+                                .Province()
+                                .getDescription();
+            }
+
+            parameters.put(
+                    "sAddress",
+                    lsAddress.toUpperCase()
+            );
+
+            parameters.put(
+                    "sValidityDesc",
+                    Master().getValidityDescription()
+                            .toUpperCase()
+            );
+
+            // Current DP rate
+            parameters.put(
+                    "nDPRatePct",
+                    ldblDPRate
+            );
+
+            // ---------------------------------------------
+            // Build data for current DP rate
+            // ---------------------------------------------
+
+            List<Map<String, Object>> rows =
+                    buildSampleData(
+                            ldblDPRate,
+                            laStandardInterestRate
+                    );
+
+            List<Map<String, ?>> data =
+                    new ArrayList<>(rows);
+
+            JRMapCollectionDataSource dataSource =
+                    new JRMapCollectionDataSource(data);
+
+            // ---------------------------------------------
+            // Generate JasperPrint
+            // ---------------------------------------------
+
+            JasperPrint currentPrint =
+                    JasperFillManager.fillReport(
+                            jasperReport,
+                            parameters,
+                            dataSource
+                    );
+
+            if (currentPrint == null) {
+                continue;
+            }
+
+            // ---------------------------------------------
+            // Combine reports
+            // ---------------------------------------------
+
+            if (finalPrint == null) {
+
+                finalPrint = currentPrint;
+
+            } else {
+
+                finalPrint.getPages().addAll(
+                        currentPrint.getPages()
+                );
+            }
+        }
+
+        // ---------------------------------------------
+        // Display final report
+        // ---------------------------------------------
+
+        if (finalPrint != null) {
+
+            CustomJasperViewer viewer =
+                    new CustomJasperViewer(finalPrint);
+
+            viewer.setVisible(true);
+
+            viewer.addWindowListener(
+                    new WindowAdapter() {
+                        @Override
+                        public void windowClosed(WindowEvent e) {
+                            proceedAfterViewerClosed();
+                        }
+                    }
+            );
+        }
+
+    } catch (JRException | SQLException | GuanzonException ex) {
+
+        poJSON.put("result", "error");
+        poJSON.put(
+                "message",
+                "Transaction print aborted!"
+        );
+
+        Logger.getLogger(getClass().getName())
+                .log(Level.SEVERE, null, ex);
+    }
+
+    return poJSON;
+}
+    
     private void proceedAfterViewerClosed() {
         Platform.runLater(() -> {
             System.out.println("SHOWED!!!!!!!!!!!");
