@@ -1030,14 +1030,27 @@ public class VehicleFinancingPrice extends Transaction {
         }
                  
         Date loToDate = Master().getThruDate();
+        Date loFromDate = Master().getFromDate();
         if(loToDate != null && !"1900-01-01".equals(xsDateShort(loToDate))){
             lsSQL = lsSQL 
                     + " AND ((dFromDate between "+ SQLUtil.toSQL(xsDateShort(Master().getFromDate()))+" AND "+  SQLUtil.toSQL(xsDateShort(Master().getThruDate())) +") OR dFromDate <= "+ SQLUtil.toSQL(xsDateShort(Master().getFromDate()))+")"
                     + " AND ((dThruDate between "+ SQLUtil.toSQL(xsDateShort(Master().getFromDate()))+" AND "+  SQLUtil.toSQL(xsDateShort(Master().getThruDate())) +") OR dThruDate IS NULL OR dThruDate >= "+ SQLUtil.toSQL(xsDateShort(Master().getFromDate()))+")";
         } else {
-            lsSQL = lsSQL 
-                + " AND ( dFromDate <= "+ SQLUtil.toSQL(xsDateShort(Master().getFromDate()))+")"
-                + " AND ( dThruDate IS NULL OR dThruDate >= "+ SQLUtil.toSQL(xsDateShort(Master().getFromDate()))+")";
+            if(loFromDate != null && !"".equals(xsDateShort(loFromDate))){
+                lsSQL = lsSQL 
+                    + " AND ( dFromDate <= "+ SQLUtil.toSQL(xsDateShort(Master().getFromDate()))+")"
+                    + " AND ( dThruDate IS NULL OR dThruDate >= "+ SQLUtil.toSQL(xsDateShort(Master().getFromDate()))+")";
+            } else {
+                Date ldServerDate = poGRider.getServerDate();
+                Calendar locFromDate = Calendar.getInstance();
+                locFromDate.setTime(ldServerDate);
+
+                // Set to the last day of the current month
+                locFromDate.set(Calendar.DAY_OF_MONTH,locFromDate.getActualMinimum(Calendar.DAY_OF_MONTH));
+                lsSQL = lsSQL 
+                    + " AND ( dFromDate <= "+ SQLUtil.toSQL(SQLUtil.toDate(xsDateShort(locFromDate.getTime()),SQLUtil.FORMAT_SHORT_DATE))+")"
+                    + " AND ( dThruDate IS NULL OR dThruDate >= "+ SQLUtil.toSQL(SQLUtil.toDate(xsDateShort(locFromDate.getTime()),SQLUtil.FORMAT_SHORT_DATE))+")";
+            }
         }
 
         lsSQL = lsSQL + " GROUP BY nDuration, nRateValx  ORDER BY nDuration, nRateValx ASC ";
@@ -1347,18 +1360,29 @@ public class VehicleFinancingPrice extends Transaction {
     /**
      * Prints disbursement vouchers for the provided transactions and marks first-time prints.
      *
-     * @param fdblSelectedDPRate
+     * @param fsSelectedDPRate
      * @return JSON result containing print status.
      * @throws CloneNotSupportedException If cloning operations fail.
      * @throws SQLException If a database access error occurs.
      * @throws GuanzonException If transaction loading or validation fails.
      */
-    public JSONObject printTransaction(Double fdblSelectedDPRate)
+    public JSONObject printTransaction(String fsSelectedDPRate)
             throws CloneNotSupportedException, SQLException, GuanzonException {
         poJSON = new JSONObject();
-        JasperPrint masterPrint = null;
         JasperReport jasperReport = null;
         pbIsPrinted = false;
+        Double ldblSelectedDPRate = 0.00;
+        if (fsSelectedDPRate == null) {
+            poJSON.put("result", "error");
+            poJSON.put("message", "Invalid downpayment rate selected.");
+            return poJSON;
+        } else {
+            if(fsSelectedDPRate.contains("ALL")){
+                poJSON.put("result", "error");
+                poJSON.put("message", "Invalid downpayment rate selected.");
+                return poJSON;
+            }
+        }
 
         JSONArray laStandardInterestRate = loadStandardInterestRates();
         if(laStandardInterestRate.size() <= 0){
@@ -1369,59 +1393,27 @@ public class VehicleFinancingPrice extends Transaction {
         try {
             String jrxmlPath = System.getProperty("sys.default.path.config") + "/Reports/VehicleFinancingPromo_dynamic.jrxml";
             jasperReport = JasperCompileManager.compileReport(jrxmlPath);
-//            String lsWaterMarkPath = System.getProperty("sys.default.path.config") + "/Reports/images/none.png" ;
 
             // 1. Prepare parameters
             Map<String, Object> parameters = new HashMap<>();
-            parameters.put("nDPRatePct", fdblSelectedDPRate);
-//            parameters.put("sTransNox", Master().getValidityId());
-//            parameters.put("dFromDate", new java.sql.Date(Master().getFromDate().getTime()));
-//            if(Master().getThruDate() != null){
-//                parameters.put("dThruDate", new java.text.SimpleDateFormat("MMMM dd, yyyy").format((java.util.Date) Master().getThruDate()));
-//            } else {
-//                parameters.put("dThruDate", "");
-//            }
-//            parameters.put("sValidDsc", Master().getValidityDescription());
-            parameters.put("sCompny", Master().Company().getCompanyName()); 
-//            parameters.put("sBranch", Master().Company().getCompanyAddress()); 
-//            parameters.put("sPreparedBy", ""); 
-//            parameters.put("sApprovedBy",""); 
-//            String lsPreparedBy = "";
-//            if(Master().getModifiedBy().length() > 10){
-//                lsPreparedBy = getSysUser(poGRider.Decrypt(Master().getModifiedBy()), false); 
-//            } else {
-//                lsPreparedBy = getSysUser(Master().getModifiedBy(), false); 
-//            }
-//
-//            // Get the LocalDateTime from your result set
-//            System.out.println("PREPARED DATE : " + Master().getModifiedDate());//Always returning NULL 
-//            System.out.println("PREPARED DATE MANUAL QUERY: " + getPreparedDate()); 
-//            parameters.put("sPreparedBy", "Prepared by : "+ lsPreparedBy + " " + getPreparedDate()); 
-//
-//            if(ValidityPeriodStatus.APPROVED.equals(Master().getRecordStatus())){
-//                //Update value when approved
-//                JSONObject loJSON = getApprover();
-//                if("success".equals((String) loJSON.get("result"))){
-//                    String lsApprover = (String) loJSON.get("sModified");
-//                    if(lsApprover != null && !"".equals(lsApprover)){
-//                        if(lsApprover.length() > 10){
-//                            lsApprover = getSysUser(poGRider.Decrypt(lsApprover),true); 
-//                        } else {
-//                            lsApprover = getSysUser(lsApprover,true); 
-//                        }
-//                        parameters.put("sApprovedBy","Approved by: " + lsApprover  + " " + String.valueOf((String) loJSON.get("dModified"))); 
-//                    }
-//                }
-//            }
-            List<Map<String, Object>> rows = buildSampleData(fdblSelectedDPRate,laStandardInterestRate);
+            parameters.put("sCompany", Master().Company().getCompanyName().toUpperCase()); 
+            String lsAddress = Master().Company().getCompanyAddress() ;
+            if(Master().Company().TownCity().getDescription() != null && !"".equals(Master().Company().TownCity().getDescription())){
+                lsAddress = lsAddress + " " + Master().Company().TownCity().getDescription();
+            }
+            if(Master().Company().TownCity().Province().getDescription() != null && !"".equals(Master().Company().TownCity().Province().getDescription())){
+                lsAddress = lsAddress  + ", " + Master().Company().TownCity().Province().getDescription();
+            }
+            
+            parameters.put("sAddress", lsAddress.toUpperCase()); 
+            parameters.put("sValidityDesc", Master().getValidityDescription().toUpperCase()); 
+            parameters.put("nDPRatePct", ldblSelectedDPRate);
+            List<Map<String, Object>> rows = buildSampleData(ldblSelectedDPRate,laStandardInterestRate);
             List<Map<String, ?>> data = new ArrayList<>(rows);
             JRMapCollectionDataSource dataSource = new JRMapCollectionDataSource(data);
-//            List<Map<String, Object>> rows = buildSampleData();
-//            // Wrap as a JRDataSource JasperReports can iterate over.
-//            JRMapCollectionDataSource dataSource = new JRMapCollectionDataSource(rows);
             JasperPrint currentPrint = JasperFillManager.fillReport(jasperReport, parameters, dataSource);
             if (currentPrint != null) {
-                CustomJasperViewer viewer = new CustomJasperViewer(masterPrint);
+                CustomJasperViewer viewer = new CustomJasperViewer(currentPrint);
                 viewer.setVisible(true);
                 viewer.addWindowListener(new WindowAdapter() {
                     @Override
@@ -1576,7 +1568,7 @@ public class VehicleFinancingPrice extends Transaction {
                                 , Detail(lnCtr).ModelVariant().Model().Brand().getDescription()
                                 , Detail(lnCtr).ModelVariant().Model().getDescription()
                                 , Detail(lnCtr).ModelVariant().getDescription()
-//                                , Detail(lnCtr).getDownPaymentRate()
+                                , Detail(lnCtr).getSRPAmount()
                                 , Detail(lnCtr).getReservationAmount()
                                 , lnDuration
                                 , ldblRate
@@ -1593,12 +1585,17 @@ public class VehicleFinancingPrice extends Transaction {
     // Keys here MUST match the <field name="..."> values in the .jrxml exactly.
     private void addRow(List<Map<String, Object>> rows,
                                 String brand, String model, String variant,
+                                double srpAmt,
                                 double cashOutDP, int termMonths,
                                 double ratePct, double monthlyAmort) {
         Map<String, Object> row = new LinkedHashMap<>();
-        row.put("sBrand", brand);
-        row.put("sModel", model);
-        row.put("sVariant", variant);
+        if(brand == null){ brand = "";}
+        if(model == null){ model = "";}
+        if(variant == null){ variant = "";}
+        row.put("sBrand", brand.toUpperCase());
+        row.put("sModel", model.toUpperCase());
+        row.put("sVariant", variant.toUpperCase());
+        row.put("nSRPAmt", srpAmt);
         row.put("nCashOutDP", cashOutDP);
         row.put("nTermMonths", termMonths);
         row.put("nRatePct", ratePct);
