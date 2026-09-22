@@ -5,6 +5,13 @@
  */
 package ph.com.guanzongroup.cas.sales;
 
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.io.File;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.DecimalFormat;
@@ -16,15 +23,36 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CountDownLatch;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javafx.application.Platform;
 import javax.script.ScriptException;
 import javax.sql.rowset.CachedRowSet;
 import javax.sql.rowset.RowSetFactory;
 import javax.sql.rowset.RowSetProvider;
+import javax.swing.JButton;
+import javax.swing.SwingUtilities;
+import javax.swing.WindowConstants;
+import net.sf.jasperreports.engine.JRException;
+import net.sf.jasperreports.engine.JasperCompileManager;
+import net.sf.jasperreports.engine.JasperExportManager;
+import net.sf.jasperreports.engine.JasperFillManager;
+import net.sf.jasperreports.engine.JasperPrint;
+import net.sf.jasperreports.engine.JasperPrintManager;
+import net.sf.jasperreports.engine.JasperReport;
+import net.sf.jasperreports.engine.data.JRBeanCollectionDataSource;
+import net.sf.jasperreports.engine.data.JRMapCollectionDataSource;
+import net.sf.jasperreports.swing.JRViewer;
+import net.sf.jasperreports.swing.JRViewerToolbar;
+import net.sf.jasperreports.view.JasperViewer;
 import org.guanzon.appdriver.agent.ShowDialogFX;
+import org.guanzon.appdriver.agent.ShowMessageFX;
 import org.guanzon.appdriver.agent.services.Model;
 import org.guanzon.appdriver.agent.services.Transaction;
 import org.guanzon.appdriver.agent.systables.SysTableContollers;
@@ -40,6 +68,10 @@ import org.guanzon.appdriver.iface.GValidator;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.ParseException;
+import ph.com.guanzongroup.cas.cashflow.model.Model_Disbursement_Master;
+import ph.com.guanzongroup.cas.cashflow.services.CashflowModels;
+import ph.com.guanzongroup.cas.cashflow.status.DisbursementStatic;
+import ph.com.guanzongroup.cas.cashflow.utility.CustomCommonUtil;
 import ph.com.guanzongroup.cas.sales.model.Model_Validity_Period_Master;
 import ph.com.guanzongroup.cas.sales.model.Model_Vehicle_Financing_Price;
 import ph.com.guanzongroup.cas.sales.services.SalesModels;
@@ -1257,6 +1289,321 @@ public class VehicleFinancingPrice extends Transaction {
         if(lsCondition != null && !"".equals(lsCondition)){
             SQL_BROWSE = MiscUtil.addCondition(SQL_BROWSE, lsCondition);
         }
+    }
+    
+    public JSONObject getApprover() throws SQLException{
+        JSONObject loJSON = new JSONObject();
+        loJSON.put("sModified", "");
+        loJSON.put("dModified", "");
+        String lsSQL =   " SELECT "
+                    + "     a.sModified"
+                    + " ,   a.dModified"
+                    + " FROM Transaction_Status_History a  "
+                    + " WHERE a.sTableNme = " + SQLUtil.toSQL(Master().getTable())
+                    + " AND a.sSourceNo = " + SQLUtil.toSQL(Master().getValidityId())
+                    + " AND a.cRefrStat = " + SQLUtil.toSQL(ValidityPeriodStatus.APPROVED)
+                    + " AND a.cTranStat = '1' ";
+        System.out.println("Executing SQL: " + lsSQL);
+        ResultSet loRS = poGRider.executeQuery(lsSQL);
+        if (MiscUtil.RecordCount(loRS) >= 0) {
+            while (loRS.next()) {
+                // Get the LocalDateTime from your result set
+                LocalDateTime dModified = loRS.getObject("dModified", LocalDateTime.class);
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM-dd-yyyy HH:mm:ss");
+                loJSON.put("sModified", loRS.getString("sModified"));
+                loJSON.put("dModified", dModified.format(formatter));
+                loJSON.put("result", "success");
+                return loJSON;
+            }
+            MiscUtil.close(loRS);
+        }
+        
+        loJSON.put("result", "error");
+        return loJSON;
+    }
+    
+    public String getPreparedDate() throws SQLException, GuanzonException {
+        String lsSQL = MiscUtil.addCondition(MiscUtil.makeSelect(Master()), " sValidIDx =  " + SQLUtil.toSQL(Master().getValidityId())) ;
+        System.out.println("SQL " + lsSQL);
+        ResultSet loRS = poGRider.executeQuery(lsSQL);
+        try {
+          if (MiscUtil.RecordCount(loRS) > 0L) {
+            if (loRS.next()) {
+                // Get the LocalDateTime from your result set
+                LocalDateTime dModified = loRS.getObject("dModified", LocalDateTime.class);
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM-dd-yyyy HH:mm:ss");
+                return dModified.format(formatter);
+            } 
+          }
+          MiscUtil.close(loRS);
+        } catch (SQLException e) {
+          poJSON.put("result", "error");
+          poJSON.put("message", e.getMessage());
+        } 
+        return "";
+    }
+    
+    
+    /**
+     * Prints disbursement vouchers for the provided transactions and marks first-time prints.
+     *
+     * @param fdblSelectedDPRate
+     * @return JSON result containing print status.
+     * @throws CloneNotSupportedException If cloning operations fail.
+     * @throws SQLException If a database access error occurs.
+     * @throws GuanzonException If transaction loading or validation fails.
+     */
+    public JSONObject printTransaction(Double fdblSelectedDPRate)
+            throws CloneNotSupportedException, SQLException, GuanzonException {
+        poJSON = new JSONObject();
+        JasperPrint masterPrint = null;
+        JasperReport jasperReport = null;
+        pbIsPrinted = false;
+
+        JSONArray laStandardInterestRate = loadStandardInterestRates();
+        if(laStandardInterestRate.size() <= 0){
+            poJSON = setJSON("error", "No active standard interest rate.");
+            return poJSON;
+        }
+ 
+        try {
+            String jrxmlPath = System.getProperty("sys.default.path.config") + "/Reports/VehicleFinancingPromo_dynamic.jrxml";
+            jasperReport = JasperCompileManager.compileReport(jrxmlPath);
+//            String lsWaterMarkPath = System.getProperty("sys.default.path.config") + "/Reports/images/none.png" ;
+
+            // 1. Prepare parameters
+            Map<String, Object> parameters = new HashMap<>();
+            parameters.put("nDPRatePct", fdblSelectedDPRate);
+//            parameters.put("sTransNox", Master().getValidityId());
+//            parameters.put("dFromDate", new java.sql.Date(Master().getFromDate().getTime()));
+//            if(Master().getThruDate() != null){
+//                parameters.put("dThruDate", new java.text.SimpleDateFormat("MMMM dd, yyyy").format((java.util.Date) Master().getThruDate()));
+//            } else {
+//                parameters.put("dThruDate", "");
+//            }
+//            parameters.put("sValidDsc", Master().getValidityDescription());
+            parameters.put("sCompny", Master().Company().getCompanyName()); 
+//            parameters.put("sBranch", Master().Company().getCompanyAddress()); 
+//            parameters.put("sPreparedBy", ""); 
+//            parameters.put("sApprovedBy",""); 
+//            String lsPreparedBy = "";
+//            if(Master().getModifiedBy().length() > 10){
+//                lsPreparedBy = getSysUser(poGRider.Decrypt(Master().getModifiedBy()), false); 
+//            } else {
+//                lsPreparedBy = getSysUser(Master().getModifiedBy(), false); 
+//            }
+//
+//            // Get the LocalDateTime from your result set
+//            System.out.println("PREPARED DATE : " + Master().getModifiedDate());//Always returning NULL 
+//            System.out.println("PREPARED DATE MANUAL QUERY: " + getPreparedDate()); 
+//            parameters.put("sPreparedBy", "Prepared by : "+ lsPreparedBy + " " + getPreparedDate()); 
+//
+//            if(ValidityPeriodStatus.APPROVED.equals(Master().getRecordStatus())){
+//                //Update value when approved
+//                JSONObject loJSON = getApprover();
+//                if("success".equals((String) loJSON.get("result"))){
+//                    String lsApprover = (String) loJSON.get("sModified");
+//                    if(lsApprover != null && !"".equals(lsApprover)){
+//                        if(lsApprover.length() > 10){
+//                            lsApprover = getSysUser(poGRider.Decrypt(lsApprover),true); 
+//                        } else {
+//                            lsApprover = getSysUser(lsApprover,true); 
+//                        }
+//                        parameters.put("sApprovedBy","Approved by: " + lsApprover  + " " + String.valueOf((String) loJSON.get("dModified"))); 
+//                    }
+//                }
+//            }
+            List<Map<String, Object>> rows = buildSampleData(fdblSelectedDPRate,laStandardInterestRate);
+            List<Map<String, ?>> data = new ArrayList<>(rows);
+            JRMapCollectionDataSource dataSource = new JRMapCollectionDataSource(data);
+//            List<Map<String, Object>> rows = buildSampleData();
+//            // Wrap as a JRDataSource JasperReports can iterate over.
+//            JRMapCollectionDataSource dataSource = new JRMapCollectionDataSource(rows);
+            JasperPrint currentPrint = JasperFillManager.fillReport(jasperReport, parameters, dataSource);
+            if (currentPrint != null) {
+                CustomJasperViewer viewer = new CustomJasperViewer(masterPrint);
+                viewer.setVisible(true);
+                viewer.addWindowListener(new WindowAdapter() {
+                    @Override
+                    public void windowClosed(WindowEvent e) {
+                        proceedAfterViewerClosed();
+                    }
+
+                });
+            }
+
+        } catch (JRException | SQLException | GuanzonException  ex) {
+            poJSON.put("result", "error");
+            poJSON.put("message", "Transaction print aborted!");
+            Logger.getLogger(getClass().getName()).log(Level.SEVERE, null, ex);
+        }
+
+        return poJSON;
+    }
+
+    private void proceedAfterViewerClosed() {
+        Platform.runLater(() -> {
+            System.out.println("SHOWED!!!!!!!!!!!");
+            if ("error".equals((String) poJSON.get("result"))) {
+                ShowMessageFX.Warning(null, "Computerized Accounting System",
+                        (String) poJSON.get("message"));
+            } else {
+                if (pbIsPrinted) {
+                    ShowMessageFX.Information(null, "Computerized Accounting System",
+                            "Transaction Printed Successfully");
+                } else {
+                    ShowMessageFX.Warning(null, "Computerized Accounting System",
+                            "Printing was canceled by the user.");
+                }
+            }
+        });
+    }
+
+    private boolean pbIsPrinted = false;
+    public class CustomJasperViewer extends JasperViewer {
+
+        public CustomJasperViewer(final JasperPrint jasperPrint) {
+            super(jasperPrint, false);
+            customizePrintButton(jasperPrint);
+        }
+
+        /* ---- toolbar patch ------------------------------------------ */
+        private JSONObject customizePrintButton(final JasperPrint jasperPrint) {
+
+            try {
+                JRViewer viewer = findJRViewer(this);
+                if (viewer == null) {
+                    poJSON.put("result", "error");
+                    poJSON.put("message", "JRViewer not found!");
+                    return poJSON;
+                }
+                for (int i = 0; i < viewer.getComponentCount(); i++) {
+                    if (viewer.getComponent(i) instanceof JRViewerToolbar) {
+
+                        JRViewerToolbar toolbar = (JRViewerToolbar) viewer.getComponent(i);
+
+                        for (int j = 0; j < toolbar.getComponentCount(); j++) {
+                            if (toolbar.getComponent(j) instanceof JButton) {
+
+                                final JButton button = (JButton) toolbar.getComponent(j);
+
+                                if ("Print".equals(button.getToolTipText())) {
+                                    /* remove existing handlers */
+                                    ActionListener[] old = button.getActionListeners();
+                                    for (int k = 0; k < old.length; k++) {
+                                        button.removeActionListener(old[k]);
+                                    }
+
+                                    /* add our own (anonymous inner‑class, not lambda) */
+                                    button.addActionListener(new ActionListener() {
+                                        @Override
+                                        public void actionPerformed(ActionEvent e) {
+                                            try {
+                                                pbIsPrinted = JasperPrintManager.printReport(jasperPrint, true);
+                                                if (pbIsPrinted) {
+                                                    CustomJasperViewer.this.dispose();
+                                                } else {
+                                                    poJSON.put("result", "error");
+                                                    poJSON.put("message",  "Printing was canceled by the user.");
+                                                }
+                                            } catch (JRException ex) {
+                                                poJSON.put("result", "error");
+                                                poJSON.put("message",  "Print Failed: " + ex.getMessage());
+                                                Logger.getLogger(getClass().getName()).log(Level.SEVERE,  ex.getMessage(), ex);
+                                            }
+                                        }
+                                    });
+                                } else {
+                                    // Disable all other buttons
+//                                    button.setEnabled(false);
+//                                    poJSON.put("result", "error");
+//                                    poJSON.put("message",  "Transaction print aborted!");
+                                }
+                            }
+                        }
+                        toolbar.revalidate();
+                        toolbar.repaint();
+                    }
+                }
+            } catch (Exception e) {
+                System.out.println("Error customizing print button: " + e.getMessage());
+                poJSON.put("result", "error");
+                poJSON.put("message", "Error customizing print button: " + e.getMessage());
+            }
+
+            return poJSON;
+        }
+
+        private JRViewer findJRViewer(Component parent) {
+            if (parent instanceof JRViewer) {
+                return (JRViewer) parent;
+            }
+            if (parent instanceof Container) {
+                Component[] comps = ((Container) parent).getComponents();
+                for (int i = 0; i < comps.length; i++) {
+                    JRViewer v = findJRViewer(comps[i]);
+                    if (v != null) {
+                        return v;
+                    }
+                }
+            }
+            return null;
+        }
+    }
+    /**
+     * Sample data. Notice Civic RS has FOUR terms (36/48/60/72) while every
+     * other variant only has three - that's deliberate, to demonstrate that the
+     * crosstab prints exactly as many term columns as the data supports, with
+     * no template change required.
+     */
+    private List<Map<String, Object>> buildSampleData(Double fdblSelectedDPRate,JSONArray faStandardInterestRate) {
+        List<Map<String, Object>> rows = new ArrayList<>();
+        
+        sortDetail();
+        try{
+            //Group by dp rate 
+            for(int lnCtr = 0;lnCtr < getDetailCount();lnCtr++){
+                if(fdblSelectedDPRate.equals(Detail(lnCtr).getDownPaymentRate())){
+                    for(int lnRow = 0;lnRow < faStandardInterestRate.size();lnRow++){
+                        JSONObject loJSONObject = (JSONObject) faStandardInterestRate.get(lnRow);
+                        int lnDuration = (int) loJSONObject.get("nDuration");
+                        Double ldblRate = (Double) loJSONObject.get("nRateValx");
+                        System.out.println("Duration : " + lnDuration);
+                        System.out.println("Rate : " + ldblRate);
+                        System.out.println("Montly Amortization Amount : " + getMontlyAmortizationAmount(lnCtr, lnDuration, ldblRate));
+
+                        addRow(rows
+                                , Detail(lnCtr).ModelVariant().Model().Brand().getDescription()
+                                , Detail(lnCtr).ModelVariant().Model().getDescription()
+                                , Detail(lnCtr).ModelVariant().getDescription()
+//                                , Detail(lnCtr).getDownPaymentRate()
+                                , Detail(lnCtr).getReservationAmount()
+                                , lnDuration
+                                , ldblRate
+                                , getMontlyAmortizationAmount(lnCtr, lnDuration, ldblRate));
+                    }
+                }
+            }
+        } catch (SQLException | GuanzonException ex) {
+            Logger.getLogger(VehicleFinancingPrice.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return rows;
+    }
+ 
+    // Keys here MUST match the <field name="..."> values in the .jrxml exactly.
+    private void addRow(List<Map<String, Object>> rows,
+                                String brand, String model, String variant,
+                                double cashOutDP, int termMonths,
+                                double ratePct, double monthlyAmort) {
+        Map<String, Object> row = new LinkedHashMap<>();
+        row.put("sBrand", brand);
+        row.put("sModel", model);
+        row.put("sVariant", variant);
+        row.put("nCashOutDP", cashOutDP);
+        row.put("nTermMonths", termMonths);
+        row.put("nRatePct", ratePct);
+        row.put("nMonthlyAmort", monthlyAmort);
+        rows.add(row);
     }
     
     /**
