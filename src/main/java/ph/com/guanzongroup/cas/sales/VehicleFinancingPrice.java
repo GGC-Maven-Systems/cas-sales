@@ -1377,9 +1377,11 @@ public class VehicleFinancingPrice extends Transaction {
             poJSON.put("message", "Invalid downpayment rate selected.");
             return poJSON;
         } else {
-            if(fsSelectedDPRate.contains("ALL")){
+            if ("--All--".equalsIgnoreCase(fsSelectedDPRate.trim())) {
                 poJSON.put("result", "error");
                 poJSON.put("message", "Invalid downpayment rate selected.");
+                ShowMessageFX.Warning(null, "Computerized Accounting System",
+                        "Invalid downpayment rate selected.");
                 return poJSON;
             }
         }
