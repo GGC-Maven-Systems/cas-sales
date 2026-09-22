@@ -17,8 +17,6 @@ import java.util.logging.Logger;
 import org.guanzon.appdriver.base.GRiderCAS;
 import org.guanzon.appdriver.base.MiscUtil;
 import org.guanzon.appdriver.base.SQLUtil;
-import org.guanzon.appdriver.constant.Logical;
-import org.guanzon.appdriver.constant.RecordStatus;
 import org.guanzon.appdriver.iface.GValidator;
 import org.json.simple.JSONObject;
 import ph.com.guanzongroup.cas.sales.model.Model_Validity_Period_Master;

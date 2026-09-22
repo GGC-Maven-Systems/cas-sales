@@ -14,6 +14,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
@@ -148,7 +149,16 @@ public class VehicleFinancingPrice extends Transaction {
      * @throws ScriptException if script processing fails
      */
     public JSONObject OpenTransaction(String transactionNo) throws CloneNotSupportedException, SQLException, GuanzonException, ScriptException {
-        return openTransaction(transactionNo);
+        poJSON = new JSONObject();
+        
+        poJSON = openTransaction(transactionNo);
+        if(!isJSONSuccess(poJSON)){
+            return poJSON;
+        }
+        
+        sortDetail();
+        
+        return poJSON;
     }
     /**
      * Opens an existing transaction and loads all associated detail records.
@@ -794,10 +804,66 @@ public class VehicleFinancingPrice extends Transaction {
             }
         }
         MiscUtil.close(loRS);
+
+        sortDetail();
+        
         poJSON = new JSONObject();
         poJSON.put("result", "success");
         poJSON.put("message", "success");
         return poJSON;
+    }
+    
+    public void sortDetail(){
+        //Sort paDetail by brand, model, variant;
+        paDetail.sort(
+            Comparator.comparing(
+                o -> getBrandDescription((Model_Vehicle_Financing_Price) o),
+                Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)
+            ).thenComparing(
+                o -> getModelDescription((Model_Vehicle_Financing_Price) o),
+                Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)
+            ).thenComparing(
+                o -> getModelVariantDescription((Model_Vehicle_Financing_Price) o),
+                Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)
+            ).thenComparing(
+                o -> getDownpaymentRate((Model_Vehicle_Financing_Price) o),
+                    Comparator.nullsLast(Comparator.naturalOrder())
+                )
+        );
+    }
+    
+    private String getBrandDescription(Model_Vehicle_Financing_Price poDetail) {
+        try {
+            return poDetail.ModelVariant()
+                    .Model()
+                    .Brand()
+                    .getDescription();
+        } catch (SQLException | GuanzonException e) {
+            return null;
+        }
+    }
+
+    private String getModelDescription(Model_Vehicle_Financing_Price poDetail) {
+        try {
+            return poDetail.ModelVariant()
+                    .Model()
+                    .getDescription();
+        } catch (SQLException | GuanzonException e) {
+            return null;
+        }
+    }
+
+    private String getModelVariantDescription(Model_Vehicle_Financing_Price poDetail) {
+        try {
+            return poDetail.ModelVariant()
+                    .getDescription();
+        } catch (SQLException | GuanzonException e) {
+            return null;
+        }
+    }
+
+    private Double getDownpaymentRate(Model_Vehicle_Financing_Price poDetail) {
+        return poDetail.getDownPaymentRate();
     }
     
     /**
