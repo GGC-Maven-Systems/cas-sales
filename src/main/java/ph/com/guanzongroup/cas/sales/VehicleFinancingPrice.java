@@ -1371,10 +1371,11 @@ public class VehicleFinancingPrice extends Transaction {
         poJSON = new JSONObject();
         JasperReport jasperReport = null;
         pbIsPrinted = false;
-        Double ldblSelectedDPRate = 0.00;
         if (fsSelectedDPRate == null) {
             poJSON.put("result", "error");
             poJSON.put("message", "Invalid downpayment rate selected.");
+                ShowMessageFX.Warning(null, "Computerized Accounting System",
+                        "Invalid downpayment rate selected.");
             return poJSON;
         } else {
             if ("--All--".equalsIgnoreCase(fsSelectedDPRate.trim())) {
@@ -1386,6 +1387,7 @@ public class VehicleFinancingPrice extends Transaction {
             }
         }
 
+        Double ldblSelectedDPRate = Double.valueOf(fsSelectedDPRate);
         JSONArray laStandardInterestRate = loadStandardInterestRates();
         if(laStandardInterestRate.size() <= 0){
             poJSON = setJSON("error", "No active standard interest rate.");
@@ -1597,7 +1599,7 @@ public class VehicleFinancingPrice extends Transaction {
         row.put("sBrand", brand.toUpperCase());
         row.put("sModel", model.toUpperCase());
         row.put("sVariant", variant.toUpperCase());
-        row.put("nSRPAmt", srpAmt);
+        row.put("nSRP", srpAmt);
         row.put("nCashOutDP", cashOutDP);
         row.put("nTermMonths", termMonths);
         row.put("nRatePct", ratePct);
