@@ -1304,68 +1304,59 @@ public class VehicleFinancingPrice extends Transaction {
         }
     }
     
-    public JSONObject getApprover() throws SQLException{
-        JSONObject loJSON = new JSONObject();
-        loJSON.put("sModified", "");
-        loJSON.put("dModified", "");
-        String lsSQL =   " SELECT "
-                    + "     a.sModified"
-                    + " ,   a.dModified"
-                    + " FROM Transaction_Status_History a  "
-                    + " WHERE a.sTableNme = " + SQLUtil.toSQL(Master().getTable())
-                    + " AND a.sSourceNo = " + SQLUtil.toSQL(Master().getValidityId())
-                    + " AND a.cRefrStat = " + SQLUtil.toSQL(ValidityPeriodStatus.APPROVED)
-                    + " AND a.cTranStat = '1' ";
-        System.out.println("Executing SQL: " + lsSQL);
-        ResultSet loRS = poGRider.executeQuery(lsSQL);
-        if (MiscUtil.RecordCount(loRS) >= 0) {
-            while (loRS.next()) {
-                // Get the LocalDateTime from your result set
-                LocalDateTime dModified = loRS.getObject("dModified", LocalDateTime.class);
-                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM-dd-yyyy HH:mm:ss");
-                loJSON.put("sModified", loRS.getString("sModified"));
-                loJSON.put("dModified", dModified.format(formatter));
-                loJSON.put("result", "success");
-                return loJSON;
-            }
-            MiscUtil.close(loRS);
-        }
-        
-        loJSON.put("result", "error");
-        return loJSON;
-    }
+//    public JSONObject getApprover() throws SQLException{
+//        JSONObject loJSON = new JSONObject();
+//        loJSON.put("sModified", "");
+//        loJSON.put("dModified", "");
+//        String lsSQL =   " SELECT "
+//                    + "     a.sModified"
+//                    + " ,   a.dModified"
+//                    + " FROM Transaction_Status_History a  "
+//                    + " WHERE a.sTableNme = " + SQLUtil.toSQL(Master().getTable())
+//                    + " AND a.sSourceNo = " + SQLUtil.toSQL(Master().getValidityId())
+//                    + " AND a.cRefrStat = " + SQLUtil.toSQL(ValidityPeriodStatus.APPROVED)
+//                    + " AND a.cTranStat = '1' ";
+//        System.out.println("Executing SQL: " + lsSQL);
+//        ResultSet loRS = poGRider.executeQuery(lsSQL);
+//        if (MiscUtil.RecordCount(loRS) >= 0) {
+//            while (loRS.next()) {
+//                // Get the LocalDateTime from your result set
+//                LocalDateTime dModified = loRS.getObject("dModified", LocalDateTime.class);
+//                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM-dd-yyyy HH:mm:ss");
+//                loJSON.put("sModified", loRS.getString("sModified"));
+//                loJSON.put("dModified", dModified.format(formatter));
+//                loJSON.put("result", "success");
+//                return loJSON;
+//            }
+//            MiscUtil.close(loRS);
+//        }
+//        
+//        loJSON.put("result", "error");
+//        return loJSON;
+//    }
+//    
+//    public String getPreparedDate() throws SQLException, GuanzonException {
+//        String lsSQL = MiscUtil.addCondition(MiscUtil.makeSelect(Master()), " sValidIDx =  " + SQLUtil.toSQL(Master().getValidityId())) ;
+//        System.out.println("SQL " + lsSQL);
+//        ResultSet loRS = poGRider.executeQuery(lsSQL);
+//        try {
+//          if (MiscUtil.RecordCount(loRS) > 0L) {
+//            if (loRS.next()) {
+//                // Get the LocalDateTime from your result set
+//                LocalDateTime dModified = loRS.getObject("dModified", LocalDateTime.class);
+//                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM-dd-yyyy HH:mm:ss");
+//                return dModified.format(formatter);
+//            } 
+//          }
+//          MiscUtil.close(loRS);
+//        } catch (SQLException e) {
+//          poJSON.put("result", "error");
+//          poJSON.put("message", e.getMessage());
+//        } 
+//        return "";
+//    }
+//    
     
-    public String getPreparedDate() throws SQLException, GuanzonException {
-        String lsSQL = MiscUtil.addCondition(MiscUtil.makeSelect(Master()), " sValidIDx =  " + SQLUtil.toSQL(Master().getValidityId())) ;
-        System.out.println("SQL " + lsSQL);
-        ResultSet loRS = poGRider.executeQuery(lsSQL);
-        try {
-          if (MiscUtil.RecordCount(loRS) > 0L) {
-            if (loRS.next()) {
-                // Get the LocalDateTime from your result set
-                LocalDateTime dModified = loRS.getObject("dModified", LocalDateTime.class);
-                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM-dd-yyyy HH:mm:ss");
-                return dModified.format(formatter);
-            } 
-          }
-          MiscUtil.close(loRS);
-        } catch (SQLException e) {
-          poJSON.put("result", "error");
-          poJSON.put("message", e.getMessage());
-        } 
-        return "";
-    }
-    
-    
-    /**
-     * Prints disbursement vouchers for the provided transactions and marks first-time prints.
-     *
-     * @param fsSelectedDPRate
-     * @return JSON result containing print status.
-     * @throws CloneNotSupportedException If cloning operations fail.
-     * @throws SQLException If a database access error occurs.
-     * @throws GuanzonException If transaction loading or validation fails.
-     */
 //    public JSONObject printTransaction(String fsSelectedDPRate)
 //            throws CloneNotSupportedException, SQLException, GuanzonException {
 //        poJSON = new JSONObject();
@@ -1684,7 +1675,7 @@ public class VehicleFinancingPrice extends Transaction {
             } else {
                 if (pbIsPrinted) {
                     ShowMessageFX.Information(null, "Computerized Accounting System",
-                            "Transaction Printed Successfully");
+                            "Vehicle Financing Promo Printed Successfully");
                 } else {
                     ShowMessageFX.Warning(null, "Computerized Accounting System",
                             "Printing was canceled by the user.");
@@ -1797,24 +1788,29 @@ public class VehicleFinancingPrice extends Transaction {
         try{
             //Group by dp rate 
             for(int lnCtr = 0;lnCtr < getDetailCount();lnCtr++){
-                if(fdblSelectedDPRate.equals(Detail(lnCtr).getDownPaymentRate())){
-                    for(int lnRow = 0;lnRow < faStandardInterestRate.size();lnRow++){
-                        JSONObject loJSONObject = (JSONObject) faStandardInterestRate.get(lnRow);
-                        int lnDuration = (int) loJSONObject.get("nDuration");
-                        Double ldblRate = (Double) loJSONObject.get("nRateValx");
-                        System.out.println("Duration : " + lnDuration);
-                        System.out.println("Rate : " + ldblRate);
-                        System.out.println("Montly Amortization Amount : " + getMontlyAmortizationAmount(lnCtr, lnDuration, ldblRate));
-
-                        addRow(rows
-                                , Detail(lnCtr).ModelVariant().Model().Brand().getDescription()
-                                , Detail(lnCtr).ModelVariant().Model().getDescription()
-                                , Detail(lnCtr).ModelVariant().getDescription()
-                                , Detail(lnCtr).getSRPAmount()
-                                , Detail(lnCtr).getReservationAmount()
-                                , lnDuration
-                                , ldblRate
-                                , getMontlyAmortizationAmount(lnCtr, lnDuration, ldblRate));
+                if(Detail(lnCtr).getRecordStatus()){
+                    if(fdblSelectedDPRate.equals(Detail(lnCtr).getDownPaymentRate())){
+                        for(int lnRow = 0;lnRow < faStandardInterestRate.size();lnRow++){
+                            JSONObject loJSONObject = (JSONObject) faStandardInterestRate.get(lnRow);
+                            int lnDuration = (int) loJSONObject.get("nDuration");
+                            Double ldblRate = (Double) loJSONObject.get("nRateValx");
+                            System.out.println("Duration : " + lnDuration);
+                            System.out.println("Rate : " + ldblRate);
+                            System.out.println("Montly Amortization Amount : " + getMontlyAmortizationAmount(lnCtr, lnDuration, ldblRate));
+                            String lsVariant = Detail(lnCtr).ModelVariant().getDescription();
+                            if(Detail(lnCtr).ModelVariant().Color().getDescription() != null && !"".equals(Detail(lnCtr).ModelVariant().Color().getDescription())){
+                                lsVariant = lsVariant + " " + Detail(lnCtr).ModelVariant().Color().getDescription(); 
+                            }
+                            addRow(rows
+                                    , Detail(lnCtr).ModelVariant().Model().Brand().getDescription()
+                                    , Detail(lnCtr).ModelVariant().Model().getDescription()
+                                    , lsVariant
+                                    , Detail(lnCtr).getSRPAmount()
+                                    , Detail(lnCtr).getReservationAmount()
+                                    , lnDuration
+                                    , ldblRate
+                                    , getMontlyAmortizationAmount(lnCtr, lnDuration, ldblRate));
+                        }
                     }
                 }
             }
