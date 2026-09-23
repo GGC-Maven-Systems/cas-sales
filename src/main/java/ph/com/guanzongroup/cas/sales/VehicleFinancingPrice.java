@@ -65,6 +65,9 @@ import org.guanzon.appdriver.constant.Logical;
 import org.guanzon.appdriver.constant.RecordStatus;
 import org.guanzon.appdriver.constant.UserRight;
 import org.guanzon.appdriver.iface.GValidator;
+import org.guanzon.cas.parameter.Branch;
+import org.guanzon.cas.parameter.model.Model_Branch;
+import org.guanzon.cas.parameter.services.ParamModels;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.ParseException;
@@ -1361,8 +1364,7 @@ public class VehicleFinancingPrice extends Transaction {
 //        } 
 //        return "";
 //    }
-//    
-    
+ 
 //    public JSONObject printTransaction(String fsSelectedDPRate)
 //            throws CloneNotSupportedException, SQLException, GuanzonException {
 //        poJSON = new JSONObject();
@@ -1443,6 +1445,71 @@ public class VehicleFinancingPrice extends Transaction {
 //        return poJSON;
 //    }
 
+    
+     public Model_Branch Branch() throws SQLException, GuanzonException {
+        Model_Branch loModel = new ParamModels(poGRider).Branch();
+        loModel.initialize();
+        
+        if (!"".equals(poGRider.getBranchCode())) {
+            if (loModel.getEditMode() == EditMode.READY && loModel.getBranchCode().equals(poGRider.getBranchCode())) {
+                return loModel;
+            } else {
+                poJSON = loModel.openRecord(poGRider.getBranchCode());
+
+                if ("success".equals((String) poJSON.get("result"))) {
+                    return loModel;
+                } else {
+                    loModel.initialize();
+                    return loModel;
+                }
+            }
+        } else {
+            loModel.initialize();
+            return loModel;
+        }
+    }
+    
+    public String BranchEmail() throws SQLException{
+        String lsEmail = "";
+        String lsSQL =   " SELECT "
+                    + "     sBranchCD"
+                    + " ,   sEMailAdd"
+                    + " FROM Branch_Email  "
+                    + " WHERE sBranchCD = " + SQLUtil.toSQL(poGRider.getBranchCode());
+//                    + " AND a.cRectStat = '1' ";
+        System.out.println("Executing SQL: " + lsSQL);
+        ResultSet loRS = poGRider.executeQuery(lsSQL);
+        if (MiscUtil.RecordCount(loRS) >= 0) {
+            while (loRS.next()) {
+                lsEmail = loRS.getString("sEMailAdd");
+            }
+            MiscUtil.close(loRS);
+        }
+        
+        return lsEmail;
+    }
+    
+    public String BranchBrand() throws SQLException{
+        String lsDesc = "";
+        String lsSQL =   " SELECT "
+                    + "     a.sBranchCD "
+                    + " ,   a.sBrandIDx "
+                    + " ,   b.sDescript "
+                    + " FROM Branch_Others a "
+                    + " LEFT JOIN Brand b ON b.sBrandIDx = a.sBrandIDx "
+                    + " WHERE sBranchCD = " + SQLUtil.toSQL(poGRider.getBranchCode());
+//                    + " AND a.cRectStat = '1' ";
+        System.out.println("Executing SQL: " + lsSQL);
+        ResultSet loRS = poGRider.executeQuery(lsSQL);
+        if (MiscUtil.RecordCount(loRS) >= 0) {
+            while (loRS.next()) {
+                lsDesc = loRS.getString("sDescript");
+            }
+            MiscUtil.close(loRS);
+        }
+        
+        return lsDesc;
+    }
     public JSONObject printTransaction(String fsSelectedDPRate)
         throws CloneNotSupportedException, SQLException, GuanzonException {
 
@@ -1509,7 +1576,25 @@ public class VehicleFinancingPrice extends Transaction {
 
         JasperReport jasperReport =
                 JasperCompileManager.compileReport(jrxmlPath);
-
+        String lsWatermarkPath = System.getProperty("sys.default.path.config") + "/Reports/images/";
+        String lsBrand = BranchBrand();
+        
+        if(lsBrand == null || "".equals(lsBrand)){
+            lsWatermarkPath = lsWatermarkPath + "anyauto.png" ;
+        } else {
+            if(lsBrand.toLowerCase().contains("honda")){
+                lsWatermarkPath = lsWatermarkPath + "honda.png" ;
+            } else if(lsBrand.toLowerCase().contains("nissan")){
+                lsWatermarkPath = lsWatermarkPath + "nissan.png" ;
+            } else if(lsBrand.toLowerCase().contains("geely")){
+                lsWatermarkPath = lsWatermarkPath + "geely.png" ;
+            }  else if(lsBrand.toLowerCase().contains("gac")){
+                lsWatermarkPath = lsWatermarkPath + "gacmotor.png" ;
+            } else {
+                lsWatermarkPath = lsWatermarkPath + "anyauto.png" ;
+            }
+        }
+        
         /*
          * Create the final JasperPrint.
          * The first rate will initialize it.
@@ -1517,93 +1602,84 @@ public class VehicleFinancingPrice extends Transaction {
         JasperPrint finalPrint = null;
 
         for (Double ldblDPRate : loDPRate) {
-
             // ---------------------------------------------
             // Parameters
             // ---------------------------------------------
-
             Map<String, Object> parameters = new HashMap<>();
-
-            parameters.put(
-                    "sValidity",
-                    Master().getValidityId()
-                    + "-"
-                    + poGRider.getServerDate()
-            );
-
-            parameters.put(
-                    "sCompany",
-                    Master().Company()
-                            .getCompanyName()
-                            .toUpperCase()
-            );
-
-            String lsAddress =
-                    Master().Company().getCompanyAddress();
-
-            if (Master().Company().TownCity().getDescription() != null
-                    && !"".equals(
-                            Master().Company()
-                                    .TownCity()
-                                    .getDescription())) {
-
-                lsAddress = lsAddress
-                        + " "
-                        + Master().Company()
-                                .TownCity()
-                                .getDescription();
+            
+            
+            parameters.put("watermarkImagePath", lsWatermarkPath);
+            parameters.put("sValidity",Master().getValidityId()+ "-"+ poGRider.getServerDate());
+            parameters.put("sCompany",Master().Company().getCompanyName().toUpperCase());
+            String lsAddress = Master().Company().getCompanyAddress();
+            if (Master().Company().TownCity().getDescription() != null && !"".equals(Master().Company().TownCity().getDescription())) {
+                lsAddress = lsAddress + " " + Master().Company().TownCity().getDescription();
             }
 
-            if (Master().Company()
-                    .TownCity()
-                    .Province()
-                    .getDescription() != null
-                    && !"".equals(
-                            Master().Company()
-                                    .TownCity()
-                                    .Province()
-                                    .getDescription())) {
-
-                lsAddress = lsAddress
-                        + ", "
-                        + Master().Company()
-                                .TownCity()
-                                .Province()
-                                .getDescription();
+            if (Master().Company().TownCity().Province().getDescription() != null
+                    && !"".equals(Master().Company().TownCity().Province().getDescription())) {
+                lsAddress = lsAddress+ ", "+ Master().Company().TownCity().Province().getDescription();
             }
 
-            parameters.put(
-                    "sAddress",
-                    lsAddress.toUpperCase()
-            );
+            parameters.put("sAddress",lsAddress.toUpperCase());
+            parameters.put("sValidityDesc",Master().getValidityDescription().toUpperCase());
+            
+            Model_Branch loModel = Branch();
+            String lsBranchName = loModel.getBranchName();
+            String lsBranchDesc = loModel.getDescription();
+            String lsBranchAddress = loModel.getAddress();
+            String lsEmail = BranchEmail();
+            if (loModel.TownCity().getDescription() != null && !"".equals(loModel.TownCity().getDescription())) {
+                lsBranchAddress = lsBranchAddress + " " + loModel.TownCity().getDescription();
+            }
 
-            parameters.put(
-                    "sValidityDesc",
-                    Master().getValidityDescription()
-                            .toUpperCase()
-            );
-
+            if (loModel.TownCity().Province().getDescription() != null && !"".equals(loModel.TownCity().Province().getDescription())) {
+                lsBranchAddress = lsBranchAddress+ ", "+ loModel.TownCity().Province().getDescription();
+            }
+            String lsContact = loModel.getMobile();
+            String lsLandLine = loModel.getLandLine();
+            if(lsBranchName == null) { lsBranchName = "";}
+            if(lsBranchDesc == null) { lsBranchDesc = "";}
+            if(lsBranchAddress == null) { lsBranchAddress = "";}
+            if(lsContact == null) { 
+                lsContact = "";
+            } else {
+                if(!lsContact.isEmpty()){
+                    lsContact = "Mobile : " + lsContact;
+                }
+            }
+            if(lsLandLine == null) {
+                lsLandLine = "";
+            } else {
+                if(!lsContact.isEmpty()){
+                    lsContact = lsContact 
+                                + "\nTel No : " + lsLandLine;
+                } else {
+                    lsContact = "Tel No : " + lsLandLine;
+                }
+            }
+            if(lsEmail == null) {
+                lsEmail = "";
+            } else {
+                if(!lsEmail.isEmpty()){
+                    lsContact = lsContact + "\nEmail Address : " + lsEmail;
+                } else {
+                    lsContact = "Email Address : " + lsEmail;
+                }
+            }
+            
+            parameters.put("sBranch",lsBranchName.toUpperCase());
+            parameters.put("sBranchAddress",lsBranchAddress.toUpperCase());
+            parameters.put("sBranchDesc",lsBranchDesc.toUpperCase());
+            parameters.put("sContact",lsContact);
             // Current DP rate
-            parameters.put(
-                    "nDPRatePct",
-                    ldblDPRate
-            );
-
+            parameters.put("nDPRatePct",ldblDPRate);
             // ---------------------------------------------
             // Build data for current DP rate
             // ---------------------------------------------
-
-            List<Map<String, Object>> rows =
-                    buildSampleData(
-                            ldblDPRate,
-                            laStandardInterestRate
-                    );
-
-            List<Map<String, ?>> data =
-                    new ArrayList<>(rows);
-
-            JRMapCollectionDataSource dataSource =
-                    new JRMapCollectionDataSource(data);
+            List<Map<String, Object>> rows = buildSampleData(ldblDPRate,laStandardInterestRate);
+            List<Map<String, ?>> data = new ArrayList<>(rows);
+            JRMapCollectionDataSource dataSource = new JRMapCollectionDataSource(data);
 
             // ---------------------------------------------
             // Generate JasperPrint
