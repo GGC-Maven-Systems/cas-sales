@@ -1223,10 +1223,10 @@ public class VehicleFinancingPrice extends Transaction {
                     detail.remove(); // Correctly remove the item
                 } 
             } else {
-//                if(ldblRSVAmt <= 0.00 && RecordStatus.ACTIVE.equals(lsRecStat)){
-//                    poJSON = setJSON("error", "Reservation amount cannot be zero at row "+lnDetailRow+".");
-//                    return poJSON;
-//                }
+                if(ldblRSVAmt > ldblSRP && RecordStatus.ACTIVE.equals(lsRecStat)){
+                    poJSON = setJSON("error", "Reservation amount cannot be greater than SRP amount at row "+lnDetailRow+".");
+                    return poJSON;
+                }
                 lnDetailRow++;
             }
         }
