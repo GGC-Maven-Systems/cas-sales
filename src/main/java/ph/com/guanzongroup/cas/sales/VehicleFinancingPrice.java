@@ -769,11 +769,17 @@ public class VehicleFinancingPrice extends Transaction {
         
         if(laStandardInterestRate.size() <= 0){
             poJSON = setJSON("error", "No active standard interest rate.");
+            if(EditMode.ADDNEW == getEditMode()){
+                paDetail.clear();
+            }
             return poJSON;
         }
         
         if(laStandardDownpaymentRate.size() <= 0){
             poJSON = setJSON("error", "No active standard downpayment rate.");
+            if(EditMode.ADDNEW == getEditMode()){
+                paDetail.clear();
+            }
             return poJSON;
         }
         
@@ -1223,7 +1229,7 @@ public class VehicleFinancingPrice extends Transaction {
                     detail.remove(); // Correctly remove the item
                 } 
             } else {
-                if(ldblRSVAmt > ldblSRP && RecordStatus.ACTIVE.equals(lsRecStat)){
+                if(ldblRSVAmt > ldblSRP){
                     poJSON = setJSON("error", "Reservation amount cannot be greater than SRP amount at row "+lnDetailRow+".");
                     return poJSON;
                 }
