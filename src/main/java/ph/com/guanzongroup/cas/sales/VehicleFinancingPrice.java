@@ -1190,6 +1190,39 @@ public class VehicleFinancingPrice extends Transaction {
         return poJSON;
     }
     
+    private JSONObject checkExistingVehicleFinancing(){
+        try {
+            initSQL();
+            String lsSQL = MiscUtil.addCondition(SQL_BROWSE,
+                                                    " a.cRecdStat != " + SQLUtil.toSQL(ValidityPeriodStatus.VOID)
+                                                    + " AND a.cRecdStat != " + SQLUtil.toSQL(ValidityPeriodStatus.CANCELLED)
+                                                    + " AND a.sValidIDx != " + SQLUtil.toSQL(Master().getValidityId())
+                                                    );
+          lsSQL = lsSQL 
+                    + " AND ((a.dFromDate between "+ SQLUtil.toSQL(xsDateShort(Master().getFromDate()))+" AND "+  SQLUtil.toSQL(xsDateShort(Master().getThruDate())) +") OR a.dFromDate <= "+ SQLUtil.toSQL(xsDateShort(Master().getFromDate()))+")"
+                    + " AND ((a.dThruDate between "+ SQLUtil.toSQL(xsDateShort(Master().getFromDate()))+" AND "+  SQLUtil.toSQL(xsDateShort(Master().getThruDate())) +") OR a.dThruDate IS NULL OR a.dThruDate >= "+ SQLUtil.toSQL(xsDateShort(Master().getFromDate()))+")";
+      
+            System.out.println("checkExistingVehicleFinancing SQL: " + lsSQL);
+            ResultSet loRS = poGRider.executeQuery(lsSQL);
+            if (MiscUtil.RecordCount(loRS) > 0) {
+                if(loRS.next()){    
+                    poJSON.put("result", "error");
+                    poJSON.put("message", "A Vehicle Financing Promo already exists for the selected validity period.");
+                    return poJSON;
+                }
+            }
+        } catch (SQLException ex) {
+            Logger.getLogger(getClass().getName()).log(Level.SEVERE, MiscUtil.getException(ex), ex);
+            poJSON.put("result", "error");
+            poJSON.put("message", MiscUtil.getException(ex));
+            return poJSON;
+        }
+            
+        poJSON.put("result", "success");
+        poJSON.put("message", "success");
+        return poJSON;
+    }
+    
     /**
      * Performs pre-save validation and assignments.
      * Generates new IDs for new records, validates all entries, removes invalid detail rows,
@@ -1214,6 +1247,11 @@ public class VehicleFinancingPrice extends Transaction {
         }
         
         poJSON = isEntryOkay(Master().getRecordStatus());
+        if (!isJSONSuccess(poJSON)) {
+            return poJSON;
+        }
+        
+        poJSON = checkExistingVehicleFinancing();
         if (!isJSONSuccess(poJSON)) {
             return poJSON;
         }

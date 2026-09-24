@@ -139,44 +139,7 @@ public class ValidityMasterValidator implements GValidator{
             return poJSON;
         }
         
-        poJSON = checkExistingVehicleFinancing();
-        if("error".equals((String) poJSON.get("result"))){
-            return poJSON;
-        }
-        
         poJSON.put("result", "success");
-        return poJSON;
-    }
-    
-    private JSONObject checkExistingVehicleFinancing(){
-        try {
-            String lsSQL = MiscUtil.addCondition(MiscUtil.makeSelect(poMaster),
-                                                    " cRecdStat != " + SQLUtil.toSQL(ValidityPeriodStatus.VOID)
-                                                    + " AND cRecdStat != " + SQLUtil.toSQL(ValidityPeriodStatus.CANCELLED)
-                                                    + " AND sValidIDx != " + SQLUtil.toSQL(poMaster.getValidityId())
-                                                    );
-          lsSQL = lsSQL 
-                    + " AND ((dFromDate between "+ SQLUtil.toSQL(xsDateShort(poMaster.getFromDate()))+" AND "+  SQLUtil.toSQL(xsDateShort(poMaster.getThruDate())) +") OR dFromDate <= "+ SQLUtil.toSQL(xsDateShort(poMaster.getFromDate()))+")"
-                    + " AND ((dThruDate between "+ SQLUtil.toSQL(xsDateShort(poMaster.getFromDate()))+" AND "+  SQLUtil.toSQL(xsDateShort(poMaster.getThruDate())) +") OR dThruDate IS NULL OR dThruDate >= "+ SQLUtil.toSQL(xsDateShort(poMaster.getFromDate()))+")";
-      
-            System.out.println("checkExistingVehicleFinancing SQL: " + lsSQL);
-            ResultSet loRS = poGRider.executeQuery(lsSQL);
-            if (MiscUtil.RecordCount(loRS) > 0) {
-                if(loRS.next()){    
-                    poJSON.put("result", "error");
-                    poJSON.put("message", "A Vehicle Financing Promo already exists for the selected validity period.");
-                    return poJSON;
-                }
-            }
-        } catch (SQLException ex) {
-            Logger.getLogger(getClass().getName()).log(Level.SEVERE, MiscUtil.getException(ex), ex);
-            poJSON.put("result", "error");
-            poJSON.put("message", MiscUtil.getException(ex));
-            return poJSON;
-        }
-            
-        poJSON.put("result", "success");
-        poJSON.put("message", "success");
         return poJSON;
     }
     
