@@ -99,6 +99,7 @@ public class VehicleAddOn extends Transaction {
         poDetail = new SalesModels(poGRider).VehicleAddOnMaster();
 
         paMaster = new ArrayList<Model>();
+        paVariantDetail = new ArrayList<>();
         psApprover = "";
         setApproving("");
         return initialize();
@@ -174,6 +175,11 @@ public class VehicleAddOn extends Transaction {
          poJSON = new JSONObject();
         
         poJSON = openTransaction(transactionNo);
+        if(!isJSONSuccess(poJSON)){
+            return poJSON;
+        }
+        
+        poJSON = populateVehicleList();
         if(!isJSONSuccess(poJSON)){
             return poJSON;
         }
@@ -801,15 +807,15 @@ public class VehicleAddOn extends Transaction {
         return poJSON;
     }
     
-    public void populateDetail(String fsType, boolean isApplicableToAll, Double fdblAmount) throws CloneNotSupportedException{
-        if(fsType == null || "".equals(fsType)){
+    public void populateDetail(int fnDetail, boolean isApplicableToAll, Double fdblAmount) throws CloneNotSupportedException{
+        if(Detail(fnDetail).getAddOnType() == null || "".equals(Detail(fnDetail).getAddOnType())){
             return;
         }
         
         ArrayList<String> laType = loadUniqueAddOnType(); //get unique add on type for all detail
         ReloadDetail();
         boolean lbExistType = false;
-//        for(String lsType : laType){
+        for(String lsType : laType){
             //get unique variant
             for(int lnCtr = 0;lnCtr < getVariantDetailCount();lnCtr++){
                 lbExistType = false;
@@ -817,7 +823,10 @@ public class VehicleAddOn extends Transaction {
                     //Check if unique add on type per variant
                     for(int lnRow = 0;lnRow < getDetailCount();lnRow++){
                         if(VariantDetail(lnCtr).getVariantId().equals(Detail(lnRow).getVariantId())){
-                            if(fsType.equals(Detail(lnRow).getAddOnType())){
+                            if(lsType.equals(Detail(lnRow).getAddOnType())){
+                                if(isApplicableToAll && (lsType.equals(Detail(fnDetail).getAddOnType()))){
+                                    Detail(lnRow).setAmount(fdblAmount);
+                                }
                                 lbExistType = true;
                                 break;
                             }
@@ -827,7 +836,7 @@ public class VehicleAddOn extends Transaction {
                     if(!lbExistType){
                         Detail(getDetailCount() - 1).setVariantId(VariantDetail(lnCtr).getVariantId());
                         Detail(getDetailCount() - 1).setSRPAmount(VariantDetail(lnCtr).getSRPAmount());
-                        Detail(getDetailCount() - 1).setAddOnType(fsType);
+                        Detail(getDetailCount() - 1).setAddOnType(lsType);
                         if(isApplicableToAll){
                             Detail(getDetailCount() - 1).setAmount(fdblAmount);
                         }
@@ -835,7 +844,7 @@ public class VehicleAddOn extends Transaction {
                     }
                 }
             }
-//        }
+        }
 
         sortDetail();
     }
@@ -851,7 +860,7 @@ public class VehicleAddOn extends Transaction {
     public void ReloadDetail() throws CloneNotSupportedException{
         int lnCtr = getDetailCount() - 1;
         while (lnCtr >= 0) {
-            if ((Detail(lnCtr).getVariantId() == null || "".equals(Detail(lnCtr).getVariantId()))) {
+            if ((Detail(lnCtr).getAddOnType() == null || "".equals(Detail(lnCtr).getAddOnType()))) {
                 deleteDetail(lnCtr);
             } 
             lnCtr--;
@@ -860,7 +869,8 @@ public class VehicleAddOn extends Transaction {
         if ((getDetailCount() - 1) >= 0) {
             if (
                 (Detail(getDetailCount() - 1).getVariantId() != null && !"".equals(Detail(getDetailCount() - 1).getVariantId()))
-                && Detail(getDetailCount() - 1).getAmount() > 0.0000
+                && (Detail(getDetailCount() - 1).getAddOnType() != null && !"".equals(Detail(getDetailCount() - 1).getAddOnType()))
+//                && Detail(getDetailCount() - 1).getAmount() > 0.0000
                 ) {
                 AddDetail();
             }
@@ -870,6 +880,20 @@ public class VehicleAddOn extends Transaction {
             AddDetail();
         }
         
+    }
+    
+    public void removeDetail(String fsType){
+        int lnCtr = getDetailCount() - 1;
+        while (lnCtr >= 0) {
+            if (fsType.equals(Detail(lnCtr).getAddOnType())) {
+                if(EditMode.ADDNEW == Detail(lnCtr).getEditMode()){
+                    deleteDetail(lnCtr);
+                } else {
+                    Detail(lnCtr).setRecordStatus(false);
+                }
+            } 
+            lnCtr--;
+        }
     }
     
     public void sortDetail(){
@@ -932,13 +956,14 @@ public class VehicleAddOn extends Transaction {
                 if(laType.isEmpty()){
                     laType.add(Detail(lnCtr).getAddOnType());
                 } else {
-                    if(!laType.contains(Detail(lnCtr).getAddOnType())){
+                    String lsType = Detail(lnCtr).getAddOnType();
+                    if(!laType.contains(lsType)){
                         laType.add(Detail(lnCtr).getAddOnType());
                     }
                 }
             }
         }    
-             
+            
         return laType;
     }
     
