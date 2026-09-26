@@ -322,6 +322,72 @@ public class SalesModels {
 
         return poSalesReservationDetail;
     }
+    public Model_Sales_Quotation_Master SalesQuotationMaster(){
+        if (poGRider == null){
+            System.err.println("CashflowModels.Sales Quotation Master: Application driver is not set.");
+            return null;
+        }
+
+        if (poSalesQuotationMaster == null){
+            poSalesQuotationMaster = new Model_Sales_Quotation_Master();
+            poSalesQuotationMaster.setApplicationDriver(poGRider);
+            poSalesQuotationMaster.setXML("Model_Sales_Quotation_Master");
+            poSalesQuotationMaster.setTableName("Sales_Quotation_Master");
+            poSalesQuotationMaster.initialize();
+        }
+
+        return poSalesQuotationMaster;
+    }
+    public Model_Sales_Quotations_FollowUp SalesQuotationFollowUp(){
+        if (poGRider == null){
+            System.err.println("CashflowModels.Sales Quotation Follow Up: Application driver is not set.");
+            return null;
+        }
+
+        if (poSalesQuotationFollowUp == null){
+            poSalesQuotationFollowUp = new Model_Sales_Quotations_FollowUp();
+            poSalesQuotationFollowUp.setApplicationDriver(poGRider);
+            poSalesQuotationFollowUp.setXML("Model_Sales_Quotations_FollowUp");
+            poSalesQuotationFollowUp.setTableName("Sales_Quotation_FollowUp");
+            poSalesQuotationMaster.initialize();
+        }
+
+        return poSalesQuotationFollowUp;
+    }
+
+    public Model_Sales_Quotations_Version_Master SalesQuotationVersionMaster(){
+        if (poGRider == null){
+            System.err.println("CashflowModels.Sales Quotation Version Master: Application driver is not set.");
+            return null;
+        }
+
+        if (poSalesQuotationVersionMaster == null){
+            poSalesQuotationVersionMaster = new Model_Sales_Quotations_Version_Master();
+            poSalesQuotationVersionMaster.setApplicationDriver(poGRider);
+            poSalesQuotationVersionMaster.setXML("Model_Sales_Quotations_Version_Master");
+            poSalesQuotationVersionMaster.setTableName("Sales_Quotation_Version_Master");
+            poSalesQuotationVersionMaster.initialize();
+        }
+
+        return poSalesQuotationVersionMaster;
+    }
+
+    public Model_Sales_Quotations_Version_Detail SalesQuotationVersionDetail(){
+        if (poGRider == null){
+            System.err.println("CashflowModels.Sales Quotation Version Detail: Application driver is not set.");
+            return null;
+        }
+
+        if (poSalesQuotationVersionDetail == null){
+            poSalesQuotationVersionDetail = new Model_Sales_Quotations_Version_Detail();
+            poSalesQuotationVersionDetail.setApplicationDriver(poGRider);
+            poSalesQuotationVersionDetail.setXML("Model_Sales_Quotations_Version_Detail");
+            poSalesQuotationVersionDetail.setTableName("Sales_Quotation_Version_Detail");
+            poSalesQuotationVersionDetail.initialize();
+        }
+
+        return poSalesQuotationVersionDetail;
+    }
     
     @Override
     protected void finalize() throws Throwable {
@@ -343,6 +409,10 @@ public class SalesModels {
             poVspMaster = null;
             poSalesReservationMaster = null;
             poSalesReservationDetail = null;
+            poSalesQuotationMaster = null;
+            poSalesQuotationFollowUp = null;
+            poSalesQuotationVersionMaster = null;
+            poSalesQuotationVersionDetail = null;
 
             poGRider = null;
         } finally {
@@ -370,4 +440,8 @@ public class SalesModels {
     private Model_Vsp_Master poVspMaster;
     private Model_Sales_Reservation_Master poSalesReservationMaster;
     private Model_Sales_Reservation_Detail poSalesReservationDetail;
+    private Model_Sales_Quotation_Master poSalesQuotationMaster;
+    private Model_Sales_Quotations_FollowUp poSalesQuotationFollowUp;
+    private Model_Sales_Quotations_Version_Master poSalesQuotationVersionMaster;
+    private Model_Sales_Quotations_Version_Detail poSalesQuotationVersionDetail;
 }
