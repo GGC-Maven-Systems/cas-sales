@@ -1081,6 +1081,11 @@ public class MCPromoSales extends Transaction {
             poJSON.put("message", "Transaction was already voided.");
             return poJSON;
         }
+        if (SalesPromotionStatus.REPLACED.equals((String) poMaster.getValue("cTranStat"))) {
+            poJSON.put("result", "error");
+            poJSON.put("message", "Transaction was already replaced.");
+            return poJSON;
+        }
         if (SalesPromotionStatus.CANCELLED.equals((String) poMaster.getValue("cTranStat"))) {
             poJSON.put("result", "error");
             poJSON.put("message", "Transaction was already cancelled.");
@@ -3091,6 +3096,7 @@ public class MCPromoSales extends Transaction {
         String lsSQL = "SELECT DISTINCT a.sPromIDxx FROM Sales_Promotion_Master a WHERE 1=1"
                 // OPEN drafts are included on purpose; remove OPEN here if only confirmed promos should block
                 + " AND a.cTranStat NOT IN (" + SQLUtil.toSQL(SalesPromotionStatus.VOID)
+                + ", " + SQLUtil.toSQL(SalesPromotionStatus.REPLACED)
                 + ", " + SQLUtil.toSQL(SalesPromotionStatus.OPEN)
                 + ", " + SQLUtil.toSQL(SalesPromotionStatus.CANCELLED) + ")"
                 + " AND a.sPromIDxx <> " + SQLUtil.toSQL(loNew.psPromoID)
@@ -3403,5 +3409,54 @@ public class MCPromoSales extends Transaction {
 
         loJSON.put("result", "success");
         return loJSON;
+    }
+
+    public JSONObject ReplaceTransaction(String[] faPromoID) throws SQLException, GuanzonException {
+        poJSON = new JSONObject();
+
+        if (faPromoID == null || faPromoID.length == 0) {
+            poJSON.put("result", "error");
+            poJSON.put("message", "No promo to replace.");
+            return poJSON;
+        }
+
+        // build IN list, never include the promo currently loaded
+        String lsCurrent = getMaster().getPromoID();
+        StringBuilder lsIn = new StringBuilder();
+        for (String lsID : faPromoID) {
+            if (lsID == null || lsID.trim().isEmpty() || lsID.equals(lsCurrent)) {
+                continue;
+            }
+            if (lsIn.length() > 0) {
+                lsIn.append(", ");
+            }
+            lsIn.append(SQLUtil.toSQL(lsID.trim()));
+        }
+        if (lsIn.length() == 0) {
+            poJSON.put("result", "error");
+            poJSON.put("message", "No valid promo to replace.");
+            return poJSON;
+        }
+
+        String lsSQL = "UPDATE Sales_Promotion_Master SET"
+                + "  cTranStat = " + SQLUtil.toSQL(SalesPromotionStatus.REPLACED)
+                + ", sModified = " + SQLUtil.toSQL(poGRider.Encrypt(poGRider.getUserID()))
+                + ", dModified = " + SQLUtil.toSQL(poGRider.getServerDate())
+                + " WHERE sPromIDxx IN (" + lsIn + ")";
+
+        poGRider.beginTrans("UPDATE STATUS", "ReplaceTransaction", SOURCE_CODE, lsCurrent == null ? "" : lsCurrent);
+
+        if (poGRider.executeQuery(lsSQL, "Sales_Promotion_Master", poGRider.getBranchCode(), "", "") <= 0) {
+            poGRider.rollbackTrans();
+            poJSON.put("result", "error");
+            poJSON.put("message", "Unable to replace conflicting promo(s).");
+            return poJSON;
+        }
+
+        poGRider.commitTrans();
+
+        poJSON.put("result", "success");
+        poJSON.put("message", "Conflicting promo(s) replaced successfully.");
+        return poJSON;
     }
 }
