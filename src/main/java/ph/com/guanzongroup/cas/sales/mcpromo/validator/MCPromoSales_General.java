@@ -1,13 +1,7 @@
 package ph.com.guanzongroup.cas.sales.mcpromo.validator;
 
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.guanzon.appdriver.base.GRiderCAS;
@@ -19,7 +13,7 @@ import ph.com.guanzongroup.cas.sales.mcpromo.model.Model_Sales_Promotion_Master;
 
 /**
  *
- * @author MNV t4
+ * @author MNV
  */
 public class MCPromoSales_General implements GValidator {
 
@@ -85,7 +79,7 @@ public class MCPromoSales_General implements GValidator {
         poJSON = new JSONObject();
         boolean isRequiredApproval = false;
 
-        if (poMaster.getDate()== null) {
+        if (poMaster.getDate() == null) {
             poJSON.put("result", "error");
             poJSON.put("message", "Invalid Transaction Date.");
             return poJSON;
@@ -101,7 +95,7 @@ public class MCPromoSales_General implements GValidator {
         poJSON = new JSONObject();
         boolean isRequiredApproval = false;
 
-        if (poMaster.getDate()== null) {
+        if (poMaster.getDate() == null) {
             poJSON.put("result", "error");
             poJSON.put("message", "Invalid Transaction Date.");
             return poJSON;

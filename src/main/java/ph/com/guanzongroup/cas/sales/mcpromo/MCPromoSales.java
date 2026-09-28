@@ -5,9 +5,12 @@ import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.sql.rowset.CachedRowSet;
@@ -30,8 +33,10 @@ import org.guanzon.cas.inv.services.InvControllers;
 import org.guanzon.cas.inv.warehouse.report.ReportUtil;
 import org.guanzon.cas.inv.warehouse.report.ReportUtilListener;
 import org.guanzon.cas.parameter.BranchArea;
+import org.guanzon.cas.parameter.Brand;
 import org.guanzon.cas.parameter.Province;
 import org.guanzon.cas.parameter.services.ParamControllers;
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import ph.com.guanzongroup.cas.sales.mcpromo.common.SalesPromotionStatus;
 import ph.com.guanzongroup.cas.sales.mcpromo.model.Model_Sales_Promotion_Branch_Area;
@@ -44,6 +49,7 @@ import ph.com.guanzongroup.cas.sales.mcpromo.model.Model_Sales_Promotion_Provinc
 import ph.com.guanzongroup.cas.sales.mcpromo.services.PromoModels;
 import ph.com.guanzongroup.cas.sales.mcpromo.validator.MCPromoSalesValidatorFactory;
 import ph.com.guanzongroup.cas.sales.mcpromo.common.PromoMaintenancePrint;
+import ph.com.guanzongroup.cas.sales.mcpromo.services.PromoControllers;
 
 public class MCPromoSales extends Transaction {
 
@@ -58,6 +64,22 @@ public class MCPromoSales extends Transaction {
     private List<Model> paSalesPromotionModelException;
     private List<Model> paSalesPromotionGiveAwayItem;
 
+    //Searching Filter
+    private Brand poBrand = null;
+    private org.guanzon.cas.parameter.Model poModel = null;
+    private BranchArea poBranchArea = null;
+    private Province poProvince = null;
+    private String poTranType = "";
+    private String poShopType = "";
+    private String poTranStatus = "";
+    private String poPromoType = "";
+    private String poPromoSource = "";
+    private AP_Client_Master poSourceClient = null;
+    private String poSRPFrom = "";
+    private String poSRPThru = "";
+    private String poDateFrom = "";
+    private String poDateEnd = "";
+
     public void setIndustryID(String industryId) {
         psIndustryCode = industryId;
     }
@@ -68,6 +90,118 @@ public class MCPromoSales extends Transaction {
 
     public void setCategoryID(String categoryId) {
         psCategorCD = categoryId;
+    }
+
+    public Brand getBrand() {
+        return poBrand;
+    }
+
+    public void setBrand(Brand poBrand) {
+        this.poBrand = poBrand;
+    }
+
+    public org.guanzon.cas.parameter.Model getModel() {
+        return poModel;
+    }
+
+    public void setModel(org.guanzon.cas.parameter.Model poModel) {
+        this.poModel = poModel;
+    }
+
+    public BranchArea getBranchArea() {
+        return poBranchArea;
+    }
+
+    public void setBranchArea(BranchArea poBranchArea) {
+        this.poBranchArea = poBranchArea;
+    }
+
+    public Province getProvince() {
+        return poProvince;
+    }
+
+    public void setProvince(Province poProvince) {
+        this.poProvince = poProvince;
+    }
+
+    public String getShopType() {
+        return poShopType;
+    }
+
+    public void setShopType(String poShopType) {
+        this.poShopType = poShopType;
+    }
+
+    public String getTranType() {
+        return poTranType;
+    }
+
+    public void setTranType(String poTranType) {
+        this.poTranType = poTranType;
+    }
+
+    public String getPromoType() {
+        return poPromoType;
+    }
+
+    public void setPromoType(String popromoType) {
+        this.poPromoType = popromoType;
+    }
+
+    public String getTranStatus() {
+        return poTranStatus;
+    }
+
+    public void setTranStatus(String poTranStatus) {
+        this.poTranStatus = poTranStatus;
+    }
+
+    public String getPromoSource() {
+        return poPromoSource;
+    }
+
+    public void setPromoSource(String poPromoSource) {
+        this.poPromoSource = poPromoSource;
+    }
+
+    public AP_Client_Master getSourceClient() {
+        return poSourceClient;
+    }
+
+    public void setSourceClient(AP_Client_Master poSourceClient) {
+        this.poSourceClient = poSourceClient;
+    }
+
+    public String getSRPFrom() {
+        return poSRPFrom;
+    }
+
+    public void setSRPFrom(String poSRPFrom) {
+        this.poSRPFrom = poSRPFrom;
+    }
+
+    public String getSRPThru() {
+        return poSRPThru;
+    }
+
+    public void setSRPThru(String poSRPThru) {
+        this.poSRPThru = poSRPThru;
+    }
+
+    public String getDateFrom() {
+        return poDateFrom;
+    }
+
+    public void setDateFrom(String poDateFrom) {
+        this.poDateFrom = poDateFrom;
+    }
+
+    public String getDateEnd() {
+        return poDateEnd;
+    }
+
+    public void setDateEnd(String poDateEnd) {
+        this.poDateEnd = poDateEnd;
     }
 
     public Model_Sales_Promotion_Master getMaster() {
@@ -295,7 +429,7 @@ public class MCPromoSales extends Transaction {
     }
 
     public JSONObject initTransaction() throws GuanzonException, SQLException {
-        SOURCE_CODE = "MCSp";
+        SOURCE_CODE = "MCPs";
 
         poMaster = new PromoModels(poGRider).SalesPromotionMaster();
 
@@ -309,6 +443,7 @@ public class MCPromoSales extends Transaction {
         paSalesPromotionModel = new ArrayList<Model>();
         paSalesPromotionModelException = new ArrayList<Model>();
         paSalesPromotionGiveAwayItem = new ArrayList<Model>();
+        paMaster = new ArrayList<Model>();
 
         pbWithUI = true; //allow input
 
@@ -334,12 +469,14 @@ public class MCPromoSales extends Transaction {
             if (!psCategorCD.isEmpty()) {
                 lsSQL = MiscUtil.addCondition(lsSQL, "sCategrCd = " + SQLUtil.toSQL(psCategorCD));
             }
+
+            lsSQL = lsSQL + " GROUP BY a.sPromIDxx ";
             poJSON = ShowDialogFX.Search(poGRider,
                     lsSQL,
                     value,
                     "Promo ID»sPromDesc»Date»From Date»Thru Date",
-                    "sPromIDxx»sPromDesc»dTransact»dFromDate»dThruDate",
-                    "sPromIDxx»sPromDesc»dTransact»dFromDate»dThruDate",
+                    "a.sPromIDxx»a.sPromDesc»a.dTransact»a.dFromDate»a.dThruDate",
+                    "a.sPromIDxx»a.sPromDesc»a.dTransact»a.dFromDate»a.dThruDate",
                     byExact ? (byCode ? 0 : 1) : 2);
 
             if (poJSON != null) {
@@ -602,6 +739,12 @@ public class MCPromoSales extends Transaction {
         }
 
         removeOther();
+
+        poJSON = hasMechanicEntry();
+        if ("error".equals((String) poJSON.get("result"))) {
+            return poJSON;
+        }
+
         if (paSalesPromotionProvince.size() > 0) {
             poJSON = new JSONObject();
             poJSON = isEntryOkay(0);
@@ -1032,7 +1175,11 @@ public class MCPromoSales extends Transaction {
             poJSON.put("message", "Transaction was already confirmed.");
             return poJSON;
         }
-
+        // program conflict check (before publishing)
+        poJSON = checkConflictOverlapping();
+        if ("error".equals((String) poJSON.get("result"))) {
+            return poJSON;
+        }
         //validator
         poJSON = isEntryOkay(SalesPromotionStatus.CONFIRMED);
         if ("error".equals((String) poJSON.get("result"))) {
@@ -1880,10 +2027,10 @@ public class MCPromoSales extends Transaction {
                 + "            WHEN 1 THEN 'Multi Brand'"
                 + "            WHEN 2 THEN 'Big Bike'"
                 + "            ELSE 'Other Shop'"
-                + "        END `xShopType` "
+                + "        END xShopType "
                 + "    FROM Branch_Others"
                 + "    WHERE sIndstCdx = '01' "
-                + ") `Shop` WHERE 1=1 GROUP BY cShopType";
+                + ") Shop WHERE 1=1 GROUP BY cShopType";
 
         //default
         String lscolHeader = "Shop Type»Description";
@@ -2156,7 +2303,9 @@ public class MCPromoSales extends Transaction {
 
             Model_Sales_Promotion_Brand loBrand
                     = (Model_Sales_Promotion_Brand) item;
-
+            if (!loBrand.isWithActive()) {
+                continue;
+            }
             String brandDesc;
 
             try {
@@ -2200,7 +2349,9 @@ public class MCPromoSales extends Transaction {
 
             Model_Sales_Promotion_Model loModel
                     = (Model_Sales_Promotion_Model) item;
-
+            if (!loModel.isWithActive()) {
+                continue;
+            }
             String brandDesc;
 
             try {
@@ -2260,7 +2411,9 @@ public class MCPromoSales extends Transaction {
 
             Model_Sales_Promotion_Model_Exception loException
                     = (Model_Sales_Promotion_Model_Exception) item;
-
+            if (!loException.isWithActive()) {
+                continue;
+            }
             String brandDesc;
 
             try {
@@ -2300,6 +2453,9 @@ public class MCPromoSales extends Transaction {
             Model_Sales_Promotion_GiveAway_Item loGiveAway
                     = (Model_Sales_Promotion_GiveAway_Item) item;
 
+            if (!loGiveAway.isWithActive()) {
+                continue;
+            }
             String barcode;
 
             try {
@@ -2603,7 +2759,7 @@ public class MCPromoSales extends Transaction {
 
         poReportJasper.isAlwaysTop(false);
         poReportJasper.isWithUI(true);
-        poReportJasper.isWithExport(true);
+        poReportJasper.isWithExport(false);
         poReportJasper.isWithExportPDF(true);
         poReportJasper.willExport(false);
 
@@ -2675,5 +2831,577 @@ public class MCPromoSales extends Transaction {
         }
 
         return String.join(", ", details);
+    }
+
+    @Override
+    public void initSQL() {
+        SQL_BROWSE = "SELECT a.* FROM Sales_Promotion_Master a"
+                + " LEFT JOIN Sales_Promotion_Province b ON a.sPromIDxx = b.sPromIDxx"
+                + " LEFT JOIN Sales_Promotion_Branch_Area c ON a.sPromIDxx = c.sPromIDxx"
+                + " LEFT JOIN Sales_Promotion_Brand d ON a.sPromIDxx = d.sPromIDxx"
+                + " LEFT JOIN Sales_Promotion_Model e ON a.sPromIDxx = e.sPromIDxx"
+                + " LEFT JOIN Sales_Promotion_Model_Exception f ON a.sPromIDxx = f.sPromIDxx"
+                + " LEFT JOIN Sales_Promotion_Giveaway_Item g ON a.sPromIDxx = g.sPromIDxx";
+
+    }
+
+    public JSONObject loadTransactionList()
+            throws SQLException, GuanzonException, CloneNotSupportedException {
+
+//        if (psIndustryCode.isEmpty()) {
+//            poJSON.put("result", "error");
+//            poJSON.put("message", "I is not set");
+//            return poJSON;
+//        }
+        paMaster.clear();
+        initSQL();
+        String lsSQL = SQL_BROWSE;
+        String lsCondition = "";
+
+        if (!psIndustryCode.isEmpty()) {
+            lsSQL = MiscUtil.addCondition(lsSQL, "a.sIndstCdx = " + SQLUtil.toSQL(psIndustryCode));
+        }
+        if (!psCategorCD.isEmpty()) {
+            lsSQL = MiscUtil.addCondition(lsSQL, "a.sCategrCd = " + SQLUtil.toSQL(psCategorCD));
+        }
+
+        //FILTER's INPUT by USER
+        if (poBrand != null) {
+            lsSQL = MiscUtil.addCondition(lsSQL, "d.sBrandIDx = " + SQLUtil.toSQL(poBrand.getModel().getBrandId()));
+        }
+        if (poModel != null) {
+            lsSQL = MiscUtil.addCondition(lsSQL, "e.sModelIDx = " + SQLUtil.toSQL(poModel.getModel().getModelId()));
+        }
+        if (poBranchArea != null) {
+            lsSQL = MiscUtil.addCondition(lsSQL, "c.sAreaCode = " + SQLUtil.toSQL(poBranchArea.getModel().getAreaCode())); // confirm column name
+        }
+        if (poProvince != null) {
+            lsSQL = MiscUtil.addCondition(lsSQL, "b.sProvIDxx = " + SQLUtil.toSQL(poProvince.getModel().getProvinceId())); // confirm column name
+        }
+
+        if (!poShopType.isEmpty()) {
+            lsSQL = MiscUtil.addCondition(lsSQL, "a.sShopType LIKE " + SQLUtil.toSQL("%" + poShopType + "%"));
+
+        }
+        if (!poTranType.isEmpty()) {
+            lsSQL = MiscUtil.addCondition(lsSQL, "a.cTranType = " + SQLUtil.toSQL(poTranType));
+
+        }
+        if (!poTranStatus.isEmpty()) {
+            lsSQL = MiscUtil.addCondition(lsSQL, "a.cTranStat = " + SQLUtil.toSQL(poTranStatus));
+
+        }
+        if (!poPromoSource.isEmpty()) {
+            lsSQL = MiscUtil.addCondition(lsSQL, "a.cPromoSrc = " + SQLUtil.toSQL(poPromoSource));
+
+        }
+        if (poSourceClient != null) {
+            lsSQL = MiscUtil.addCondition(lsSQL, "a.sClientID = " + SQLUtil.toSQL(poSourceClient.getModel().getClientId()));
+
+        }
+        if (!poSRPFrom.isEmpty()) {
+            lsSQL = MiscUtil.addCondition(lsSQL, "a.nAmtFromxx >= " + SQLUtil.toSQL(poSRPFrom));
+
+        }
+        if (!poSRPThru.isEmpty()) {
+            lsSQL = MiscUtil.addCondition(lsSQL, "a.nAmtToxxx <= " + SQLUtil.toSQL(poSRPThru));
+
+        }
+        if (!poDateFrom.isEmpty()) {
+            lsSQL = MiscUtil.addCondition(lsSQL, "DATE(a.dFromDate) >= " + SQLUtil.toSQL(poDateFrom));
+
+        }
+        if (!poDateEnd.isEmpty()) {
+            lsSQL = MiscUtil.addCondition(lsSQL, "DATE(a.dThruDate) <= " + SQLUtil.toSQL(poDateEnd));
+
+        }
+
+        lsSQL = lsSQL + " GROUP BY a.sPromIDxx ";
+        ResultSet loRS = poGRider.executeQuery(lsSQL);
+        System.out.println("Load Transaction list query is " + lsSQL);
+
+        if (MiscUtil.RecordCount(loRS)
+                <= 0) {
+            poJSON.put("result", "error");
+            poJSON.put("message", "No record found.");
+            return poJSON;
+        }
+
+        while (loRS.next()) {
+            Model_Sales_Promotion_Master loObject = new PromoModels(poGRider).SalesPromotionMaster();
+
+            for (int lnCtr = 1; lnCtr <= loRS.getMetaData().getColumnCount(); ++lnCtr) {
+                String lsColumnName = loRS.getMetaData().getColumnName(lnCtr);
+                loObject.setValue(lsColumnName, loRS.getObject(lnCtr));
+            }
+            paMaster.add((Model) loObject);
+        }
+
+        poJSON = new JSONObject();
+        poJSON.put("result", "success");
+        return poJSON;
+    }
+
+    //Searching of Promotion 
+    public JSONObject searchFilterByProvince(String value, boolean byCode)
+            throws SQLException, GuanzonException, CloneNotSupportedException {
+
+        Province loBrowse = new ParamControllers(poGRider, logwrapr).Province();
+        loBrowse.initialize();
+        loBrowse.setRecordStatus(RecordStatus.ACTIVE);
+        loBrowse.setWithParentClass(true);
+
+        poJSON = loBrowse.searchRecord(value, byCode);
+        System.out.println("result " + (String) poJSON.get("result"));
+        if ("success".equals((String) poJSON.get("result"))) {
+            poProvince = loBrowse;
+        } else {
+            poProvince = null;
+
+        }
+        return poJSON;
+    }
+
+    public JSONObject searchFilterByBranchArea(String value, boolean byCode)
+            throws SQLException, GuanzonException, CloneNotSupportedException {
+
+        BranchArea loBrowse = new ParamControllers(poGRider, logwrapr).BranchArea();
+        loBrowse.initialize();
+        loBrowse.setRecordStatus(RecordStatus.ACTIVE);
+        loBrowse.setWithParentClass(true);
+
+        poJSON = loBrowse.searchRecord(value, byCode);
+        System.out.println("result " + (String) poJSON.get("result"));
+        if ("success".equals((String) poJSON.get("result"))) {
+            poBranchArea = loBrowse;
+        } else {
+            poBranchArea = null;
+
+        }
+        return poJSON;
+    }
+
+    public JSONObject searchFilterByBrand(String value, boolean byCode)
+            throws SQLException, GuanzonException, CloneNotSupportedException {
+
+        org.guanzon.cas.parameter.Brand loBrowse = new ParamControllers(poGRider, logwrapr).Brand();
+        loBrowse.initialize();
+        loBrowse.setRecordStatus(RecordStatus.ACTIVE);
+        loBrowse.setWithParentClass(true);
+
+        poJSON = loBrowse.searchRecord(value, byCode, psIndustryCode);
+        System.out.println("result " + (String) poJSON.get("result"));
+        if ("success".equals((String) poJSON.get("result"))) {
+            poBrand = loBrowse;
+        } else {
+            poBrand = null;
+
+        }
+        return poJSON;
+    }
+
+    public JSONObject searchFilterByModel(String value, boolean byCode)
+            throws SQLException, GuanzonException, CloneNotSupportedException {
+
+        org.guanzon.cas.parameter.Model loBrowse = new ParamControllers(poGRider, logwrapr).Model();
+        loBrowse.initialize();
+        loBrowse.setRecordStatus(RecordStatus.ACTIVE);
+        loBrowse.setWithParentClass(true);
+        String lsCondition = null;
+
+        if (poBrand != null) {
+            lsCondition = "";
+            lsCondition = poBrand.getModel().getBrandCode();
+
+        }
+        if (lsCondition != null) {
+            poJSON = loBrowse.searchRecordbyIndustryWCondition(value, byCode, psIndustryCode, "b.sBrandIDx = " + SQLUtil.toSQL(lsCondition));
+        } else {
+            poJSON = loBrowse.searchRecordbyIndustryWCondition(value, byCode, psIndustryCode, null);
+
+        }
+        System.out.println("result " + (String) poJSON.get("result"));
+        if ("success".equals((String) poJSON.get("result"))) {
+            poModel = loBrowse;
+        } else {
+            poModel = null;
+
+        }
+        return poJSON;
+    }
+
+    public JSONObject searchFilterBySupplier(String value, boolean byCode)
+            throws SQLException, GuanzonException, CloneNotSupportedException {
+
+        AP_Client_Master loBrowse = new ClientControllers(poGRider, logwrapr).APClientMaster();
+        loBrowse.initialize();
+        loBrowse.setRecordStatus(RecordStatus.ACTIVE);
+        loBrowse.setWithParentClass(true);
+
+        poJSON = loBrowse.searchRecord(value, byCode);
+        System.out.println("result " + (String) poJSON.get("result"));
+        if ("success".equals((String) poJSON.get("result"))) {
+            poSourceClient = loBrowse;
+        } else {
+            poSourceClient = null;
+
+        }
+        return poJSON;
+    }
+
+    // ===================================================================
+    // PROGRAM CONFLICT CHECK
+    // ===================================================================
+    private static class Program {
+
+        String psPromoID = "", psDescription = "", psPromoType = "", psTranType = "";
+        java.util.Date pdFrom, pdThru;
+        double pnSRPFrom, pnSRPThru;
+        Set<String> paShop = new HashSet<>(), paProvince = new HashSet<>(), paArea = new HashSet<>();
+        Set<String> paBrand = new HashSet<>(), paException = new HashSet<>(), paGiveAway = new HashSet<>();
+        Map<String, String> paModel = new HashMap<>();   // modelID -> brandID
+
+        // descriptions for display
+        Map<String, String> paBrandDesc = new HashMap<>();   // brandID -> description
+        Map<String, String> paModelDesc = new HashMap<>();   // modelID -> description
+    }
+
+    /**
+     * Checks the transaction currently loaded/edited in this object against all
+     * other live programs. Returns "error" + "conflicts" array if any overlap;
+     * "success" (no message) if clean.
+     */
+    public JSONObject checkConflictOverlapping()
+            throws SQLException, GuanzonException, CloneNotSupportedException {
+
+        JSONObject loJSON = new JSONObject();
+
+        if (getMaster().getFromDate() == null) {
+            loJSON.put("result", "error");
+            loJSON.put("message", "Promo start date is required to check conflicts.");
+            return loJSON;
+        }
+
+        Program loNew = snapshot(this);
+
+        // ---- candidates: same industry/category, live status, overlapping dates ----
+        java.text.SimpleDateFormat loFmt = new java.text.SimpleDateFormat("yyyy-MM-dd");
+        String lsFrom = loFmt.format(loNew.pdFrom);
+
+        String lsSQL = "SELECT DISTINCT a.sPromIDxx FROM Sales_Promotion_Master a WHERE 1=1"
+                // OPEN drafts are included on purpose; remove OPEN here if only confirmed promos should block
+                + " AND a.cTranStat NOT IN (" + SQLUtil.toSQL(SalesPromotionStatus.VOID)
+                + ", " + SQLUtil.toSQL(SalesPromotionStatus.OPEN)
+                + ", " + SQLUtil.toSQL(SalesPromotionStatus.CANCELLED) + ")"
+                + " AND a.sPromIDxx <> " + SQLUtil.toSQL(loNew.psPromoID)
+                + " AND (a.dThruDate IS NULL OR DATE(a.dThruDate) >= " + SQLUtil.toSQL(lsFrom) + ")";
+
+        if (loNew.pdThru != null) {
+            lsSQL += " AND DATE(a.dFromDate) <= " + SQLUtil.toSQL(loFmt.format(loNew.pdThru));
+        }
+        if (!psIndustryCode.isEmpty()) {
+            lsSQL += " AND a.sIndstCdx = " + SQLUtil.toSQL(psIndustryCode);
+        }
+        if (!psCategorCD.isEmpty()) {
+            lsSQL += " AND a.sCategrCd = " + SQLUtil.toSQL(psCategorCD);
+        }
+
+        System.out.println("Conflict candidate query : " + lsSQL);
+        ResultSet loRS = poGRider.executeQuery(lsSQL);
+
+        JSONArray laConflicts = new JSONArray();
+
+        while (loRS.next()) {
+            String lsOtherID = loRS.getString("sPromIDxx");
+
+            // load the other promo (master + all detail lists) into a scratch object
+            MCPromoSales loOther = new PromoControllers(poGRider, logwrapr).MCPromoSales();
+            loOther.initTransaction();
+            JSONObject loOpen = loOther.openTransaction(lsOtherID);
+            if ("error".equals((String) loOpen.get("result"))) {
+                continue;
+            }
+
+            Program loOld = snapshot(loOther);
+            String lsReason = findConflictReason(loNew, loOld);
+
+            if (lsReason != null) {
+                JSONObject loItem = new JSONObject();
+                loItem.put("promoID", loOld.psPromoID);
+                loItem.put("description", loOld.psDescription);
+                loItem.put("from", loOld.pdFrom == null ? "" : loFmt.format(loOld.pdFrom));
+                loItem.put("thru", loOld.pdThru == null ? "" : loFmt.format(loOld.pdThru));
+                loItem.put("reason", lsReason);
+                laConflicts.add(loItem);
+            }
+        }
+        MiscUtil.close(loRS);
+
+        if (laConflicts.isEmpty()) {
+            loJSON.put("result", "success");
+            return loJSON;
+        }
+
+        StringBuilder lsMsg = new StringBuilder("Program conflict detected with:");
+        int lnShown = 0;
+        for (Object loObj : laConflicts) {
+            JSONObject loItem = (JSONObject) loObj;
+            if (lnShown++ == 5) {
+                lsMsg.append("\n... and ").append(laConflicts.size() - 5).append(" more");
+                break;
+            }
+            lsMsg.append("\n\n").append(loItem.get("promoID")).append(" - ").append(loItem.get("description"))
+                    .append("\nValid: ").append(loItem.get("from")).append(" to ")
+                    .append(((String) loItem.get("thru")).isEmpty() ? "open-ended" : loItem.get("thru"))
+                    .append("\n").append(loItem.get("reason"));
+        }
+
+        loJSON.put("result", "error");
+        loJSON.put("message", lsMsg.toString());
+        loJSON.put("conflicts", laConflicts);
+        return loJSON;
+    }
+
+    // ---------- snapshot of a program (active rows only) ----------
+    private Program snapshot(MCPromoSales foSrc) throws SQLException, GuanzonException {
+        Program loP = new Program();
+        Model_Sales_Promotion_Master loM = foSrc.getMaster();
+
+        loP.psPromoID = nz(loM.getPromoID());
+        loP.psDescription = nz(loM.getPromoDescription());
+        loP.psPromoType = nz(loM.getPromoType());
+        loP.psTranType = nz(loM.getTransactionType());
+        loP.pdFrom = loM.getFromDate();
+        loP.pdThru = loM.getThruDate();
+        loP.pnSRPFrom = loM.getAmountFrom();
+        loP.pnSRPThru = loM.getAmountTo();
+
+        String lsShop = loM.getShopType();
+        if (lsShop != null && !lsShop.trim().isEmpty()) {
+            for (String lsCode : lsShop.split("»")) {
+                if (!lsCode.trim().isEmpty()) {
+                    loP.paShop.add(lsCode.trim());
+                }
+            }
+        }
+        for (Model_Sales_Promotion_Province x : foSrc.getSalesPromotionProvinceList()) {
+            if (x.isWithActive() && !nz(x.getProvinceID()).isEmpty()) {
+                loP.paProvince.add(x.getProvinceID());
+            }
+        }
+        for (Model_Sales_Promotion_Branch_Area x : foSrc.getSalesPromotionBranchAreaList()) {
+            if (x.isWithActive() && !nz(x.getAreaCode()).isEmpty()) {
+                loP.paArea.add(x.getAreaCode());
+            }
+        }
+        for (Model_Sales_Promotion_Brand x : foSrc.getSalesPromotionBrandList()) {
+            if (x.isWithActive() && !nz(x.getBrandID()).isEmpty()) {
+                loP.paBrand.add(x.getBrandID());
+                loP.paBrandDesc.put(x.getBrandID(), nz(x.Brand().getDescription()));
+            }
+        }
+        for (Model_Sales_Promotion_Model x : foSrc.getSalesPromotionModelList()) {
+            if (x.isWithActive() && !nz(x.getModelID()).isEmpty()) {
+                loP.paModel.put(x.getModelID(), nz(x.Model().getBrandId()));
+                loP.paModelDesc.put(x.getModelID(), nz(x.Model().getDescription()));
+                // brand description for the model's brand (used when the brand isn't a row here)
+                loP.paBrandDesc.putIfAbsent(nz(x.Model().getBrandId()), nz(x.Model().Brand().getDescription()));
+            }
+        }
+        for (Model_Sales_Promotion_Model_Exception x : foSrc.getSalesPromotionModelExceptionList()) {
+            if (x.isWithActive() && !nz(x.getModelID()).isEmpty()) {
+                loP.paException.add(x.getModelID());
+                loP.paModelDesc.put(x.getModelID(), nz(x.Model().getDescription()));
+            }
+        }
+        for (Model_Sales_Promotion_GiveAway_Item x : foSrc.getSalesPromotionGiveAwayItemList()) {
+            if (x.isWithActive() && !nz(x.getStockID()).isEmpty()) {
+                loP.paGiveAway.add(x.getStockID());
+            }
+        }
+        return loP;
+    }
+
+    // ---------- rule engine: returns null when allowed ----------
+    private String findConflictReason(Program a, Program b) {
+        // Rules 1/5: scope must overlap
+        if (!scopeOverlaps(a, b)) {
+            return null;
+        }
+        // Rules 1/2: mechanic must overlap
+        return mechanicOverlaps(a, b);   // null = different mechanic = allowed
+    }
+
+    // ---------- SCOPE ----------
+    private boolean scopeOverlaps(Program a, Program b) {
+        return dimOverlaps(a.paShop, b.paShop)
+                && dimOverlaps(a.paProvince, b.paProvince)
+                && dimOverlaps(a.paArea, b.paArea);
+    }
+
+    /**
+     * Empty = "all". Note: province-only vs area-only cannot be compared
+     * without a province->area mapping, so they are treated as overlapping
+     * (conservative).
+     */
+    private boolean dimOverlaps(Set<String> a, Set<String> b) {
+        if (a.isEmpty() || b.isEmpty()) {
+            return true;
+        }
+        return !Collections.disjoint(a, b);
+    }
+
+    // ---------- MECHANIC ----------
+    private String mechanicOverlaps(Program a, Program b) {
+        // master-level mechanic
+        if (!a.psTranType.equals(b.psTranType)) {
+            return null;
+        }
+        if (!srpOverlaps(a, b)) {
+            return null;
+        }
+
+        // product-level mechanic (brand / model / exception)
+        List<String> laProducts = productOverlap(a, b);
+        if (laProducts.isEmpty()) {
+            return null;
+        }
+
+        // give-away mechanic: if both have give-aways they must share one
+        if (!a.paGiveAway.isEmpty() && !b.paGiveAway.isEmpty()
+                && Collections.disjoint(a.paGiveAway, b.paGiveAway)) {
+            return null;
+        }
+
+        return "Same mechanic on: " + String.join("; ", laProducts)
+                + (a.paGiveAway.isEmpty() || b.paGiveAway.isEmpty() ? "" : " (same give-away item)");
+    }
+
+    private boolean srpOverlaps(Program a, Program b) {
+        double lnAT = a.pnSRPThru <= 0 ? Double.MAX_VALUE : a.pnSRPThru;   // 0 = unbounded
+        double lnBT = b.pnSRPThru <= 0 ? Double.MAX_VALUE : b.pnSRPThru;
+        return a.pnSRPFrom <= lnBT && b.pnSRPFrom <= lnAT;
+    }
+
+    private List<String> productOverlap(Program a, Program b) {
+        List<String> laHits = new ArrayList<>();
+
+        boolean lbAAll = a.paBrand.isEmpty() && a.paModel.isEmpty();
+        boolean lbBAll = b.paBrand.isEmpty() && b.paModel.isEmpty();
+        if (lbAAll || lbBAll) {
+            laHits.add("ALL PRODUCTS");
+            return laHits;
+        }
+
+        // brand vs brand (exceptions never cover a whole brand)
+        for (String lsBrand : a.paBrand) {
+            if (b.paBrand.contains(lsBrand)) {
+                laHits.add("Brand " + lsBrand);
+            }
+        }
+        // A brand covers B model unless A excepts that model
+        for (Map.Entry<String, String> e : b.paModel.entrySet()) {
+            if (a.paBrand.contains(e.getValue()) && !a.paException.contains(e.getKey())) {
+                laHits.add("Model " + e.getKey() + " (under brand " + e.getValue() + ")");
+            }
+        }
+        // B brand covers A model unless B excepts that model
+        for (Map.Entry<String, String> e : a.paModel.entrySet()) {
+            if (b.paBrand.contains(e.getValue()) && !b.paException.contains(e.getKey())) {
+                laHits.add("Model " + e.getKey() + " (under brand " + e.getValue() + ")");
+            }
+        }
+        // model vs model
+        for (String lsModel : a.paModel.keySet()) {
+            if (b.paModel.containsKey(lsModel)) {
+                laHits.add("Model " + lsModel);
+            }
+        }
+        return laHits;
+    }
+
+    private static String nz(String fsValue) {
+        return fsValue == null ? "" : fsValue;
+    }
+
+    private static String brandName(Program a, Program b, String fsBrandID) {
+        String ls = a.paBrandDesc.get(fsBrandID);
+        if (ls == null || ls.isEmpty()) {
+            ls = b.paBrandDesc.get(fsBrandID);
+        }
+        return (ls == null || ls.isEmpty()) ? fsBrandID : ls;
+    }
+
+    private static String modelName(Program a, Program b, String fsModelID) {
+        String ls = a.paModelDesc.get(fsModelID);
+        if (ls == null || ls.isEmpty()) {
+            ls = b.paModelDesc.get(fsModelID);
+        }
+        return (ls == null || ls.isEmpty()) ? fsModelID : ls;
+    }
+
+    private static String labelOf(Program p) {
+        return p.psPromoID.isEmpty() ? "this promo"
+                : "promo " + p.psPromoID + (p.psDescription.isEmpty() ? "" : " (" + p.psDescription + ")");
+    }
+
+    private JSONObject hasMechanicEntry() {
+        JSONObject loJSON = new JSONObject();
+
+        boolean lbHasMechanic = false;
+
+        for (Model_Sales_Promotion_Brand x : getSalesPromotionBrandList()) {
+            if (x.isWithActive()) {
+                lbHasMechanic = true;
+                break;
+            }
+        }
+        if (!lbHasMechanic) {
+            for (Model_Sales_Promotion_Model x : getSalesPromotionModelList()) {
+                if (x.isWithActive()) {
+                    lbHasMechanic = true;
+                    break;
+                }
+            }
+        }
+        if (!lbHasMechanic) {
+            for (Model_Sales_Promotion_GiveAway_Item x : getSalesPromotionGiveAwayItemList()) {
+                if (x.isWithActive()) {
+                    lbHasMechanic = true;
+                    break;
+                }
+            }
+        }
+
+        if (!lbHasMechanic) {
+            loJSON.put("result", "error");
+            loJSON.put("message", "Please add at least one promo mechanic (Brand, Model or Give Away Item) before saving.");
+            return loJSON;
+        }
+
+        // exceptions only make sense on top of a brand or model
+        boolean lbHasProduct = false;
+        for (Model_Sales_Promotion_Brand x : getSalesPromotionBrandList()) {
+            if (x.isWithActive()) {
+                lbHasProduct = true;
+                break;
+            }
+        }
+        if (!lbHasProduct) {
+            for (Model_Sales_Promotion_Model x : getSalesPromotionModelList()) {
+                if (x.isWithActive()) {
+                    lbHasProduct = true;
+                    break;
+                }
+            }
+        }
+        if (!lbHasProduct && getCountSalesPromotionModelException() > 0) {
+            loJSON.put("result", "error");
+            loJSON.put("message", "Model Exception requires a Brand or Model entry.");
+            return loJSON;
+        }
+
+        loJSON.put("result", "success");
+        return loJSON;
     }
 }
