@@ -1,9 +1,10 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-package ph.com.guanzongroup.cas.sales.model;
+
+        /*
+         * To change this license header, choose License Headers in Project Properties.
+         * To change this template file, choose Tools | Templates
+         * and open the template in the editor.
+         */
+        package ph.com.guanzongroup.cas.sales.model;
 
 import org.guanzon.appdriver.agent.services.Model;
 import org.guanzon.appdriver.base.MiscUtil;
@@ -28,8 +29,7 @@ import java.util.Date;
  * Detail records do not generate their own transaction number; the
  * {@code sTransNox} value is inherited from the parent
  * {@code Sales_Quotation_Version_Master} record, and {@code nEntryNox} is
- * expected to be assigned by the caller (e.g. the next available line
- * number for the given transaction).
+ * expected to be assigned by the caller.
  * </p>
  *
  * @author TEEJEI DE CELIS
@@ -37,7 +37,7 @@ import java.util.Date;
  * @module Sales Quotation Version Detail
  * @version 1.0
  */
-public class Model_Sales_Quotations_Version_Detail extends Model {
+public class Model_Sales_Quotation_Version_Detail extends Model {
 
     @Override
     public void initialize() {
@@ -53,17 +53,35 @@ public class Model_Sales_Quotations_Version_Detail extends Model {
             MiscUtil.initRowSet(poEntity);
 
             // assign default values
+            poEntity.updateObject("nEntryNox", 0);
             poEntity.updateNull("dModified");
+            poEntity.updateObject("nQuantity", 0);
+            poEntity.updateDouble("nUnitPrce", 0.00);
+            poEntity.updateDouble("nDiscount", 0.00);
+            poEntity.updateDouble("nAddDiscx", 0.00);
+            poEntity.updateDouble("nFreightx", 0.00);
+            poEntity.updateDouble("nRegisAmt", 0.00);
+            poEntity.updateDouble("nInsAmtxx", 0.00);
+            poEntity.updateString("cWithVATx", "0");
             // end - assign default values
 
             poEntity.insertRow();
             poEntity.moveToCurrentRow();
+
             poEntity.absolute(1);
+
+            ID = "sTransNox";
+            ID2 = "nEntryNox";
 
         } catch (SQLException e) {
             logwrapr.severe(e.getMessage());
             System.exit(1);
         }
+    }
+
+    @Override
+    public String getNextCode() {
+        return "";
     }
 
     public JSONObject setTransactionNo(String transactionNo) {
@@ -74,7 +92,7 @@ public class Model_Sales_Quotations_Version_Detail extends Model {
         return (String) getValue("sTransNox");
     }
 
-    public JSONObject setEntryNo(Integer entryNo) {
+    public JSONObject setEntryNo(int entryNo) {
         return setValue("nEntryNox", entryNo);
     }
 
@@ -182,3 +200,4 @@ public class Model_Sales_Quotations_Version_Detail extends Model {
         return (Timestamp) getValue("dTimeStmp");
     }
 }
+

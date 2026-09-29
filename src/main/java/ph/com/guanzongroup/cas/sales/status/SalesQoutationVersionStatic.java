@@ -94,6 +94,48 @@ public final class SalesQoutationVersionStatic {
     public static final String EXPIRED = "6";
 
 
+    public static final class STATUS_DESCRIPTION {
+
+        /**
+         * Prevents instantiation of this utility class.
+         */
+        private STATUS_DESCRIPTION() {
+            throw new UnsupportedOperationException("Utility class cannot be instantiated.");
+        }
+
+        public static final String OPEN = "OPEN";
+
+        /**
+         * Indicates that the quotation version has been confirmed.
+         */
+        public static final String CONFIRMED = "CONFIRMED";
+
+        /**
+         * Indicates that the quotation version has been converted to a sales transaction.
+         */
+        public static final String SALES = "SALES";
+
+        /**
+         * Indicates that the quotation version has been rejected.
+         */
+        public static final String REJECTED = "REJECTED";
+
+        /**
+         * Indicates that the quotation version has been voided.
+         */
+        public static final String VOID = "VOID";
+
+        /**
+         * Indicates that the quotation version has been superseded by another version.
+         */
+        public static final String SUPERCEDED = "SUPERCEDED";
+
+        /**
+         * Indicates that the quotation version has exceeded its validity period.
+         */
+        public static final String EXPIRED = "EXPIRED";
+
+    }
 
 
 // -------------------------------------------------------------------------

@@ -322,7 +322,7 @@ public class SalesModels {
 
         return poSalesReservationDetail;
     }
-    public Model_Sales_Quotation_Master SalesQuotationMaster(){
+    public Model_Sales_Quotation_Master SalesQuotationsMaster(){
         if (poGRider == null){
             System.err.println("CashflowModels.Sales Quotation Master: Application driver is not set.");
             return null;
@@ -338,33 +338,33 @@ public class SalesModels {
 
         return poSalesQuotationMaster;
     }
-    public Model_Sales_Quotations_FollowUp SalesQuotationFollowUp(){
+    public Model_Sales_Quotation_FollowUp SalesQuotationFollowUp(){
         if (poGRider == null){
             System.err.println("CashflowModels.Sales Quotation Follow Up: Application driver is not set.");
             return null;
         }
 
         if (poSalesQuotationFollowUp == null){
-            poSalesQuotationFollowUp = new Model_Sales_Quotations_FollowUp();
+            poSalesQuotationFollowUp = new Model_Sales_Quotation_FollowUp();
             poSalesQuotationFollowUp.setApplicationDriver(poGRider);
-            poSalesQuotationFollowUp.setXML("Model_Sales_Quotations_FollowUp");
+            poSalesQuotationFollowUp.setXML("Model_Sales_Quotation_FollowUp");
             poSalesQuotationFollowUp.setTableName("Sales_Quotation_FollowUp");
-            poSalesQuotationMaster.initialize();
+            poSalesQuotationFollowUp.initialize();
         }
 
         return poSalesQuotationFollowUp;
     }
 
-    public Model_Sales_Quotations_Version_Master SalesQuotationVersionMaster(){
+    public Model_Sales_Quotation_Version_Master SalesQuotationVersionMaster(){
         if (poGRider == null){
             System.err.println("CashflowModels.Sales Quotation Version Master: Application driver is not set.");
             return null;
         }
 
         if (poSalesQuotationVersionMaster == null){
-            poSalesQuotationVersionMaster = new Model_Sales_Quotations_Version_Master();
+            poSalesQuotationVersionMaster = new Model_Sales_Quotation_Version_Master();
             poSalesQuotationVersionMaster.setApplicationDriver(poGRider);
-            poSalesQuotationVersionMaster.setXML("Model_Sales_Quotations_Version_Master");
+            poSalesQuotationVersionMaster.setXML("Model_Sales_Quotation_Version_Master");
             poSalesQuotationVersionMaster.setTableName("Sales_Quotation_Version_Master");
             poSalesQuotationVersionMaster.initialize();
         }
@@ -372,21 +372,37 @@ public class SalesModels {
         return poSalesQuotationVersionMaster;
     }
 
-    public Model_Sales_Quotations_Version_Detail SalesQuotationVersionDetail(){
+    public Model_Sales_Quotation_Version_Detail SalesQuotationVersionDetail(){
         if (poGRider == null){
             System.err.println("CashflowModels.Sales Quotation Version Detail: Application driver is not set.");
             return null;
         }
 
         if (poSalesQuotationVersionDetail == null){
-            poSalesQuotationVersionDetail = new Model_Sales_Quotations_Version_Detail();
+            poSalesQuotationVersionDetail = new Model_Sales_Quotation_Version_Detail();
             poSalesQuotationVersionDetail.setApplicationDriver(poGRider);
-            poSalesQuotationVersionDetail.setXML("Model_Sales_Quotations_Version_Detail");
+            poSalesQuotationVersionDetail.setXML("Model_Sales_Quotation_Version_Detail");
             poSalesQuotationVersionDetail.setTableName("Sales_Quotation_Version_Detail");
             poSalesQuotationVersionDetail.initialize();
         }
 
         return poSalesQuotationVersionDetail;
+    }
+    public Model_Sales_Quotation_Version_Giveaways SalesQuotationVersionGiveaways(){
+        if (poGRider == null){
+            System.err.println("CashflowModels.Sales Quotation Version Giveaways: Application driver is not set.");
+            return null;
+        }
+
+        if (poSalesQuotationVersionGiveaways == null){
+            poSalesQuotationVersionGiveaways = new Model_Sales_Quotation_Version_Giveaways();
+            poSalesQuotationVersionGiveaways.setApplicationDriver(poGRider);
+            poSalesQuotationVersionGiveaways.setXML("Model_Sales_Quotation_Version_Giveaways");
+            poSalesQuotationVersionGiveaways.setTableName("Sales_Quotation_Version_Giveaways");
+            poSalesQuotationVersionGiveaways.initialize();
+        }
+
+        return poSalesQuotationVersionGiveaways;
     }
     
     @Override
@@ -413,6 +429,7 @@ public class SalesModels {
             poSalesQuotationFollowUp = null;
             poSalesQuotationVersionMaster = null;
             poSalesQuotationVersionDetail = null;
+            poSalesQuotationVersionGiveaways = null;
 
             poGRider = null;
         } finally {
@@ -441,7 +458,8 @@ public class SalesModels {
     private Model_Sales_Reservation_Master poSalesReservationMaster;
     private Model_Sales_Reservation_Detail poSalesReservationDetail;
     private Model_Sales_Quotation_Master poSalesQuotationMaster;
-    private Model_Sales_Quotations_FollowUp poSalesQuotationFollowUp;
-    private Model_Sales_Quotations_Version_Master poSalesQuotationVersionMaster;
-    private Model_Sales_Quotations_Version_Detail poSalesQuotationVersionDetail;
+    private Model_Sales_Quotation_FollowUp poSalesQuotationFollowUp;
+    private Model_Sales_Quotation_Version_Master poSalesQuotationVersionMaster;
+    private Model_Sales_Quotation_Version_Detail poSalesQuotationVersionDetail;
+    private Model_Sales_Quotation_Version_Giveaways poSalesQuotationVersionGiveaways;
 }

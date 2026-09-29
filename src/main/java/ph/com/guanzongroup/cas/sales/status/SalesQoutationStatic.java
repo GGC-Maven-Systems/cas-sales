@@ -63,60 +63,220 @@ public final class SalesQoutationStatic {
     /**
      * Indicates that the quotation transaction has been confirmed.
      */
-    public static final String CONFIRMED = "2";
+    public static final String SALES = "2";
 
     /**
      * Indicates that the quotation transaction has been cancelled.
      */
-    public static final String CANCELLED = "3";
+    public static final String LOST = "3";
 
     /**
      * Indicates that the quotation transaction has been voided.
      */
     public static final String VOID = "4";
 
-
-// -------------------------------------------------------------------------
-    // Vehicle Types
-    // -------------------------------------------------------------------------
-
-    /**
-     * Vehicle type identifiers used by the Vehicle Release module.
-     */
-    public static final class UnitType {
+    public static final class STATUS_DESCRIPTION {
 
         /**
          * Prevents instantiation of this utility class.
          */
-        private UnitType() {
+        private STATUS_DESCRIPTION() {
             throw new UnsupportedOperationException("Utility class cannot be instantiated.");
         }
 
         /**
-         * Brand New vehicle.
+         * DELIVERY.
          */
-        public static final String BRAND_NEW = "0";
+        public static final String OPEN = "OPEN";
 
         /**
-         * Pre-Owned vehicle.
+         * PICK_UP.
          */
-        public static final String PRE_OWNED = "1";
+        public static final String SALES = "SALES";
+        public static final String LOST = "LOST";
+        public static final String VOID = "VOID";
+
+    }
+
+    // -------------------------------------------------------------------------
+    // Delivery Types
+    // -------------------------------------------------------------------------
+
+    public static final class DeliveryType {
+
+        /**
+         * Prevents instantiation of this utility class.
+         */
+        private DeliveryType() {
+            throw new UnsupportedOperationException("Utility class cannot be instantiated.");
+        }
+
+        /**
+         * DELIVERY.
+         */
+        public static final String DELIVERY = "0";
+
+        /**
+         * PICK_UP.
+         */
+        public static final String PICK_UP = "1";
+
+
     }
 
     /**
-     * Vehicle type descriptions used in JavaFX ComboBox controls.
+     * Delivery type descriptions used in JavaFX ComboBox controls.
      */
-    public static final ObservableList<String> UNIT_TYPE_DESCRIPTION =
+    public static final ObservableList<String> DELIVERY_TYPE_DESCRIPTION =
             FXCollections.observableArrayList(
-                    "Brand New",
-                    "Pre-Owned",
+                    "Delivery",
+                    "Pick Up",
                     ""
             );
 
     /**
-     * Vehicle type codes corresponding to {@link UnitType}.
+     * Delivery type codes corresponding to {@link SalesQoutationVersionStatic.DeliveryType}.
      */
-    public static final String[] UNIT_TYPE_CODE = {
+    public static final String[] DELIVERY_TYPE_CODE = {
+            "0",
+            "1",
+            null
+    };
+
+    // -------------------------------------------------------------------------
+    // Payment Types
+    // -------------------------------------------------------------------------
+
+    /**
+     * Payment type identifiers used by the Sales Quotation Version module.
+     */
+    public static final class PaymentType {
+
+        /**
+         * Prevents instantiation of this utility class.
+         */
+        private PaymentType() {
+            throw new UnsupportedOperationException("Utility class cannot be instantiated.");
+        }
+
+        /**
+         * Cash.
+         */
+        public static final String CASH = "0";
+
+        /**
+         * Cash Balance.
+         */
+        public static final String CASH_BALANCE = "1";
+
+        /**
+         * Term.
+         */
+        public static final String TERM = "2";
+    }
+
+    /**
+     * Payment type descriptions used in JavaFX ComboBox controls.
+     */
+    public static final ObservableList<String> UNIT_TYPE_DESCRIPTION =
+            FXCollections.observableArrayList(
+                    "Cash",
+                    "Cash Balance",
+                    "Term",
+                    ""
+            );
+
+    /**
+     * Payment type codes corresponding to {@link SalesQoutationVersionStatic.PaymentType}.
+     */
+    public static final String[] PAYMENT_TYPE_CODE = {
+            "0",
+            "1",
+            "2",
+            null
+    };
+
+    // -------------------------------------------------------------------------
+    // Insurance
+    // -------------------------------------------------------------------------
+
+    public static final class Insurance {
+
+        /**
+         * Prevents instantiation of this utility class.
+         */
+        private Insurance() {
+            throw new UnsupportedOperationException("Utility class cannot be instantiated.");
+        }
+
+        /**
+         * YES.
+         */
+        public static final String YES = "0";
+
+        /**
+         * NO.
+         */
+        public static final String NO = "1";
+
+
+    }
+
+    /**
+     * Delivery type descriptions used in JavaFX ComboBox controls.
+     */
+    public static final ObservableList<String> INSURANCE_DESCRIPTION =
+            FXCollections.observableArrayList(
+                    "Yes",
+                    "No",
+                    ""
+            );
+
+    /**
+     * Delivery type codes corresponding to {@link SalesQoutationVersionStatic.DeliveryType}.
+     */
+    public static final String[] INSURANCE_CODE = {
+            "0",
+            "1",
+            null
+    };
+
+    public static final class Registration {
+
+        /**
+         * Prevents instantiation of this utility class.
+         */
+        private Registration() {
+            throw new UnsupportedOperationException("Utility class cannot be instantiated.");
+        }
+
+        /**
+         * YES.
+         */
+        public static final String YES = "0";
+
+        /**
+         * NO.
+         */
+        public static final String NO = "1";
+
+
+    }
+
+    /**
+     * Delivery type descriptions used in JavaFX ComboBox controls.
+     */
+    public static final ObservableList<String> REGISTRATION_DESCRIPTION =
+            FXCollections.observableArrayList(
+                    "Yes",
+                    "No",
+                    ""
+            );
+
+    /**
+     * Delivery type codes corresponding to {@link SalesQoutationVersionStatic.DeliveryType}.
+     */
+    public static final String[] REGISTRATION_CODE = {
             "0",
             "1",
             null

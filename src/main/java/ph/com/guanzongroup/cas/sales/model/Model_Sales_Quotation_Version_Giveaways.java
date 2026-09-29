@@ -37,7 +37,7 @@ import java.util.Date;
  * @module Sales Quotation Version Giveaways
  * @version 1.0
  */
-public class Model_Sales_Quotations_Version_Giveaways extends Model {
+public class Model_Sales_Quotation_Version_Giveaways extends Model {
 
     @Override
     public void initialize() {
@@ -53,15 +53,20 @@ public class Model_Sales_Quotations_Version_Giveaways extends Model {
             MiscUtil.initRowSet(poEntity);
 
             // assign default values
+            poEntity.updateObject("nEntryNox", 0);
+            poEntity.updateObject("nQuantity", 0);
             poEntity.updateNull("dModified");
+
             // end - assign default values
 
             poEntity.insertRow();
             poEntity.moveToCurrentRow();
             poEntity.absolute(1);
+            ID  = "sTransNox";
+            ID2 = "nEntryNox";
 
         } catch (SQLException e) {
-            logwrapr.severe(e.getMessage());
+            e.printStackTrace();
             System.exit(1);
         }
     }
@@ -108,5 +113,10 @@ public class Model_Sales_Quotations_Version_Giveaways extends Model {
 
     public Timestamp getTimeStamp() {
         return (Timestamp) getValue("dTimeStmp");
+    }
+
+    @Override
+    public String getNextCode() {
+        return "";   // sTransNox is inherited from the parent version
     }
 }

@@ -1,63 +1,24 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package ph.com.guanzongroup.cas.sales.model;
 
 import org.guanzon.appdriver.agent.services.Model;
+import org.guanzon.appdriver.agent.services.ReferenceCache;
 import org.guanzon.appdriver.base.GuanzonException;
 import org.guanzon.appdriver.base.MiscUtil;
 import org.guanzon.appdriver.constant.EditMode;
-import org.guanzon.cas.client.model.Model_Client_Address;
-import org.guanzon.cas.client.model.Model_Client_Master;
-import org.guanzon.cas.client.model.Model_Client_Mobile;
-import org.guanzon.cas.client.services.ClientModels;
 import org.guanzon.cas.parameter.model.Model_Branch;
-import org.guanzon.cas.parameter.model.Model_Industry;
-import org.guanzon.cas.parameter.services.ParamModels;
+import org.guanzon.cas.parameter.model.Model_Term;
 import org.json.simple.JSONObject;
+import ph.com.guanzongroup.cas.sales.status.SalesQoutationVersionStatic;
 
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.Date;
 
-/**
- * Model class for the Sales Quotation Master transaction.
- *
- * <p>
- * This class represents the master record of a Sales Quotation transaction
- * within the CAS Sales module. It encapsulates transaction information
- * including transaction number, industry, category, transaction date,
- * client, address, contact, version, and transaction status.
- * </p>
- *
- * <p>
- * In addition to maintaining the Sales Quotation Master record, this model
- * provides convenient access to its associated reference objects, including:
- * </p>
- * <ul>
- *     <li>Industry</li>
- *     <li>Client Master</li>
- *     <li>Client Address</li>
- *     <li>Client Mobile</li>
- * </ul>
- *
- * <p>
- * Upon initialization, the model loads its metadata, assigns default values,
- * initializes its reference objects, and prepares the entity for create,
- * retrieve, update, and save operations.
- * </p>
- *
- * @author TEEJEI DE CELIS
- * @date September 2x, 2026
- * @module Sales Quotations Master
- * @version 1.0
- */
-public class Model_Sales_Quotations_Version_Master extends Model {
+public class Model_Sales_Quotation_Version_Master extends Model {
 
-    //reference objects
-    Model_Branch poBranch;
+    // reference objects
+    private Model_Branch poBranch;
+    private Model_Term poTerm;
 
     @Override
     public void initialize() {
@@ -74,24 +35,34 @@ public class Model_Sales_Quotations_Version_Master extends Model {
 
             // assign default values
             poEntity.updateObject("dTransact", poGRider.getServerDate());
-            poEntity.updateNull("dExpected");
-            poEntity.updateNull("dValdThru");
-            poEntity.updateNull("dModified");
+            poEntity.updateObject("dExpected", poGRider.getServerDate());
+            poEntity.updateObject("dValdThru", poGRider.getServerDate());
+            poEntity.updateObject("dModified", poGRider.getServerDate());
 
-            poEntity.updateString("cTranStat", "");
-            poEntity.updateInt("nEntryNox", 0);
+            poEntity.updateString(
+                    "cTranStat",
+                    SalesQoutationVersionStatic.OPEN
+            );
+
+            poEntity.updateObject("nEntryNox", 0);
+            poEntity.updateObject("nTranTotl", 0.00);
+            poEntity.updateObject("nDiscAmtx", 0.00);
+            poEntity.updateObject("nAddDiscx", 0.00);
+            poEntity.updateObject("nFreightx", 0.00);
+            poEntity.updateObject("nVATSales", 0.00);
+            poEntity.updateObject("nVATAmtxx", 0.00);
+            poEntity.updateObject("nNonVATSl", 0.00);
             // end - assign default values
 
             poEntity.insertRow();
             poEntity.moveToCurrentRow();
+
             poEntity.absolute(1);
 
             ID = "sTransNox";
 
-            // initialize reference objects
-            ParamModels paramModel = new ParamModels(poGRider);
-            poBranch = paramModel.Branch();
-            // end - initialize reference objects
+            // poBranch/poTerm are intentionally NOT constructed here.
+            // They are initialized lazily in Branch()/Terms().
 
         } catch (SQLException e) {
             logwrapr.severe(e.getMessage());
@@ -212,11 +183,11 @@ public class Model_Sales_Quotations_Version_Master extends Model {
     }
 
     public JSONObject setTermId(String termId) {
-        return setValue("sTermIdxx", termId);
+        return setValue("sTermIDxx", termId);
     }
 
     public String getTermId() {
-        return (String) getValue("sTermIdxx");
+        return (String) getValue("sTermIDxx");
     }
 
     public JSONObject setTransactionTotal(Double transactionTotal) {
@@ -346,55 +317,107 @@ public class Model_Sales_Quotations_Version_Master extends Model {
         );
     }
 
-    // reference object models
+    // ============================================================
+    // Reference Object Models
+    // ============================================================
 
-    /**
-     * Retrieves the branch associated with the current Sales Quotation
-     * Version transaction.
-     *
-     * <p>
-     * If a branch code is assigned to the current transaction, this method
-     * checks whether the existing branch model is already loaded for the same
-     * branch. If it is ready and matches the current branch code, the existing
-     * model is returned. Otherwise, the branch record is opened using the
-     * current branch code.
-     * </p>
-     *
-     * <p>
-     * If the branch record cannot be opened successfully, the branch model
-     * is reinitialized and returned. When no branch code is assigned to the
-     * current transaction, the branch model is also reinitialized.
-     * </p>
-     *
-     * @return the {@link Model_Branch} associated with the current Sales
-     *         Quotation Version transaction, or an initialized branch model
-     *         when no valid branch record is available.
-     *
-     * @throws SQLException if a database access error occurs while retrieving
-     *         the branch record.
-     * @throws GuanzonException if an application-specific error occurs while
-     *         processing the branch record.
-     */
     public Model_Branch Branch() throws SQLException, GuanzonException {
-        if (!"".equals((String) getValue("sBranchCd"))) {
+
+        if (poBranch == null) {
+            poBranch = new Model_Branch();
+            poBranch.setApplicationDriver(poGRider);
+            poBranch.setXML("Model_Branch");
+            poBranch.setTableName("Branch");
+            poBranch.initialize();
+        }
+
+        String branchCode = (String) (
+                getValue("sBranchCd") == null
+                        ? ""
+                        : getValue("sBranchCd")
+        );
+
+        if (!"".equals(branchCode)) {
+
             if (poBranch.getEditMode() == EditMode.READY
-                    && poBranch.getBranchCode().equals((String) getValue("sBranchCd"))) {
-
+                    && poBranch.getBranchCode().equals(branchCode)) {
                 return poBranch;
-
-            } else {
-                poJSON = poBranch.openRecord((String) getValue("sBranchCd"));
-
-                if ("success".equals((String) poJSON.get("result"))) {
-                    return poBranch;
-                } else {
-                    poBranch.initialize();
-                    return poBranch;
-                }
             }
+
+            if (ReferenceCache.tryLoad(
+                    "Branch",
+                    branchCode,
+                    poBranch)) {
+                return poBranch;
+            }
+
+            poJSON = poBranch.openRecord(branchCode);
+
+            if ("success".equals((String) poJSON.get("result"))) {
+                ReferenceCache.store(
+                        "Branch",
+                        branchCode,
+                        poBranch
+                );
+                return poBranch;
+            } else {
+                poBranch.initialize();
+                return poBranch;
+            }
+
         } else {
             poBranch.initialize();
             return poBranch;
+        }
+    }
+
+    public Model_Term Terms() throws SQLException, GuanzonException {
+
+        if (poTerm == null) {
+            poTerm = new Model_Term();
+            poTerm.setApplicationDriver(poGRider);
+            poTerm.setXML("Model_Term");
+            poTerm.setTableName("Term");
+            poTerm.initialize();
+        }
+
+        String termId = (String) (
+                getValue("sTermIDxx") == null
+                        ? ""
+                        : getValue("sTermIDxx")
+        );
+
+        if (!"".equals(termId)) {
+
+            if (poTerm.getEditMode() == EditMode.READY
+                    && poTerm.getTermId().equals(termId)) {
+                return poTerm;
+            }
+
+            if (ReferenceCache.tryLoad(
+                    "Term",
+                    termId,
+                    poTerm)) {
+                return poTerm;
+            }
+
+            poJSON = poTerm.openRecord(termId);
+
+            if ("success".equals((String) poJSON.get("result"))) {
+                ReferenceCache.store(
+                        "Term",
+                        termId,
+                        poTerm
+                );
+                return poTerm;
+            } else {
+                poTerm.initialize();
+                return poTerm;
+            }
+
+        } else {
+            poTerm.initialize();
+            return poTerm;
         }
     }
 

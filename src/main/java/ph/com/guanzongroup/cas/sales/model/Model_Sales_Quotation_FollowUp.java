@@ -19,7 +19,7 @@ import java.util.Date;
  * <p>
  * A record is written to this table every time a Sales Quotation Version is
  * followed up. Each record is identified by the combination of
- * {@code sTransNox} (the version's transaction number) and
+ * {@code sTransNox} (the quotation's transaction number) and
  * {@code nEntryNox} (the follow-up entry number), and captures the
  * reference number, follow-up date, next follow-up date, who performed the
  * follow-up, the follow-up type, and remarks.
@@ -28,7 +28,8 @@ import java.util.Date;
  * <p>
  * Detail records do not generate their own transaction number; the
  * {@code sTransNox} value is inherited from the parent
- * {@code Sales_Quotation_Version_Master} record, and {@code nEntryNox} is
+ * {@code Sales_Quotation_Master} record, {@code sReferNox} holds the version's
+ * transaction number, and {@code nEntryNox} is
  * expected to be assigned by the caller (e.g. the next available follow-up
  * entry number for the given transaction).
  * </p>
@@ -38,7 +39,7 @@ import java.util.Date;
  * @module Sales Quotation FollowUp
  * @version 1.0
  */
-public class Model_Sales_Quotations_FollowUp extends Model {
+public class Model_Sales_Quotation_FollowUp extends Model {
 
     @Override
     public void initialize() {
@@ -63,10 +64,19 @@ public class Model_Sales_Quotations_FollowUp extends Model {
             poEntity.moveToCurrentRow();
             poEntity.absolute(1);
 
+            ID  = "sTransNox";
+            ID2 = "nEntryNox";
+
         } catch (SQLException e) {
-            logwrapr.severe(e.getMessage());
+            e.printStackTrace();
             System.exit(1);
         }
+    }
+
+    /** The key is assigned by the caller (see SalesQoutation), never generated here. */
+    @Override
+    public String getNextCode() {
+        return "";
     }
 
     public JSONObject setTransactionNo(String transactionNo) {

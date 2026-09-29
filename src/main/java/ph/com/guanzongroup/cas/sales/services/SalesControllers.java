@@ -264,6 +264,84 @@ public class SalesControllers {
         poSalesReservation.setWithParent(false);
         return poSalesReservation;
     }
+
+    public SalesQoutation SalesQoutation(){
+        try {
+            if (poGRider == null) {
+                poLogWrapper.severe("SalesControllers.Sales Qoutation: Application driver is not set.");
+                return null;
+            }
+            if (poSalesQoutation != null){
+                return poSalesQoutation;
+            }
+            poSalesQoutation = new SalesQoutation();
+            poSalesQoutation.setApplicationDriver(poGRider);
+            poSalesQoutation.setWithParentClass(false);
+            poSalesQoutation.setLogWrapper(poLogWrapper);
+            poSalesQoutation.initialize();
+        } catch (SQLException | GuanzonException ex) {
+            Logger.getLogger(getClass().getName()).log(Level.SEVERE, MiscUtil.getException(ex), ex);
+        }
+
+        return poSalesQoutation;
+    }
+    public SalesQoutationVersion SalesQoutationVersion() {
+        if (poGRider == null) {
+            poLogWrapper.severe("SalesControllers.Sales Qoutation Version: Application driver is not set.");
+            return null;
+        }
+        if (poSalesQoutationVersion != null) {
+            return poSalesQoutationVersion;
+        }
+
+        poSalesQoutationVersion = new SalesQoutationVersion();
+        poSalesQoutationVersion.setApplicationDriver(poGRider);
+        poSalesQoutationVersion.setBranchCode(poGRider.getBranchCode());
+        poSalesQoutationVersion.setVerifyEntryNo(false);   // true if the detail uses nEntryNox tied to the master
+        poSalesQoutationVersion.setWithParent(false);
+        poSalesQoutationVersion.setLogWrapper(poLogWrapper);
+        return poSalesQoutationVersion;
+    }
+    public SalesQoutationFollowUp SalesQoutationFollowUp(){
+        try {
+            if (poGRider == null) {
+                poLogWrapper.severe("SalesControllers.Sales Qoutation Follow Up: Application driver is not set.");
+                return null;
+            }
+            if (poSalesQoutationFollowUp != null){
+                return poSalesQoutationFollowUp;
+            }
+            poSalesQoutationFollowUp = new SalesQoutationFollowUp();
+            poSalesQoutationFollowUp.setApplicationDriver(poGRider);
+            poSalesQoutationFollowUp.setWithParentClass(false);
+            poSalesQoutationFollowUp.setLogWrapper(poLogWrapper);
+            poSalesQoutationFollowUp.initialize();
+        } catch (SQLException | GuanzonException ex) {
+            Logger.getLogger(getClass().getName()).log(Level.SEVERE, MiscUtil.getException(ex), ex);
+        }
+
+        return poSalesQoutationFollowUp;
+    }
+    public SalesQoutationVersionGiveaways SalesQoutationVersionGiveaways(){
+        try {
+            if (poGRider == null) {
+                poLogWrapper.severe("SalesControllers.Sales Qoutation Version Giveaways: Application driver is not set.");
+                return null;
+            }
+            if (poSalesQoutationVersionGiveaways != null){
+                return poSalesQoutationVersionGiveaways;
+            }
+            poSalesQoutationVersionGiveaways = new SalesQoutationVersionGiveaways();
+            poSalesQoutationVersionGiveaways.setApplicationDriver(poGRider);
+            poSalesQoutationVersionGiveaways.setWithParentClass(false);
+            poSalesQoutationVersionGiveaways.setLogWrapper(poLogWrapper);
+            poSalesQoutationVersionGiveaways.initialize();
+        } catch (SQLException | GuanzonException ex) {
+            Logger.getLogger(getClass().getName()).log(Level.SEVERE, MiscUtil.getException(ex), ex);
+        }
+
+        return poSalesQoutationVersionGiveaways;
+    }
     
     @Override
     protected void finalize() throws Throwable {
@@ -279,6 +357,10 @@ public class SalesControllers {
             poSalesCommitment = null;
             poVSP = null;
             poSalesReservation = null;
+            poSalesQoutation = null;
+            poSalesQoutationVersion = null;
+            poSalesQoutationFollowUp = null;
+            poSalesQoutationVersionGiveaways = null;
 
             poLogWrapper = null;
             poGRider = null;
@@ -302,4 +384,8 @@ public class SalesControllers {
     private SalesCommitment poSalesCommitment;
     private VSP poVSP;
     private SalesReservation poSalesReservation;
+    private SalesQoutation poSalesQoutation;
+    private SalesQoutationVersion poSalesQoutationVersion;
+    private SalesQoutationFollowUp poSalesQoutationFollowUp;
+    private SalesQoutationVersionGiveaways poSalesQoutationVersionGiveaways;
 }
