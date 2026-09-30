@@ -175,6 +175,7 @@ public class SalesQoutationVersion extends Transaction {
         return paDetail.size();
     }
 
+
     public JSONObject AddDetail() throws CloneNotSupportedException {
         poJSON = new JSONObject();
 

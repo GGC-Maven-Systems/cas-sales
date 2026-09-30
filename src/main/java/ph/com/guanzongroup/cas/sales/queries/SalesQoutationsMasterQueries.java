@@ -1,4 +1,6 @@
-package ph.com.guanzongroup.cas.sales.status;
+package ph.com.guanzongroup.cas.sales.queries;
+
+import ph.com.guanzongroup.cas.sales.status.SalesVehicleReleaseStatic;
 
 /**
  * Provides centralized SQL statements for the Sales Vehicle Release module.
@@ -56,7 +58,7 @@ package ph.com.guanzongroup.cas.sales.status;
  * <strong>Since:</strong> 1.0
  * </p>
  */
-public class SalesQoutationsVersionQueries {
+public class SalesQoutationsMasterQueries {
     /**
      * Returns the SQL statement used to retrieve salesman records for browsing.
      *
@@ -78,6 +80,47 @@ public class SalesQoutationsVersionQueries {
                 + "  , a.cRecdStat "
                 + "  , CONCAT(a.sLastName,', ',a.sFrstName, ' ',a.sMiddName) AS sFullName "
                 + " FROM Salesman a ";
+    }
+
+    public static String SQL_MCItem() {
+        String lsSQL = "SELECT "
+                // Inventory
+                + "  a.sStockIDx"
+                + ", a.sBarCodex"
+                + ", a.sDescript AS xStockDesc"
+                + ", a.cRecdStat AS xStockStat"
+                + ", a.nUnitPrce"
+
+                // Model
+                + ", b.sModelIDx"
+                + ", b.sModelCde"
+                + ", b.sDescript AS xModelNme"
+                + ", b.cRecdStat AS xModelStat"
+
+                // Brand
+                + ", c.sBrandIDx"
+                + ", c.sBrandCde"
+                + ", c.sDescript AS xBrandNme"
+                + ", c.cRecdStat AS xBrandStat"
+
+                // Model Variant
+                + ", d.sVrntIDxx"
+                + ", d.sDescript AS xVrntName"
+                + ", d.cRecdStat AS xVrntStat"
+
+                // Color
+                + ", e.sColorIDx"
+                + ", e.sColorCde"
+                + ", e.sDescript AS xColorNme"
+                + ", e.cRecdStat AS xColorStat"
+
+                + " FROM Inventory a"
+                + " LEFT JOIN Model b ON a.sModelIDx = b.sModelIDx"
+                + " LEFT JOIN Brand c ON b.sBrandIDx = c.sBrandIDx"
+                + " LEFT JOIN Model_Variant d ON a.sVrntIDxx = d.sVrntIDxx"
+                + " LEFT JOIN Color e ON a.sColorIDx = e.sColorIDx";
+
+        return lsSQL;
     }
     /**
      * Returns the SQL statement used to retrieve detailed salesman information.

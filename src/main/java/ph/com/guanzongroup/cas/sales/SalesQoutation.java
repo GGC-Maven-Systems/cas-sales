@@ -19,11 +19,18 @@ import org.guanzon.appdriver.constant.RecordStatus;
 import org.guanzon.cas.client.Client;
 import org.guanzon.cas.client.ClientGUI;
 import org.guanzon.cas.client.services.ClientControllers;
+import org.guanzon.cas.inv.model.Model_Inventory;
+import org.guanzon.cas.inv.services.InvModels;
 import org.guanzon.cas.parameter.Branch;
+import org.guanzon.cas.parameter.Brand;
 import org.guanzon.cas.parameter.Term;
+import org.guanzon.cas.parameter.model.Model_Model;
+import org.guanzon.cas.parameter.model.Model_Term;
 import org.guanzon.cas.parameter.services.ParamControllers;
+import org.guanzon.cas.parameter.services.ParamModels;
 import org.json.simple.JSONObject;
 import ph.com.guanzongroup.cas.sales.model.Model_Sales_Quotation_Master;
+import ph.com.guanzongroup.cas.sales.queries.SalesQoutationsMasterQueries;
 import ph.com.guanzongroup.cas.sales.services.SalesControllers;
 import ph.com.guanzongroup.cas.sales.services.SalesModels;
 
@@ -542,4 +549,75 @@ public class SalesQoutation extends Parameter {
 
         return poJSON;
     }
+
+    public JSONObject SearchBranch(String value, boolean byCode) throws ExceptionInInitializerError, SQLException, GuanzonException {
+        Branch object = new ParamControllers(poGRider, logwrapr).Branch();
+        object.setRecordStatus("1");
+
+        if(!pbWithUI){
+            poJSON.put("result", "success");
+            poJSON.put("message", "withUI");
+            return poJSON;
+        }
+        poJSON = object.searchRecord(value, byCode);
+
+        if ("success".equals((String) poJSON.get("result"))) {
+            oSalesQoutationVersion.Master().setBranchCode((object.getModel().getBranchCode()));
+            System.out.println("Branch ID : " + oSalesQoutationVersion.Master().getBranchCode());
+        }
+
+        return poJSON;
+    }
+
+    public JSONObject SearchMcItem(String value, int MCITemRow, int byCode) throws SQLException, GuanzonException {
+        if (MCITemRow < 0 || MCITemRow >= oSalesQoutationVersion.getDetailCount()) {
+            return setError("Select an item row first.");
+        }
+
+        String lsSQL = SalesQoutationsMasterQueries.SQL_MCItem();
+        System.out.println("Executing SQL: " + lsSQL);
+
+        JSONObject loBrowse = ShowDialogFX.Browse(poGRider,
+                lsSQL,
+                value,
+                "Stock ID»Brand»Model»Variant»Color",
+                "sStockIDx»xBrandNme»xModelNme»xVrntName»xColorNme",
+                "a.sStockIDx»c.sDescript»b.sDescript»d.sDescript»e.sDescript",
+                byCode);
+
+        if (loBrowse == null || loBrowse.get("sStockIDx") == null) {
+            return setError("No record loaded.");
+        }
+        System.out.println("Stock ID : " + loBrowse.get("sStockIDx"));
+        System.out.println("Unit Price : " + loBrowse.get("nUnitPrce"));
+        String lsStockId = (String) loBrowse.get("sStockIDx");
+
+        double lnUnitPrice = 0.00;
+        Object loPrice = loBrowse.get("nUnitPrce");
+        if (loPrice != null && !loPrice.toString().trim().isEmpty()) {
+            try {
+                lnUnitPrice = Double.parseDouble(loPrice.toString().replace(",", "").trim());
+            } catch (NumberFormatException e) {
+                lnUnitPrice = 0.00;
+            }
+        }
+        // duplicate check: same stock id on any other row
+        for (int lnCtr = 0; lnCtr < oSalesQoutationVersion.getDetailCount(); lnCtr++) {
+            if (lnCtr == MCITemRow) continue;
+
+            String lsExisting = oSalesQoutationVersion.Detail(lnCtr).getStockId();
+            if (lsExisting != null && lsExisting.equals(lsStockId)) {
+                return setError("Item " + lsStockId + " is already added in row " + (lnCtr + 1) + ".");
+            }
+        }
+        oSalesQoutationVersion.Detail(MCITemRow).setStockId(lsStockId);
+        oSalesQoutationVersion.Detail(MCITemRow).setUnitPrice(lnUnitPrice);
+
+        JSONObject loResult = new JSONObject();
+        loResult.put("result", "success");
+        return loResult;
+    }
+
+
+
 }

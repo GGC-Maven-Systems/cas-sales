@@ -1,4 +1,6 @@
-package ph.com.guanzongroup.cas.sales.status;
+package ph.com.guanzongroup.cas.sales.queries;
+
+import ph.com.guanzongroup.cas.sales.status.SalesVehicleReleaseStatic;
 
 /**
  * Provides centralized SQL statements for the Sales Vehicle Release module.
@@ -56,7 +58,7 @@ package ph.com.guanzongroup.cas.sales.status;
  * <strong>Since:</strong> 1.0
  * </p>
  */
-public class SalesVehicleReleaseQueries {
+public class SalesQoutationsVersionQueries {
     /**
      * Returns the SQL statement used to retrieve salesman records for browsing.
      *

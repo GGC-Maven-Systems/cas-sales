@@ -121,6 +121,8 @@ public final class SalesQoutationStatic {
          */
         public static final String PICK_UP = "1";
 
+        public static final String EMPTY = "";
+
 
     }
 
@@ -140,7 +142,7 @@ public final class SalesQoutationStatic {
     public static final String[] DELIVERY_TYPE_CODE = {
             "0",
             "1",
-            null
+            ""
     };
 
     // -------------------------------------------------------------------------
@@ -173,12 +175,16 @@ public final class SalesQoutationStatic {
          * Term.
          */
         public static final String TERM = "2";
+        /**
+         * Term.
+         */
+        public static final String EMPTY = "";
     }
 
     /**
      * Payment type descriptions used in JavaFX ComboBox controls.
      */
-    public static final ObservableList<String> UNIT_TYPE_DESCRIPTION =
+    public static final ObservableList<String> PAYMENT_TYPE_DESCRIPTION =
             FXCollections.observableArrayList(
                     "Cash",
                     "Cash Balance",
@@ -193,7 +199,7 @@ public final class SalesQoutationStatic {
             "0",
             "1",
             "2",
-            null
+            ""
     };
 
     // -------------------------------------------------------------------------
@@ -238,7 +244,7 @@ public final class SalesQoutationStatic {
     public static final String[] INSURANCE_CODE = {
             "0",
             "1",
-            null
+            ""
     };
 
     public static final class Registration {
@@ -279,6 +285,6 @@ public final class SalesQoutationStatic {
     public static final String[] REGISTRATION_CODE = {
             "0",
             "1",
-            null
+            ""
     };
 }
