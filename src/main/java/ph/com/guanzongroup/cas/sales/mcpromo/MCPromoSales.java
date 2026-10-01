@@ -2341,7 +2341,7 @@ public class MCPromoSales extends Transaction {
 
             Map<String, Object> row = new HashMap<>();
 
-            row.put("brand", brandDesc);
+            row.put("brand", brandDesc == null ? "" : brandDesc);
             row.put("promoDetail", promoDetail);
 
             brandRows.add(row);
@@ -2402,8 +2402,8 @@ public class MCPromoSales extends Transaction {
 
             Map<String, Object> row = new HashMap<>();
 
-            row.put("brand", brandDesc);
-            row.put("model", modelDesc);
+            row.put("brand", brandDesc == null ? "" : brandDesc);
+            row.put("model", modelDesc == null ? "" : modelDesc);
             row.put("promoDetail", promoDetail);
 
             modelRows.add(row);
@@ -2444,8 +2444,8 @@ public class MCPromoSales extends Transaction {
 
             Map<String, Object> row = new HashMap<>();
 
-            row.put("brand", brandDesc);
-            row.put("model", modelDesc);
+            row.put("brand", brandDesc == null ? "" : brandDesc);
+            row.put("model", modelDesc == null ? "" : modelDesc);
 
             exceptionRows.add(row);
         }
