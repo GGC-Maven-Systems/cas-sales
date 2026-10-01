@@ -206,12 +206,12 @@ public final class SalesQoutationStatic {
     // Insurance
     // -------------------------------------------------------------------------
 
-    public static final class Insurance {
+    public static final class InsuranceType {
 
         /**
          * Prevents instantiation of this utility class.
          */
-        private Insurance() {
+        private InsuranceType() {
             throw new UnsupportedOperationException("Utility class cannot be instantiated.");
         }
 
@@ -224,6 +224,8 @@ public final class SalesQoutationStatic {
          * NO.
          */
         public static final String NO = "1";
+
+        public static final String EMPTY = "";
 
 
     }
@@ -266,6 +268,8 @@ public final class SalesQoutationStatic {
          */
         public static final String NO = "1";
 
+        public static final String EMPTY = "";
+
 
     }
 
@@ -287,4 +291,33 @@ public final class SalesQoutationStatic {
             "1",
             ""
     };
+
+    public static final class Category {
+
+        /**
+         * Prevents instantiation of this utility class.
+         */
+        private Category() {
+            throw new UnsupportedOperationException("Utility class cannot be instantiated.");
+        }
+
+        /**
+         * Cash.
+         */
+            public static final String MC_UNIT = "0000003";
+
+        /**
+         * Cash Balance.
+         */
+        public static final String MC_SPAREPARTS = "0000004";
+
+        /**
+         * Term.
+         */
+        public static final String TERM = "2";
+        /**
+         * Term.
+         */
+        public static final String EMPTY = "";
+    }
 }

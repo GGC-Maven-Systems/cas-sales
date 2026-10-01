@@ -161,4 +161,25 @@ public class SalesQoutationFollowUp extends Parameter {
             return poJSON;
         }
     }
+
+    public String getSysUser(String fsId) throws SQLException, GuanzonException {
+        String lsEntry = "";
+        String lsSQL = " SELECT b.sCompnyNm from xxxSysUser a "
+                + " LEFT JOIN Client_Master b ON b.sClientID = a.sEmployNo ";
+        lsSQL = MiscUtil.addCondition(lsSQL, " a.sUserIDxx =  " + SQLUtil.toSQL(fsId));
+        System.out.println("SQL " + lsSQL);
+        ResultSet loRS = poGRider.executeQuery(lsSQL);
+        try {
+            if (MiscUtil.RecordCount(loRS) > 0L) {
+                if (loRS.next()) {
+                    lsEntry = loRS.getString("sCompnyNm");
+                }
+            }
+            MiscUtil.close(loRS);
+        } catch (SQLException e) {
+            poJSON.put("result", "error");
+            poJSON.put("message", e.getMessage());
+        }
+        return lsEntry;
+    }
 }

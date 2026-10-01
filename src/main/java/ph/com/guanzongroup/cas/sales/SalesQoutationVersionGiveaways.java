@@ -157,7 +157,11 @@ public class SalesQoutationVersionGiveaways extends Parameter {
      */
     public JSONObject saveGiveaways(String versionNo) throws SQLException, GuanzonException, CloneNotSupportedException {
         // drop rows without an item
-        paGiveaways.removeIf(m -> m.getStockId() == null || m.getStockId().isEmpty());
+        paGiveaways.removeIf(m ->
+                (m.getStockId() == null || m.getStockId().trim().isEmpty())
+                        && (m.getQuantity() == null || m.getQuantity() == 0)
+                        && (m.getRemarks() == null || m.getRemarks().trim().isEmpty())
+        );
 
         for (int lnCtr = 0; lnCtr < paGiveaways.size(); lnCtr++) {
             Integer lnQty = paGiveaways.get(lnCtr).getQuantity();
@@ -204,6 +208,36 @@ public class SalesQoutationVersionGiveaways extends Parameter {
         return poJSON;
     }
 
+    /** Cleans and validates the rows. Call before anything is saved. */
+    public JSONObject validateGiveaways() {
+        // drop completely blank rows (the UI keeps a blank trailing row)
+        paGiveaways.removeIf(m ->
+                (m.getStockId() == null || m.getStockId().trim().isEmpty())
+                        && (m.getQuantity() == null || m.getQuantity() == 0)
+                        && (m.getRemarks() == null || m.getRemarks().trim().isEmpty()));
+
+        for (int lnCtr = 0; lnCtr < paGiveaways.size(); lnCtr++) {
+            Model_Sales_Quotation_Version_Giveaways loModel = paGiveaways.get(lnCtr);
+
+//            if (loModel.getStockId() == null || loModel.getStockId().trim().isEmpty()) {
+//                poJSON = new JSONObject();
+//                poJSON.put("result", "error");
+//                poJSON.put("message", "Giveaway item is required at row " + (lnCtr + 1) + ".");
+//                return poJSON;
+//            }
+            if (loModel.getQuantity() == null || loModel.getQuantity() <= 0) {
+                poJSON = new JSONObject();
+                poJSON.put("result", "error");
+                poJSON.put("message", "Invalid giveaway quantity at row " + (lnCtr + 1) + ".");
+                return poJSON;
+            }
+        }
+
+        poJSON = new JSONObject();
+        poJSON.put("result", "success");
+        return poJSON;
+    }
+
     // ------------------------------------------------------------------
     // Parameter overrides
     // ------------------------------------------------------------------
@@ -212,6 +246,7 @@ public class SalesQoutationVersionGiveaways extends Parameter {
     public JSONObject isEntryOkay() throws SQLException {
         poJSON = new JSONObject();
         poModel.setModifiedDate(poGRider.getServerDate());
+
         poJSON.put("result", "success");
         return poJSON;
     }

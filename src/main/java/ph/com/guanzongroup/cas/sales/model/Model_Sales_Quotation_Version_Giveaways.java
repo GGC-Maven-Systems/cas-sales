@@ -6,7 +6,11 @@
 package ph.com.guanzongroup.cas.sales.model;
 
 import org.guanzon.appdriver.agent.services.Model;
+import org.guanzon.appdriver.agent.services.ReferenceCache;
+import org.guanzon.appdriver.base.GuanzonException;
 import org.guanzon.appdriver.base.MiscUtil;
+import org.guanzon.appdriver.constant.EditMode;
+import org.guanzon.cas.inv.model.Model_Inventory;
 import org.json.simple.JSONObject;
 
 import java.sql.SQLException;
@@ -38,7 +42,7 @@ import java.util.Date;
  * @version 1.0
  */
 public class Model_Sales_Quotation_Version_Giveaways extends Model {
-
+    private Model_Inventory poInventory;
     @Override
     public void initialize() {
         try {
@@ -103,6 +107,14 @@ public class Model_Sales_Quotation_Version_Giveaways extends Model {
         return (Integer) getValue("nQuantity");
     }
 
+    public JSONObject setRemarks(String remarks) {
+        return setValue("sRemarksx", remarks);
+    }
+
+    public String getRemarks() {
+        return (String) getValue("sRemarksx");
+    }
+
     public JSONObject setModifiedDate(Date modifiedDate) {
         return setValue("dModified", modifiedDate);
     }
@@ -118,5 +130,54 @@ public class Model_Sales_Quotation_Version_Giveaways extends Model {
     @Override
     public String getNextCode() {
         return "";   // sTransNox is inherited from the parent version
+    }
+    public Model_Inventory Inventory() throws SQLException, GuanzonException {
+
+        if (poInventory == null) {
+            poInventory = new Model_Inventory();
+            poInventory.setApplicationDriver(poGRider);
+            poInventory.setXML("Model_Inventory");
+            poInventory.setTableName("Inventory");
+            poInventory.initialize();
+        }
+
+        String stockId = (String) (
+                getValue("sStockIDx") == null
+                        ? ""
+                        : getValue("sStockIDx")
+        );
+
+        if (!"".equals(stockId)) {
+
+            if (poInventory.getEditMode() == EditMode.READY
+                    && poInventory.getStockId().equals(stockId)) {
+                return poInventory;
+            }
+
+            if (ReferenceCache.tryLoad(
+                    "Inventory",
+                    stockId,
+                    poInventory)) {
+                return poInventory;
+            }
+
+            poJSON = poInventory.openRecord(stockId);
+
+            if ("success".equals((String) poJSON.get("result"))) {
+                ReferenceCache.store(
+                        "Inventory",
+                        stockId,
+                        poInventory
+                );
+                return poInventory;
+            } else {
+                poInventory.initialize();
+                return poInventory;
+            }
+
+        } else {
+            poInventory.initialize();
+            return poInventory;
+        }
     }
 }

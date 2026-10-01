@@ -33,6 +33,7 @@ import ph.com.guanzongroup.cas.sales.model.Model_Sales_Quotation_Master;
 import ph.com.guanzongroup.cas.sales.queries.SalesQoutationsMasterQueries;
 import ph.com.guanzongroup.cas.sales.services.SalesControllers;
 import ph.com.guanzongroup.cas.sales.services.SalesModels;
+import ph.com.guanzongroup.cas.sales.status.SalesQoutationStatic;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -358,19 +359,25 @@ public class SalesQoutation extends Parameter {
             // version: master points to the quotation, detail rows are keyed in its willSave()
             oSalesQoutationVersion.Master().setParentId(lsQuotationNo);
             poJSON = oSalesQoutationVersion.SaveTransaction();
-            if (!"success".equals((String) poJSON.get("result"))) return poJSON;
+            if (!"success".equals((String) poJSON.get("result"))) {
+                return poJSON;
+            }
 
             String lsVersionNo = oSalesQoutationVersion.Master().getTransactionNo();
 
             // giveaways: numbered and keyed by the version's number
             poJSON = oSalesQoutationVersionGiveaways.saveGiveaways(lsVersionNo);
-            if (!"success".equals((String) poJSON.get("result"))) return poJSON;
+            if (!"success".equals((String) poJSON.get("result"))) {
+                return poJSON;
+            }
 
             // follow-up: only if one is being added or edited
             if (isPending(oSalesQoutationFollowUp)) {
                 keyFollowUp(lsQuotationNo, lsVersionNo);
                 poJSON = oSalesQoutationFollowUp.saveRecord();
-                if (!"success".equals((String) poJSON.get("result"))) return poJSON;
+                if (!"success".equals((String) poJSON.get("result"))) {
+                    return poJSON;
+                }
             }
 
             poJSON = new JSONObject();
@@ -402,6 +409,10 @@ public class SalesQoutation extends Parameter {
         if (poModel.getCategoryCode() == null || poModel.getCategoryCode().isEmpty()) {
             return setError("Category Code must not be empty.");
         }
+
+        poJSON = oSalesQoutationVersionGiveaways.validateGiveaways();
+        if (!"success".equals((String) poJSON.get("result"))) return poJSON;
+        poJSON = new JSONObject();
 
         poModel.setModifyingId(poGRider.Encrypt(poGRider.getUserID()));
         poModel.setModifiedDate(poGRider.getServerDate());
@@ -569,15 +580,16 @@ public class SalesQoutation extends Parameter {
         return poJSON;
     }
 
-    public JSONObject SearchMcItem(String value, int MCITemRow, int byCode) throws SQLException, GuanzonException {
+    public JSONObject SearchDetailItem(String value, int MCITemRow, String Category, int byCode) throws SQLException, GuanzonException {
         if (MCITemRow < 0 || MCITemRow >= oSalesQoutationVersion.getDetailCount()) {
             return setError("Select an item row first.");
         }
 
-        String lsSQL = SalesQoutationsMasterQueries.SQL_MCItem();
+        String lsSQL = MiscUtil.addCondition(SalesQoutationsMasterQueries.SQL_MCItem(),
+                "a.sIndstCdx = " + SQLUtil.toSQL(poModel.getIndustryCode()) + " AND a.sCategCd1 = " + SQLUtil.toSQL(Category));
         System.out.println("Executing SQL: " + lsSQL);
 
-        JSONObject loBrowse = ShowDialogFX.Browse(poGRider,
+        JSONObject  loBrowse = ShowDialogFX.Browse(poGRider,
                 lsSQL,
                 value,
                 "Stock ID»Brand»Model»Variant»Color",
@@ -613,6 +625,49 @@ public class SalesQoutation extends Parameter {
         oSalesQoutationVersion.Detail(MCITemRow).setStockId(lsStockId);
         oSalesQoutationVersion.Detail(MCITemRow).setUnitPrice(lnUnitPrice);
 
+        JSONObject loResult = new JSONObject();
+        loResult.put("result", "success");
+        return loResult;
+    }
+
+    public JSONObject SearchGawayItem(String value, int GawayITemRow, String Category, int byCode) throws SQLException, GuanzonException {
+        if (GawayITemRow < 0 || GawayITemRow >= Giveaways().getGiveawayCount()) {
+            return setError("Select an item row first.");
+        }
+
+        String lsSQL = MiscUtil.addCondition(SalesQoutationsMasterQueries.SQL_GawayItem(),
+                "a.sIndstCdx = " + SQLUtil.toSQL(poModel.getIndustryCode()));
+        System.out.println("Executing SQL: " + lsSQL);
+
+        if (Category != null && !Category.isEmpty()) {
+            lsSQL = lsSQL + " AND a.sCategCd1 = " + SQLUtil.toSQL(Category);
+        }
+        JSONObject  loBrowse = ShowDialogFX.Browse(poGRider,
+                lsSQL,
+                value,
+                "Stock ID»Barcode»Description»Color",
+                "sStockIDx»sBarCodex»xStockDesc»xColorNme",
+                "a.sStockIDx»a.sBarCodex»a.sDescript»e.sDescript",
+                byCode);
+
+        if (loBrowse == null || loBrowse.get("sStockIDx") == null) {
+            return setError("No record loaded.");
+        }
+        System.out.println("Stock ID : " + loBrowse.get("sStockIDx"));
+        System.out.println("Unit Price : " + loBrowse.get("nUnitPrce"));
+        String lsStockId = (String) loBrowse.get("sStockIDx");
+
+
+        // duplicate check: same stock id on any other row
+        for (int lnCtr = 0; lnCtr < oSalesQoutationVersion.getDetailCount(); lnCtr++) {
+            if (lnCtr == GawayITemRow) continue;
+
+            String lsExisting = oSalesQoutationVersion.Detail(lnCtr).getStockId();
+            if (lsExisting != null && lsExisting.equals(lsStockId)) {
+                return setError("Item " + lsStockId + " is already added in row " + (lnCtr + 1) + ".");
+            }
+        }
+        Giveaways().Giveaway(GawayITemRow).setStockId(lsStockId);
         JSONObject loResult = new JSONObject();
         loResult.put("result", "success");
         return loResult;

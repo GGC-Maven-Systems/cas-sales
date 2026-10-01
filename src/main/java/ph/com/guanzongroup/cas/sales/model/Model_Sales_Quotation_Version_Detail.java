@@ -164,20 +164,20 @@ public class Model_Sales_Quotation_Version_Detail extends Model {
         return (Double) getValue("nFreightx");
     }
 
-    public JSONObject setRegistrationAmount(Double registrationAmount) {
+    public JSONObject setRegistrationAmount(double registrationAmount) {
         return setValue("nRegisAmt", registrationAmount);
     }
 
-    public Double getRegistrationAmount() {
-        return (Double) getValue("nRegisAmt");
+    public double getRegistrationAmount() {
+        return Double.parseDouble(String.valueOf(getValue("nRegisAmt")));
     }
 
-    public JSONObject setInsuranceAmount(Double insuranceAmount) {
+    public JSONObject setInsuranceAmount(double insuranceAmount) {
         return setValue("nInsAmtxx", insuranceAmount);
     }
 
-    public Double getInsuranceAmount() {
-        return (Double) getValue("nInsAmtxx");
+    public double getInsuranceAmount() {
+        return Double.parseDouble(String.valueOf(getValue("nInsAmtxx")));
     }
 
     public JSONObject setWithVAT(String withVat) {

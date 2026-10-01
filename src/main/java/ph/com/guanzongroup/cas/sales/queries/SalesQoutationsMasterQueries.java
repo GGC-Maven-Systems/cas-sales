@@ -90,6 +90,8 @@ public class SalesQoutationsMasterQueries {
                 + ", a.sDescript AS xStockDesc"
                 + ", a.cRecdStat AS xStockStat"
                 + ", a.nUnitPrce"
+                + ", a.sIndstCdx"
+                + ", a.sCategCd1"
 
                 // Model
                 + ", b.sModelIDx"
@@ -118,6 +120,35 @@ public class SalesQoutationsMasterQueries {
                 + " LEFT JOIN Model b ON a.sModelIDx = b.sModelIDx"
                 + " LEFT JOIN Brand c ON b.sBrandIDx = c.sBrandIDx"
                 + " LEFT JOIN Model_Variant d ON a.sVrntIDxx = d.sVrntIDxx"
+                + " LEFT JOIN Color e ON a.sColorIDx = e.sColorIDx";
+
+        return lsSQL;
+    }
+    public static String SQL_GawayItem() {
+        String lsSQL = "SELECT "
+                // Inventory
+                + "  a.sStockIDx"
+                + ", a.sBarCodex"
+                + ", a.sDescript AS xStockDesc"
+                + ", a.cRecdStat AS xStockStat"
+                + ", a.nUnitPrce"
+                + ", a.sIndstCdx"
+                + ", a.sCategCd1"
+
+                // Brand
+                + ", c.sBrandIDx"
+                + ", c.sBrandCde"
+                + ", c.sDescript AS xBrandNme"
+                + ", c.cRecdStat AS xBrandStat"
+
+                // Color
+                + ", e.sColorIDx"
+                + ", e.sColorCde"
+                + ", e.sDescript AS xColorNme"
+                + ", e.cRecdStat AS xColorStat"
+
+                + " FROM Inventory a"
+                + " LEFT JOIN Brand c ON a.sBrandIDx = c.sBrandIDx"
                 + " LEFT JOIN Color e ON a.sColorIDx = e.sColorIDx";
 
         return lsSQL;

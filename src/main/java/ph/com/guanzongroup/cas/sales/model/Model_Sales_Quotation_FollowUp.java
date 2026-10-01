@@ -6,7 +6,11 @@
 package ph.com.guanzongroup.cas.sales.model;
 
 import org.guanzon.appdriver.agent.services.Model;
+import org.guanzon.appdriver.agent.services.ReferenceCache;
+import org.guanzon.appdriver.base.GuanzonException;
 import org.guanzon.appdriver.base.MiscUtil;
+import org.guanzon.appdriver.constant.EditMode;
+import org.guanzon.cas.client.model.Model_Client_Master;
 import org.json.simple.JSONObject;
 
 import java.sql.SQLException;
@@ -40,7 +44,7 @@ import java.util.Date;
  * @version 1.0
  */
 public class Model_Sales_Quotation_FollowUp extends Model {
-
+    private Model_Client_Master poClient;
     @Override
     public void initialize() {
         try {
@@ -153,5 +157,48 @@ public class Model_Sales_Quotation_FollowUp extends Model {
 
     public Timestamp getTimeStamp() {
         return (Timestamp) getValue("dTimeStmp");
+    }
+
+    public Model_Client_Master Client() throws SQLException, GuanzonException {
+
+        if (poClient == null) {
+            poClient = new Model_Client_Master();
+            poClient.setApplicationDriver(poGRider);
+            poClient.setXML("Model_Client_Master");
+            poClient.setTableName("Client_Master");
+            poClient.initialize();
+        }
+
+        String clientId = (String) (
+                getValue("sClientID") == null
+                        ? ""
+                        : getValue("sClientID")
+        );
+
+        if (!"".equals(clientId)) {
+
+            if (poClient.getEditMode() == EditMode.READY
+                    && poClient.getClientId().equals(clientId)) {
+                return poClient;
+            }
+
+            if (ReferenceCache.tryLoad("Client_Master", clientId, poClient)) {
+                return poClient;
+            }
+
+            poJSON = poClient.openRecord(clientId);
+
+            if ("success".equals((String) poJSON.get("result"))) {
+                ReferenceCache.store("Client_Master", clientId, poClient);
+                return poClient;
+            } else {
+                poClient.initialize();
+                return poClient;
+            }
+
+        } else {
+            poClient.initialize();
+            return poClient;
+        }
     }
 }
