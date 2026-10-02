@@ -62,6 +62,7 @@ public class SalesReservation extends Transaction {
         SalesModels model = new SalesModels(poGRider);
         modelSalesInquiryMaster = model.SalesInquiryMaster();
         paDetail = new ArrayList<>();
+        pbWithUI = true;
         return initialize();
     }
     private String psIndustryId = "";
@@ -459,7 +460,7 @@ public class SalesReservation extends Transaction {
         if(!pbWithUI){
             poJSON.put("result", "success");
             poJSON.put("message", "withUI");
-            return poJSON;
+//            return poJSON;
         }
         poJSON = object.Master().searchRecord(value, byCode);
         if ("success".equals((String) poJSON.get("result"))) {
@@ -493,7 +494,7 @@ public class SalesReservation extends Transaction {
             throws SQLException, GuanzonException, NullPointerException, CloneNotSupportedException {
         Inventory object = new InvControllers(poGRider, logwrapr).Inventory();
         object.getModel().setRecordStatus(RecordStatus.ACTIVE);
-
+        object.setRecordStatus(RecordStatus.ACTIVE);
         String brand = (Detail(row).getBrandId() != null && !Detail(row).getBrandId().isEmpty()) ? Detail(row).getBrandId() : null;
         String industry = Master().getIndustryID().isEmpty() ? null : Master().getIndustryID();
         String category = Master().getCategoryCode();
