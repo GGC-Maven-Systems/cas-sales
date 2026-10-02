@@ -60,6 +60,7 @@ public final class SalesQoutationStatic {
      */
     public static final String OPEN = "0";
 
+    public static final String CONFIRMED = "1";
     /**
      * Indicates that the quotation transaction has been confirmed.
      */

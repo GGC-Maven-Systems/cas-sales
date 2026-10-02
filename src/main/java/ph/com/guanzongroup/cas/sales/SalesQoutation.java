@@ -34,6 +34,7 @@ import ph.com.guanzongroup.cas.sales.queries.SalesQoutationsMasterQueries;
 import ph.com.guanzongroup.cas.sales.services.SalesControllers;
 import ph.com.guanzongroup.cas.sales.services.SalesModels;
 import ph.com.guanzongroup.cas.sales.status.SalesQoutationStatic;
+import ph.com.guanzongroup.cas.sales.status.SalesQoutationVersionStatic;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -473,9 +474,79 @@ public class SalesQoutation extends Parameter {
         }
     }
 
+    // ------------------------------------------------------------------
+    // confirm
+    // ------------------------------------------------------------------
+
+    /**
+     * Confirms the opened quotation and its (latest) version together. Both
+     * status updates run in one transaction: if either fails, both are rolled
+     * back. The quotation must be open (not being added or edited) and the
+     * opened version must be the latest one.
+     *
+     * @param remarks confirmation remarks (stored in the version's status history)
+     */
+    public JSONObject confirmRecord(String remarks)
+            throws SQLException, GuanzonException, CloneNotSupportedException, java.text.ParseException {
+        if (poModel.getEditMode() != EditMode.READY) {
+            return setError("No quotation was loaded, or it is still being added/edited.");
+        }
+        if (!pbLatestVersion) {
+            return setError("Only the latest version can be confirmed.");
+        }
+        if (SalesQoutationStatic.CONFIRMED.equals(poModel.getTransactionStatus())) {
+            return setError("Quotation was already confirmed.");
+        }
+        if (!SalesQoutationStatic.OPEN.equals(poModel.getTransactionStatus())) {
+            return setError("Only an open quotation can be confirmed.");
+        }
+
+        String lsQuotationNo = poModel.getTransactionNo();
+        String lsVersionNo = oSalesQoutationVersion.Master().getTransactionNo();
+
+        poGRider.beginTrans("UPDATE STATUS", "Confirm", "SalesQuotation", lsQuotationNo);
+
+        // 1. quotation master
+        poJSON = super.updateRecord();
+        if (!"success".equals((String) poJSON.get("result"))) {
+            poGRider.rollbackTrans();
+            return poJSON;
+        }
+        poModel.setTransactionStatus(SalesQoutationStatic.CONFIRMED);
+        poModel.setModifyingId(poGRider.Encrypt(poGRider.getUserID()));
+        poModel.setModifiedDate(poGRider.getServerDate());
+        poJSON = poModel.saveRecord();
+        if (!"success".equals((String) poJSON.get("result"))) {
+            poGRider.rollbackTrans();
+            return poJSON;
+        }
+
+        // 2. version (runs under this transaction, see setWithParent(true))
+        poJSON = oSalesQoutationVersion.ConfirmTransaction(remarks);
+        if (!"success".equals((String) poJSON.get("result"))) {
+            poGRider.rollbackTrans();
+            return poJSON;
+        }
+
+        poGRider.commitTrans();
+
+        // reload so the screen shows the new status of both records
+        poJSON = openRecord(lsQuotationNo, lsVersionNo);
+        if (!"success".equals((String) poJSON.get("result"))) return poJSON;
+
+        return setResult("success", "Quotation and version confirmed successfully.");
+    }
+
     private JSONObject setError(String message) {
         JSONObject loJSON = new JSONObject();
         loJSON.put("result", "error");
+        loJSON.put("message", message);
+        return loJSON;
+    }
+
+    private JSONObject setResult(String result, String message) {
+        JSONObject loJSON = new JSONObject();
+        loJSON.put("result", result);
         loJSON.put("message", message);
         return loJSON;
     }
@@ -673,6 +744,118 @@ public class SalesQoutation extends Parameter {
         return loResult;
     }
 
+    public JSONObject SearchMCItemPromo(String value, int MCItemRow, int byCode) throws SQLException, GuanzonException {
+        if (MCItemRow < 0 || MCItemRow >= oSalesQoutationVersion.getDetailCount()) {
+            return setError("Select an item row first.");
+        }
 
+        String lsSQL = MiscUtil.addCondition(SalesQoutationsMasterQueries.SQL_MCItemPromo(),
+                "a.sIndstCdx = " + SQLUtil.toSQL(poModel.getIndustryCode())
+                        + " AND b.sModelIDx = " + SQLUtil.toSQL(oSalesQoutationVersion.Detail(MCItemRow).Inventory().getModelId()));
+        System.out.println("Executing SQL: " + lsSQL);
+
+        JSONObject  loBrowse = ShowDialogFX.Browse(poGRider,
+                lsSQL,
+                value,
+                "Promo ID»Description»Promo From»Promo To",
+                "sPromIDxx»sPromDesc»dFromDate»dThruDate",
+                "a.sPromIDxx»a.sPromDesc»a.dFromDate»a.dThruDate",
+                byCode);
+
+        if (loBrowse == null || loBrowse.get("sPromIDxx") == null) {
+            return setError("No record loaded.");
+        }
+        System.out.println("Promo ID : " + loBrowse.get("sPromIDxx"));
+        System.out.println("Promo ID : " + loBrowse.get("nDiscRate"));
+        System.out.println("Promo ID : " + loBrowse.get("nDiscAmtx"));
+        System.out.println("Promo ID : " + loBrowse.get("nFreightx"));
+        oSalesQoutationVersion.Detail(MCItemRow).setPromoCode((String) loBrowse.get("sPromIDxx"));
+        oSalesQoutationVersion.Detail(MCItemRow).setDiscount(Double.parseDouble((String)loBrowse.get("nDiscRate")));
+        oSalesQoutationVersion.Detail(MCItemRow).setAdditionalDiscount(Double.parseDouble((String)loBrowse.get("nDiscAmtx")));
+        oSalesQoutationVersion.Detail(MCItemRow).setFreight(Double.parseDouble((String)loBrowse.get("nFreightx")));
+
+        JSONObject loResult = new JSONObject();
+        loResult.put("PromoDesc", (String) loBrowse.get("sPromDesc"));
+        loResult.put("result", "success");
+        return loResult;
+    }
+
+    public double computeMCItemDetail(
+            double srp,
+            int qty,
+            double discount,           // percentage
+            double additionaldiscount, // fixed amount
+            double freight,
+            double registration,
+            double insurance,
+            String vatType
+    ) {
+        // ============================================
+        // TRANSACTION TOTAL
+        // ============================================
+        double grossUnitSRP = srp * qty;
+        // ============================================
+        // SALES COMPUTATION
+        // ============================================
+        // Discount is percentage
+        double discountAmount =
+                grossUnitSRP * (discount / 100.0);
+        // Net sales after percentage discount
+        double netSales =
+                grossUnitSRP - (discountAmount + additionaldiscount);
+        if (netSales < 0) {
+            netSales = 0;
+        }
+        double totalfreight = freight * qty;
+        double totalregistration = registration * qty;
+        double totalinsurance = insurance * qty;
+        // ============================================
+        // TOTAL AMOUNT
+        // ============================================
+        double totalAmount;
+        // No VAT
+        if (vatType == null || vatType.trim().isEmpty()) {
+
+            totalAmount =
+                    netSales
+                            + totalfreight
+                            + totalregistration
+                            + totalinsurance;
+        }
+        // VAT Inclusive
+        else if (SalesQoutationVersionStatic.VatType.VAT_INCLUSIVE.equalsIgnoreCase(vatType.trim())) {
+            // Net sales already includes VAT
+            double vatableSales = netSales / 1.12;
+            double vatAmount = netSales - vatableSales;
+
+            totalAmount =
+                    netSales
+                            + totalfreight
+                            + totalregistration
+                            + totalinsurance;
+        }
+        // VAT Exclusive
+        else if (SalesQoutationVersionStatic.VatType.VAT_EXCLUSIVE.equalsIgnoreCase(vatType.trim())) {
+
+            double vatAmount = netSales * 0.12;
+
+            totalAmount =
+                    netSales
+                            + vatAmount
+                            + totalfreight
+                            + totalregistration
+                            + totalinsurance;
+        }
+        // Unknown VAT type
+        else {
+
+            totalAmount =
+                    netSales
+                            + totalfreight
+                            + totalregistration
+                            + totalinsurance;
+        }
+        return totalAmount;
+    }
 
 }

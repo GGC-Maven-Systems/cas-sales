@@ -231,4 +231,45 @@ public final class SalesQoutationVersionStatic {
             "1",
             null
     };
+
+    public static final class VatType {
+
+        /**
+         * Prevents instantiation of this utility class.
+         */
+        private VatType() {
+            throw new UnsupportedOperationException("Utility class cannot be instantiated.");
+        }
+
+        /**
+         * VAT_INCLUSIVE.
+         */
+        public static final String VAT_INCLUSIVE = "0";
+
+        /**
+         * VAT_EXCLUSIVE.
+         */
+        public static final String VAT_EXCLUSIVE = "1";
+
+
+    }
+
+    /**
+     * VAT type descriptions used in JavaFX ComboBox controls.
+     */
+    public static final ObservableList<String> VAT_TYPE_DESCRIPTION =
+            FXCollections.observableArrayList(
+                    "VAT Inclusive",
+                    "VAT Exclusive",
+                    ""
+            );
+
+    /**
+     * VAT type codes corresponding to {@link VatType}.
+     */
+    public static final String[] VAT_TYPE_CODE = {
+            "0",
+            "1",
+            null
+    };
 }

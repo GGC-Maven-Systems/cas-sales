@@ -136,32 +136,32 @@ public class Model_Sales_Quotation_Version_Detail extends Model {
         return setValue("nUnitPrce", unitPrice);
     }
 
-    public Double getUnitPrice() {
-        return (Double) getValue("nUnitPrce");
+    public double getUnitPrice() {
+        return Double.parseDouble(String.valueOf(getValue("nUnitPrce")));
     }
 
     public JSONObject setDiscount(Double discount) {
         return setValue("nDiscount", discount);
     }
 
-    public Double getDiscount() {
-        return (Double) getValue("nDiscount");
+    public double getDiscount() {
+        return Double.parseDouble(String.valueOf(getValue("nDiscount")));
     }
 
     public JSONObject setAdditionalDiscount(Double additionalDiscount) {
         return setValue("nAddDiscx", additionalDiscount);
     }
 
-    public Double getAdditionalDiscount() {
-        return (Double) getValue("nAddDiscx");
+    public double getAdditionalDiscount() {
+        return Double.parseDouble(String.valueOf(getValue("nAddDiscx")));
     }
 
     public JSONObject setFreight(Double freight) {
         return setValue("nFreightx", freight);
     }
 
-    public Double getFreight() {
-        return (Double) getValue("nFreightx");
+    public double getFreight() {
+        return Double.parseDouble(String.valueOf(getValue("nFreightx")));
     }
 
     public JSONObject setRegistrationAmount(double registrationAmount) {

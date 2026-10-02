@@ -10,6 +10,7 @@ import org.guanzon.appdriver.agent.services.Transaction;
 import org.guanzon.appdriver.base.GuanzonException;
 import org.guanzon.appdriver.base.MiscUtil;
 import org.guanzon.appdriver.base.SQLUtil;
+import org.guanzon.appdriver.constant.EditMode;
 import org.guanzon.appdriver.constant.UserRight;
 import org.json.simple.JSONObject;
 import ph.com.guanzongroup.cas.sales.model.Model_Sales_Quotation_Version_Detail;
@@ -20,6 +21,7 @@ import ph.com.guanzongroup.cas.sales.status.SalesQoutationVersionStatic;
 import javax.sql.rowset.CachedRowSet;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.text.ParseException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -220,6 +222,61 @@ public class SalesQoutationVersion extends Transaction {
             AddDetail();
         }
     }
+    /** VAT rate used to split a VAT-inclusive total into VAT sales and VAT amount. */
+    private static final double VAT_RATE = 0.12;
+
+    private double nz(Number fnValue) {
+        return fnValue == null ? 0.00 : fnValue.doubleValue();
+    }
+
+    private double round2(double fnValue) {
+        return Math.round(fnValue * 100.0) / 100.0;
+    }
+
+    /** ASSUMPTION: adjust to your VAT type codes; until then every version is treated as VAT-able. */
+    private boolean isVatable() {
+        return true;
+    }
+
+    public void computeMasterTotals() {
+        double lnTotal = 0.00;
+        double lnDiscount = 0.00;
+        double lnAddDiscount = 0.00;
+        double lnFreight = 0.00;
+
+        for (int lnCtr = 0; lnCtr <= getDetailCount() - 1; lnCtr++) {
+            Model_Sales_Quotation_Version_Detail loRow = Detail(lnCtr);
+
+            double lnQty     = nz(loRow.getQuantity());
+            double lnPrice   = nz(loRow.getUnitPrice());
+            double lnDiscAmt = lnPrice * nz(loRow.getDiscount()) / 100.0;   // discount is a percentage
+            double lnAddDisc = nz(loRow.getAdditionalDiscount());
+            double lnFrght   = nz(loRow.getFreight());
+            double lnReg     = nz(loRow.getRegistrationAmount());
+            double lnIns     = nz(loRow.getInsuranceAmount());
+
+            lnDiscount    += lnDiscAmt * lnQty;
+            lnAddDiscount += lnAddDisc;
+            lnFreight     += lnFrght * lnQty;
+            lnTotal       += (lnPrice - lnDiscAmt - lnAddDisc + lnFrght + lnReg + lnIns) * lnQty;
+        }
+
+        double lnVatSales = 0.00, lnVatAmount = 0.00, lnNonVatSales = 0.00;
+        if (isVatable()) {
+            lnVatSales  = lnTotal / (1.0 + VAT_RATE);
+            lnVatAmount = lnTotal - lnVatSales;
+        } else {
+            lnNonVatSales = lnTotal;
+        }
+
+        Master().setTransactionTotal(round2(lnTotal));
+        Master().setDiscountAmount(round2(lnDiscount));
+        Master().setAdditionalDiscount(round2(lnAddDiscount));
+        Master().setFreight(round2(lnFreight));
+        Master().setVatSales(round2(lnVatSales));
+        Master().setVatAmount(round2(lnVatAmount));
+        Master().setNonVatSales(round2(lnNonVatSales));
+    }
 
     @Override
     protected JSONObject willSave()
@@ -254,8 +311,8 @@ public class SalesQoutationVersion extends Transaction {
             Detail(lnCtr).setTransactionNo(Master().getTransactionNo());
             Detail(lnCtr).setEntryNo(lnCtr + 1);
         }
-
         Master().setEntryNo(getDetailCount());
+        computeMasterTotals();
 
         poJSON.put("result", "success");
         return poJSON;
@@ -406,6 +463,47 @@ public class SalesQoutationVersion extends Transaction {
             poJSON = setJSON("error", e.getMessage());
         }
         return lsEntry;
+    }
+
+    /**
+     * Confirms the loaded version. When the version runs under a parent
+     * ({@link #setWithParent(boolean)}), the parent owns the database
+     * transaction, so none is started or committed here.
+     *
+     * @param remarks confirmation remarks
+     */
+    public JSONObject ConfirmTransaction(String remarks)
+            throws ParseException, SQLException, GuanzonException, CloneNotSupportedException {
+        String lsStatus = SalesQoutationVersionStatic.CONFIRMED;
+
+        if (getEditMode() != EditMode.READY) {
+            return setJSON("error", "No version was loaded.");
+        }
+        if (lsStatus.equals(Master().getTransactionStatus())) {
+            return setJSON("error", "Version was already confirmed.");
+        }
+        if (!SalesQoutationVersionStatic.OPEN.equals(Master().getTransactionStatus())) {
+            return setJSON("error", "Only an open version can be confirmed.");
+        }
+
+        poJSON = isEntryOkay(lsStatus);
+        if (!"success".equals((String) poJSON.get("result"))) return poJSON;
+
+        if (!pbWthParent) {
+            poGRider.beginTrans("UPDATE STATUS", "Confirm", SOURCE_CODE, Master().getTransactionNo());
+        }
+
+        poJSON = statusChange(poMaster.getTable(), (String) poMaster.getValue("sTransNox"),
+                remarks, lsStatus, false, true);
+        if (!"success".equals((String) poJSON.get("result"))) {
+            if (!pbWthParent) poGRider.rollbackTrans();
+            return poJSON;
+        }
+
+        if (!pbWthParent) poGRider.commitTrans();
+
+        poJSON = setJSON("success", "Version confirmed successfully.");
+        return poJSON;
     }
 
     private JSONObject setJSON(String fsResult, String fsMessage) {
