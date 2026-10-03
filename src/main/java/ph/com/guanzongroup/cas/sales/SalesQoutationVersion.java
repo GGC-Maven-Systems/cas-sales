@@ -13,6 +13,9 @@ import org.guanzon.appdriver.base.SQLUtil;
 import org.guanzon.appdriver.constant.EditMode;
 import org.guanzon.appdriver.constant.UserRight;
 import org.json.simple.JSONObject;
+import ph.com.guanzongroup.cas.cashflow.model.Model_Recurring_Expense_Payment_Monitor;
+import ph.com.guanzongroup.cas.cashflow.services.CashflowModels;
+import ph.com.guanzongroup.cas.cashflow.status.PaymentRequestStatus;
 import ph.com.guanzongroup.cas.sales.model.Model_Sales_Quotation_Version_Detail;
 import ph.com.guanzongroup.cas.sales.model.Model_Sales_Quotation_Version_Master;
 import ph.com.guanzongroup.cas.sales.services.SalesModels;
@@ -26,6 +29,9 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
+
+import static ph.com.guanzongroup.cas.cashflow.status.PaymentRequestStaticData.recurring_expense_payment;
 
 /**
  * Transaction controller for Sales Quotation Version
@@ -283,11 +289,29 @@ public class SalesQoutationVersion extends Transaction {
             throws SQLException, GuanzonException, CloneNotSupportedException {
         poJSON = new JSONObject();
 
+
         Master().setModifyingId(poGRider.Encrypt(poGRider.getUserID()));
         Master().setModifiedDate(poGRider.getServerDate());
         // Transaction.saveTransaction() only sets pdModified for new records; without this an update writes a null dModified
-        pdModified = poGRider.getServerDate();
 
+        if (Master().getValidThruDate() != null
+                && Master().getValidThruDate().before(poGRider.getServerDate())) {
+            poJSON.put("result", "error");
+            poJSON.put("message",  "This version expired on "
+                    + SQLUtil.dateFormat(Master().getValidThruDate(), SQLUtil.FORMAT_SHORT_DATE)
+                    + ". Create a new version to continue.");
+            return poJSON;
+
+        }
+
+        if (Master().getExpectedDate() != null
+                && Master().getExpectedDate().before(poGRider.getServerDate())) {
+            poJSON.put("result", "error");
+            poJSON.put("message",  "The expected date ("
+                    + SQLUtil.dateFormat(Master().getExpectedDate(), SQLUtil.FORMAT_SHORT_DATE)
+                    + ") has already passed. Update the expected date to continue.");
+            return poJSON;
+        }
         // drop rows without an item
         Iterator<Model> detail = Detail().iterator();
         while (detail.hasNext()) {
@@ -485,14 +509,17 @@ public class SalesQoutationVersion extends Transaction {
         if (!SalesQoutationVersionStatic.OPEN.equals(Master().getTransactionStatus())) {
             return setJSON("error", "Only an open version can be confirmed.");
         }
+        if (poGRider.getServerDate().equals(Master().getValidThruDate())) {
+            return setJSON("error", "Version was already expired.");
+        }
 
         poJSON = isEntryOkay(lsStatus);
         if (!"success".equals((String) poJSON.get("result"))) return poJSON;
 
-        if (!pbWthParent) {
-            poGRider.beginTrans("UPDATE STATUS", "Confirm", SOURCE_CODE, Master().getTransactionNo());
-        }
-
+//        if (!pbWthParent) {
+//            poGRider.beginTrans("UPDATE STATUS", "Confirm", SOURCE_CODE, Master().getTransactionNo());
+//        }
+        poGRider.beginTrans("UPDATE STATUS", "Confirm", SOURCE_CODE, Master().getTransactionNo());
         poJSON = statusChange(poMaster.getTable(), (String) poMaster.getValue("sTransNox"),
                 remarks, lsStatus, false, true);
         if (!"success".equals((String) poJSON.get("result"))) {
@@ -504,6 +531,95 @@ public class SalesQoutationVersion extends Transaction {
 
         poJSON = setJSON("success", "Version confirmed successfully.");
         return poJSON;
+    }
+    public JSONObject LostTransaction(String remarks)
+            throws ParseException, SQLException, GuanzonException, CloneNotSupportedException {
+        String lsStatus = SalesQoutationVersionStatic.REJECTED;
+
+        if (getEditMode() != EditMode.READY) {
+            return setJSON("error", "No version was loaded.");
+        }
+        if (lsStatus.equals(Master().getTransactionStatus())) {
+            return setJSON("error", "Version was already rejected/lost.");
+        }
+
+        poJSON = isEntryOkay(lsStatus);
+        if (!"success".equals((String) poJSON.get("result"))) return poJSON;
+
+//        if (!pbWthParent) {
+//            poGRider.beginTrans("UPDATE STATUS", "Confirm", SOURCE_CODE, Master().getTransactionNo());
+//        }
+        poGRider.beginTrans("UPDATE STATUS", "Confirm", SOURCE_CODE, Master().getTransactionNo());
+        poJSON = statusChange(poMaster.getTable(), (String) poMaster.getValue("sTransNox"),
+                remarks, lsStatus, false, true);
+        if (!"success".equals((String) poJSON.get("result"))) {
+            if (!pbWthParent) poGRider.rollbackTrans();
+            return poJSON;
+        }
+
+        if (!pbWthParent) poGRider.commitTrans();
+
+        poJSON = setJSON("success", "Version marked as lost successfully.");
+        return poJSON;
+    }
+    public JSONObject VoidTransaction(String remarks)
+            throws ParseException, SQLException, GuanzonException, CloneNotSupportedException {
+        String lsStatus = SalesQoutationVersionStatic.VOID;
+
+        if (getEditMode() != EditMode.READY) {
+            return setJSON("error", "No version was loaded.");
+        }
+        if (lsStatus.equals(Master().getTransactionStatus())) {
+            return setJSON("error", "Version was already voided.");
+        }
+
+        poJSON = isEntryOkay(lsStatus);
+        if (!"success".equals((String) poJSON.get("result"))) return poJSON;
+
+//        if (!pbWthParent) {
+//            poGRider.beginTrans("UPDATE STATUS", "Confirm", SOURCE_CODE, Master().getTransactionNo());
+//        }
+        poGRider.beginTrans("UPDATE STATUS", "Confirm", SOURCE_CODE, Master().getTransactionNo());
+        poJSON = statusChange(poMaster.getTable(), (String) poMaster.getValue("sTransNox"),
+                remarks, lsStatus, false, true);
+        if (!"success".equals((String) poJSON.get("result"))) {
+            if (!pbWthParent) poGRider.rollbackTrans();
+            return poJSON;
+        }
+
+        if (!pbWthParent) poGRider.commitTrans();
+
+        poJSON = setJSON("success", "Version marked as void successfully.");
+        return poJSON;
+    }
+
+    /**
+     * Marks a version as SUPERCEDED. Used when a new version replaces it, so the
+     * version number is passed in (the old version is not the one loaded here).
+     * Runs inside the parent's transaction, so none is started or committed.
+     *
+     * @param versionNo version transaction no. to supersede
+     * @param remarks   status history remarks
+     */
+    public JSONObject SupersedeTransaction(String remarks)
+            throws ParseException, SQLException, GuanzonException, CloneNotSupportedException {
+        String lsStatus = SalesQoutationVersionStatic.SUPERCEDED;
+
+        if (getEditMode() != EditMode.READY) {
+            return setJSON("error", "No version was loaded.");
+        }
+        if (lsStatus.equals(Master().getTransactionStatus())) {
+            return setJSON("error", "Version was already superseded.");
+        }
+
+        // runs under the parent's transaction (setWithParent(true)), so none is started or committed here
+        poJSON = statusChange(poMaster.getTable(), (String) poMaster.getValue("sTransNox"),
+                remarks, lsStatus, false, true);
+        if (!"success".equals((String) poJSON.get("result"))) {
+            return poJSON;
+        }
+
+        return setJSON("success", "Version superseded successfully.");
     }
 
     private JSONObject setJSON(String fsResult, String fsMessage) {

@@ -396,4 +396,67 @@ public class SalesQoutationsMasterQueries {
                 + "    AddOnOrder "
                 + "  , TransactionNo ";
     }
+
+    /**
+     * Returns the SQL statement used to list Sales Quotations for the
+     * quotation list (tree table parent rows).
+     *
+     * <p>
+     * Retrieves the quotation number, date, status, client and client name
+     * from {@code Sales_Quotation_Master} joined with {@code Client_Master}.
+     * No condition or ordering is included; the caller adds them.
+     * </p>
+     *
+     * @return the SQL query used to list Sales Quotations
+     */
+    public static String SQL_QuotationList() {
+        return " SELECT "
+                + "    a.sTransNox "
+                + "  , a.dTransact "
+                + "  , a.cTranStat "
+                + "  , a.nVersionx "
+                + "  , a.sClientID "
+                + "  , IFNULL(b.sCompnyNm, '') AS sCompnyNm "
+                + "  , v.sTransNox AS sVersnNox "
+                + "  , v.cTranStat AS cVersStat "
+                + " FROM Sales_Quotation_Master a "
+                + " LEFT JOIN Client_Master b "
+                + "        ON b.sClientID = a.sClientID "
+                + " INNER JOIN Sales_Quotation_Version_Master v "
+                + "        ON v.sParentID = a.sTransNox "
+                + "       AND v.sTransNox = ( SELECT MAX(v2.sTransNox) "
+                + "                             FROM Sales_Quotation_Version_Master v2 "
+                + "                            WHERE v2.sParentID = a.sTransNox ) ";
+    }
+
+
+    /**
+     * Returns the SQL statement used to list the versions of Sales
+     * Quotations for the quotation list (tree table child rows).
+     *
+     * <p>
+     * Retrieves each version's number, parent quotation number, date,
+     * status, total amount and valid-through date from
+     * {@code Sales_Quotation_Version_Master}. The parent quotation and its
+     * client are joined as {@code a} and {@code b}, so the same conditions
+     * used with {@link #SQL_QuotationList()} can be applied. No condition or
+     * ordering is included; the caller adds them.
+     * </p>
+     *
+     * @return the SQL query used to list Sales Quotation versions
+     */
+    public static String SQL_QuotationVersionList() {
+        return " SELECT "
+                + "    v.sTransNox "
+                + "  , v.sParentID "
+                + "  , v.dTransact "
+                + "  , v.cTranStat "
+                + "  , v.nTranTotl "
+                + "  , v.dValdThru "
+                + " FROM Sales_Quotation_Version_Master v "
+                + " INNER JOIN Sales_Quotation_Master a "
+                + "        ON a.sTransNox = v.sParentID "
+                + " LEFT JOIN Client_Master b "
+                + "        ON b.sClientID = a.sClientID ";
+    }
 }
