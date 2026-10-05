@@ -259,6 +259,7 @@ public class SalesQoutation extends Parameter {
         oSalesQoutationFollowUp = null;
         oSalesQoutationVersionGiveaways.clearGiveaways();
         pbLatestVersion = true;
+        psSupersedeVersionNo = "";
 
         poJSON = super.openRecord(Id);                       // quotation master
         if (!"success".equals((String) poJSON.get("result"))) return poJSON;
@@ -608,7 +609,21 @@ public class SalesQoutation extends Parameter {
             MiscUtil.close(loRS);
         }
     }
-
+    /** Version number (1, 2, 3...) of a version = how many versions of the quotation are at or below it. */
+    public int getVersionNumber(String quotationNo, String versionNo) throws SQLException {
+        String lsSQL = "SELECT COUNT(*) nVersionNo FROM " + oSalesQoutationVersion.Master().getTable()
+                + " WHERE sParentID = " + SQLUtil.toSQL(quotationNo)
+                + " AND sTransNox <= " + SQLUtil.toSQL(versionNo);
+        ResultSet loRS = poGRider.executeQuery(lsSQL);
+        try {
+            return loRS.next() ? loRS.getInt("nVersionNo") : 0;
+        } finally {
+            MiscUtil.close(loRS);
+        }
+    }
+    public boolean isNewVersionPending() {
+        return !psSupersedeVersionNo.isEmpty();
+    }
     // ------------------------------------------------------------------
     // confirm
     // ------------------------------------------------------------------
@@ -711,7 +726,6 @@ public class SalesQoutation extends Parameter {
         if (poModel.getEditMode() != EditMode.READY) {
             return setError("No quotation was loaded, or it is still being added/edited.");
         }
-
         String lsQuotationNo = poModel.getTransactionNo();
         String lsVersionNo = oSalesQoutationVersion.Master().getTransactionNo();
 
@@ -726,14 +740,13 @@ public class SalesQoutation extends Parameter {
             poGRider.rollbackTrans();
             return poJSON;
         }
-
         poGRider.commitTrans();
 
         // reload so the screen shows the new status of both records
         poJSON = openRecord(lsQuotationNo, lsVersionNo);
         if (!"success".equals((String) poJSON.get("result"))) return poJSON;
 
-        return setResult("success", "Quotation and version marked as lost successfully.");
+        return setResult("success", "Quotation and version successfully voided.");
     }
 
     private JSONObject setError(String message) {
@@ -1083,9 +1096,9 @@ public class SalesQoutation extends Parameter {
         if (!pbLatestVersion) {
             return setError("Only the latest version can be used to create a new version.");
         }
-        if (!SalesQoutationStatic.OPEN.equals(poModel.getTransactionStatus())) {
-            return setError("Only an open quotation can have a new version.");
-        }
+//        if (!SalesQoutationStatic.OPEN.equals(poModel.getTransactionStatus())) {
+//            return setError("Only an open quotation can have a new version.");
+//        }
 
         String lsOldVersionNo = oSalesQoutationVersion.Master().getTransactionNo();
 
