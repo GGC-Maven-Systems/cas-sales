@@ -451,7 +451,7 @@ public class VehicleDescription extends Parameter {
         }
     }    
     
-    public JSONObject SearchBrand(String value, boolean byCode, int row)
+    public JSONObject SearchBrand(String value, boolean byCode)
             throws ExceptionInInitializerError,
             SQLException,
             GuanzonException {
