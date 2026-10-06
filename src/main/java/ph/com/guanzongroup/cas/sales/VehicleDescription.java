@@ -476,7 +476,7 @@ public class VehicleDescription extends Parameter {
         Model object = new ParamControllers(poGRider, logwrapr).Model();
         object.setRecordStatus(RecordStatus.ACTIVE);
 
-        poJSON = object.searchRecord(value, byCode, psIndustryId);
+        poJSON = object.searchRecord(value, byCode, psBrandId);
         if ("success".equals((String) poJSON.get("result"))) {
             poModel.setModelId(object.getModel().getModelId());
             psBrandId = poModel.Model().getBrandId();
