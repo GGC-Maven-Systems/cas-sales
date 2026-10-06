@@ -434,11 +434,6 @@ public class AddOnType extends Parameter {
                 }
             }
         }
-        
-        if(getEditMode() == EditMode.ADDNEW){
-            poModel.setEntryBy(poGRider.Encrypt(poGRider.getUserID()));
-            poModel.setEntryDate(poGRider.getServerDate());
-        }
     
         poJSON = setJSON("success", "success");
         return poJSON;
@@ -475,7 +470,6 @@ public class AddOnType extends Parameter {
         return  "SELECT " +
             "  a.sAddTypex " +
             ", a.sAddTypNm " +
-            ", a.nSortOrdx " +
             ", a.cRecdStat " +
             ", a.sModified " +
             ", a.dModified " +

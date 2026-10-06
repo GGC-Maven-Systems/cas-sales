@@ -31,9 +31,7 @@ public class Model_Vehicle_AddOn_Type extends Model {
             MiscUtil.initRowSet(poEntity);
 
             // assign default values
-            poEntity.updateNull("dEntryDte");
             poEntity.updateNull("dModified");
-            poEntity.updateObject("nSortOrdx", 0);
             poEntity.updateObject("cSourceTx", Logical.NO);
             poEntity.updateString("cRecdStat", Logical.NO);
             // end - assign default values
@@ -66,17 +64,6 @@ public class Model_Vehicle_AddOn_Type extends Model {
         return (String) getValue("sAddTypNm");
     }
 
-    public JSONObject setSortOrder(int sortOrder) {
-        return setValue("nSortOrdx", sortOrder);
-    }
-
-    public int getSortOrder() {
-        if (getValue("nSortOrdx") == null || "".equals(getValue("nSortOrdx"))) {
-            return 0;
-        }
-        return Integer.parseInt(getValue("nSortOrdx").toString());
-    }
-
     public JSONObject setSource(String source) {
         return setValue("cSourceTx", source);
     }
@@ -84,23 +71,7 @@ public class Model_Vehicle_AddOn_Type extends Model {
     public String getSource() {
         return (String) getValue("cSourceTx");
     }
-
-    public JSONObject setEntryBy(String entryBy) {
-        return setValue("sEntryByx", entryBy);
-    }
-
-    public String getEntryBy() {
-        return (String) getValue("sEntryByx");
-    }
-
-    public JSONObject setEntryDate(Date entryDate) {
-        return setValue("dEntryDte", entryDate);
-    }
-
-    public Date getEntryDate() {
-        return (Date) getValue("dEntryDte");
-    }
-
+    
     public JSONObject setRecordStatus(boolean recordStatus) {
         return setValue("cRecdStat", recordStatus ? "1" : "0");
     }
