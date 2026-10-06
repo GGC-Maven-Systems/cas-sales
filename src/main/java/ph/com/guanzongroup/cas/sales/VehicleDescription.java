@@ -20,6 +20,7 @@ import org.guanzon.appdriver.constant.UserRight;
 import org.guanzon.cas.inv.model.Model_Inventory;
 import org.guanzon.cas.inv.services.InvModels;
 import org.guanzon.cas.parameter.Brand;
+import org.guanzon.cas.parameter.Color;
 import org.guanzon.cas.parameter.Model;
 import org.guanzon.cas.parameter.model.Model_Brand;
 import org.guanzon.cas.parameter.model.Model_Model_Variant;
@@ -479,6 +480,22 @@ public class VehicleDescription extends Parameter {
         if ("success".equals((String) poJSON.get("result"))) {
             poModel.setModelId(object.getModel().getModelId());
             psBrandId = poModel.Model().getBrandId();
+        }
+        return poJSON;
+    }
+    
+    public JSONObject SearchColor(String value, boolean byCode)
+            throws ExceptionInInitializerError,
+            SQLException,
+            GuanzonException {
+        poJSON = new JSONObject();
+        
+        Color object = new ParamControllers(poGRider, logwrapr).Color();
+        object.setRecordStatus(RecordStatus.ACTIVE);
+
+        poJSON = object.searchRecord(value, byCode);
+        if ("success".equals((String) poJSON.get("result"))) {
+            poModel.setColorId(object.getModel().getColorId());
         }
         return poJSON;
     }
