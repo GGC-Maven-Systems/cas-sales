@@ -4,7 +4,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import javafx.application.Application.Parameters;
 import javax.sql.rowset.CachedRowSet;
 import javax.sql.rowset.RowSetFactory;
 import javax.sql.rowset.RowSetProvider;
@@ -17,8 +16,6 @@ import org.guanzon.appdriver.constant.EditMode;
 import org.guanzon.appdriver.constant.Logical;
 import org.guanzon.appdriver.constant.RecordStatus;
 import org.guanzon.appdriver.constant.UserRight;
-import org.guanzon.cas.inv.model.Model_Inventory;
-import org.guanzon.cas.inv.services.InvModels;
 import org.guanzon.cas.parameter.Brand;
 import org.guanzon.cas.parameter.Color;
 import org.guanzon.cas.parameter.Model;
@@ -29,7 +26,6 @@ import org.guanzon.cas.parameter.services.ParamControllers;
 import org.guanzon.cas.parameter.services.ParamModels;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.ParseException;
-import ph.com.guanzongroup.cas.sales.status.VehicleDescriptionStatus;
 
 public class VehicleDescription extends Parameter {
     Model_Model_Variant poModel;
@@ -47,32 +43,6 @@ public class VehicleDescription extends Parameter {
         poModelVariantInsurance = new ParamModels(poGRider).ModelVariantInsurance();
         
         super.initialize();
-    }
-    
-    /**
-    * Creates a JSONObject with "result" and "message" fields.
-    *
-    * @param fsResult  The result value (e.g., "success", "error")
-    * @param fsMessage The message describing the result
-    * @return JSONObject containing the result and message
-    */
-    private JSONObject setJSON(String fsResult, String fsMessage) {
-        JSONObject loJSON = new JSONObject();
-        loJSON.put("result", fsResult);
-        loJSON.put("message", fsMessage);
-        return loJSON;
-    }
-
-    /**
-     * Checks whether a JSONObject indicates a successful result.
-     *
-     * Returns true if the "result" field equals "success" or is not "error".
-     *
-     * @param foJSON The JSONObject to check
-     * @return true if successful, false otherwise
-     */
-    public boolean isJSONSuccess(JSONObject foJSON) {
-        return ("success".equals((String) foJSON.get("result")) || !"error".equals((String) foJSON.get("result")));
     }
     
     /**
@@ -296,6 +266,32 @@ public class VehicleDescription extends Parameter {
         return poJSON;
     }
     
+    /**
+    * Creates a JSONObject with "result" and "message" fields.
+    *
+    * @param fsResult  The result value (e.g., "success", "error")
+    * @param fsMessage The message describing the result
+    * @return JSONObject containing the result and message
+    */
+    private JSONObject setJSON(String fsResult, String fsMessage) {
+        JSONObject loJSON = new JSONObject();
+        loJSON.put("result", fsResult);
+        loJSON.put("message", fsMessage);
+        return loJSON;
+    }
+
+    /**
+     * Checks whether a JSONObject indicates a successful result.
+     *
+     * Returns true if the "result" field equals "success" or is not "error".
+     *
+     * @param foJSON The JSONObject to check
+     * @return true if successful, false otherwise
+     */
+    public boolean isJSONSuccess(JSONObject foJSON) {
+        return ("success".equals((String) foJSON.get("result")) || !"error".equals((String) foJSON.get("result")));
+    }
+    
     private boolean checkEmpty(String fsValue){
         return fsValue == null || "".equals(fsValue);
     }
@@ -307,6 +303,7 @@ public class VehicleDescription extends Parameter {
     @Override
     public JSONObject isEntryOkay() throws SQLException{
         poJSON = new JSONObject();
+        poModelVariantInsurance.setVariantId(poModel.getVariantId());
         
         if (checkEmpty(poModel.getDescription())){
             poJSON.put("result", "error");
@@ -506,27 +503,28 @@ public class VehicleDescription extends Parameter {
             GuanzonException {
         poJSON = new JSONObject();
        
-        Model_Inventory loObj = new InvModels(poGRider).Inventory();
-        loObj.initialize();
-        
-        poJSON = loObj.newRecord();
-        if(!isJSONSuccess(poJSON)){
-            return poJSON;
-        }
-        
-        loObj.setIndustryCode(psIndustryId);
-        loObj.setCategoryFirstLevelId(psCategoryId);
-        loObj.setBrandId(poModel.Model().getBrandId());
-        loObj.setModelId(poModel.getModelId());
-        loObj.setVariantId(poModel.getVariantId());
-        loObj.setColorId(poModel.getColorId());
-        loObj.setDescription(poModel.getDescription());
-        loObj.isSerialized(true);
-        
-        poJSON = loObj.saveRecord();
-        if(!isJSONSuccess(poJSON)){
-            return poJSON;
-        }
+//        Model_Inventory loObj = new InvModels(poGRider).Inventory();
+//        loObj.initialize();
+//        
+//        poJSON = loObj.newRecord();
+//        if(!isJSONSuccess(poJSON)){
+//            return poJSON;
+//        }
+//        
+//        loObj.setIndustryCode(psIndustryId);
+//        loObj.setCategoryFirstLevelId(psCategoryId);
+//        loObj.setBrandId(poModel.Model().getBrandId());
+//        loObj.setModelId(poModel.getModelId());
+//        loObj.setVariantId(poModel.getVariantId());
+//        loObj.setColorId(poModel.getColorId());
+//        loObj.setDescription(poModel.getDescription());
+//        loObj.setBarCode(poModel.getDescription().replace(" ", "")); //Replace space
+//        loObj.isSerialized(true);
+//        
+//        poJSON = loObj.saveRecord();
+//        if(!isJSONSuccess(poJSON)){
+//            return poJSON;
+//        }
         
         return poJSON;
     }
@@ -536,7 +534,7 @@ public class VehicleDescription extends Parameter {
             throws SQLException,
             GuanzonException {
         poJSON = new JSONObject();
-        
+        poModelVariantInsurance.setVariantId(poModel.getVariantId());
         poJSON = poModelVariantInsurance.saveRecord();
         if (!isJSONSuccess(poJSON)) {
             return poJSON;
