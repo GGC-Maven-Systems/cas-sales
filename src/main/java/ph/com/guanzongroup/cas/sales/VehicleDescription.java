@@ -4,6 +4,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.sql.rowset.CachedRowSet;
 import javax.sql.rowset.RowSetFactory;
 import javax.sql.rowset.RowSetProvider;
@@ -16,6 +18,8 @@ import org.guanzon.appdriver.constant.EditMode;
 import org.guanzon.appdriver.constant.Logical;
 import org.guanzon.appdriver.constant.RecordStatus;
 import org.guanzon.appdriver.constant.UserRight;
+import org.guanzon.cas.inv.model.Model_Inventory;
+import org.guanzon.cas.inv.services.InvModels;
 import org.guanzon.cas.parameter.Brand;
 import org.guanzon.cas.parameter.Color;
 import org.guanzon.cas.parameter.Model;
@@ -246,10 +250,9 @@ public class VehicleDescription extends Parameter {
             }
         }
         
-
         poGRider.beginTrans("UPDATE STATUS", "DeactivateRecord", SOURCE_CODE, poModel.getVariantId());
         
-        poJSON = generateInventory();
+        poJSON = generateInventory(lsStatus);
         if (!isJSONSuccess(poJSON)){
             return poJSON;
         }
@@ -497,46 +500,110 @@ public class VehicleDescription extends Parameter {
         return poJSON;
     }
     
-    private JSONObject generateInventory()
+    private JSONObject generateInventory(String fsRecordStatus)
             throws ExceptionInInitializerError,
             SQLException,
-            GuanzonException {
+            GuanzonException,
+            CloneNotSupportedException {
         poJSON = new JSONObject();
        
-//        Model_Inventory loObj = new InvModels(poGRider).Inventory();
-//        loObj.initialize();
-//        
-//        poJSON = loObj.newRecord();
-//        if(!isJSONSuccess(poJSON)){
-//            return poJSON;
-//        }
-//        
-//        loObj.setIndustryCode(psIndustryId);
-//        loObj.setCategoryFirstLevelId(psCategoryId);
-//        loObj.setBrandId(poModel.Model().getBrandId());
-//        loObj.setModelId(poModel.getModelId());
-//        loObj.setVariantId(poModel.getVariantId());
-//        loObj.setColorId(poModel.getColorId());
-//        loObj.setDescription(poModel.getDescription());
-//        loObj.setBarCode(poModel.getDescription().replace(" ", "")); //Replace space
-//        loObj.isSerialized(true);
-//        
-//        poJSON = loObj.saveRecord();
-//        if(!isJSONSuccess(poJSON)){
-//            return poJSON;
-//        }
+        Model_Inventory loObj = new InvModels(poGRider).Inventory();
+        loObj.initialize();
+        
+        if(getEditMode() == EditMode.ADDNEW){
+            poJSON = loObj.newRecord();
+            if(!isJSONSuccess(poJSON)){
+                return poJSON;
+            }
+
+            loObj.setIndustryCode(psIndustryId);
+            loObj.setCategoryFirstLevelId(psCategoryId);
+            loObj.setBarCode(poModel.getDescription().replace(" ", "")); //Replace space
+            loObj.isSerialized(true);
+            
+            poJSON = loObj.saveRecord();
+            if(!isJSONSuccess(poJSON)){
+                return poJSON;
+            }
+        } else {
+            //Find the inventory
+            String lsInvId = findInventory(loObj);
+            if(!checkEmpty(lsInvId)){
+                poJSON = loObj.openRecord(lsInvId);
+                if(!isJSONSuccess(poJSON)){
+                    return poJSON;
+                }
+                
+                poJSON = loObj.updateRecord();
+                if(!isJSONSuccess(poJSON)){
+                    return poJSON;
+                }
+            }
+            
+        }
+        
+        if(loObj.getEditMode() == EditMode.ADDNEW || loObj.getEditMode() == EditMode.UPDATE){
+            
+            loObj.setBrandId(poModel.Model().getBrandId());
+            loObj.setModelId(poModel.getModelId());
+            loObj.setVariantId(poModel.getVariantId());
+            loObj.setColorId(poModel.getColorId());
+            loObj.setDescription(poModel.getDescription());
+            loObj.setRecordStatus(fsRecordStatus);
+
+            poJSON = loObj.saveRecord();
+            if(!isJSONSuccess(poJSON)){
+                return poJSON;
+            }
+        }
         
         return poJSON;
     }
+    
+    public String findInventory(Model_Inventory loObj) throws SQLException, GuanzonException, CloneNotSupportedException {
+        poJSON = new JSONObject();
+       
+        String lsSQL = MiscUtil.makeSelect(loObj);
+        lsSQL = MiscUtil.addCondition(lsSQL," sIndstCdx =  " + SQLUtil.toSQL(psIndustryId)
+                       + " AND sVrntIDxx =  " + SQLUtil.toSQL(poModel.getVariantId())
+                       + " AND cRecdStat =  " + SQLUtil.toSQL(RecordStatus.ACTIVE)
+                    );
+        
+        System.out.println("findInventory SQL: " + lsSQL);
+        ResultSet loRS = poGRider.executeQuery(lsSQL);
+        if (MiscUtil.RecordCount(loRS) <= 0) {
+            return "";
+        }
+        String lsInvId = "";
+        if(loRS.next()) {
+            lsInvId = loRS.getString("sStockIDx");
+        }
+        MiscUtil.close(loRS);
+        
+        return lsInvId;
+    }
+    
     
     @Override
     protected JSONObject saveOthers()
             throws SQLException,
             GuanzonException {
-        poJSON = new JSONObject();
-        poModelVariantInsurance.setVariantId(poModel.getVariantId());
-        poJSON = poModelVariantInsurance.saveRecord();
-        if (!isJSONSuccess(poJSON)) {
+        try {
+            poJSON = new JSONObject();
+            poModelVariantInsurance.setVariantId(poModel.getVariantId());
+            poJSON = poModelVariantInsurance.saveRecord();
+            if (!isJSONSuccess(poJSON)) {
+                return poJSON;
+            }
+            
+            poJSON = generateInventory(poModel.getRecordStatus());
+            if (!isJSONSuccess(poJSON)){
+                return poJSON;
+            }
+            
+        } catch (ExceptionInInitializerError | CloneNotSupportedException ex) {
+            Logger.getLogger(getClass().getName()).log(Level.SEVERE, MiscUtil.getException(ex), ex);
+            poJSON = setJSON("error", MiscUtil.getException(ex));
             return poJSON;
         }
         
