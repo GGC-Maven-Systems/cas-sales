@@ -392,7 +392,13 @@ public class VehicleDescription extends Parameter {
                 byCode ? 0 : 1);
 
         if (poJSON != null) {
-            return poModel.openRecord((String) poJSON.get("sVrntIDxx"));
+            String lsVrnID =  (String) poJSON.get("sVrntIDxx");
+            poJSON = poModel.openRecord(lsVrnID);
+            if(!isJSONSuccess(poJSON)){
+               return poJSON;
+            }else{
+               return poModelVariantInsurance.openRecord(lsVrnID);
+            }
         } else {
             poJSON = new JSONObject();
             poJSON.put("result", "error");
