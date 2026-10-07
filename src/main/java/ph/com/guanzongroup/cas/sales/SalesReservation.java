@@ -44,6 +44,9 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.guanzon.appdriver.base.CommonUtils;
+import org.guanzon.appdriver.constant.ClientType;
+import org.guanzon.cas.client.ClientGUI;
 
 public class SalesReservation extends Transaction {
 
@@ -446,30 +449,99 @@ public class SalesReservation extends Transaction {
         return poJSON;
     }
 
-    public JSONObject SearchClient(String value, boolean byCode)
+   public JSONObject SearchClient(String value, boolean byCode)
             throws SQLException,
-            GuanzonException {
+            GuanzonException,
+            Exception {
         poJSON = new JSONObject();
 
-        if (value.isEmpty()) {
-            Master().setClientID(null);
-        }
-        Client object = new ClientControllers(poGRider, logwrapr).Client();
-        object.Master().setRecordStatus(RecordStatus.ACTIVE);
-        object.Master().setClientType("1");
-        if(!pbWithUI){
-            poJSON.put("result", "success");
-            poJSON.put("message", "withUI");
-//            return poJSON;
-        }
-        poJSON = object.Master().searchRecord(value, byCode);
+        JSONObject loResult = new JSONObject();
+        String lsClientId = Master().getClientID();
+        lsClientId = (lsClientId == null || lsClientId.isEmpty()) ? "" : lsClientId;
+
+        //initialize Client GUI
+        ClientGUI loClient = new ClientGUI();
+
+        loClient.setGRider(poGRider);
+        loClient.setLogWrapper(null);
+        loClient.setClientType("1");
+        loClient.setCategoryCode(Master().getCategoryCode());
+        //searchRecord(fsValue,fbByCode) will run make sure to set client and bycode
+        //bycode true client id
+        //bycode false company
+        //set search by code
+        loClient.setByCode(false);
+        poJSON = loClient.searchRecord(value, byCode);
         if ("success".equals((String) poJSON.get("result"))) {
-            Master().setClientID(object.Master().getModel().getClientId());
-            Master().setAddressID(object.ClientAddress().getModel().getAddressId());
-//            Master().setContactID(object.Mobile().getModel().getClientId());
+            loClient.setClientId((String) poJSON.get("clientId"));
+            //Load Client of Existing 
+
+            //load record
+            CommonUtils.showModal(loClient);
+        } else {
+            poJSON = new JSONObject();
+            //Maynard 2026-10-07
+            poJSON = addClient();
+            if ("success".equals((String) poJSON.get("result"))) {
+                return poJSON;
+            }
+
         }
 
+        //load if button
+        if (!loClient.isCancelled()) {
+            Master().setClientID(loClient.getClientId());
+            Master().setAddressID(Master().Client_Address().getAddressId()); //TODO
+        }
+
+
         return poJSON;
+    }
+
+   public JSONObject addClient() throws SQLException, GuanzonException, Exception {
+        //initialize new json for result
+        JSONObject loResult = new JSONObject();
+
+        String lsClientId = Master().getClientID();
+        lsClientId = (lsClientId == null || lsClientId.isEmpty()) ? "" : lsClientId;
+
+        //initialize Client GUI
+        ClientGUI loClient = new ClientGUI();
+
+        loClient.setGRider(poGRider);
+        loClient.setLogWrapper(null);
+
+        loClient.setClientType("1");
+
+        //searchRecord(fsValue,fbByCode) will run make sure to set client and bycode
+        //bycode true client id
+        //bycode false company
+        //set search by code
+        loClient.setByCode(false);
+
+        //set cilent empty, to create a new record
+        //Arsiela - 05-22-2026 - Load Client of Create new Client
+        loClient.setClientId(lsClientId);
+
+        //load record
+        CommonUtils.showModal(loClient);
+
+        //load if button
+        if (!loClient.isCancelled()) {
+            lsClientId = loClient.getClient().getModel().getClientId();
+//            //check existing record of client id to other supplier accreditation records
+//            loResult = checkDuplicateAgent(lsClientId); //Moved script to method by Arsiela 05-23-2026 09:19 AM
+//            if ("error".equals((String) loResult.get("result"))) {
+//                return loResult;
+//            }
+
+            //set company id for supplier accreditation
+            Master().setClientID(lsClientId != null ? lsClientId : "");
+            Master().setAddressID(Master().Client_Address().getAddressId()); //TODO
+
+        }
+        loResult.put("result", "success");
+        return loResult;
     }
 
     public JSONObject SearchBrand(String value, boolean byCode, int row) throws ExceptionInInitializerError, SQLException, GuanzonException {
