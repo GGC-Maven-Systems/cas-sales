@@ -45,10 +45,10 @@ public class VehicleDescription extends Parameter {
         
         poModel = new ParamModels(poGRider).ModelVariant();
         poModelVariantInsurance = new ParamModels(poGRider).ModelVariantInsurance();
-        
+        psBrandId = "";
         super.initialize();
     }
-    
+ 
     /**
     * Requests user approval for the current transaction.
     *
