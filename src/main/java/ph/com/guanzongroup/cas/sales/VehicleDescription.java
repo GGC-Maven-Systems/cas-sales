@@ -522,10 +522,6 @@ public class VehicleDescription extends Parameter {
             loObj.setBarCode(poModel.getDescription().replace(" ", "")); //Replace space
             loObj.isSerialized(true);
             
-            poJSON = loObj.saveRecord();
-            if(!isJSONSuccess(poJSON)){
-                return poJSON;
-            }
         } else {
             //Find the inventory
             String lsInvId = findInventory(loObj);
@@ -539,6 +535,18 @@ public class VehicleDescription extends Parameter {
                 if(!isJSONSuccess(poJSON)){
                     return poJSON;
                 }
+            } else {
+                if(getEditMode() == EditMode.UPDATE){
+                    poJSON = loObj.newRecord();
+                    if(!isJSONSuccess(poJSON)){
+                        return poJSON;
+                    }
+
+                    loObj.setIndustryCode(psIndustryId);
+                    loObj.setCategoryFirstLevelId(psCategoryId);
+                    loObj.setBarCode(poModel.getDescription().replace(" ", "")); //Replace space
+                    loObj.isSerialized(true);
+                 }
             }
             
         }
@@ -567,6 +575,7 @@ public class VehicleDescription extends Parameter {
         String lsSQL = MiscUtil.makeSelect(loObj);
         lsSQL = MiscUtil.addCondition(lsSQL," sIndstCdx =  " + SQLUtil.toSQL(psIndustryId)
                        + " AND sVrntIDxx =  " + SQLUtil.toSQL(poModel.getVariantId())
+                       + " AND sCategCd1 =  " + SQLUtil.toSQL(psCategoryId)
                     );
         
         System.out.println("findInventory SQL: " + lsSQL);
@@ -590,14 +599,18 @@ public class VehicleDescription extends Parameter {
             GuanzonException {
         try {
             poJSON = new JSONObject();
-            poModelVariantInsurance.setVariantId(poModel.getVariantId());
-            poJSON = poModelVariantInsurance.saveRecord();
-            if (!isJSONSuccess(poJSON)) {
-                return poJSON;
+            if(poModelVariantInsurance.getEditMode() == EditMode.ADDNEW || poModelVariantInsurance.getEditMode() == EditMode.UPDATE){
+                poModelVariantInsurance.setVariantId(poModel.getVariantId());
+                poJSON = poModelVariantInsurance.saveRecord();
+                if (!isJSONSuccess(poJSON)) {
+                    poJSON = setJSON("error", "Unable to save model variant parameter.\n"+(String) poJSON.get("message"));
+                    return poJSON;
+                }
             }
             
             poJSON = generateInventory(poModel.getRecordStatus());
             if (!isJSONSuccess(poJSON)){
+                poJSON = setJSON("error", "Unable to save inventory.\n"+(String) poJSON.get("message"));
                 return poJSON;
             }
             
