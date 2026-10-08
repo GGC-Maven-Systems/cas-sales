@@ -148,64 +148,64 @@ public class VehicleDescription extends Parameter {
     }
     
     
-//    /**
-//     * Activates the currently loaded financing rate record.
-//     *
-//     * @param remarks remarks to save with the status change
-//     * @return JSON result of the activation request
-//     * @throws SQLException if a database error occurs
-//     * @throws GuanzonException if the activation fails
-//     * @throws CloneNotSupportedException if model cloning is not supported
-//     */
-//    public JSONObject ActivateRecord(String remarks)
-//            throws SQLException,
-//            GuanzonException,
-//            CloneNotSupportedException {
-//        
-//        String lsStatus = VehicleDescriptionStatus.ACTIVE;
-//
-//        if (getEditMode() != EditMode.READY) {
-//            poJSON = setJSON("error",  "No transacton was loaded.");
-//            return poJSON;
-//        }
-//
-//        if (lsStatus.equals((String) poModel.getValue("cRecdStat"))) {
-//            poJSON = setJSON("error", "Record was already active.");
-//            return poJSON;
-//        }
-//
-//        //validator
-//        poJSON = isEntryOkay();
-//        if (!"success".equals((String) poJSON.get("result"))) {
-//            return poJSON;
-//        }
-//        
-//        if(!pbWthParent){
-//            psApprover = poGRider.getUserID();
-//            poJSON = callApproval();
-//            if (!isJSONSuccess(poJSON)) {
-//                return poJSON;
-//            }
-//        }
-//
-//        poGRider.beginTrans("UPDATE STATUS", "ActivateRecord", SOURCE_CODE, poModel.getVariantId());
-//        
-//        poJSON = generateInventory();
-//        if (!isJSONSuccess(poJSON)){
-//            return poJSON;
-//        }
-//        
-//        //change status
-//        poJSON = statusChange(poModel.getTable(), (String) poModel.getValue("sVrntIDxx"), remarks, lsStatus, false, true);
-//        if (!isJSONSuccess(poJSON)) {
-//            return poJSON;
-//        }
-//        
-//        poGRider.commitTrans();
-//        
-//        poJSON = setJSON("success", "Record activated successfully.");
-//        return poJSON;
-//    }
+    /**
+     * Activates the currently loaded financing rate record.
+     *
+     * @param remarks remarks to save with the status change
+     * @return JSON result of the activation request
+     * @throws SQLException if a database error occurs
+     * @throws GuanzonException if the activation fails
+     * @throws CloneNotSupportedException if model cloning is not supported
+     */
+    public JSONObject ActivateRecord(String remarks)
+            throws SQLException,
+            GuanzonException,
+            CloneNotSupportedException {
+        
+        String lsStatus = RecordStatus.ACTIVE;
+
+        if (getEditMode() != EditMode.READY) {
+            poJSON = setJSON("error",  "No transacton was loaded.");
+            return poJSON;
+        }
+
+        if (lsStatus.equals((String) poModel.getValue("cRecdStat"))) {
+            poJSON = setJSON("error", "Record was already active.");
+            return poJSON;
+        }
+
+        //validator
+        poJSON = isEntryOkay();
+        if (!"success".equals((String) poJSON.get("result"))) {
+            return poJSON;
+        }
+        
+        if(!pbWthParent){
+            psApprover = poGRider.getUserID();
+            poJSON = callApproval();
+            if (!isJSONSuccess(poJSON)) {
+                return poJSON;
+            }
+        }
+
+        poGRider.beginTrans("UPDATE STATUS", "ActivateRecord", SOURCE_CODE, poModel.getVariantId());
+        
+        poJSON = generateInventory(lsStatus);
+        if (!isJSONSuccess(poJSON)){
+            return poJSON;
+        }
+        
+        //change status
+        poJSON = statusChange(poModel.getTable(), (String) poModel.getValue("sVrntIDxx"), remarks, lsStatus, false, true);
+        if (!isJSONSuccess(poJSON)) {
+            return poJSON;
+        }
+        
+        poGRider.commitTrans();
+        
+        poJSON = setJSON("success", "Record activated successfully.");
+        return poJSON;
+    }
     
     /**
      * Deactivates the currently loaded financing rate record.
@@ -386,19 +386,13 @@ public class VehicleDescription extends Parameter {
         poJSON = ShowDialogFX.Search(poGRider,
                 lsSQL,
                 value,
-                "Code»Model Name»Variant»Year Model»Color",
-                "xModelCde»xModelNme»sDescript»nYearMdlx»xColorNme",
-                "IFNULL(b.sModelCde, '')»IFNULL(b.sDescript, '')»a.sDescript»a.nYearMdlx»IFNULL(c.sDescript, '')",
-                byCode ? 0 : 1);
+                "Brand»Code»Model Name»Variant»Year Model»Color",
+                "xBrandNme»xModelCde»xModelNme»sDescript»nYearMdlx»xColorNme",
+                "IFNULL(d.sDescript, '')»IFNULL(b.sModelCde, '')»IFNULL(b.sDescript, '')»a.sDescript»a.nYearMdlx»IFNULL(c.sDescript, '')",
+                byCode ? 0 : 3);
 
         if (poJSON != null) {
-            String lsVrnID =  (String) poJSON.get("sVrntIDxx");
-            poJSON = poModel.openRecord(lsVrnID);
-            if(!isJSONSuccess(poJSON)){
-               return poJSON;
-            }else{
-               return poModelVariantInsurance.openRecord(lsVrnID);
-            }
+            return OpenRecord((String) poJSON.get("sVrntIDxx"));
         } else {
             poJSON = new JSONObject();
             poJSON.put("result", "error");
@@ -423,13 +417,14 @@ public class VehicleDescription extends Parameter {
                 byCode ? 0 : 1);
 
         if (poJSON != null) {
-            return poModel.openRecord((String) poJSON.get("sVrntIDxx"));
+            return OpenRecord((String) poJSON.get("sVrntIDxx"));
         } else {
             poJSON = new JSONObject();
             poJSON.put("result", "error");
             poJSON.put("message", "No record loaded.");
             return poJSON;
         }
+        
     }    
     
     public JSONObject searchRecordByModel(String value, boolean byCode, String brandId) throws SQLException, GuanzonException{
@@ -448,7 +443,7 @@ public class VehicleDescription extends Parameter {
                 byCode ? 0 : 1);
 
         if (poJSON != null) {
-            return poModel.openRecord((String) poJSON.get("sVrntIDxx"));
+            return OpenRecord((String) poJSON.get("sVrntIDxx"));
         } else {
             poJSON = new JSONObject();
             poJSON.put("result", "error");
@@ -498,7 +493,7 @@ public class VehicleDescription extends Parameter {
         
         Color object = new ParamControllers(poGRider, logwrapr).Color();
         object.setRecordStatus(RecordStatus.ACTIVE);
-
+        object.setIndustryId(psIndustryId);
         poJSON = object.searchRecord(value, byCode);
         if ("success".equals((String) poJSON.get("result"))) {
             poModel.setColorId(object.getModel().getColorId());
@@ -572,7 +567,6 @@ public class VehicleDescription extends Parameter {
         String lsSQL = MiscUtil.makeSelect(loObj);
         lsSQL = MiscUtil.addCondition(lsSQL," sIndstCdx =  " + SQLUtil.toSQL(psIndustryId)
                        + " AND sVrntIDxx =  " + SQLUtil.toSQL(poModel.getVariantId())
-                       + " AND cRecdStat =  " + SQLUtil.toSQL(RecordStatus.ACTIVE)
                     );
         
         System.out.println("findInventory SQL: " + lsSQL);
@@ -647,6 +641,7 @@ public class VehicleDescription extends Parameter {
                             ", IFNULL(d.sDescript, '') xBrandNme" +
                             ", IFNULL(b.sBrandIDx, '') xBrandIDx" +
                         " FROM Model_Variant a" +
+                            " INNER JOIN Model_Variant_Insurance e ON e.sVrntIDxx = a.sVrntIDxx" +
                             " LEFT JOIN Model b ON a.sModelIDx = b.sModelIDx" +
                             " LEFT JOIN Color c ON a.sColorIDx = c.sColorIDx" +
                             " LEFT JOIN Brand d ON b.sBrandIDx = d.sBrandIDx";
