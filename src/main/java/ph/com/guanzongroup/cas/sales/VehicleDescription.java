@@ -519,7 +519,8 @@ public class VehicleDescription extends Parameter {
 
             loObj.setIndustryCode(psIndustryId);
             loObj.setCategoryFirstLevelId(psCategoryId);
-            loObj.setBarCode(poModel.getDescription().replace(" ", "")); //Replace space
+//            loObj.setBarCode(poModel.getDescription().replace(" ", "")); //Replace space
+            loObj.setBarCode(poModel.getModelId()+poModel.getVariantId()+psIndustryId); //Replace space
             loObj.isSerialized(true);
             
         } else {
@@ -557,7 +558,7 @@ public class VehicleDescription extends Parameter {
             loObj.setModelId(poModel.getModelId());
             loObj.setVariantId(poModel.getVariantId());
             loObj.setColorId(poModel.getColorId());
-            loObj.setDescription(poModel.getDescription());
+            loObj.setDescription(poModel.Model().Brand().getDescription() + " " + poModel.Model().getDescription() + " " + poModel.getDescription() + " " + poModel.Color().getDescription());
             loObj.setRecordStatus(fsRecordStatus);
 
             poJSON = loObj.saveRecord();
