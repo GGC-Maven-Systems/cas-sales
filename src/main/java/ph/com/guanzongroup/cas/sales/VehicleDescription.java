@@ -593,6 +593,25 @@ public class VehicleDescription extends Parameter {
         return lsInvId;
     }
     
+    @Override
+    protected JSONObject willSave()
+            throws SQLException,
+            GuanzonException {
+        poJSON = new JSONObject();
+        
+        if(getEditMode() == EditMode.UPDATE){
+            if(!pbWthParent){
+                psApprover = poGRider.getUserID();
+                poJSON = callApproval();
+                if (!isJSONSuccess(poJSON)) {
+                    return poJSON;
+                }
+            }
+        }
+        
+        poJSON = setJSON("success", "success");
+        return poJSON;
+    }
     
     @Override
     protected JSONObject saveOthers()
