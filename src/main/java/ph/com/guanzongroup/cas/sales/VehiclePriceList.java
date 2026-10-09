@@ -13,7 +13,6 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -55,19 +54,21 @@ import org.guanzon.appdriver.base.GuanzonException;
 import org.guanzon.appdriver.base.MiscUtil;
 import org.guanzon.appdriver.base.SQLUtil;
 import org.guanzon.appdriver.constant.EditMode;
-import org.guanzon.appdriver.constant.Logical;
 import org.guanzon.appdriver.constant.RecordStatus;
 import org.guanzon.appdriver.constant.UserRight;
 import org.guanzon.appdriver.iface.GValidator;
+import org.guanzon.cas.parameter.Brand;
+import org.guanzon.cas.parameter.Color;
 import org.guanzon.cas.parameter.model.Model_Branch;
+import org.guanzon.cas.parameter.model.Model_Brand;
+import org.guanzon.cas.parameter.services.ParamControllers;
 import org.guanzon.cas.parameter.services.ParamModels;
-import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.ParseException;
 import ph.com.guanzongroup.cas.sales.model.Model_Validity_Period_Master;
-import ph.com.guanzongroup.cas.sales.model.Model_Vehicle_Financing_Price;
+import ph.com.guanzongroup.cas.sales.model.Model_Vehicle_Price_Master;
+import ph.com.guanzongroup.cas.sales.services.SalesControllers;
 import ph.com.guanzongroup.cas.sales.services.SalesModels;
-import ph.com.guanzongroup.cas.sales.status.FinancingRateStatus;
 import ph.com.guanzongroup.cas.sales.status.ValidityPeriodStatus;
 import ph.com.guanzongroup.cas.sales.validator.ValidityMasterValidator;
 
@@ -77,10 +78,10 @@ import ph.com.guanzongroup.cas.sales.validator.ValidityMasterValidator;
  *
  * @author Arsiela 09182026
  */
-public class VehicleFinancingPrice extends Transaction {
-    /** Company ID for filtering and transaction context */
+public class VehiclePriceList extends Transaction {
     public String psCompanyId = "";
-    /** User ID of the approving officer */
+    public String psIndustryId = "";
+    public String psBrandId = "";
     public String psApprover = "";
 
     /** List of master records for batch operations */
@@ -95,10 +96,10 @@ public class VehicleFinancingPrice extends Transaction {
      * @throws GuanzonException if application-specific error occurs
      */
     public JSONObject InitTransaction() throws SQLException, GuanzonException {
-        SOURCE_CODE = "Vhpm";
+        SOURCE_CODE = "Vhpl";
 
         poMaster = new SalesModels(poGRider).ValidityPeriodMaster();
-        poDetail = new SalesModels(poGRider).VehicleFinancingPrice();
+        poDetail = new SalesModels(poGRider).VehiclePriceMaster();
 
         paMaster = new ArrayList<Model>();
         psApprover = "";
@@ -109,7 +110,7 @@ public class VehicleFinancingPrice extends Transaction {
     /**
      * Returns the transaction source code.
      *
-     * @return the source code for this transaction ("Vhpm" for Vehicle Financing Price)
+     * @return the source code for this transaction ("Vhpl" for Vehicle Financing Price)
      */
     @Override
     public String getSourceCode() { return SOURCE_CODE; }
@@ -120,6 +121,8 @@ public class VehicleFinancingPrice extends Transaction {
      * @param companyId the company ID to set
      */
     public void setCompanyId(String companyId) { psCompanyId = companyId; }
+    public void setIndustryId(String industryId) { psIndustryId = industryId; }
+    
     /**
     * Creates a JSONObject with "result" and "message" fields.
     *
@@ -132,6 +135,13 @@ public class VehicleFinancingPrice extends Transaction {
         loJSON.put("result", fsResult);
         loJSON.put("message", fsMessage);
         return loJSON;
+    }
+    private boolean checkEmpty(String fsValue){
+        return fsValue == null || "".equals(fsValue);
+    }
+    
+    private boolean checkNotEmpty(String fsValue){
+        return fsValue != null && !"".equals(fsValue);
     }
 
     /**
@@ -205,14 +215,14 @@ public class VehicleFinancingPrice extends Transaction {
         } else {
             this.paDetail.clear();
             
-            String sql = "SELECT sVhclFIDx FROM " + this.poDetail.getTable() + " WHERE sValidIDx = " + SQLUtil.toSQL(transactionNo) + " ORDER BY sVhclFIDx";
+            String sql = "SELECT sPriceIDx FROM " + this.poDetail.getTable() + " WHERE sValidIDx = " + SQLUtil.toSQL(transactionNo) + " ORDER BY sPriceIDx";
             ResultSet rs = this.poGRider.executeQuery(sql);
 
             while(rs.next()) {
                 Model loDetail = (Model)this.poDetail.clone();
                 loDetail.newRecord();
-//                this.poJSON = loDetail.openRecord(transactionNo, rs.getString("sVhclFIDx"));
-                this.poJSON = loDetail.openRecord( rs.getString("sVhclFIDx"),transactionNo);
+//                this.poJSON = loDetail.openRecord(transactionNo, rs.getString("sPriceIDx"));
+                this.poJSON = loDetail.openRecord( rs.getString("sPriceIDx"),transactionNo);
                 if (!"success".equals((String)this.poJSON.get("result"))) {
                     this.poJSON.put("message", "Unable to open transaction detail record.");
                     this.clear();
@@ -244,11 +254,6 @@ public class VehicleFinancingPrice extends Transaction {
         poJSON = new JSONObject();
         
         poJSON = updateTransaction();
-        if(!isJSONSuccess(poJSON)){
-            return poJSON;
-        }
-        
-        poJSON = populateVehicleList();
         if(!isJSONSuccess(poJSON)){
             return poJSON;
         }
@@ -320,7 +325,7 @@ public class VehicleFinancingPrice extends Transaction {
                                 ((Model)this.paDetail.get(lnCtr)).setValue("dModified", this.pdModified);
                                 Detail(lnCtr).setValidityId(Master().getValidityId());
                                 if(((Model)this.paDetail.get(lnCtr)).getEditMode() == EditMode.ADDNEW){
-                                    ((Model)this.paDetail.get(lnCtr)).setValue("sVhclFIDx", Detail(lnCtr).getNextCode());
+                                    ((Model)this.paDetail.get(lnCtr)).setValue("sPriceIDx", Detail(lnCtr).getNextCode());
                                 }
                                 this.poJSON = ((Model)this.paDetail.get(lnCtr)).saveRecord();
                                 if ("error".equals((String)this.poJSON.get("rsearesult"))) {
@@ -737,109 +742,62 @@ public class VehicleFinancingPrice extends Transaction {
         }
     }
     
-    /**
-     * Populates detail rows with available vehicle variants and financing rates.
-     * Loads standard interest and downpayment rates, then creates detail entries
-     * for each vehicle variant with applicable rates.
-     *
-     * @return JSONObject with "result" and optional error "message"
-     * @throws SQLException if a database error occurs
-     * @throws GuanzonException if application-specific error occurs
-     * @throws CloneNotSupportedException if detail cloning fails
-     */
-    public JSONObject populateVehicleList() throws SQLException, GuanzonException, CloneNotSupportedException {
+    public JSONObject SearchBrand(String value, boolean byCode, int row)
+            throws ExceptionInInitializerError,
+            SQLException,
+            GuanzonException {
         poJSON = new JSONObject();
-        if(pnEditMode != EditMode.ADDNEW && pnEditMode != EditMode.UPDATE){
-            poJSON = new JSONObject();
-            poJSON.put("result", "success");
-            poJSON.put("message", "success");
-            return poJSON;
-        }
         
-        JSONArray laStandardInterestRate = loadStandardInterestRates();
-        ArrayList<Double> laStandardDownpaymentRate = loadStandardDownpaymentRates();
-        
-        if(laStandardInterestRate.size() <= 0){
-            poJSON = setJSON("error", "No active standard interest rate.");
-            if(EditMode.ADDNEW == getEditMode()){
-                paDetail.clear();
-            }
-            return poJSON;
-        }
-        
-        if(laStandardDownpaymentRate.size() <= 0){
-            poJSON = setJSON("error", "No active standard downpayment rate.");
-            if(EditMode.ADDNEW == getEditMode()){
-                paDetail.clear();
-            }
-            return poJSON;
-        }
-        
-        String lsSQL = " SELECT   " 
-                       + " c.sVrntIDxx " 
-                       + " , a.sIndstCdx " 
-                       + " , c.nSelPrice " 
-                       + " FROM Brand a " 
-                       + " LEFT JOIN Model b On b.sBrandIDx = a.sBrandIDx " 
-                       + " LEFT JOIN Model_Variant c ON c.sModelIDx = b.sModelIDx " ;
-        lsSQL = MiscUtil.addCondition(lsSQL," a.sIndstCdx =  " + SQLUtil.toSQL(poGRider.getIndustry())
-                       + " AND c.cEndOfLfe =  " + SQLUtil.toSQL(Logical.YES)
-                       + " AND c.nSelPrice > 0.00 "
-                       + " AND c.cRecdStat =  " + SQLUtil.toSQL(RecordStatus.ACTIVE)
-                    );
-        
-        lsSQL = lsSQL + " ORDER BY b.sDescript, c.sDescript ASC ";
-        System.out.println("populateVehicleList SQL: " + lsSQL);
-        ResultSet loRS = poGRider.executeQuery(lsSQL);
-        if (MiscUtil.RecordCount(loRS) <= 0) {
-            poJSON = setJSON("error", "No vehicle model variant available.");
-            return poJSON;
-        }
-        
-        ReloadDetail();
-        boolean lbExist = false;
-        String lsVariantId = "";
-        double ldblDownpaymentRate = 0.00;
-        double ldblSelPrice= 0.00;
-        while (loRS.next()) {
-            lsVariantId = loRS.getString("sVrntIDxx");
-            ldblSelPrice = loRS.getDouble("nSelPrice");
-            if(lsVariantId != null && !"".equals(lsVariantId)){
-                for(int lnCtr = 0; lnCtr < laStandardDownpaymentRate.size();lnCtr++){
-                    lbExist = false;
-                    ldblDownpaymentRate = laStandardDownpaymentRate.get(lnCtr);
-                    for(int lnRow = 0; lnRow < getDetailCount(); lnRow++){
-                        if(lsVariantId.equals(Detail(lnRow).getVariantId())
-                            && ldblDownpaymentRate == Detail(lnRow).getDownPaymentRate()){
-                            lbExist = true;
-                            break;
-                        }
-                    }
-                    
-                    if(!lbExist){
-                        Detail(getDetailCount() - 1).setVehicleFinancingId(Detail(getDetailCount() - 1).getNextCode());
-                        Detail(getDetailCount() - 1).setVariantId(lsVariantId);
-                        Detail(getDetailCount() - 1).setSRPAmount(ldblSelPrice);
-                        Detail(getDetailCount() - 1).setDownPaymentRate(ldblDownpaymentRate);
-                        ReloadDetail();
-                        if(!pbWithUI){
-                            break;
-                        }
-                    }
-                }
+        Brand object = new ParamControllers(poGRider, logwrapr).Brand();
+        object.setRecordStatus(RecordStatus.ACTIVE);
 
-                if(!pbWithUI){
-                    break;
-                }
-            }
+        poJSON = object.searchRecord(value, byCode, psIndustryId);
+        if (isJSONSuccess(poJSON)) {
+            Detail(row).setBrandId(object.getModel().getBrandId());
         }
-        MiscUtil.close(loRS);
+        return poJSON;
+    }
+    
+    public JSONObject SearchModel(String value, boolean byCode, int row)
+            throws ExceptionInInitializerError,
+            SQLException,
+            GuanzonException {
+        poJSON = new JSONObject();
+        
+        if(checkEmpty(Detail(row).getBrandId())){
+            return setJSON("error", "Brand cannot be empty.");
+        }
+        
+        org.guanzon.cas.parameter.Model object = new ParamControllers(poGRider, logwrapr).Model();
+        object.setRecordStatus(RecordStatus.ACTIVE);
 
+        poJSON = object.searchRecord(value, byCode, Detail(row).getBrandId());
+        if (isJSONSuccess(poJSON)) {
+            Detail(row).setModelId(object.getModel().getModelId());
+        }
+        return poJSON;
+    }
+    
+    public JSONObject SearchModelVariant(String value, boolean byCode, int row)
+            throws ExceptionInInitializerError,
+            SQLException,
+            GuanzonException {
+        poJSON = new JSONObject();
+        
+        if(checkEmpty(Detail(row).getModelId())){
+            return setJSON("error", "Model cannot be empty.");
+        }
+        
+        VehicleDescription object = new SalesControllers(poGRider, logwrapr).VehicleDescription();
+        object.setRecordStatus(RecordStatus.ACTIVE);
+        object.setIndustryId(psIndustryId);
+        poJSON = object.searchRecord(value, byCode, Detail(row).getModelId());
+        if (isJSONSuccess(poJSON)) {
+            Detail(row).setVariantId(object.getModel().getVariantId());
+        }
+        
         sortDetail();
         
-        poJSON = new JSONObject();
-        poJSON.put("result", "success");
-        poJSON.put("message", "success");
         return poJSON;
     }
     
@@ -847,22 +805,22 @@ public class VehicleFinancingPrice extends Transaction {
         //Sort paDetail by brand, model, variant;
         paDetail.sort(
             Comparator.comparing(
-                o -> getBrandDescription((Model_Vehicle_Financing_Price) o),
+                o -> getBrandDescription((Model_Vehicle_Price_Master) o),
                 Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)
             ).thenComparing(
-                o -> getModelDescription((Model_Vehicle_Financing_Price) o),
+                o -> getModelDescription((Model_Vehicle_Price_Master) o),
                 Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)
             ).thenComparing(
-                o -> getModelVariantDescription((Model_Vehicle_Financing_Price) o),
+                o -> getModelVariantDescription((Model_Vehicle_Price_Master) o),
                 Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)
             ).thenComparing(
-                o -> getDownpaymentRate((Model_Vehicle_Financing_Price) o),
-                    Comparator.nullsLast(Comparator.naturalOrder())
+                o -> getSRPAmount((Model_Vehicle_Price_Master) o),
+                    Comparator.nullsLast(Comparator.reverseOrder())
                 )
         );
     }
     
-    private String getBrandDescription(Model_Vehicle_Financing_Price poDetail) {
+    private String getBrandDescription(Model_Vehicle_Price_Master poDetail) {
         try {
             return poDetail.ModelVariant()
                     .Model()
@@ -873,7 +831,7 @@ public class VehicleFinancingPrice extends Transaction {
         }
     }
 
-    private String getModelDescription(Model_Vehicle_Financing_Price poDetail) {
+    private String getModelDescription(Model_Vehicle_Price_Master poDetail) {
         try {
             return poDetail.ModelVariant()
                     .Model()
@@ -883,7 +841,7 @@ public class VehicleFinancingPrice extends Transaction {
         }
     }
 
-    private String getModelVariantDescription(Model_Vehicle_Financing_Price poDetail) {
+    private String getModelVariantDescription(Model_Vehicle_Price_Master poDetail) {
         try {
             return poDetail.ModelVariant()
                     .getDescription();
@@ -892,8 +850,8 @@ public class VehicleFinancingPrice extends Transaction {
         }
     }
 
-    private Double getDownpaymentRate(Model_Vehicle_Financing_Price poDetail) {
-        return poDetail.getDownPaymentRate();
+    private Double getSRPAmount(Model_Vehicle_Price_Master poDetail) {
+        return poDetail.getSRPAmount();
     }
     
     /**
@@ -917,7 +875,6 @@ public class VehicleFinancingPrice extends Transaction {
             if (
                 (Detail(getDetailCount() - 1).getVariantId() != null && !"".equals(Detail(getDetailCount() - 1).getVariantId()))
                 && Detail(getDetailCount() - 1).getSRPAmount() > 0.0000
-                && Detail(getDetailCount() - 1).getDownPaymentRate() > 0.00
                 ) {
                 AddDetail();
             }
@@ -926,33 +883,6 @@ public class VehicleFinancingPrice extends Transaction {
         if ((getDetailCount() - 1) < 0) {
             AddDetail();
         }
-    }
-    
-    /**
-     * Loads all active standard vehicle financing rates.
-     *
-     * @return JSON result of the load operation
-     * @throws SQLException if a database error occurs
-     * @throws GuanzonException if record loading fails
-     */
-    public ArrayList loadStandardDownpaymentRates() throws SQLException, GuanzonException {
-        ArrayList<Double> laStandardRate = new ArrayList<>();
-        try {
-            String lsSQL = getStandardRate(true);
-            System.out.println("Downpayment Rate SQL: " + lsSQL);
-            ResultSet loRS = poGRider.executeQuery(lsSQL);
-            poJSON = new JSONObject();
-            if (MiscUtil.RecordCount(loRS) >= 0) {
-                while(loRS.next()){
-                    laStandardRate.add(loRS.getDouble("nRateValx"));
-                }
-            }
-            MiscUtil.close(loRS);
-        } catch (SQLException e) {
-            System.out.println("ERROR: " + e.getMessage());
-        }
-        
-        return laStandardRate;
     }
     
     /**
@@ -971,120 +901,6 @@ public class VehicleFinancingPrice extends Transaction {
         LocalDate localDate = LocalDate.parse(val, date_formatter);
         return localDate;
     }
-    /**
-     * Loads all active standard vehicle financing rates.
-     *
-     * @return JSON result of the load operation
-     * @throws SQLException if a database error occurs
-     * @throws GuanzonException if record loading fails
-     */
-    public JSONArray loadStandardInterestRates() throws SQLException, GuanzonException {
-        JSONArray loJSONArray = new JSONArray();
-        JSONObject loJSON = new JSONObject();
-        try {
-            String lsSQL = getStandardRate(false);
-            System.out.println("Standard Rate SQL: " + lsSQL);
-            ResultSet loRS = poGRider.executeQuery(lsSQL);
-            poJSON = new JSONObject();
-            if (MiscUtil.RecordCount(loRS) >= 0) {
-                while(loRS.next()){
-                    loJSON = new JSONObject();
-//                    Date loVFromDate = Master().getFromDate();
-//                    Date loFromDate = loRS.getDate("dFromDate");
-//                    if (loFromDate != null) {
-//                        if (!"1900-01-01".equals(xsDateShort(loFromDate))) {
-//                            LocalDate lldVFromDate = strToDate(xsDateShort(loVFromDate));
-//                            LocalDate lldFromDate = strToDate(xsDateShort(loFromDate));
-//                            if (lldVFromDate.isBefore(lldFromDate)) {
-//                                loJSON.put("nDuration", loRS.getInt("nDuration"));
-//                                loJSON.put("nRateValx", loRS.getDouble("nRateValx"));
-//                                loJSONArray.add(loJSON);
-//                            }
-//                        }
-//                    }
-
-
-                    loJSON.put("nDuration", loRS.getInt("nDuration"));
-                    loJSON.put("nRateValx", loRS.getDouble("nRateValx"));
-                    loJSONArray.add(loJSON);
-                }
-            }
-            MiscUtil.close(loRS);
-        } catch (SQLException e) {
-            System.out.println("ERROR: " + e.getMessage());
-        }
-        
-        return loJSONArray;
-    }
-    
-    private String getStandardRate(boolean isDownpaymentRate) throws SQLException{
-        String lsSQL = MiscUtil.addCondition(MiscUtil.makeSelect(new SalesModels(poGRider).VehicleFinancingRates()),
-                                                    " cRecdStat = " + SQLUtil.toSQL(RecordStatus.ACTIVE)
-                                                    );
-        if(isDownpaymentRate){
-            lsSQL = lsSQL + " AND sRateType = " + SQLUtil.toSQL(FinancingRateStatus.StandardRateType.DOWNPAYMENT_RATE);
-        } else {
-            lsSQL = lsSQL + " AND sRateType = " + SQLUtil.toSQL(FinancingRateStatus.StandardRateType.INTEREST_RATE);
-        }
-                 
-        Date loToDate = Master().getThruDate();
-        Date loFromDate = Master().getFromDate();
-        if(loToDate != null && !"1900-01-01".equals(xsDateShort(loToDate))){
-            lsSQL = lsSQL 
-                    + " AND ((dFromDate between "+ SQLUtil.toSQL(xsDateShort(Master().getFromDate()))+" AND "+  SQLUtil.toSQL(xsDateShort(Master().getThruDate())) +") OR dFromDate <= "+ SQLUtil.toSQL(xsDateShort(Master().getFromDate()))+")"
-                    + " AND ((dThruDate between "+ SQLUtil.toSQL(xsDateShort(Master().getFromDate()))+" AND "+  SQLUtil.toSQL(xsDateShort(Master().getThruDate())) +") OR dThruDate IS NULL OR dThruDate >= "+ SQLUtil.toSQL(xsDateShort(Master().getFromDate()))+")";
-        } else {
-            if(loFromDate != null && !"".equals(xsDateShort(loFromDate))){
-                lsSQL = lsSQL 
-                    + " AND ( dFromDate <= "+ SQLUtil.toSQL(xsDateShort(Master().getFromDate()))+")"
-                    + " AND ( dThruDate IS NULL OR dThruDate >= "+ SQLUtil.toSQL(xsDateShort(Master().getFromDate()))+")";
-            } else {
-                Date ldServerDate = poGRider.getServerDate();
-                Calendar locFromDate = Calendar.getInstance();
-                locFromDate.setTime(ldServerDate);
-
-                // Set to the last day of the current month
-                locFromDate.set(Calendar.DAY_OF_MONTH,locFromDate.getActualMinimum(Calendar.DAY_OF_MONTH));
-                lsSQL = lsSQL 
-                    + " AND ( dFromDate <= "+ SQLUtil.toSQL(SQLUtil.toDate(xsDateShort(locFromDate.getTime()),SQLUtil.FORMAT_SHORT_DATE))+")"
-                    + " AND ( dThruDate IS NULL OR dThruDate >= "+ SQLUtil.toSQL(SQLUtil.toDate(xsDateShort(locFromDate.getTime()),SQLUtil.FORMAT_SHORT_DATE))+")";
-            }
-        }
-
-        lsSQL = lsSQL + " GROUP BY nDuration, nRateValx  ORDER BY nDuration, nRateValx ASC ";
-        return lsSQL;
-    }
-    
-    /**
-     * Calculates the monthly amortization amount based on vehicle financing details.
-     * Formula: (SRP - DownPayment) × (InterestRate / 100) / Duration
-     *
-     * @param fnRow the detail row index
-     * @param fnDuration the loan duration in months
-     * @param fdblInterestRate the annual interest rate percentage
-     * @return calculated monthly amortization amount formatted to 2 decimal places
-     */
-    public Double getMontlyAmortizationAmount(int fnRow, int fnDuration, Double fdblInterestRate) {
-        Double ldblDownpaymentAmount = 0.00;
-        Double ldblBalance = 0.00;
-        Double ldblMontlyAmortizationAmt = 0.00;
-        /**
-         * SRP x Downpayment Rate = Downpayment Amount
-         * SRP - Downpayment Amount = Balance
-         * Balance x Interest Rate / Duration = Monthly Amortization Amount
-         */
-        ldblDownpaymentAmount = Detail(fnRow).getSRPAmount() * (Detail(fnRow).getDownPaymentRate()/100);
-        ldblBalance = Detail(fnRow).getSRPAmount() - ldblDownpaymentAmount;
-        fdblInterestRate = ((fdblInterestRate/100)+1);
-        ldblMontlyAmortizationAmt = ((ldblBalance * fdblInterestRate) / fnDuration)+2;
-        
-        String lsDecimalFormat = "###0.00";
-        DecimalFormat format = new DecimalFormat(lsDecimalFormat);
-        ldblMontlyAmortizationAmt = Double.parseDouble(format.format(ldblMontlyAmortizationAmt));
-        ldblMontlyAmortizationAmt = Double.parseDouble(String.valueOf(Math.round(ldblMontlyAmortizationAmt)));
-        
-        return ldblMontlyAmortizationAmt;
-    }
     
     /**
      * Gets the master record as Model_Validity_Period_Master.
@@ -1097,14 +913,14 @@ public class VehicleFinancingPrice extends Transaction {
     }
     
     /**
-     * Gets a detail record by row index as Model_Vehicle_Financing_Price.
+     * Gets a detail record by row index as Model_Vehicle_Price_Master.
      *
      * @param row the index of the detail record to retrieve
-     * @return the detail record at the specified row cast to Model_Vehicle_Financing_Price
+     * @return the detail record at the specified row cast to Model_Vehicle_Price_Master
      */
     @Override
-    public Model_Vehicle_Financing_Price Detail(int row) {
-        return (Model_Vehicle_Financing_Price) paDetail.get(row); 
+    public Model_Vehicle_Price_Master Detail(int row) {
+        return (Model_Vehicle_Price_Master) paDetail.get(row); 
     }
     /**
      * Adds a new detail row with validation.
@@ -1155,7 +971,7 @@ public class VehicleFinancingPrice extends Transaction {
             Master().setThruDate(SQLUtil.toDate(xsDateShort(loToDate.getTime()),SQLUtil.FORMAT_SHORT_DATE));
             
         } catch (SQLException ex) {
-            Logger.getLogger(VehicleFinancingPrice.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(VehiclePriceList.class.getName()).log(Level.SEVERE, null, ex);
         }
         
         poJSON.put("result", "success");
@@ -1179,7 +995,7 @@ public class VehicleFinancingPrice extends Transaction {
         return poJSON;
     }
     
-    private JSONObject checkExistingVehicleFinancing(){
+    private JSONObject checkExistingVehiclePriceList(){
         try {
             initSQL();
             String lsSQL = MiscUtil.addCondition(SQL_BROWSE,
@@ -1196,7 +1012,7 @@ public class VehicleFinancingPrice extends Transaction {
             if (MiscUtil.RecordCount(loRS) > 0) {
                 if(loRS.next()){    
                     poJSON.put("result", "error");
-                    poJSON.put("message", "A Vehicle Financing Promo already exists for the selected validity period.");
+                    poJSON.put("message", "A Vehicle Price Update already exists for the selected validity period.");
                     return poJSON;
                 }
             }
@@ -1240,7 +1056,7 @@ public class VehicleFinancingPrice extends Transaction {
             return poJSON;
         }
         
-        poJSON = checkExistingVehicleFinancing();
+        poJSON = checkExistingVehiclePriceList();
         if (!isJSONSuccess(poJSON)) {
             return poJSON;
         }
@@ -1252,17 +1068,12 @@ public class VehicleFinancingPrice extends Transaction {
             String lsDetail = (String) item.getValue("sVrntIDxx");
             String lsRecStat = (String) item.getValue("cRecdStat");
             double ldblSRP = Double.parseDouble(String.valueOf(item.getValue("nSRPAmntx")));
-            double ldblRSVAmt = Double.parseDouble(String.valueOf(item.getValue("nRsrvAmtx")));
             
             if ((ldblSRP == 0.0000 || (lsDetail == null || "".equals(lsDetail)))){
                 if(item.getEditMode() == EditMode.ADDNEW){
                     detail.remove(); // Correctly remove the item
                 } 
             } else {
-                if(ldblRSVAmt > ldblSRP){
-                    poJSON = setJSON("error", "Reservation amount cannot be greater than SRP amount at row "+lnDetailRow+".");
-                    return poJSON;
-                }
                 lnDetailRow++;
             }
         }
@@ -1275,7 +1086,7 @@ public class VehicleFinancingPrice extends Transaction {
         for (int lnCtr = 0; lnCtr <= getDetailCount() - 1; lnCtr++) {
             System.out.println("Record Status : " + Detail(lnCtr).getRecordStatus());
             if(Detail(lnCtr).getEditMode() == EditMode.ADDNEW){
-                Detail(lnCtr).setVehicleFinancingId(Detail(lnCtr).getNextCode());
+                Detail(lnCtr).setPriceId(Detail(lnCtr).getNextCode());
             }
             Detail(lnCtr).setValidityId(Master().getValidityId());
             Detail(lnCtr).setModifiedBy(poGRider.Encrypt(poGRider.getUserID()));
@@ -1334,7 +1145,7 @@ public class VehicleFinancingPrice extends Transaction {
                 "  a.dModified, " +
                 "  a.sModified " +
                 "FROM Validity_Period_Master a " +
-                "INNER JOIN Vehicle_Financing_Price b ON b.sValidIDx = a.sValidIDx";
+                "INNER JOIN Vehicle_Price_Master b ON b.sValidIDx = a.sValidIDx";
         if(lsCondition != null && !"".equals(lsCondition)){
             SQL_BROWSE = MiscUtil.addCondition(SQL_BROWSE, lsCondition);
         }
@@ -1537,69 +1348,17 @@ public class VehicleFinancingPrice extends Transaction {
         
         return lsDesc;
     }
-    public JSONObject printTransaction(String fsSelectedDPRate)
+    public JSONObject printTransaction()
         throws CloneNotSupportedException, SQLException, GuanzonException {
 
     poJSON = new JSONObject();
     pbIsPrinted = false;
-
-    ArrayList<Double> loDPRate = loadStandardDownpaymentRates();
-
-    // Validate selection
-    if (fsSelectedDPRate == null) {
-        poJSON.put("result", "error");
-        poJSON.put("message", "Invalid downpayment rate selected.");
-
-        ShowMessageFX.Warning(
-                null,
-                "Computerized Accounting System",
-                "Invalid downpayment rate selected."
-        );
-
-        return poJSON;
-    }
-
-    // If a specific rate is selected, only load that rate
-    if (!"--All--".equalsIgnoreCase(fsSelectedDPRate.trim())) {
-
-        try {
-            loDPRate = new ArrayList<>();
-            loDPRate.add(Double.valueOf(fsSelectedDPRate));
-
-        } catch (NumberFormatException e) {
-
-            poJSON.put("result", "error");
-            poJSON.put("message", "Invalid downpayment rate selected.");
-
-            ShowMessageFX.Warning(
-                    null,
-                    "Computerized Accounting System",
-                    "Invalid downpayment rate selected."
-            );
-
-            return poJSON;
-        }
-    }
-
-    // Load standard interest rates
-    JSONArray laStandardInterestRate = loadStandardInterestRates();
-
-    if (laStandardInterestRate == null
-            || laStandardInterestRate.size() <= 0) {
-
-        poJSON = setJSON(
-                "error",
-                "No active standard interest rate."
-        );
-
-        return poJSON;
-    }
-
+    
     try {
 
         String jrxmlPath =
                 System.getProperty("sys.default.path.config")
-                + "/Reports/VehicleFinancingPromo_dynamic.jrxml";
+                + "/Reports/VehiclePriceList.jrxml";
 
         JasperReport jasperReport =
                 JasperCompileManager.compileReport(jrxmlPath);
@@ -1628,115 +1387,105 @@ public class VehicleFinancingPrice extends Transaction {
          */
         JasperPrint finalPrint = null;
 
-        for (Double ldblDPRate : loDPRate) {
-            // ---------------------------------------------
-            // Parameters
-            // ---------------------------------------------
-            Map<String, Object> parameters = new HashMap<>();
-            
-            
-            parameters.put("watermarkImagePath", lsWatermarkPath);
-            parameters.put("sValidity",Master().getValidityId()+ "-"+ poGRider.getServerDate());
-            parameters.put("sCompany",Master().Company().getCompanyName().toUpperCase());
-            String lsAddress = Master().Company().getCompanyAddress();
-            if (Master().Company().TownCity().getDescription() != null && !"".equals(Master().Company().TownCity().getDescription())) {
-                lsAddress = lsAddress + " " + Master().Company().TownCity().getDescription();
-            }
+        // ---------------------------------------------
+        // Parameters
+        // ---------------------------------------------
+        Map<String, Object> parameters = new HashMap<>();
 
-            if (Master().Company().TownCity().Province().getDescription() != null
-                    && !"".equals(Master().Company().TownCity().Province().getDescription())) {
-                lsAddress = lsAddress+ ", "+ Master().Company().TownCity().Province().getDescription();
-            }
 
-            parameters.put("sAddress",lsAddress.toUpperCase());
-            parameters.put("sValidityDesc",Master().getValidityDescription().toUpperCase());
-            
-            Model_Branch loModel = Branch();
-            String lsBranchName = loModel.getBranchName();
-            String lsBranchDesc = loModel.getDescription();
-            String lsBranchAddress = loModel.getAddress();
-            String lsEmail = BranchEmail();
-            if (loModel.TownCity().getDescription() != null && !"".equals(loModel.TownCity().getDescription())) {
-                lsBranchAddress = lsBranchAddress + " " + loModel.TownCity().getDescription();
-            }
+        parameters.put("watermarkImagePath", lsWatermarkPath);
+        parameters.put("sValidity",Master().getValidityId()+ "-"+ poGRider.getServerDate());
+        parameters.put("sCompany",Master().Company().getCompanyName().toUpperCase());
+        String lsAddress = Master().Company().getCompanyAddress();
+        if (Master().Company().TownCity().getDescription() != null && !"".equals(Master().Company().TownCity().getDescription())) {
+            lsAddress = lsAddress + " " + Master().Company().TownCity().getDescription();
+        }
 
-            if (loModel.TownCity().Province().getDescription() != null && !"".equals(loModel.TownCity().Province().getDescription())) {
-                lsBranchAddress = lsBranchAddress+ ", "+ loModel.TownCity().Province().getDescription();
+        if (Master().Company().TownCity().Province().getDescription() != null
+                && !"".equals(Master().Company().TownCity().Province().getDescription())) {
+            lsAddress = lsAddress+ ", "+ Master().Company().TownCity().Province().getDescription();
+        }
+
+        parameters.put("sAddress",lsAddress.toUpperCase());
+        parameters.put("sValidityDesc",Master().getValidityDescription().toUpperCase());
+
+        Model_Branch loModel = Branch();
+        String lsBranchName = loModel.getBranchName();
+        String lsBranchDesc = loModel.getDescription();
+        String lsBranchAddress = loModel.getAddress();
+        String lsEmail = BranchEmail();
+        if (loModel.TownCity().getDescription() != null && !"".equals(loModel.TownCity().getDescription())) {
+            lsBranchAddress = lsBranchAddress + " " + loModel.TownCity().getDescription();
+        }
+
+        if (loModel.TownCity().Province().getDescription() != null && !"".equals(loModel.TownCity().Province().getDescription())) {
+            lsBranchAddress = lsBranchAddress+ ", "+ loModel.TownCity().Province().getDescription();
+        }
+        String lsContact = loModel.getMobile();
+        String lsLandLine = loModel.getLandLine();
+        if(lsBranchName == null) { lsBranchName = "";}
+        if(lsBranchDesc == null) { lsBranchDesc = "";}
+        if(lsBranchAddress == null) { lsBranchAddress = "";}
+        if(lsContact == null) { 
+            lsContact = "";
+        } else {
+            if(!lsContact.isEmpty()){
+                lsContact = "Mobile : " + lsContact;
             }
-            String lsContact = loModel.getMobile();
-            String lsLandLine = loModel.getLandLine();
-            if(lsBranchName == null) { lsBranchName = "";}
-            if(lsBranchDesc == null) { lsBranchDesc = "";}
-            if(lsBranchAddress == null) { lsBranchAddress = "";}
-            if(lsContact == null) { 
-                lsContact = "";
+        }
+        if(lsLandLine == null) {
+            lsLandLine = "";
+        } else {
+            if(!lsContact.isEmpty()){
+                lsContact = lsContact 
+                            + "\nTel No : " + lsLandLine;
             } else {
-                if(!lsContact.isEmpty()){
-                    lsContact = "Mobile : " + lsContact;
-                }
+                lsContact = "Tel No : " + lsLandLine;
             }
-            if(lsLandLine == null) {
-                lsLandLine = "";
+        }
+        if(lsEmail == null) {
+            lsEmail = "";
+        } else {
+            if(!lsEmail.isEmpty()){
+                lsContact = lsContact + "\nEmail Address : " + lsEmail;
             } else {
-                if(!lsContact.isEmpty()){
-                    lsContact = lsContact 
-                                + "\nTel No : " + lsLandLine;
-                } else {
-                    lsContact = "Tel No : " + lsLandLine;
-                }
+                lsContact = "Email Address : " + lsEmail;
             }
-            if(lsEmail == null) {
-                lsEmail = "";
-            } else {
-                if(!lsEmail.isEmpty()){
-                    lsContact = lsContact + "\nEmail Address : " + lsEmail;
-                } else {
-                    lsContact = "Email Address : " + lsEmail;
-                }
-            }
-            
-            parameters.put("sBranch",lsBranchName.toUpperCase());
-            parameters.put("sBranchAddress",lsBranchAddress.toUpperCase());
-            parameters.put("sBranchDesc",lsBranchDesc.toUpperCase());
-            parameters.put("sContact",lsContact);
-            // Current DP rate
-            parameters.put("nDPRatePct",ldblDPRate);
-            // ---------------------------------------------
-            // Build data for current DP rate
-            // ---------------------------------------------
-            List<Map<String, Object>> rows = buildSampleData(ldblDPRate,laStandardInterestRate);
-            List<Map<String, ?>> data = new ArrayList<>(rows);
-            JRMapCollectionDataSource dataSource = new JRMapCollectionDataSource(data);
+        }
 
-            // ---------------------------------------------
-            // Generate JasperPrint
-            // ---------------------------------------------
+        parameters.put("sBranch",lsBranchName.toUpperCase());
+        parameters.put("sBranchAddress",lsBranchAddress.toUpperCase());
+        parameters.put("sBranchDesc",lsBranchDesc.toUpperCase());
+        parameters.put("sContact",lsContact);
+        // ---------------------------------------------
+        // Build data for current DP rate
+        // ---------------------------------------------
+        List<Map<String, Object>> rows = buildSampleData();
+        List<Map<String, ?>> data = new ArrayList<>(rows);
+        JRMapCollectionDataSource dataSource = new JRMapCollectionDataSource(data);
 
-            JasperPrint currentPrint =
-                    JasperFillManager.fillReport(
-                            jasperReport,
-                            parameters,
-                            dataSource
-                    );
+        // ---------------------------------------------
+        // Generate JasperPrint
+        // ---------------------------------------------
 
-            if (currentPrint == null) {
-                continue;
-            }
-
-            // ---------------------------------------------
-            // Combine reports
-            // ---------------------------------------------
-
-            if (finalPrint == null) {
-
-                finalPrint = currentPrint;
-
-            } else {
-
-                finalPrint.getPages().addAll(
-                        currentPrint.getPages()
+        JasperPrint currentPrint =
+                JasperFillManager.fillReport(
+                        jasperReport,
+                        parameters,
+                        dataSource
                 );
-            }
+
+        // ---------------------------------------------
+        // Combine reports
+        // ---------------------------------------------
+
+        if (finalPrint == null) {
+            finalPrint = currentPrint;
+        } else {
+
+            finalPrint.getPages().addAll(
+                    currentPrint.getPages()
+            );
         }
 
         // ---------------------------------------------
@@ -1890,7 +1639,7 @@ public class VehicleFinancingPrice extends Transaction {
      * crosstab prints exactly as many term columns as the data supports, with
      * no template change required.
      */
-    private List<Map<String, Object>> buildSampleData(Double fdblSelectedDPRate,JSONArray faStandardInterestRate) {
+    private List<Map<String, Object>> buildSampleData() {
         List<Map<String, Object>> rows = new ArrayList<>();
         
         sortDetail();
@@ -1898,33 +1647,21 @@ public class VehicleFinancingPrice extends Transaction {
             //Group by dp rate 
             for(int lnCtr = 0;lnCtr < getDetailCount();lnCtr++){
                 if(Detail(lnCtr).getRecordStatus()){
-                    if(fdblSelectedDPRate.equals(Detail(lnCtr).getDownPaymentRate())){
-                        for(int lnRow = 0;lnRow < faStandardInterestRate.size();lnRow++){
-                            JSONObject loJSONObject = (JSONObject) faStandardInterestRate.get(lnRow);
-                            int lnDuration = (int) loJSONObject.get("nDuration");
-                            Double ldblRate = (Double) loJSONObject.get("nRateValx");
-                            System.out.println("Duration : " + lnDuration);
-                            System.out.println("Rate : " + ldblRate);
-                            System.out.println("Montly Amortization Amount : " + getMontlyAmortizationAmount(lnCtr, lnDuration, ldblRate));
-                            String lsVariant = Detail(lnCtr).ModelVariant().getDescription();
-                            if(Detail(lnCtr).ModelVariant().Color().getDescription() != null && !"".equals(Detail(lnCtr).ModelVariant().Color().getDescription())){
-                                lsVariant = lsVariant + " " + Detail(lnCtr).ModelVariant().Color().getDescription(); 
-                            }
-                            addRow(rows
-                                    , Detail(lnCtr).ModelVariant().Model().Brand().getDescription()
-                                    , Detail(lnCtr).ModelVariant().Model().getDescription()
-                                    , lsVariant
-                                    , Detail(lnCtr).getSRPAmount()
-                                    , Detail(lnCtr).getReservationAmount()
-                                    , lnDuration
-                                    , ldblRate
-                                    , getMontlyAmortizationAmount(lnCtr, lnDuration, ldblRate));
+                    String lsVariant = Detail(lnCtr).ModelVariant().getDescription();
+                        if(Detail(lnCtr).ModelVariant().Color().getDescription() != null && !"".equals(Detail(lnCtr).ModelVariant().Color().getDescription())){
+                            lsVariant = lsVariant + " " + Detail(lnCtr).ModelVariant().Color().getDescription(); 
                         }
-                    }
+                        addRow(rows
+                                , Detail(lnCtr).ModelVariant().Model().Brand().getDescription()
+                                , Detail(lnCtr).ModelVariant().Model().getDescription()
+                                , lsVariant
+                                , Detail(lnCtr).getSRPAmount()
+                                , Detail(lnCtr).getPriceYear()
+                        );
                 }
             }
         } catch (SQLException | GuanzonException ex) {
-            Logger.getLogger(VehicleFinancingPrice.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(VehiclePriceList.class.getName()).log(Level.SEVERE, null, ex);
         }
         return rows;
     }
@@ -1932,9 +1669,7 @@ public class VehicleFinancingPrice extends Transaction {
     // Keys here MUST match the <field name="..."> values in the .jrxml exactly.
     private void addRow(List<Map<String, Object>> rows,
                                 String brand, String model, String variant,
-                                double srpAmt,
-                                double cashOutDP, int termMonths,
-                                double ratePct, double monthlyAmort) {
+                                double srpAmt,int priceYr) {
         Map<String, Object> row = new LinkedHashMap<>();
         if(brand == null){ brand = "";}
         if(model == null){ model = "";}
@@ -1943,10 +1678,7 @@ public class VehicleFinancingPrice extends Transaction {
         row.put("sModel", model.toUpperCase());
         row.put("sVariant", variant.toUpperCase());
         row.put("nSRP", srpAmt);
-        row.put("nCashOutDP", cashOutDP);
-        row.put("nTermMonths", termMonths);
-        row.put("nRatePct", ratePct);
-        row.put("nMonthlyAmort", monthlyAmort);
+        row.put("npriceYr", priceYr);
         rows.add(row);
     }
     
@@ -2109,7 +1841,7 @@ public class VehicleFinancingPrice extends Transaction {
         }
 
         if(pbWithUI){
-            showStatusHistoryUI("Vehicle Financing Promo", (String) poMaster.getValue("sValidIDx"), entryBy, entryDate, crs);
+            showStatusHistoryUI("Vehicle Price", (String) poMaster.getValue("sValidIDx"), entryBy, entryDate, crs);
         }
     }
     /**
