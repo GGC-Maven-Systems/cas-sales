@@ -593,6 +593,52 @@ public class VehicleDescription extends Parameter {
         return lsInvId;
     }
     
+    public String checkExistingVariant() {
+        String lsRecId = "";
+        poJSON = new JSONObject();
+        try {
+            String lsSQL = "SELECT  "
+                    + "  a.sVrntIDxx  "
+                    + ", a.sDescript  "
+                    + ", a.nSelPrice  "
+                    + ", a.nYearMdlx  "
+                    + ", a.sPayloadx  "
+                    + ", a.sModelIDx  "
+                    + ", a.sColorIDx  "
+                    + ", a.cRecdStat  "
+                    + ", b.sVhclType "
+                    + ", b.sBodyType "
+                    + ", b.sTransmss "
+                    + ", b.nAuthCapx "
+                    + " FROM Model_Variant a  "
+                    + " LEFT JOIN Model_Variant_Insurance b ON b.sVrntIDxx = a.sVrntIDxx";
+            lsSQL = MiscUtil.addCondition(getSQ_Browse()," sDescript =  " + SQLUtil.toSQL(poModel.getDescription())
+                    + " AND sVrntIDxx !=  " + SQLUtil.toSQL(poModel.getVariantId())
+                    + " AND sModelIDx =  " + SQLUtil.toSQL(poModel.getModelId())
+                    + " AND sColorIDx =  " + SQLUtil.toSQL(poModel.getColorId())
+                    + " AND sVhclType =  " + SQLUtil.toSQL(poModelVariantInsurance.getVehicleType())
+                    + " AND sBodyType =  " + SQLUtil.toSQL(poModelVariantInsurance.getBodyType())
+                    + " AND sTransmss =  " + SQLUtil.toSQL(poModelVariantInsurance.getTransmission())
+            );
+            
+            System.out.println("checkExistingVariant SQL: " + lsSQL);
+            ResultSet loRS = poGRider.executeQuery(lsSQL);
+            if (MiscUtil.RecordCount(loRS) <= 0) {
+                return "";
+            }
+            if(loRS.next()) {
+                lsRecId = loRS.getString("sVrntIDxx");
+            }
+            MiscUtil.close(loRS);
+            
+        } catch (SQLException ex) {
+            Logger.getLogger(getClass().getName()).log(Level.SEVERE, MiscUtil.getException(ex), ex);
+            return "";
+        }
+        return lsRecId;
+    }
+    
+    
     @Override
     protected JSONObject willSave()
             throws SQLException,
@@ -607,6 +653,11 @@ public class VehicleDescription extends Parameter {
                     return poJSON;
                 }
             }
+        }
+        String lsValVariant = checkExistingVariant();
+        if(checkNotEmpty(lsValVariant)){
+            poJSON = setJSON("error","Variant already exists.\nPlease check Variant ID: " + lsValVariant);
+            return poJSON;
         }
         
         poJSON = setJSON("success", "success");
