@@ -243,8 +243,7 @@ public class VehiclePriceListTest {
             System.out.println("MESSAGE : " + String.valueOf(loJSON.get("message")));
             Assert.assertEquals("success", loJSON.get("result"));
             
-            
-             System.out.println("-----------LOAD DETAIL-----------");
+            System.out.println("-----------LOAD DETAIL-----------");
             for(int lnCtr = 0; lnCtr < poController.getDetailCount(); lnCtr++){
                 if(poController.Detail(lnCtr).getVariantId() == null || "".equals(poController.Detail(lnCtr).getVariantId())){
                     continue;
@@ -253,6 +252,27 @@ public class VehiclePriceListTest {
                 System.out.println("Variant ID : " + poController.Detail(lnCtr).getVariantId());
                 System.out.println("SRP Amount : " + poController.Detail(lnCtr).getSRPAmount());
                 System.out.println("Price Year : " + poController.Detail(lnCtr).getPriceYear());
+            }
+            
+            loJSON = poController.loadVariantPriceList(0);
+            System.out.println("MESSAGE : " + String.valueOf(loJSON.get("message")));
+//            Assert.assertEquals("success", loJSON.get("result"));
+            
+            System.out.println("-----------LOAD VARIANT PRICE LIST-----------");
+            JSONArray loJSONArray = (JSONArray) loJSON.get("data");
+            if (loJSONArray != null && !loJSONArray.isEmpty()) {
+                for (Object requestObj : loJSONArray) {
+                    JSONObject obj = (JSONObject) requestObj;
+                    System.out.println("Validity ID : " + obj.get("sValidIDx") != null ? obj.get("sValidIDx").toString() : "");
+                    System.out.println("Variant ID : " + obj.get("sVrntIDxx") != null ? obj.get("sVrntIDxx").toString() : "");
+                    System.out.println("Effected From : " + obj.get("dFromDate") != null ? obj.get("dFromDate").toString() : "");
+                    System.out.println("Effective To : " + obj.get("dThruDate") != null ? obj.get("dThruDate").toString() : "");
+                    System.out.println("SRP Amount : " + obj.get("nSRPAmntx") != null ? obj.get("nSRPAmntx").toString() : "");
+                    System.out.println("Price Year : " + obj.get("nPriceYrx") != null ? obj.get("nPriceYrx").toString() : "");
+                    System.out.println("Updated By : " + obj.get("sModified") != null ? obj.get("sModified").toString() : "");
+                    System.out.println("Updated Date : " + obj.get("dModified") != null ? obj.get("dModified").toString() : "");
+                    System.out.println("Status : " + obj.get("cRecdStat") != null ? obj.get("cRecdStat").toString() : "");
+                }
             }
             
             loJSON = poController.UpdateTransaction();

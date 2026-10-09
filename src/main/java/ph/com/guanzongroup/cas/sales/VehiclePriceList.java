@@ -63,6 +63,7 @@ import org.guanzon.cas.parameter.model.Model_Branch;
 import org.guanzon.cas.parameter.model.Model_Brand;
 import org.guanzon.cas.parameter.services.ParamControllers;
 import org.guanzon.cas.parameter.services.ParamModels;
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.ParseException;
 import ph.com.guanzongroup.cas.sales.model.Model_Validity_Period_Master;
@@ -85,7 +86,7 @@ public class VehiclePriceList extends Transaction {
     public String psApprover = "";
 
     /** List of master records for batch operations */
-    public List<Model> paMaster;
+    public List<Model_Vehicle_Price_Master> paPriceList;
     
     /**
      * Initializes the transaction with source code and loads required models.
@@ -101,7 +102,7 @@ public class VehiclePriceList extends Transaction {
         poMaster = new SalesModels(poGRider).ValidityPeriodMaster();
         poDetail = new SalesModels(poGRider).VehiclePriceMaster();
 
-        paMaster = new ArrayList<Model>();
+        paPriceList = new ArrayList<Model_Vehicle_Price_Master>();
         psApprover = "";
         setApproving("");
         return initialize();
@@ -740,6 +741,66 @@ public class VehiclePriceList extends Transaction {
             poJSON.put("message", "No record loaded.");
             return poJSON;
         }
+    }
+    
+     public JSONObject loadVariantPriceList(int row) {
+        poJSON = new JSONObject();
+
+        try {
+            //Default union all
+            initSQL();
+            String lsSQL = MiscUtil.addCondition(SQL_BROWSE,
+                                                    " a.cRecdStat != " + SQLUtil.toSQL(ValidityPeriodStatus.VOID)
+                                                    + " AND a.cRecdStat != " + SQLUtil.toSQL(ValidityPeriodStatus.CANCELLED)
+                                                    + " AND a.sValidIDx != " + SQLUtil.toSQL(Master().getValidityId())
+                                                    + " AND b.sVrntIDxx = " + SQLUtil.toSQL(Detail(row).getVariantId())
+                                                    + " AND a.sCompnyID = " + SQLUtil.toSQL(Master().getCompanyId())
+                                                    );
+
+            lsSQL = lsSQL + " ORDER BY dFromDate, nPriceYrx ASC ";
+            System.out.println("Executing SQL: " + lsSQL);
+            ResultSet loRS = poGRider.executeQuery(lsSQL);
+            if (loRS == null) {
+                poJSON.put("result", "error");
+                poJSON.put("message", "Query execution failed.");
+                return poJSON;
+            }
+
+            int lnctr = 0;
+            JSONArray dataArray = new JSONArray();
+            while (loRS.next()) {
+                JSONObject record = new JSONObject();
+                record.put("sValidIDx", loRS.getString("sValidIDx"));
+                record.put("sVrntIDxx", loRS.getString("sVrntIDxx"));
+                record.put("dFromDate", loRS.getDate("dFromDate"));
+                record.put("dThruDate", loRS.getDate("dThruDate"));
+                record.put("nSRPAmntx", loRS.getDouble("nSRPAmntx"));
+                record.put("nPriceYrx", loRS.getInt("nPriceYrx"));
+                record.put("sModified", getSysUser(loRS.getString("sModified"),false));
+                record.put("dModified", loRS.getDate("dModified"));
+                record.put("cRecdStat", getStatus(loRS.getString("cRecdStat")));
+                dataArray.add(record);
+                lnctr++;
+            }
+            MiscUtil.close(loRS);
+
+            if (lnctr > 0) {
+                poJSON.put("result", "success");
+                poJSON.put("message", "Record(s) loaded successfully.");
+                poJSON.put("data", dataArray);
+            } else {
+                poJSON.put("result", "error");
+                poJSON.put("message", "No records found.");
+                poJSON.put("data", new JSONArray());
+            }
+        } catch (SQLException e) {
+            poJSON.put("result", "error");
+            poJSON.put("message", e.getMessage());
+        } catch (GuanzonException ex) {
+            Logger.getLogger(VehiclePriceList.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
+        return poJSON;
     }
     
     public JSONObject SearchBrand(String value, boolean byCode, int row)
