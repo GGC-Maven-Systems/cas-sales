@@ -259,7 +259,7 @@ public class Model_Vehicle_Price_Master extends Model {
             setModelId(ModelVariant().getModelId());
         }
         
-        String id = (String) (getBrandId() == null ? "" : getBrandId());
+        String id = (String) (getModelId() == null ? "" : getModelId());
 
         if (!"".equals(id)) {
             if (poModel.getEditMode() == EditMode.READY
