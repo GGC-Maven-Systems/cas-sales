@@ -15,5 +15,6 @@ CREATE TABLE `Sales_Reservation_Detail` (
   `cReversed` char(1) DEFAULT '+',
   `dModified` datetime DEFAULT NULL,
   `dTimeStmp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`sTransNox`,`nEntryNox`)
+  PRIMARY KEY (`sTransNox`,`nEntryNox`),
+  KEY `sStockIDx` (`sStockIDx`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;

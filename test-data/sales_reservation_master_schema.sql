@@ -30,5 +30,13 @@ CREATE TABLE `Sales_Reservation_Master` (
   `sModified` varchar(32) DEFAULT NULL,
   `dModified` datetime DEFAULT NULL,
   `dTimeStmp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`sTransNox`)
+  PRIMARY KEY (`sTransNox`),
+  KEY `sIndstCdx` (`sIndstCdx`),
+  KEY `sCompnyID` (`sCompnyID`),
+  KEY `sBranchCd` (`sBranchCd`),
+  KEY `sCategrCd` (`sCategrCd`),
+  KEY `dExpected` (`dExpected`),
+  KEY `cPreOrder` (`cPreOrder`),
+  KEY `sEntryNox` (`sEntryByx`),
+  KEY `cTranStat` (`cTranStat`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;

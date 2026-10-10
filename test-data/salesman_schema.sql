@@ -1,6 +1,6 @@
-DROP TABLE IF EXISTS `salesman`;
+DROP TABLE IF EXISTS `Salesman`;
 
-CREATE TABLE `salesman` (
+CREATE TABLE `Salesman` (
   `sEmployID` char(12) NOT NULL,
   `sBranchCd` char(4) DEFAULT NULL,
   `sLastName` varchar(20) DEFAULT NULL,

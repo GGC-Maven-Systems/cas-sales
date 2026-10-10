@@ -9767,9 +9767,13 @@ VALUES
 ('GCO126007','v2','Aprilia V2.1 red',2026,'GCO126005','GCO10006','08','0',NULL,'1',NULL,'2026-02-03 09:52:26','2026-02-03 09:52:26'),
 ('GCO126008','V2','Aprilia V2.8',2026,'GCO126005','GCO10006','09','0',NULL,'1',NULL,'2026-01-24 09:44:34','2026-01-24 09:44:34'),
 ('GCO126009','she model','She model',2026,'','GCO10010','09','0',NULL,'1',NULL,'2026-02-19 22:28:09','2026-02-19 22:30:37'),
-('GK0100001','City','City',2026,'','GK01012','02','1',NULL,'1',NULL,NULL,'2026-07-21 09:13:56'),
-('GK0100002','CRV','CRV',2026,'','GK01012','02','1',NULL,'1',NULL,NULL,'2026-07-21 09:14:19'),
-('GK0100003','BRV','BRV',2026,'','GK01012','02','1',NULL,'1',NULL,NULL,'2026-07-21 09:14:43'),
+('GCO126010','Click','Click 125 Limited',2026,'M0W106005','M001001','01','0','','1',NULL,'2026-09-05 17:00:01','2026-09-05 17:00:01'),
+('GCO126011','n1cc','The Honda',0,'','GK01012','03','0','','1',NULL,'2026-10-06 17:05:58','2026-10-06 17:05:58'),
+('GCO126012','Model123','Model 100726',0,'','GCO1002','03','0','','1',NULL,'2026-10-07 09:51:17','2026-10-07 09:51:17'),
+('GCO126013','1233','Sampol Model',0,'','GCO1002','03','0','','1',NULL,'2026-10-08 11:42:44','2026-10-08 11:42:44'),
+('GK0100001','City','City',2026,'','GK01012','02','1',NULL,'1',NULL,NULL,'2026-09-07 10:00:24'),
+('GK0100002','CRV','CRV',2026,'','GK01012','02','1',NULL,'1',NULL,NULL,'2026-09-07 10:00:27'),
+('GK0100003','BRV','BRV',2026,'','GK01012','02','1',NULL,'1',NULL,NULL,'2026-09-07 10:00:31'),
 ('GK0100004','TEST','TEST',2026,'','GK010013','01','1',NULL,'1',NULL,NULL,'2026-07-21 13:13:45'),
 ('GK0119001','A507FN/DS','Galaxy A50s (6GB-128GB)',0,'','C001006','00',NULL,'{"cKnoxGrdx":"1"}','1',NULL,NULL,'2025-09-26 14:46:24'),
 ('GK0119002','Ipad Mini 5 Wifi 64GB','Ipad Mini 5 Wifi 64GB',0,'','C001058','00',NULL,'{"cKnoxGrdx":"0"}','1',NULL,NULL,'2025-09-26 14:46:24'),
@@ -10072,15 +10076,15 @@ VALUES
 ('GK0125024','S2','S2',0,'','GK01126','09',NULL,'','1',NULL,NULL,'2025-09-26 14:50:39'),
 ('GK0125025','ST10000VE000','ST10000VE000',0,'','GK01002','09',NULL,'','1',NULL,NULL,'2025-09-26 14:50:39'),
 ('GK0125026','PRO MP251L E2','PRO MP251L E2',0,'','GK01021','09',NULL,'','1',NULL,NULL,'2025-09-26 14:50:39'),
-('GK0125027','TL-wn725n','TL-wn725n',0,'','GK01097','09',NULL,'','1',NULL,NULL,'2025-09-26 14:50:39'),
-('GK0125028','LS1005','LS1005',0,'','GK01097','09',NULL,'','1',NULL,NULL,'2025-09-26 14:50:40'),
-('GK0125029','DHI-USB-U116-20-16GB','DHI-USB-U116-20-16GB',0,'','GK01022','09',NULL,'','1',NULL,NULL,'2025-09-26 14:50:40'),
-('GK0125030','','LS24D300GAEXXP',0,'','GK01067','09',NULL,'','1',NULL,NULL,'2025-09-26 14:50:40'),
-('GK0125031','','LS24D300GAEXXP',0,'','','09',NULL,'','1',NULL,NULL,'2025-09-26 14:50:40');
+('GK0125027','TL-wn725n','TL-wn725n',0,'','GK01097','09',NULL,'','1',NULL,NULL,'2025-09-26 14:50:39');
 
 INSERT INTO `Model`
 (`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`)
 VALUES
+('GK0125028','LS1005','LS1005',0,'','GK01097','09',NULL,'','1',NULL,NULL,'2025-09-26 14:50:40'),
+('GK0125029','DHI-USB-U116-20-16GB','DHI-USB-U116-20-16GB',0,'','GK01022','09',NULL,'','1',NULL,NULL,'2025-09-26 14:50:40'),
+('GK0125030','','LS24D300GAEXXP',0,'','GK01067','09',NULL,'','1',NULL,NULL,'2025-09-26 14:50:40'),
+('GK0125031','','LS24D300GAEXXP',0,'','','09',NULL,'','1',NULL,NULL,'2025-09-26 14:50:40'),
 ('GK0125032','LS24D300GAEXXP','LS24D300GAEXXP',0,'','GK01067','09',NULL,'','1',NULL,NULL,'2025-09-26 14:50:40'),
 ('GK0125033','TZE-221','TZE-221',0,'','GMO1099','09',NULL,'','1',NULL,NULL,'2025-09-26 14:50:40'),
 ('GK0125034','DS-2CV2Q21FD-IW','DS-2CV2Q21FD-IW',0,'','M0W1026','09',NULL,'','1',NULL,NULL,'2025-09-26 14:50:40'),
@@ -10090,18 +10094,9 @@ VALUES
 ('GK0125038','N2455PRO-B','N2455PRO-B',0,'','GMO1067','09',NULL,'','1',NULL,NULL,'2025-09-26 14:50:40'),
 ('GK0125039','DS-2CE10DF3T-LPFS','DS-2CE10DF3T-LPFS',0,'','GK01008','09',NULL,'','1',NULL,NULL,'2025-09-26 14:50:40'),
 ('GK0125040','IDS-7208HQHI-M1/XT','IDS-7208HQHI-M1/XT',0,'','GK01008','09',NULL,'','1',NULL,NULL,'2025-09-26 14:50:40'),
-('GK0126001','GK0125041','GK0125041',2026,'','GK010132','09','0',NULL,'0',NULL,'2026-01-06 11:40:12','2026-01-06 11:40:12'),
-('GK0126002','GK0125041','Intercomm.',2025,'','GK010132','09','0',NULL,'0',NULL,'2026-01-06 11:46:42','2026-01-06 11:46:42'),
-('GK0126003','jerald1945','jerald1945',2026,'','GK010002','09','0',NULL,'0',NULL,'2026-01-07 10:59:04','2026-01-07 10:59:04'),
-('GK0126004','DIEGO','DIEGO',2026,'','GK010006','09','0',NULL,'0',NULL,'2026-01-07 13:09:43','2026-01-07 13:09:43'),
-('GK0126005','delo','delo',2026,'','GK010006','09','0',NULL,'1',NULL,'2026-01-07 11:57:25','2026-01-07 11:57:25'),
-('GK0126006','Santos','Santos',2026,'','GK010006','09','0',NULL,'0',NULL,'2026-01-07 13:23:39','2026-01-07 13:23:39'),
-('GK0126007','op','op',2026,'','GK010006','09','0',NULL,'0',NULL,'2026-01-07 13:34:39','2026-01-07 13:34:39'),
-('GK0126008','123','123',2026,'','GK010006','09','0',NULL,'0',NULL,'2026-01-07 13:43:51','2026-01-07 13:43:51'),
-('GK0126009','BRK','BARAKO',2000,'','GK010014','01','0','','1',NULL,'2026-08-06 17:04:09','2026-08-06 17:04:09'),
-('GK0126010','BRKII','BARAKO II',2026,'','GK010014','01','0','','1',NULL,'2026-08-06 17:04:55','2026-08-06 17:04:55'),
-('GK0126011','CLK','Click 125i',2026,'','GK010013','01','0','','1',NULL,'2026-08-06 17:10:13','2026-08-15 10:13:34'),
-('GK0126012','TES','Diorno',2026,'','GK010015','01','0','','1',NULL,'2026-08-07 10:20:35','2026-08-07 10:20:35'),
+('GK0126001','KB-831','KOBY Helmet Cleaner',2026,'','GK01013','09','0','','1',NULL,'2026-10-02 11:26:03','2026-10-02 11:26:03'),
+('GK0126002','test','ttre',0,'','GK01012','03','0','','1',NULL,'2026-10-06 15:50:42','2026-10-06 15:50:42'),
+('GK0126003','Civic','All New Civic',0,'','GK01012','03','0','','1',NULL,'2026-10-08 11:19:08','2026-10-08 11:19:08'),
 ('GMO124001','NONE','DS410',0,'','GK01001','09',NULL,'','1',NULL,NULL,'2025-09-26 14:50:40'),
 ('GMO124002','RG EST350 V2','Reyee Wireless Bridge',0,'','GMO1017','09',NULL,'','1',NULL,NULL,'2025-09-26 14:50:40'),
 ('GMO124003','2208','DS2208-SR7U2100SGW',0,'','GK01035','09',NULL,'','1',NULL,NULL,'2025-09-26 14:50:40'),
@@ -10580,16 +10575,16 @@ VALUES
 ('H00119058','Terra','Terra',0,'','M001008','01','0','{"cMotorTyp":"0","cEngineTp":"0","cBigBikex":"0","cHotItemx":"0","sModelDsc":"Terra","cRegisTyp":"0"}','1',NULL,NULL,'2025-09-26 14:14:34'),
 ('H00119059','Terra','Terra',0,'','M001008','01','0','{"cMotorTyp":"0","cEngineTp":"0","cBigBikex":"0","cHotItemx":"0","sModelDsc":"Terra","cRegisTyp":"0"}','1',NULL,NULL,'2025-09-26 14:14:34'),
 ('H00119060','Terra','Terra',0,'','M001008','01','0','{"cMotorTyp":"0","cEngineTp":"0","cBigBikex":"0","cHotItemx":"0","sModelDsc":"Terra","cRegisTyp":"0"}','1',NULL,NULL,'2025-09-26 14:14:34'),
-('H00119061','Almera','Almera',0,'','M001008','01','0','{"cMotorTyp":"0","cEngineTp":"0","cBigBikex":"0","cHotItemx":"0","sModelDsc":"Almera","cRegisTyp":"0"}','1',NULL,NULL,'2025-09-26 14:14:34');
-
-INSERT INTO `Model`
-(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`)
-VALUES
+('H00119061','Almera','Almera',0,'','M001008','01','0','{"cMotorTyp":"0","cEngineTp":"0","cBigBikex":"0","cHotItemx":"0","sModelDsc":"Almera","cRegisTyp":"0"}','1',NULL,NULL,'2025-09-26 14:14:34'),
 ('H00119062','Navara','Navara',0,'','M001008','01','0','{"cMotorTyp":"0","cEngineTp":"0","cBigBikex":"0","cHotItemx":"0","sModelDsc":"Navara","cRegisTyp":"0"}','1',NULL,NULL,'2025-09-26 14:14:34'),
 ('H00119063','NAVARA','NAVARA',0,'','M001008','01','0','{"cMotorTyp":"0","cEngineTp":"0","cBigBikex":"0","cHotItemx":"0","sModelDsc":"NAVARA","cRegisTyp":"0"}','1',NULL,NULL,'2025-09-26 14:14:34'),
 ('H00119064','Navara','Navara',0,'','M001008','01','0','{"cMotorTyp":"0","cEngineTp":"0","cBigBikex":"0","cHotItemx":"0","sModelDsc":"Navara","cRegisTyp":"0"}','1',NULL,NULL,'2025-09-26 14:14:34'),
 ('H00119065','COROLLA','COROLLA',0,'','M001009','01','0','{"cMotorTyp":"0","cEngineTp":"0","cBigBikex":"0","cHotItemx":"0","sModelDsc":"COROLLA","cRegisTyp":"0"}','1',NULL,NULL,'2025-09-26 14:14:34'),
-('H00119066','IMPREZA','IMPREZA',0,'','M001010','01','0','{"cMotorTyp":"0","cEngineTp":"0","cBigBikex":"0","cHotItemx":"0","sModelDsc":"IMPREZA","cRegisTyp":"0"}','1',NULL,NULL,'2025-09-26 14:14:34'),
+('H00119066','IMPREZA','IMPREZA',0,'','M001010','01','0','{"cMotorTyp":"0","cEngineTp":"0","cBigBikex":"0","cHotItemx":"0","sModelDsc":"IMPREZA","cRegisTyp":"0"}','1',NULL,NULL,'2025-09-26 14:14:34');
+
+INSERT INTO `Model`
+(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`)
+VALUES
 ('H00119067','ODYSSEY','ODYSSEY',0,'','M0W1001','01','0','{"cMotorTyp":"0","cEngineTp":"0","cBigBikex":"0","cHotItemx":"0","sModelDsc":"ODYSSEY","cRegisTyp":"0"}','1',NULL,NULL,'2025-09-26 14:14:34'),
 ('H00119068','Terra','Terra',0,'','M001008','01','0','{"cMotorTyp":"0","cEngineTp":"0","cBigBikex":"0","cHotItemx":"0","sModelDsc":"Terra","cRegisTyp":"0"}','1',NULL,NULL,'2025-09-26 14:14:34'),
 ('H00119069','JUKE','JUKE',0,'','M001008','01','0','{"cMotorTyp":"0","cEngineTp":"0","cBigBikex":"0","cHotItemx":"0","sModelDsc":"JUKE","cRegisTyp":"0"}','0',NULL,NULL,'2025-09-26 14:14:34'),
@@ -10852,9 +10847,9 @@ VALUES
 ('M00115008','CT100A-A380','CT100A',0,'','M0W1009','01','1','{"cMotorTyp":"0","cEngineTp":"0","cBigBikex":"0","cHotItemx":"0","sModelDsc":null,"cRegisTyp":"0"}','0',NULL,NULL,'2025-09-26 14:14:40'),
 ('M00115009','CCG125WHF - 70th','TMX 125 - 70th',0,'','M0W1001','01','1','{"cMotorTyp":"0","cEngineTp":"0","cBigBikex":"0","cHotItemx":"0","sModelDsc":null,"cRegisTyp":"0"}','1',NULL,NULL,'2025-09-26 14:14:40'),
 ('M00115010','CRF250LF','CRF 250L',0,'','M0W1001','01','1','{"cMotorTyp":"0","cEngineTp":"0","cBigBikex":"0","cHotItemx":"0","sModelDsc":null,"cRegisTyp":"0"}','0',NULL,NULL,'2025-09-26 14:14:40'),
-('M00115011','Avenger220','Avenger 220',0,'','GK01012','01','1','{"cMotorTyp":"0","cEngineTp":"0","cBigBikex":"0","cHotItemx":"0","sModelDsc":null,"cRegisTyp":"0"}','0',NULL,NULL,'2026-05-18 14:31:51'),
-('M00115012','ACH110CSFF','BEAT Fi eSP Series(CAST)',0,'','GK01012','01','1','{"cMotorTyp":"0","cEngineTp":"0","cBigBikex":"0","cHotItemx":"0","sModelDsc":null,"cRegisTyp":"0"}','0',NULL,NULL,'2026-05-18 14:31:06'),
-('M00115013','ACH110CBTF','BEAT Fi eSP Series(CBS/ISS)',0,'','GK01012','01','1','{"cMotorTyp":"0","cEngineTp":"0","cBigBikex":"0","cHotItemx":"0","sModelDsc":null,"cRegisTyp":"0"}','0',NULL,NULL,'2026-05-18 14:31:05'),
+('M00115011','Avenger220','Avenger 220',0,'','GK010012','01','1','{"cMotorTyp":"0","cEngineTp":"0","cBigBikex":"0","cHotItemx":"0","sModelDsc":null,"cRegisTyp":"0"}','0',NULL,NULL,'2026-05-18 14:31:51'),
+('M00115012','ACH110CSFF','BEAT Fi eSP Series(CAST)',0,'','GK010012','01','1','{"cMotorTyp":"0","cEngineTp":"0","cBigBikex":"0","cHotItemx":"0","sModelDsc":null,"cRegisTyp":"0"}','0',NULL,NULL,'2026-05-18 14:31:06'),
+('M00115013','ACH110CBTF','BEAT Fi eSP Series(CBS/ISS)',0,'','GK010012','01','1','{"cMotorTyp":"0","cEngineTp":"0","cBigBikex":"0","cHotItemx":"0","sModelDsc":null,"cRegisTyp":"0"}','0',NULL,NULL,'2026-05-18 14:31:05'),
 ('M00115014','BX250AEF','Ninja 250SL',0,'','M0W1009','01','1','{"cMotorTyp":"0","cEngineTp":"0","cBigBikex":"0","cHotItemx":"0","sModelDsc":null,"cRegisTyp":"0"}','1',NULL,NULL,'2025-09-26 14:14:40'),
 ('M00115015','TMXS2G','Supremo 2nd Gen',0,'','M0W1001','01','4','{"cMotorTyp":"0","cEngineTp":"0","cBigBikex":"0","cHotItemx":"0","sModelDsc":null,"cRegisTyp":"0"}','0',NULL,NULL,'2025-09-26 14:14:40'),
 ('M00115016','FU150DX2','Raider R150 - DX2',0,'','M0W1002','01','1','{"cMotorTyp":"0","cEngineTp":"0","cBigBikex":"0","cHotItemx":"0","sModelDsc":null,"cRegisTyp":"0"}','0',NULL,NULL,'2025-09-26 14:14:40'),
@@ -11084,16 +11079,16 @@ VALUES
 ('M00118061','AFB110MSJ','Wave 110 R - AFB110MSJ',0,'','M0W1001','01','0','{"cMotorTyp":"0","cEngineTp":"0","cBigBikex":"0","cHotItemx":"0","sModelDsc":"Wave 110 R","cRegisTyp":"0"}','0',NULL,NULL,'2025-09-26 14:14:45'),
 ('M00118062','VEGA FORCE I(B3S2)','VEGA FORCE I(B3S2)',0,'','M0W1003','01','4','{"cMotorTyp":"0","cEngineTp":"1","cBigBikex":"0","cHotItemx":"0","sModelDsc":"VEGA FORCE I","cRegisTyp":"0"}','0',NULL,NULL,'2025-09-26 14:14:45'),
 ('M00118063','FS150RKII','RS150R -FS150RKII',0,'','M0W1001','01','0','{"cMotorTyp":"0","cEngineTp":"0","cBigBikex":"0","cHotItemx":"0","sModelDsc":"RS150R","cRegisTyp":"0"}','0',NULL,NULL,'2025-09-26 14:14:45'),
-('M00118064','CFT125MSK','XRM125 DUAL SPORT - CFT125MSK',0,'','M0W1001','01','0','{"cMotorTyp":"0","cEngineTp":"0","cBigBikex":"0","cHotItemx":"0","sModelDsc":"XRM125 DUAL SPORT","cRegisTyp":"0"}','0',NULL,NULL,'2025-09-26 14:14:45');
-
-INSERT INTO `Model`
-(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`)
-VALUES
+('M00118064','CFT125MSK','XRM125 DUAL SPORT - CFT125MSK',0,'','M0W1001','01','0','{"cMotorTyp":"0","cEngineTp":"0","cBigBikex":"0","cHotItemx":"0","sModelDsc":"XRM125 DUAL SPORT","cRegisTyp":"0"}','0',NULL,NULL,'2025-09-26 14:14:45'),
 ('M00119001','EX400','Ninja 400',0,'','M0W1009','01','0','{"cMotorTyp":"0","cEngineTp":"0","cBigBikex":"0","cHotItemx":"0","sModelDsc":"Ninja","cRegisTyp":"0"}','0',NULL,NULL,'2025-09-26 14:14:45'),
 ('M00119002','B8D200-010','MT-15',0,'','M0W1003','01','0','{"cMotorTyp":"0","cEngineTp":"0","cBigBikex":"0","cHotItemx":"0","sModelDsc":"MT-15","cRegisTyp":"0"}','0',NULL,NULL,'2025-09-26 14:14:45'),
 ('M00119003','B5L400-010','YZF-R3',0,'','M0W1003','01','4','{"cMotorTyp":"0","cEngineTp":"1","cBigBikex":"0","cHotItemx":"0","sModelDsc":"YZF-R3","cRegisTyp":"0"}','0',NULL,NULL,'2025-09-26 14:14:45'),
 ('M00119004','BB45','MIO SOUL I 125 - BB45',0,'','M0W1003','01','0','{"cMotorTyp":"0","cEngineTp":"1","cBigBikex":"0","cHotItemx":"0","sModelDsc":"MIO SOUL I 125","cRegisTyp":"0"}','0',NULL,NULL,'2025-09-26 14:14:45'),
-('M00119005','B3E3','MIO SOUL I 125S B3E3',0,'','M0W1003','01','0','{"cMotorTyp":"0","cEngineTp":"1","cBigBikex":"0","cHotItemx":"0","sModelDsc":"MIO SOUL I 125S","cRegisTyp":"0"}','0',NULL,NULL,'2025-09-26 14:14:45'),
+('M00119005','B3E3','MIO SOUL I 125S B3E3',0,'','M0W1003','01','0','{"cMotorTyp":"0","cEngineTp":"1","cBigBikex":"0","cHotItemx":"0","sModelDsc":"MIO SOUL I 125S","cRegisTyp":"0"}','0',NULL,NULL,'2025-09-26 14:14:45');
+
+INSERT INTO `Model`
+(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`)
+VALUES
 ('M00119006','ACH110CSFKII','BeAt-FI(Standard) - ACH110CSFKII',0,'','M0W1001','01','0','{"cMotorTyp":"0","cEngineTp":"0","cBigBikex":"0","cHotItemx":"0","sModelDsc":"BeAt-FI(Standard)","cRegisTyp":"0"}','0',NULL,NULL,'2025-09-26 14:14:45'),
 ('M00119007','ACH110CSFK','BeAt-FI(Standard) - ACH110CSFK',0,'','M0W1001','01','0','{"cMotorTyp":"0","cEngineTp":"0","cBigBikex":"0","cHotItemx":"0","sModelDsc":"BeAt-FI(Standard)","cRegisTyp":"0"}','0',NULL,NULL,'2025-09-26 14:14:45'),
 ('M00119008','ACH110CBTK','BeAt-FI (ISS/CBS) - ACH110CBTK',0,'','M0W1001','01','0','{"cMotorTyp":"0","cEngineTp":"0","cBigBikex":"0","cHotItemx":"0","sModelDsc":"BeAt-FI (ISS\\/CBS)","cRegisTyp":"0"}','0',NULL,NULL,'2025-09-26 14:14:45'),
@@ -11326,7 +11321,7 @@ VALUES
 ('M00121098','BAJ700-010','YZ250FX BAJ700-010',0,'','M0W1003','01','0','{"cMotorTyp":"0","cEngineTp":"0","cBigBikex":"0","cHotItemx":"0","sModelDsc":"1","cRegisTyp":"1"}','0',NULL,NULL,'2025-09-26 14:14:51'),
 ('M00121099','CBR150RMIV','CBR150R - CBR150RMIV',0,'','M0W1001','01','0','{"cMotorTyp":"0","cEngineTp":"0","cBigBikex":"0","cHotItemx":"0","sModelDsc":"CBR150R","cRegisTyp":"0"}','1',NULL,NULL,'2025-09-26 14:14:51'),
 ('M00121100','BP9M00-010','Super Tenere ES - BP9M00-010',0,'','M0W1003','01','0','{"cMotorTyp":"2","cEngineTp":"0","cBigBikex":"0","cHotItemx":"0","sModelDsc":"Super Tenere ES","cRegisTyp":"1"}','1',NULL,NULL,'2025-09-26 14:14:51'),
-('M00121101','BAY200-010','Sniper 155 - BAY200-010',0,'','M0W1003','01','0','{"cMotorTyp":"0","cEngineTp":"0","cBigBikex":"0","cHotItemx":"0","sModelDsc":"Sniper 155","cRegisTyp":"1"}','1',NULL,NULL,'2025-09-26 14:14:51'),
+('M00121101','BAY200-010','Sniper 155 - BAY200-010',0,'','M001004','01','0','{"cMotorTyp":"0","cEngineTp":"0","cBigBikex":"0","cHotItemx":"0","sModelDsc":"Sniper 155","cRegisTyp":"1"}','1',NULL,NULL,'2026-10-08 14:37:38'),
 ('M00121102','BAY100-010','Sniper 155R - BAY100-010',0,'','M0W1003','01','0','{"cMotorTyp":"0","cEngineTp":"0","cBigBikex":"0","cHotItemx":"0","sModelDsc":"Sniper 155R","cRegisTyp":"1"}','1',NULL,NULL,'2025-09-26 14:14:51'),
 ('M00121103','SCV110FM','DIO - SCV110FM',0,'','M0W1001','01','0','{"cMotorTyp":"0","cEngineTp":"0","cBigBikex":"0","cHotItemx":"0","sModelDsc":"DIO SCV110FM","cRegisTyp":"1"}','1',NULL,NULL,'2025-09-26 14:14:51'),
 ('M00121104','ZN125MM','RS125 - ZN125MM',0,'','M0W1001','01','0','{"cMotorTyp":"0","cEngineTp":"0","cBigBikex":"0","cHotItemx":"0","sModelDsc":"RS125 - ZN125MM","cRegisTyp":"1"}','1',NULL,NULL,'2025-09-26 14:14:51'),
@@ -11588,16 +11583,16 @@ VALUES
 ('M00123032','B4BF00-010','YZ85 - B4BF00-010',0,'','M0W1003','01','0','{"cMotorTyp":"0","cEngineTp":"0","cBigBikex":"0","cHotItemx":"0","sModelDsc":"YZ85 - B4BF00-010","cRegisTyp":"1"}','1',NULL,NULL,'2025-09-26 14:14:58'),
 ('M00123033','B4XC00-010','YZ125 - B4XC00-010',0,'','M0W1003','01','0','{"cMotorTyp":"0","cEngineTp":"0","cBigBikex":"0","cHotItemx":"0","sModelDsc":"YZ125 - B4XC00-010","cRegisTyp":"1"}','1',NULL,NULL,'2025-09-26 14:14:58'),
 ('M00123034','BCRB00-010','YZ250 - BCRB00-010',0,'','M0W1003','01','0','{"cMotorTyp":"0","cEngineTp":"0","cBigBikex":"0","cHotItemx":"0","sModelDsc":"YZ250 - BCRB00-010","cRegisTyp":"1"}','1',NULL,NULL,'2025-09-26 14:14:58'),
-('M00123035','BSB400-010','YZ250F - BSB400-010',0,'','M0W1003','01','0','{"cMotorTyp":"0","cEngineTp":"0","cBigBikex":"0","cHotItemx":"0","sModelDsc":"YZ250F - BSB400-010","cRegisTyp":"1"}','1',NULL,NULL,'2025-09-26 14:14:58');
-
-INSERT INTO `Model`
-(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`)
-VALUES
+('M00123035','BSB400-010','YZ250F - BSB400-010',0,'','M0W1003','01','0','{"cMotorTyp":"0","cEngineTp":"0","cBigBikex":"0","cHotItemx":"0","sModelDsc":"YZ250F - BSB400-010","cRegisTyp":"1"}','1',NULL,NULL,'2025-09-26 14:14:58'),
 ('M00123036','BHR400-010','YZ450F - BHR400-010',0,'','M0W1003','01','0','{"cMotorTyp":"0","cEngineTp":"0","cBigBikex":"0","cHotItemx":"0","sModelDsc":"YZ450F - BHR400-010","cRegisTyp":"1"}','1',NULL,NULL,'2025-09-26 14:14:58'),
 ('M00123037','BMB300-010','TENERE 700 - BMB300-010',0,'','M0W1003','01','0','{"cMotorTyp":"0","cEngineTp":"0","cBigBikex":"0","cHotItemx":"0","sModelDsc":"TENERE 700 - BMB300-010","cRegisTyp":"1"}','1',NULL,NULL,'2025-09-26 14:14:58'),
 ('M00123038','B6B700-010','MIO I125S - B6B700-010',0,'','M0W1003','01','0','{"cMotorTyp":"0","cEngineTp":"0","cBigBikex":"0","cHotItemx":"0","sModelDsc":"MIO I125S - B6B700-010","cRegisTyp":"1"}','1',NULL,NULL,'2025-09-26 14:14:58'),
 ('M00123039','ER650NPSAN','Z650 - ER650NPSAN',0,'','M0W1009','01','0','{"cMotorTyp":"0","cEngineTp":"0","cBigBikex":"0","cHotItemx":"0","sModelDsc":"Z650 - ER650NPSAN","cRegisTyp":"1"}','1',NULL,NULL,'2025-09-26 14:14:58'),
-('M00123040','KLX150KRAAN','KLX150 - KLX150KRAAN',0,'','M0W1009','01','0','{"cMotorTyp":"2","cEngineTp":"0","cBigBikex":"0","cHotItemx":"0","sModelDsc":"KLX150 - KLX150KRAAN","cRegisTyp":"1"}','1',NULL,NULL,'2025-09-26 14:14:58'),
+('M00123040','KLX150KRAAN','KLX150 - KLX150KRAAN',0,'','M0W1009','01','0','{"cMotorTyp":"2","cEngineTp":"0","cBigBikex":"0","cHotItemx":"0","sModelDsc":"KLX150 - KLX150KRAAN","cRegisTyp":"1"}','1',NULL,NULL,'2025-09-26 14:14:58');
+
+INSERT INTO `Model`
+(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`)
+VALUES
 ('M00123041','UB125LNM- 1','BURGMAN STREET EX - UB125LNM- 1',0,'','M0W1002','01','0','{"cMotorTyp":"0","cEngineTp":"0","cBigBikex":"0","cHotItemx":"0","sModelDsc":"BURGMAN STREET EX - UB125LNM- 1","cRegisTyp":"1"}','1',NULL,NULL,'2025-09-26 14:14:58'),
 ('M00123042','BBWD00-010','TMAX Tech Max - BBWD00-010',0,'','M0W1003','01','0','{"cMotorTyp":"0","cEngineTp":"0","cBigBikex":"0","cHotItemx":"0","sModelDsc":"TMAX Tech Max - BBWD00-010","cRegisTyp":"1"}','1',NULL,NULL,'2025-09-26 14:14:58'),
 ('M00123043','CL500AP','CL500 - CL500AP',0,'','M0W1001','01','0','{"cMotorTyp":"0","cEngineTp":"0","cBigBikex":"0","cHotItemx":"0","sModelDsc":"CL500 - CL500AP","cRegisTyp":"1"}','1',NULL,NULL,'2025-09-26 14:14:58'),
@@ -11898,6 +11893,9 @@ VALUES
 ('M00126022','Honda CB300R','Honda CB300R',2026,'','M001001','01','0','','1',NULL,'2026-08-17 13:34:15','2026-08-17 13:34:15'),
 ('M00126023','Honda CB500F','Honda CB500F',2026,'','M001001','01','0','','1',NULL,'2026-08-17 13:34:30','2026-08-17 13:34:30'),
 ('M00126024','Honda CB650R','Honda CB650R',2026,'','M001001','01','0','','1',NULL,'2026-08-17 13:35:02','2026-08-17 13:35:02'),
+('M00126025','testing','testing',2026,'','M001006','01','0','','1',NULL,'2026-09-29 11:46:51','2026-09-29 11:46:51'),
+('M00126026','Hawak mo ang beat','Hawak mo ang beat',2026,'','M001001','01','0','','1',NULL,'2026-09-29 15:51:18','2026-09-29 15:51:18'),
+('M00126027','ZX1000','Ninja H2R',2027,'','M001003','01','0','','1',NULL,'2026-10-10 13:08:11','2026-10-10 13:08:11'),
 ('M00317001','','CBR 1000',0,'','M0W1001','01','0','{"cMotorTyp":"0","cEngineTp":"0","cBigBikex":"0","cHotItemx":"0","sModelDsc":"CBR 1000","cRegisTyp":"0"}','1',NULL,NULL,'2025-09-26 14:15:03'),
 ('M00409001','','Shark 150',0,'','M001003','01',NULL,'{"cMotorTyp":"0","cEngineTp":"0","cBigBikex":"0","cHotItemx":"0","sModelDsc":null,"cRegisTyp":"1"}','0',NULL,NULL,'2025-09-26 14:15:03'),
 ('M00908001','','Madass 125cc',0,'','M009001','01',NULL,'{"cMotorTyp":"0","cEngineTp":"0","cBigBikex":"0","cHotItemx":"0","sModelDsc":null,"cRegisTyp":"1"}','0',NULL,NULL,'2025-09-26 14:15:03'),
@@ -12092,13 +12090,13 @@ VALUES
 ('M0W107004','','SK 125 Sportivo II',0,'','M0W1007','01',NULL,'{"cMotorTyp":"","cEngineTp":"0","cBigBikex":"0","cHotItemx":"0","sModelDsc":null,"cRegisTyp":"0"}','0',NULL,NULL,'2025-09-26 14:15:07'),
 ('M0W107005','','MIO ZR SP',0,'','M0W1003','01','1','{"cMotorTyp":"","cEngineTp":"0","cBigBikex":"0","cHotItemx":"0","sModelDsc":null,"cRegisTyp":"0"}','0',NULL,NULL,'2025-09-26 14:15:08'),
 ('M0W107006','CT100','CT 100',0,'','M0W1009','01','1','{"cMotorTyp":"","cEngineTp":"0","cBigBikex":"0","cHotItemx":"0","sModelDsc":null,"cRegisTyp":"0"}','0',NULL,NULL,'2025-09-26 14:15:08'),
-('M0W107007','WIND125','WIND 125',0,'','M0W1009','01','1','{"cMotorTyp":"","cEngineTp":"0","cBigBikex":"0","cHotItemx":"0","sModelDsc":null,"cRegisTyp":"0"}','0',NULL,NULL,'2025-09-26 14:15:08');
+('M0W107007','WIND125','WIND 125',0,'','M0W1009','01','1','{"cMotorTyp":"","cEngineTp":"0","cBigBikex":"0","cHotItemx":"0","sModelDsc":null,"cRegisTyp":"0"}','0',NULL,NULL,'2025-09-26 14:15:08'),
+('M0W107008','T110','CRYPTON-Z T110',0,'','M0W1003','01','1','{"cMotorTyp":"0","cEngineTp":"0","cBigBikex":"0","cHotItemx":"0","sModelDsc":null,"cRegisTyp":"0"}','0',NULL,NULL,'2025-09-26 14:15:08'),
+('M0W107009','AL115','MIO SPORTY (Old)',0,'','M0W1003','01','1','{"cMotorTyp":"0","cEngineTp":"0","cBigBikex":"0","cHotItemx":"0","sModelDsc":null,"cRegisTyp":"0"}','0',NULL,NULL,'2025-09-26 14:15:08');
 
 INSERT INTO `Model`
 (`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`)
 VALUES
-('M0W107008','T110','CRYPTON-Z T110',0,'','M0W1003','01','1','{"cMotorTyp":"0","cEngineTp":"0","cBigBikex":"0","cHotItemx":"0","sModelDsc":null,"cRegisTyp":"0"}','0',NULL,NULL,'2025-09-26 14:15:08'),
-('M0W107009','AL115','MIO SPORTY (Old)',0,'','M0W1003','01','1','{"cMotorTyp":"0","cEngineTp":"0","cBigBikex":"0","cHotItemx":"0","sModelDsc":null,"cRegisTyp":"0"}','0',NULL,NULL,'2025-09-26 14:15:08'),
 ('M0W107010','SNIPER H/C 5D21','SNIPER H/C - 5D21',0,'','M0W1003','01','1','{"cMotorTyp":"1","cEngineTp":"0","cBigBikex":"0","cHotItemx":"0","sModelDsc":null,"cRegisTyp":"1"}','0',NULL,NULL,'2025-09-26 14:15:08'),
 ('M0W108002','FK110D','Smash 110',0,'','M0W1002','01','1','{"cMotorTyp":"0","cEngineTp":"0","cBigBikex":"0","cHotItemx":"0","sModelDsc":null,"cRegisTyp":"0"}','0',NULL,NULL,'2025-09-26 14:15:08'),
 ('M0W108003','','ANF 100MDPW',0,'','M0W1001','01','1','{"cMotorTyp":"0","cEngineTp":"0","cBigBikex":"0","cHotItemx":"0","sModelDsc":null,"cRegisTyp":"0"}','0',NULL,NULL,'2025-09-26 14:15:08'),
@@ -12537,5 +12535,10 @@ VALUES
 ('W00525022','SS26 Neon Strip','SS26 Neon Strip',0,'','M0W1056','09',NULL,'','1',NULL,NULL,'2025-09-26 14:50:47'),
 ('W00525023','RHE-18155','RHE-18155',0,'','W005072','09',NULL,'','1',NULL,NULL,'2025-09-26 14:50:47'),
 ('W00525024','RHE-18153','RHE-18153',0,'','W005073','09',NULL,'','1',NULL,NULL,'2025-09-26 14:50:47'),
-('W00525025','XK-250','XK-250',0,'','M0W1016','09',NULL,'','1',NULL,NULL,'2025-09-26 14:50:47');
+('W00525025','XK-250','XK-250',0,'','M0W1016','09',NULL,'','1',NULL,NULL,'2025-09-26 14:50:47'),
+('W00525026','CR-V','CR-V',2026,'','GK01012','03','1',NULL,'1',NULL,NULL,'2026-09-22 13:57:41'),
+('W00525027','BR-V','BR-V',2026,'','GK01012','03','1',NULL,'1',NULL,NULL,'2026-09-22 13:57:44'),
+('W00525028','BRIO','BRIO',2026,'','GK01012','03','1',NULL,'1',NULL,NULL,'2026-09-22 13:58:19'),
+('W00525029','ALL NEW CITY','ALL NEW CITY',2026,'','GK01012','03','1',NULL,'0',NULL,'2026-10-08 11:16:41','2026-10-08 11:16:41'),
+('W00525030','CITY HATCHBACK','CITY HATCHBACK',2026,'','GK01012','03','1',NULL,'1',NULL,'2026-10-08 11:17:44','2026-10-08 11:17:44');
 
