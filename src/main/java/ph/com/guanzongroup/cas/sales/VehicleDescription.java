@@ -612,13 +612,13 @@ public class VehicleDescription extends Parameter {
                     + ", b.nAuthCapx "
                     + " FROM Model_Variant a  "
                     + " LEFT JOIN Model_Variant_Insurance b ON b.sVrntIDxx = a.sVrntIDxx";
-            lsSQL = MiscUtil.addCondition(getSQ_Browse()," sDescript =  " + SQLUtil.toSQL(poModel.getDescription())
-                    + " AND sVrntIDxx !=  " + SQLUtil.toSQL(poModel.getVariantId())
-                    + " AND sModelIDx =  " + SQLUtil.toSQL(poModel.getModelId())
-                    + " AND sColorIDx =  " + SQLUtil.toSQL(poModel.getColorId())
-                    + " AND sVhclType =  " + SQLUtil.toSQL(poModelVariantInsurance.getVehicleType())
-                    + " AND sBodyType =  " + SQLUtil.toSQL(poModelVariantInsurance.getBodyType())
-                    + " AND sTransmss =  " + SQLUtil.toSQL(poModelVariantInsurance.getTransmission())
+            lsSQL = MiscUtil.addCondition(lsSQL," a.sDescript =  " + SQLUtil.toSQL(poModel.getDescription())
+                    + " AND a.sVrntIDxx !=  " + SQLUtil.toSQL(poModel.getVariantId())
+                    + " AND a.sModelIDx =  " + SQLUtil.toSQL(poModel.getModelId())
+                    + " AND a.sColorIDx =  " + SQLUtil.toSQL(poModel.getColorId())
+                    + " AND b.sVhclType =  " + SQLUtil.toSQL(poModelVariantInsurance.getVehicleType())
+                    + " AND b.sBodyType =  " + SQLUtil.toSQL(poModelVariantInsurance.getBodyType())
+                    + " AND b.sTransmss =  " + SQLUtil.toSQL(poModelVariantInsurance.getTransmission())
             );
             
             System.out.println("checkExistingVariant SQL: " + lsSQL);
@@ -645,6 +645,10 @@ public class VehicleDescription extends Parameter {
             GuanzonException {
         poJSON = new JSONObject();
         
+        if(getEditMode() == EditMode.ADDNEW){
+            poModel.setVariantId(poModel.getNextCode());
+        }
+        
         if(getEditMode() == EditMode.UPDATE){
             if(!pbWthParent){
                 psApprover = poGRider.getUserID();
@@ -665,14 +669,13 @@ public class VehicleDescription extends Parameter {
     }
     
     @Override
-    protected JSONObject saveOthers()
-            throws SQLException,
-            GuanzonException {
+    protected JSONObject saveOthers() {
         try {
             poJSON = new JSONObject();
             if(poModelVariantInsurance.getEditMode() == EditMode.ADDNEW || poModelVariantInsurance.getEditMode() == EditMode.UPDATE){
                 poModelVariantInsurance.setVariantId(poModel.getVariantId());
-                poJSON = poModelVariantInsurance.saveRecord();
+                    poJSON = poModelVariantInsurance.saveRecord();
+                
                 if (!isJSONSuccess(poJSON)) {
                     poJSON = setJSON("error", "Unable to save model variant parameter.\n"+(String) poJSON.get("message"));
                     return poJSON;
@@ -685,11 +688,11 @@ public class VehicleDescription extends Parameter {
                 return poJSON;
             }
             
-        } catch (ExceptionInInitializerError | CloneNotSupportedException ex) {
+        } catch (ExceptionInInitializerError | CloneNotSupportedException | SQLException | GuanzonException ex) {
             Logger.getLogger(getClass().getName()).log(Level.SEVERE, MiscUtil.getException(ex), ex);
             poJSON = setJSON("error", MiscUtil.getException(ex));
             return poJSON;
-        }
+        } 
         
         return poJSON;
     }

@@ -874,10 +874,11 @@ public class VehiclePriceList extends Transaction {
             ).thenComparing(
                 o -> getModelVariantDescription((Model_Vehicle_Price_Master) o),
                 Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)
-            ).thenComparing(
-                o -> getSRPAmount((Model_Vehicle_Price_Master) o),
-                    Comparator.nullsLast(Comparator.reverseOrder())
-                )
+            )
+//                    .thenComparing(
+//                o -> getSRPAmount((Model_Vehicle_Price_Master) o),
+//                    Comparator.nullsLast(Comparator.reverseOrder())
+//                )
         );
     }
     
@@ -1042,6 +1043,44 @@ public class VehiclePriceList extends Transaction {
         }
 
         return addDetail();
+    }
+    
+    public JSONObject remake(String fsTransNo) throws CloneNotSupportedException, SQLException, GuanzonException, ScriptException, ScriptException, ParseException{
+        poJSON = new JSONObject();
+        
+        VehiclePriceList loObj = new SalesControllers(poGRider, logwrapr).VehiclePriceList();
+        poJSON = loObj.OpenTransaction(fsTransNo);
+        if(!isJSONSuccess(poJSON)){
+            return poJSON;
+        }
+        
+        //Cancel or Void the transaction to be remake
+        if(ValidityPeriodStatus.APPROVED.equals(Master().getRecordStatus())){
+            poJSON = CancelTransaction();
+            if(!isJSONSuccess(poJSON)){
+                return poJSON;
+            }
+        } else {
+            poJSON = VoidTransaction();
+            if(!isJSONSuccess(poJSON)){
+                return poJSON;
+            }
+        }
+        
+        poJSON = NewTransaction();
+        if(!isJSONSuccess(poJSON)){
+            return poJSON;
+        }
+        
+        ReloadDetail();
+        for(int lnCtr = 0;lnCtr < loObj.getDetailCount(); lnCtr++){
+            Detail(getDetailCount()-1).setVariantId(loObj.Detail(lnCtr).getVariantId());
+            Detail(getDetailCount()-1).setSRPAmount(loObj.Detail(lnCtr).getSRPAmount());
+            Detail(getDetailCount()-1).setPriceYear(loObj.Detail(lnCtr).getPriceYear());
+            ReloadDetail();
+        }
+        
+        return setJSON("success", "success");
     }
     
     /**
