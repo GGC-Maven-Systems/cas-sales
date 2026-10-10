@@ -923,27 +923,69 @@ public class VehiclePriceList extends Transaction {
      * 
      * @throws CloneNotSupportedException If an error occurs while adding a new detail row.
      */
-    public void ReloadDetail() throws CloneNotSupportedException{
+    public void ReloadDetail() throws CloneNotSupportedException, SQLException, GuanzonException{
         int lnCtr = getDetailCount() - 1;
         while (lnCtr >= 0) {
-            if ((Detail(lnCtr).getVariantId() == null || "".equals(Detail(lnCtr).getVariantId()))) {
+            if ((Detail(lnCtr).getBrandId() == null || "".equals(Detail(lnCtr).getBrandId()))
+//                && (Detail(lnCtr).getModelId() == null || "".equals(Detail(lnCtr).getModelId()))
+                ) {
                 deleteDetail(lnCtr);
             } 
             lnCtr--;
         }
-            
+        
+        ArrayList<String> laVariant = groupUniqueVariant();
+        boolean lbHasSRPAmt = false;
+        Double ldblBaseAmt = 0.0000;
         if ((getDetailCount() - 1) >= 0) {
+//            for (String lsVariant : laVariant){
+//                lbHasSRPAmt = false;
+//                ldblBaseAmt = 0.0000;
+//                for(lnCtr = 0;lnCtr < getDetailCount(); lnCtr++){
+//                    if( lsVariant.equals(Detail(lnCtr).ModelVariant().getDescription())){
+//                        if(Detail(lnCtr).getSRPAmount() == 0.0000){
+//                            lbHasSRPAmt = true;
+//                        }
+//                        if(ldblBaseAmt <= 0.0000){
+//                            ldblBaseAmt = Detail(lnCtr).getSRPAmount() ;
+//                        } else {
+//                            if(ldblBaseAmt < Detail(lnCtr).getSRPAmount() ){
+//                                ldblBaseAmt = Detail(lnCtr).getSRPAmount() ;
+//                            }
+//                        }
+//                    }
+//                }
+//                if(!lbHasSRPAmt){
+//                    AddDetail();
+//                    Detail(getDetailCount() - 1).setModelId(lsVariant);
+//                    Detail(getDetailCount() - 1).setSRPAmount(ldblBaseAmt);
+//                }
+//            }
+            
             if (
                 (Detail(getDetailCount() - 1).getVariantId() != null && !"".equals(Detail(getDetailCount() - 1).getVariantId()))
                 && Detail(getDetailCount() - 1).getSRPAmount() > 0.0000
                 ) {
                 AddDetail();
             }
+            
+//            sortDetail();
         }
 
         if ((getDetailCount() - 1) < 0) {
             AddDetail();
         }
+    }
+    
+    private ArrayList<String> groupUniqueVariant() throws SQLException, GuanzonException {
+        ArrayList<String> laVariant = new ArrayList<>();
+
+        for(int lnCtr = 0;lnCtr < getDetailCount(); lnCtr++){
+            if(laVariant.isEmpty() || !laVariant.contains(Detail(lnCtr).ModelVariant().getModelId())){
+                laVariant.add(Detail(lnCtr).ModelVariant().getModelId());
+            }
+        }
+        return laVariant;
     }
     
     /**
@@ -1112,6 +1154,8 @@ public class VehiclePriceList extends Transaction {
             Master().setValidityId(Master().getNextCode());
         }
         
+        Master().setValidityDescription("Vehicle Price List");
+            
         poJSON = isEntryOkay(Master().getRecordStatus());
         if (!isJSONSuccess(poJSON)) {
             return poJSON;
