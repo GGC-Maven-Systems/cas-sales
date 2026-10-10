@@ -46,7 +46,11 @@ import javafx.collections.ObservableList;
  * @since 1.0
  */
 public final class SalesQoutationVersionStatic {
+    public static final String SOURCE_CODE = "SQVr";
 
+    public static final String BIG_BIKE = "0000014";
+    public static final String MATRIX_REGULAR_BIKE_NAME = "SALES QOUTATION MATRIX";
+    public static final String MATRIX_BIG_BIKE_NAME = "SALES QOUTATION BIG BIKE MATRIX";
     /**
      * Prevents instantiation of this utility class.
      */

@@ -41,7 +41,16 @@ import ph.com.guanzongroup.cas.sales.status.SalesQoutationVersionStatic;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.ParseException;
+import net.sf.jasperreports.engine.JRException;
+import net.sf.jasperreports.engine.JasperCompileManager;
+import net.sf.jasperreports.engine.JasperExportManager;
+import net.sf.jasperreports.engine.JasperFillManager;
+import net.sf.jasperreports.engine.JasperPrint;
+import net.sf.jasperreports.engine.JasperReport;
+import net.sf.jasperreports.engine.JREmptyDataSource;
+import net.sf.jasperreports.engine.data.JRMapCollectionDataSource;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -350,6 +359,88 @@ public class SalesQoutation extends Parameter {
      * @param customer     partial customer name, null or empty for all
      * @param status       quotation status code(s), null or empty for all
      */
+//    public List<JSONObject> getQuotationList(String industryCode, String categoryCode,
+//                                             String transNo, String customer, String status) throws SQLException {
+//        poGRider.ensureConnected();
+//
+//        // conditions shared by both queries (a = quotation, b = client)
+//        String lsCondition = "";
+//        if (industryCode != null && !industryCode.isEmpty()) {
+//            lsCondition = andCondition(lsCondition, "a.sIndstCdx = " + SQLUtil.toSQL(industryCode));
+//        }
+//        if (categoryCode != null && !categoryCode.isEmpty()) {
+//            lsCondition = andCondition(lsCondition, "a.sCategrCd = " + SQLUtil.toSQL(categoryCode));
+//        }
+//        if (transNo != null && !transNo.trim().isEmpty()) {
+//            lsCondition = andCondition(lsCondition, "a.sTransNox LIKE " + SQLUtil.toSQL("%" + transNo.trim() + "%"));
+//        }
+//        if (customer != null && !customer.trim().isEmpty()) {
+//            lsCondition = andCondition(lsCondition, "b.sCompnyNm LIKE " + SQLUtil.toSQL("%" + customer.trim() + "%"));
+//        }
+//        if (status != null && !status.isEmpty()) {
+//            StringBuilder lsIn = new StringBuilder();
+//            for (int lnCtr = 0; lnCtr < status.length(); lnCtr++) {
+//                if (lnCtr > 0) lsIn.append(", ");
+//                lsIn.append(SQLUtil.toSQL(Character.toString(status.charAt(lnCtr))));
+//            }
+//            lsCondition = andCondition(lsCondition, "a.cTranStat IN (" + lsIn + ")");
+//        }
+//
+//        // 1. quotations (parents)
+//        Map<String, JSONObject> loQuotations = new LinkedHashMap<>();
+//        String lsSQL = SalesQoutationsMasterQueries.SQL_QuotationList();
+//        if (!lsCondition.isEmpty()) lsSQL = MiscUtil.addCondition(lsSQL, lsCondition);
+//        lsSQL = lsSQL + " ORDER BY a.sTransNox DESC";
+//        System.out.println("Executing SQL: " + lsSQL);
+//        ResultSet loRS = poGRider.executeQuery(lsSQL);
+//        try {
+//            while (loRS.next()) {
+//                JSONObject loJSON = new JSONObject();
+//                loJSON.put("sTransNox", nvl(loRS.getString("sTransNox")));
+//                loJSON.put("dTransact", nvl(loRS.getString("dTransact")));
+//                loJSON.put("cTranStat", nvl(loRS.getString("cTranStat")));
+//                loJSON.put("xStatus", oSalesQoutationVersion.getStatus(nvl(loRS.getString("cTranStat"))));
+//                loJSON.put("sClientID", nvl(loRS.getString("sClientID")));
+//                loJSON.put("sCompnyNm", nvl(loRS.getString("sCompnyNm")));
+//                loJSON.put("aVersions", new ArrayList<JSONObject>());
+//                loQuotations.put((String) loJSON.get("sTransNox"), loJSON);
+//            }
+//        } finally {
+//            MiscUtil.close(loRS);
+//        }
+//        if (loQuotations.isEmpty()) return new ArrayList<>();
+//
+//        // 2. versions of those quotations, newest first inside each quotation
+//        lsSQL = SalesQoutationsMasterQueries.SQL_QuotationVersionList();
+//        if (!lsCondition.isEmpty()) lsSQL = MiscUtil.addCondition(lsSQL, lsCondition);
+//        lsSQL = lsSQL + " ORDER BY v.sParentID, v.sTransNox DESC";
+//        System.out.println("Executing SQL: " + lsSQL);
+//        loRS = poGRider.executeQuery(lsSQL);
+//        try {
+//            while (loRS.next()) {
+//                JSONObject loParent = loQuotations.get(loRS.getString("sParentID"));
+//                if (loParent == null) continue;
+//
+//                @SuppressWarnings("unchecked")
+//                List<JSONObject> laVersions = (List<JSONObject>) loParent.get("aVersions");
+//
+//                JSONObject loJSON = new JSONObject();
+//                loJSON.put("sTransNox", nvl(loRS.getString("sTransNox")));
+//                loJSON.put("sParentID", nvl(loRS.getString("sParentID")));
+//                loJSON.put("dTransact", nvl(loRS.getString("dTransact")));
+//                loJSON.put("cTranStat", nvl(loRS.getString("cTranStat")));
+//                loJSON.put("xStatus", oSalesQoutationVersion.getStatus(nvl(loRS.getString("cTranStat"))));
+//                loJSON.put("nTranTotl", nvl(loRS.getString("nTranTotl")));
+//                loJSON.put("dValdThru", nvl(loRS.getString("dValdThru")));
+//                loJSON.put("bLatest", laVersions.isEmpty());   // first row = newest
+//                laVersions.add(loJSON);
+//            }
+//        } finally {
+//            MiscUtil.close(loRS);
+//        }
+//
+//        return new ArrayList<>(loQuotations.values());
+//    }
     public List<JSONObject> getQuotationList(String industryCode, String categoryCode,
                                              String transNo, String customer, String status) throws SQLException {
         poGRider.ensureConnected();
@@ -393,6 +484,7 @@ public class SalesQoutation extends Parameter {
                 loJSON.put("xStatus", oSalesQoutationVersion.getStatus(nvl(loRS.getString("cTranStat"))));
                 loJSON.put("sClientID", nvl(loRS.getString("sClientID")));
                 loJSON.put("sCompnyNm", nvl(loRS.getString("sCompnyNm")));
+                loJSON.put("dConfirmd", nvl(loRS.getString("dConfirmd")));   // empty unless the quotation is confirmed
                 loJSON.put("aVersions", new ArrayList<JSONObject>());
                 loQuotations.put((String) loJSON.get("sTransNox"), loJSON);
             }
@@ -423,6 +515,7 @@ public class SalesQoutation extends Parameter {
                 loJSON.put("xStatus", oSalesQoutationVersion.getStatus(nvl(loRS.getString("cTranStat"))));
                 loJSON.put("nTranTotl", nvl(loRS.getString("nTranTotl")));
                 loJSON.put("dValdThru", nvl(loRS.getString("dValdThru")));
+                loJSON.put("dConfirmd", nvl(loRS.getString("dConfirmd")));
                 loJSON.put("bLatest", laVersions.isEmpty());   // first row = newest
                 laVersions.add(loJSON);
             }
@@ -432,7 +525,6 @@ public class SalesQoutation extends Parameter {
 
         return new ArrayList<>(loQuotations.values());
     }
-
     /** Joins conditions with AND (no WHERE; MiscUtil.addCondition adds it). */
     private String andCondition(String where, String condition) {
         return where.isEmpty() ? condition : where + " AND " + condition;
@@ -696,9 +788,15 @@ public class SalesQoutation extends Parameter {
         if (poModel.getEditMode() != EditMode.READY) {
             return setError("No quotation was loaded, or it is still being added/edited.");
         }
-
+        if (!SalesQoutationStatic.OPEN.equals(poModel.getTransactionStatus())) {
+            if (SalesQoutationStatic.LOST.equals(poModel.getTransactionStatus())) {
+                return setError("Quotation was already marked as lost.");
+            }
+            return setError("Only an open quotation can be marked as lost.");
+        }
         String lsQuotationNo = poModel.getTransactionNo();
         String lsVersionNo = oSalesQoutationVersion.Master().getTransactionNo();
+
 
         poJSON = statusChange(poModel.getTable(), (String) poModel.getValue("sTransNox"), remarks, SalesQoutationStatic.LOST, false, pbWthParent);
         if (!"success".equals((String) poJSON.get("result"))) {
@@ -725,6 +823,12 @@ public class SalesQoutation extends Parameter {
             throws SQLException, GuanzonException, CloneNotSupportedException, java.text.ParseException {
         if (poModel.getEditMode() != EditMode.READY) {
             return setError("No quotation was loaded, or it is still being added/edited.");
+        }
+        if (!SalesQoutationStatic.OPEN.equals(poModel.getTransactionStatus())) {
+            if (SalesQoutationStatic.VOID.equals(poModel.getTransactionStatus())) {
+                return setError("Quotation was already marked as void.");
+            }
+            return setError("Only an open quotation can be marked as void.");
         }
         String lsQuotationNo = poModel.getTransactionNo();
         String lsVersionNo = oSalesQoutationVersion.Master().getTransactionNo();
@@ -1197,5 +1301,382 @@ public class SalesQoutation extends Parameter {
         psSupersedeVersionNo = lsOldVersionNo;
 
         return setResult("success", "New version has been created successfully. Please review the details before saving.");
+    }
+
+    // ------------------------------------------------------------------
+    // print (Jasper) - report: reports/SalesQoutationVersion.jrxml
+    // ------------------------------------------------------------------
+
+    /**
+     * Prints the opened quotation version with {@code SalesQoutationVersion.jrxml}.
+     *
+     * <p>The report prints one version: header (date, customer, quotation no.,
+     * version), the motorcycle unit list ({@code ModelDataSource}), the giveaway /
+     * service list ({@code GiveAwayDataSource}), remarks and the signatories.
+     * On Windows the Jasper viewer is shown; on other systems a PDF is written
+     * to {@code sys.default.path.config/temp/}.</p>
+     */
+    public JSONObject printTransaction() {
+        try {
+            if (poModel.getEditMode() != EditMode.READY) {
+                return setError("Open a quotation first. Printing is only available in view mode.");
+            }
+
+            JasperPrint loPrint = buildJasperPrint();
+
+            if (System.getProperty("os.name").toLowerCase().contains("win")) {
+                javax.swing.SwingUtilities.invokeLater(() -> net.sf.jasperreports.view.JasperViewer.viewReport(loPrint, false));
+            } else {
+                JasperExportManager.exportReportToPdfFile(loPrint, System.getProperty("sys.default.path.config")
+                        + "/temp/" + poModel.getTransactionNo() + ".pdf");
+            }
+
+            return setResult("success", "Quotation printed successfully.");
+        } catch (JRException | SQLException | GuanzonException e) {
+            e.printStackTrace();
+            return setError("Quotation print aborted! " + e.getMessage());
+        }
+    }
+
+    /**
+     * Exports the opened quotation version straight to a PDF (no preview), using
+     * the same report and data as {@link #printTransaction()}, then reveals the
+     * file in its folder. If an Explorer window for that folder is already open,
+     * it is reused: the exported file is selected and the window is brought to
+     * the front instead of opening another one.
+     *
+     * <p>The file is saved to {@code sys.default.path.config/temp/} as
+     * {@code <customer>_<quotation no.>_V<version no.>.pdf}. If a file with that
+     * name already exists, it is kept and the new export is saved as
+     * {@code ..._V<version no.> (1).pdf}, {@code (2)}, and so on. On success the
+     * result also has {@code path}, the full path of the PDF.</p>
+     */
+    public JSONObject exportTransaction() {
+        try {
+            if (poModel.getEditMode() != EditMode.READY) {
+                return setError("Open a quotation first. Export is only available in view mode.");
+            }
+
+            JasperPrint loPrint = buildJasperPrint();
+
+            java.io.File loFolder = new java.io.File(System.getProperty("sys.default.path.config") + "/temp/");
+            if (!loFolder.exists() && !loFolder.mkdirs()) {
+                return setError("Unable to create the export folder " + loFolder.getAbsolutePath() + ".");
+            }
+
+            String lsQuotationNo = poModel.getTransactionNo();
+            String lsCustomerName = sanitizeFileName(poModel.Client().getCompanyName());
+            int lnVersion = getVersionNumber(lsQuotationNo, oSalesQoutationVersion.Master().getTransactionNo());
+
+            String lsBaseName = lsCustomerName + "_" + lsQuotationNo + "_V" + lnVersion;
+            java.io.File loFile = getUniqueFile(loFolder, lsBaseName, ".pdf");
+
+            JasperExportManager.exportReportToPdfFile(loPrint, loFile.getAbsolutePath());
+
+            boolean lbOpened = openFileLocation(loFile);
+
+            JSONObject loResult = setResult("success", "Quotation exported to:\n" + loFile.getAbsolutePath()
+                    + (lbOpened ? "" : "\n(The folder could not be opened automatically.)"));
+            loResult.put("path", loFile.getAbsolutePath());
+            return loResult;
+        } catch (JRException | SQLException | GuanzonException e) {
+            e.printStackTrace();
+            return setError("Quotation export aborted! " + e.getMessage());
+        }
+    }
+    /**
+     * Returns a file in the folder that does not exist yet. If {@code baseName + extension}
+     * is free it is used as is; otherwise " (1)", " (2)", ... is appended to the base name.
+     */
+    private java.io.File getUniqueFile(java.io.File folder, String baseName, String extension) {
+        java.io.File loFile = new java.io.File(folder, baseName + extension);
+        int lnCounter = 1;
+        while (loFile.exists()) {
+            loFile = new java.io.File(folder, baseName + " (" + lnCounter + ")" + extension);
+            lnCounter++;
+        }
+        return loFile;
+    }
+
+    /** Removes characters that are illegal in Windows file names (customer names can contain / : * ? etc.). */
+    private String sanitizeFileName(String name) {
+        if (name == null || name.trim().isEmpty()) {
+            return "Quotation";
+        }
+        return name.replaceAll("[\\\\/:*?\"<>|]", "_").trim();
+    }
+
+    /**
+     * Reveals a file in its folder. On Windows, an already-open Explorer window for
+     * that folder is reused (file re-selected, window brought to front); otherwise a
+     * new window is opened. Returns false if nothing could be opened.
+     */
+    private boolean openFileLocation(java.io.File file) {
+        try {
+            if (System.getProperty("os.name").toLowerCase().contains("win")) {
+                if (reuseExplorerWindow(file)) {
+                    return true;
+                }
+                new ProcessBuilder("explorer.exe", "/select,", file.getAbsolutePath()).start();
+                return true;
+            }
+            if (java.awt.Desktop.isDesktopSupported()
+                    && java.awt.Desktop.getDesktop().isSupported(java.awt.Desktop.Action.OPEN)) {
+                java.awt.Desktop.getDesktop().open(file.getParentFile());
+                return true;
+            }
+        } catch (java.io.IOException | RuntimeException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    /**
+     * Looks for an open Explorer window showing the file's folder. If found, selects
+     * the file in it and brings the window to the front.
+     *
+     * @return true if an existing window was reused, false if none was found (or the
+     *         lookup failed) and the caller should open a new one.
+     */
+    private boolean reuseExplorerWindow(java.io.File file) {
+        // Script is passed Base64/UTF-16LE encoded (-EncodedCommand) to avoid any quoting issues.
+        // The file path is passed through an environment variable for the same reason.
+        final String script =
+                "$file = $env:EXPORT_FILE_PATH\n"
+                        + "$folder = [System.IO.Path]::GetDirectoryName($file).TrimEnd('\\')\n"
+                        + "$name = [System.IO.Path]::GetFileName($file)\n"
+                        + "$shell = New-Object -ComObject Shell.Application\n"
+                        + "$target = $null\n"
+                        + "foreach ($w in $shell.Windows()) {\n"
+                        + "  try {\n"
+                        + "    $p = $w.Document.Folder.Self.Path\n"
+                        + "    if ($p -and ($p.TrimEnd('\\') -ieq $folder)) { $target = $w; break }\n"
+                        + "  } catch {}\n"
+                        + "}\n"
+                        + "if ($null -eq $target) { exit 1 }\n"
+                        + "$item = $target.Document.Folder.ParseName($name)\n"
+                        + "if ($item) { $target.Document.SelectItem($item, 29) }\n"   // 1=select 4=deselect others 8=ensure visible 16=focus
+                        + "Add-Type -TypeDefinition @'\n"
+                        + "using System;\n"
+                        + "using System.Runtime.InteropServices;\n"
+                        + "public class WinFront {\n"
+                        + "  [DllImport(\"user32.dll\")] public static extern bool SetForegroundWindow(IntPtr h);\n"
+                        + "  [DllImport(\"user32.dll\")] public static extern bool ShowWindow(IntPtr h, int c);\n"
+                        + "  [DllImport(\"user32.dll\")] public static extern bool IsIconic(IntPtr h);\n"
+                        + "  [DllImport(\"user32.dll\")] public static extern void keybd_event(byte k, byte s, uint f, UIntPtr e);\n"
+                        + "}\n"
+                        + "'@\n"
+                        + "$h = [IntPtr]$target.HWND\n"
+                        + "if ([WinFront]::IsIconic($h)) { [void][WinFront]::ShowWindow($h, 9) }\n"  // SW_RESTORE
+                        + "[WinFront]::keybd_event(0x12, 0, 0, [UIntPtr]::Zero)\n"                 // Alt down/up: lets us take foreground
+                        + "[WinFront]::keybd_event(0x12, 0, 2, [UIntPtr]::Zero)\n"
+                        + "[void][WinFront]::SetForegroundWindow($h)\n"
+                        + "exit 0\n";
+
+        try {
+            String lsEncoded = java.util.Base64.getEncoder()
+                    .encodeToString(script.getBytes(java.nio.charset.StandardCharsets.UTF_16LE));
+
+            ProcessBuilder loBuilder = new ProcessBuilder(
+                    "powershell.exe", "-NoProfile", "-NonInteractive",
+                    "-WindowStyle", "Hidden", "-EncodedCommand", lsEncoded);
+            loBuilder.environment().put("EXPORT_FILE_PATH", file.getAbsolutePath());
+            loBuilder.redirectErrorStream(true);
+
+            Process loProcess = loBuilder.start();
+            loProcess.getInputStream().close(); // we don't need the output
+
+            if (!loProcess.waitFor(8, java.util.concurrent.TimeUnit.SECONDS)) {
+                loProcess.destroyForcibly();
+                return false;
+            }
+            return loProcess.exitValue() == 0;
+        } catch (java.io.IOException e) {
+            e.printStackTrace();
+            return false;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return false;
+        }
+    }
+
+    /**
+     * Builds the filled report for the opened version (parameters, motorcycle
+     * units and giveaways). Shared by print and export so both give the same
+     * document.
+     */
+    private JasperPrint buildJasperPrint() throws JRException, SQLException, GuanzonException {
+        String lsConfig = System.getProperty("sys.default.path.config");
+        String lsImages = lsConfig + "/reports/images/";
+        String lsQuotationNo = poModel.getTransactionNo();
+        String lsVersionNo = oSalesQoutationVersion.Master().getTransactionNo();
+
+        // ---------------- parameters ----------------
+        Map<String, Object> parameters = new HashMap<>();
+
+        // watermark: DRAFT until the version is confirmed
+        String lsWatermark = lsImages + "draft.png";
+        String lsVersionStat = oSalesQoutationVersion.Master().getTransactionStatus();
+        if (SalesQoutationVersionStatic.CONFIRMED.equals(lsVersionStat)
+                || SalesQoutationVersionStatic.SALES.equals(lsVersionStat)) {
+            lsWatermark = lsImages + "approved.png";
+        }
+        parameters.put("watermarkImagePath", lsWatermark);
+        parameters.put("TitlewatermarkImagePath", lsImages + "Guanzon We Believe Logo.png");
+        parameters.put("HeaderDefault", lsImages + "TemplateHeader.png");
+        parameters.put("FooterDefault", lsImages + "TemplateFooter.png");
+
+        // header block
+        java.util.Date ldDate = oSalesQoutationVersion.Master().getTransactionDate();
+        parameters.put("QoutationDate", ldDate == null ? ""
+                : new java.text.SimpleDateFormat("MMMM dd, yyyy").format(ldDate));
+        parameters.put("CustomerName", safeString(poModel.Client().getCompanyName()));
+        parameters.put("CustomerAddress", getCustomerAddress());
+        parameters.put("QoutationTitle", safeString(oSalesQoutationVersion.Master().getTitleName()));
+        parameters.put("QoutationTransactionNo", safeString(lsQuotationNo));
+        parameters.put("QoutationVersion",
+                String.valueOf(getVersionNumber(lsQuotationNo, lsVersionNo)));
+
+        // summary block
+//        if(oSalesQoutationVersion.Master().getDeliveryType() != null
+//                && oSalesQoutationVersion.Master().getDeliveryType().equalsIgnoreCase(SalesQoutationVersionStatic.DeliveryType.DELIVERY)){
+//            parameters.put("DeliveryType", "Deliver to Branch");
+//        } else if(oSalesQoutationVersion.Master().getDeliveryType() != null && oSalesQoutationVersion.Master().getDeliveryType().equalsIgnoreCase("2")){
+//            parameters.put("DeliveryType", "Deliver to Customer");
+//        } else {
+//            parameters.put("DeliveryType", "N/A");
+//        }
+        parameters.put("QoutationValidity", safeString(oSalesQoutationVersion.Master().getValidThruDate()));
+        parameters.put("Remarks", safeString(oSalesQoutationVersion.Master().getRemarks2()));
+
+        JSONObject loEntry = oSalesQoutationVersion.getEntryBy();
+        parameters.put("PrepNme", loEntry != null && !"error".equals((String) loEntry.get("result"))
+                ? safeString(loEntry.get("sCompnyNm")) : "");
+
+        String lsConfirmedBy = "";
+        if (SalesQoutationVersionStatic.CONFIRMED.equals(lsVersionStat)
+                || SalesQoutationVersionStatic.SALES.equals(lsVersionStat)) {
+            lsConfirmedBy = oSalesQoutationVersion.getConfirmedBy();
+        }
+        parameters.put("ConfirmNme", lsConfirmedBy);
+
+        // declared by the report but not printed by its layout
+        parameters.put("ReceivrNme", "");
+        parameters.put("ImplentTo", "");
+        parameters.put("ReferNo", lsVersionNo);
+
+        // ---------------- motorcycle units ----------------
+        List<Map<String, ?>> laModels = new ArrayList<>();
+        for (int lnCtr = 0; lnCtr < oSalesQoutationVersion.getDetailCount(); lnCtr++) {
+            Model_Sales_Quotation_Version_Detail loRow = oSalesQoutationVersion.Detail(lnCtr);
+            if (loRow.getStockId() == null || loRow.getStockId().isEmpty()) continue;   // blank trailing row
+
+            double lnSrp = nz(loRow.getUnitPrice());
+            if (lnSrp <= 0.00) {   // fall back to the item's selling price
+                Object loPrice = loRow.Inventory().getSellingPrice();   // Object: works for boxed or primitive
+                if (loPrice != null) {
+                    try {
+                        lnSrp = Double.parseDouble(loPrice.toString().replace(",", "").trim());
+                    } catch (NumberFormatException e) {
+                        lnSrp = 0.00;
+                    }
+                }
+            }
+            int lnQty = (int) nz(loRow.getQuantity());
+            double lnDisc = nz(loRow.getDiscount());
+            double lnAddDisc = nz(loRow.getAdditionalDiscount());
+            double lnFreight = nz(loRow.getFreight());
+            double lnReg = nz(loRow.getRegistrationAmount());
+            double lnIns = nz(loRow.getInsuranceAmount());
+
+            // same computation as the screen's item table
+            double lnTotal = computeMCItemDetail(lnSrp, lnQty, lnDisc, lnAddDisc, lnFreight, lnReg, lnIns, null);
+
+            Map<String, Object> loMap = new HashMap<>();
+            loMap.put("Brand", htmlSafe(loRow.Inventory().Brand().getDescription()));
+            loMap.put("Model", htmlSafe(loRow.Inventory().Model().getDescription()));
+            loMap.put("Description", htmlSafe(loRow.Inventory().getDescription()));
+            loMap.put("Color", htmlSafe(loRow.Inventory().Color().getDescription()));
+            loMap.put("SRP", money(lnSrp));
+            loMap.put("Discount", money(lnDisc));
+            loMap.put("Add_Desc", money(lnAddDisc));
+            loMap.put("Freight", money(lnFreight));
+            loMap.put("Reg", money(lnReg));
+            loMap.put("Insur", money(lnIns));
+            loMap.put("Qty", String.valueOf(lnQty));
+            loMap.put("Total", money(lnTotal));
+            laModels.add(loMap);
+        }
+
+        // ---------------- giveaways and services ----------------
+        List<Map<String, ?>> laGiveaways = new ArrayList<>();
+        for (int lnCtr = 0; lnCtr < oSalesQoutationVersionGiveaways.getGiveawayCount(); lnCtr++) {
+            Model_Sales_Quotation_Version_Giveaways loRow = oSalesQoutationVersionGiveaways.Giveaway(lnCtr);
+            boolean lbHasItem = loRow.getStockId() != null && !loRow.getStockId().trim().isEmpty();
+            boolean lbHasQty = loRow.getQuantity() != null && loRow.getQuantity() > 0;
+            boolean lbHasRemarks = loRow.getRemarks() != null && !loRow.getRemarks().trim().isEmpty();
+            if (!lbHasItem && !lbHasQty && !lbHasRemarks) continue;                      // blank trailing row
+
+            Map<String, Object> loMap = new HashMap<>();
+            loMap.put("Inv_Type", lbHasItem ? "Giveaways" : "Service");                  // same rule as the screen
+            loMap.put("Barrcode", lbHasItem ? htmlSafe(loRow.Inventory().getBarCode()) : "");
+            loMap.put("Description", lbHasItem ? htmlSafe(loRow.Inventory().getDescription()) : "");
+            loMap.put("Qty", lbHasQty ? String.valueOf(loRow.getQuantity()) : "");
+            loMap.put("Remarks", htmlSafe(loRow.getRemarks()));
+            laGiveaways.add(loMap);
+        }
+
+        // the list components read these; the layout shows a section only when its flag is true
+        parameters.put("HasModel", !laModels.isEmpty());
+        parameters.put("HasGiveAway", !laGiveaways.isEmpty());
+        parameters.put("HasBrand", false);
+        parameters.put("HasModelException", false);
+        parameters.put("ModelDataSource", new JRMapCollectionDataSource(laModels));
+        parameters.put("GiveAwayDataSource", new JRMapCollectionDataSource(laGiveaways));
+        parameters.put("BrandDataSource", new JRMapCollectionDataSource(new ArrayList<Map<String, ?>>()));
+        parameters.put("ModelExceptionDataSource", new JRMapCollectionDataSource(new ArrayList<Map<String, ?>>()));
+
+        // ---------------- compile and fill ----------------
+        String lsJrxml = lsConfig + "/reports/SalesQoutationVersion.jrxml";
+        JasperReport loReport = JasperCompileManager.compileReport(lsJrxml);
+
+        // the report has no query: one empty record makes the detail bands print once,
+        // and the data comes from the two list datasources above
+        JasperPrint loPrint = JasperFillManager.fillReport(loReport, parameters, new JREmptyDataSource(1));
+        return loPrint;
+    }
+
+    /** Customer address as one line: street, barangay, town, province. */
+    private String getCustomerAddress() throws SQLException, GuanzonException {
+        StringBuilder loAddress = new StringBuilder();
+        appendPart(loAddress, poModel.ClientAddress().getAddress());
+        appendPart(loAddress, poModel.ClientAddress().Barangay().getBarangayName());
+        appendPart(loAddress, poModel.ClientAddress().Town().getDescription());
+        appendPart(loAddress, poModel.ClientAddress().Town().Province().getDescription());
+        return loAddress.toString();
+    }
+
+    private void appendPart(StringBuilder builder, String part) {
+        if (part == null || part.trim().isEmpty()) return;
+        if (builder.length() > 0) builder.append(", ");
+        builder.append(part.trim());
+    }
+
+    private String safeString(Object value) {
+        return value == null ? "" : value.toString();
+    }
+
+    private double nz(Number value) {
+        return value == null ? 0.00 : value.doubleValue();
+    }
+
+    private String money(double value) {
+        return String.format("%,.2f", value);
+    }
+
+    /** The report's list fields use markup="html", so escape characters that would be read as tags. */
+    private String htmlSafe(String value) {
+        if (value == null) return "";
+        return value.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
     }
 }

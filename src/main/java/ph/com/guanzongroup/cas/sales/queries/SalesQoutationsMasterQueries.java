@@ -1,5 +1,7 @@
 package ph.com.guanzongroup.cas.sales.queries;
 
+import org.guanzon.appdriver.base.SQLUtil;
+import ph.com.guanzongroup.cas.sales.status.SalesQoutationVersionStatic;
 import ph.com.guanzongroup.cas.sales.status.SalesVehicleReleaseStatic;
 
 /**
@@ -409,6 +411,26 @@ public class SalesQoutationsMasterQueries {
      *
      * @return the SQL query used to list Sales Quotations
      */
+//    public static String SQL_QuotationList() {
+//        return " SELECT "
+//                + "    a.sTransNox "
+//                + "  , a.dTransact "
+//                + "  , a.cTranStat "
+//                + "  , a.nVersionx "
+//                + "  , a.sClientID "
+//                + "  , IFNULL(b.sCompnyNm, '') AS sCompnyNm "
+//                + "  , v.sTransNox AS sVersnNox "
+//                + "  , v.cTranStat AS cVersStat "
+//                + " FROM Sales_Quotation_Master a "
+//                + " LEFT JOIN Client_Master b "
+//                + "        ON b.sClientID = a.sClientID "
+//                + " INNER JOIN Sales_Quotation_Version_Master v "
+//                + "        ON v.sParentID = a.sTransNox "
+//                + "       AND v.sTransNox = ( SELECT MAX(v2.sTransNox) "
+//                + "                             FROM Sales_Quotation_Version_Master v2 "
+//                + "                            WHERE v2.sParentID = a.sTransNox ) ";
+//    }
+
     public static String SQL_QuotationList() {
         return " SELECT "
                 + "    a.sTransNox "
@@ -419,6 +441,13 @@ public class SalesQoutationsMasterQueries {
                 + "  , IFNULL(b.sCompnyNm, '') AS sCompnyNm "
                 + "  , v.sTransNox AS sVersnNox "
                 + "  , v.cTranStat AS cVersStat "
+                + "  , CASE WHEN v.cTranStat = " + SQLUtil.toSQL(SalesQoutationVersionStatic.CONFIRMED)
+                + "         THEN ( SELECT MAX(h.dModified) "
+                + "                  FROM Transaction_Status_History h "
+                + "                 WHERE h.sSourceNo = v.sTransNox "
+                + "                   AND h.sTableNme = 'Sales_Quotation_Version_Master' "
+                + "                   AND h.cRefrStat = '1' ) "
+                + "         ELSE NULL END AS dConfirmd "
                 + " FROM Sales_Quotation_Master a "
                 + " LEFT JOIN Client_Master b "
                 + "        ON b.sClientID = a.sClientID "
@@ -428,7 +457,6 @@ public class SalesQoutationsMasterQueries {
                 + "                             FROM Sales_Quotation_Version_Master v2 "
                 + "                            WHERE v2.sParentID = a.sTransNox ) ";
     }
-
 
     /**
      * Returns the SQL statement used to list the versions of Sales
@@ -453,6 +481,13 @@ public class SalesQoutationsMasterQueries {
                 + "  , v.cTranStat "
                 + "  , v.nTranTotl "
                 + "  , v.dValdThru "
+                + "  , CASE WHEN v.cTranStat = " + SQLUtil.toSQL(SalesQoutationVersionStatic.CONFIRMED)
+                + "         THEN ( SELECT MAX(h.dModified) "
+                + "                  FROM Transaction_Status_History h "
+                + "                 WHERE h.sSourceNo = v.sTransNox "
+                + "                   AND h.sTableNme = 'Sales_Quotation_Version_Master' "
+                + "                   AND h.cRefrStat = '1' ) "
+                + "         ELSE NULL END AS dConfirmd "
                 + " FROM Sales_Quotation_Version_Master v "
                 + " INNER JOIN Sales_Quotation_Master a "
                 + "        ON a.sTransNox = v.sParentID "

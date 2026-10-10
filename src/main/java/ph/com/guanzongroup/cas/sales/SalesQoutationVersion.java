@@ -4,7 +4,10 @@
  */
 package ph.com.guanzongroup.cas.sales;
 
+import org.guanzon.appdriver.agent.ActionAuthManager;
+import org.guanzon.appdriver.agent.MatrixAuthChecker;
 import org.guanzon.appdriver.agent.ShowDialogFX;
+import org.guanzon.appdriver.agent.ShowMessageFX;
 import org.guanzon.appdriver.agent.services.Model;
 import org.guanzon.appdriver.agent.services.Transaction;
 import org.guanzon.appdriver.base.GuanzonException;
@@ -12,14 +15,18 @@ import org.guanzon.appdriver.base.MiscUtil;
 import org.guanzon.appdriver.base.SQLUtil;
 import org.guanzon.appdriver.constant.EditMode;
 import org.guanzon.appdriver.constant.UserRight;
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import ph.com.guanzongroup.cas.cashflow.model.Model_Recurring_Expense_Payment_Monitor;
 import ph.com.guanzongroup.cas.cashflow.services.CashflowModels;
 import ph.com.guanzongroup.cas.cashflow.status.PaymentRequestStatus;
 import ph.com.guanzongroup.cas.sales.model.Model_Sales_Quotation_Version_Detail;
 import ph.com.guanzongroup.cas.sales.model.Model_Sales_Quotation_Version_Master;
+import ph.com.guanzongroup.cas.sales.queries.SalesQoutationsMasterQueries;
 import ph.com.guanzongroup.cas.sales.services.SalesModels;
+import ph.com.guanzongroup.cas.sales.status.SalesQoutationStatic;
 import ph.com.guanzongroup.cas.sales.status.SalesQoutationVersionStatic;
+import ph.com.guanzongroup.cas.sales.validator.Sales_Qoutation_Validator_MC;
 
 import javax.sql.rowset.CachedRowSet;
 import java.sql.ResultSet;
@@ -328,8 +335,22 @@ public class SalesQoutationVersion extends Transaction {
 
         for (int lnCtr = 0; lnCtr <= getDetailCount() - 1; lnCtr++) {
             Integer lnQty = Detail(lnCtr).getQuantity();
+
             if (lnQty == null || lnQty <= 0) {
                 return setJSON("error", "Invalid quantity at row " + (lnCtr + 1) + ".");
+            }
+            if (Detail(lnCtr).getPromoCode() != null && !Detail(lnCtr).getPromoCode().isEmpty()) {
+                String lsExpiry = SearchMCItemPromoExpirey(Detail(lnCtr).Inventory().getModelId(), Detail(lnCtr).getPromoCode());
+                if (lsExpiry == null || lsExpiry.isEmpty()) {
+                    poJSON.put("result", "error");
+                    poJSON.put("message", "Invalid promo code at row " + (lnCtr + 1) + ".");
+                    return poJSON;
+                }
+                if (SQLUtil.toDate(lsExpiry, SQLUtil.FORMAT_SHORT_DATE).before(poGRider.getServerDate())) {
+                    poJSON.put("result", "error");
+                    poJSON.put("message", "Promo code at row " + (lnCtr + 1) + " has already expired.");
+                    return poJSON;
+                }
             }
             // key the detail to this version's master
             Detail(lnCtr).setTransactionNo(Master().getTransactionNo());
@@ -368,12 +389,16 @@ public class SalesQoutationVersion extends Transaction {
         if (Master().getTransactionNo() == null || "".equals(Master().getTransactionNo())) {
             return setJSON("error", "Transaction No. must not be empty.");
         }
-        System.out.println("getParentId. " + Master().getParentId());
         if (Master().getParentId() == null || "".equals(Master().getParentId())) {
             return setJSON("error", "Parent quotation must not be empty.");
         }
-        // TODO: add more validations (branch, dates, payment form, totals) when the UI needs them
 
+//        Sales_Qoutation_Validator_MC loValidator = new Sales_Qoutation_Validator_MC();
+//        loValidator.setApplicationDriver(poGRider);
+//        loValidator.setTransactionStatus(status);
+//        loValidator.setMaster(Master());
+//        loValidator.setDetail(new ArrayList<Object>(paDetail));
+//        return loValidator.validate();
         poJSON.put("result", "success");
         return poJSON;
     }
@@ -467,6 +492,37 @@ public class SalesQoutationVersion extends Transaction {
     }
 
     /**
+     * Name of the user who confirmed the loaded version, for the printed
+     * "Approved By" line. Returns "" when it cannot be found.
+     *
+     * ASSUMPTION: confirm runs beginTrans("UPDATE STATUS", "Confirm", ...) (see
+     * ConfirmTransaction), so the audit log row is found by event name
+     * "UPDATE STATUS" and remarks "Confirm". If your audit log stores the
+     * status change differently, adjust the two conditions below.
+     */
+    public String getConfirmedBy() throws SQLException, GuanzonException {
+        String lsConfirmed = "";
+        String lsSQL = " SELECT b.sModified "
+                + " FROM " + Master().getTable() + " a "
+                + " LEFT JOIN xxxAuditLogMaster b ON b.sSourceNo = a.sTransNox AND b.sEventNme = 'UPDATE STATUS' AND b.sRemarksx = 'Confirm' ";
+        lsSQL = MiscUtil.addCondition(lsSQL, " a.sTransNox = " + SQLUtil.toSQL(Master().getTransactionNo()));
+        lsSQL = lsSQL + " ORDER BY b.dModified DESC LIMIT 1 ";
+        System.out.println("Execute SQL : " + lsSQL);
+        ResultSet loRS = poGRider.executeQuery(lsSQL);
+        try {
+            if (loRS.next()) {
+                String lsUser = loRS.getString("sModified");
+                if (lsUser != null && !lsUser.isEmpty()) {
+                    lsConfirmed = getSysUser(lsUser.length() > 10 ? poGRider.Decrypt(lsUser) : lsUser);
+                }
+            }
+        } finally {
+            MiscUtil.close(loRS);
+        }
+        return lsConfirmed == null ? "" : lsConfirmed;
+    }
+
+    /**
      * Retrieves the company name of a system user based on user ID.
      */
     public String getSysUser(String fsId) throws SQLException, GuanzonException {
@@ -513,23 +569,214 @@ public class SalesQoutationVersion extends Transaction {
             return setJSON("error", "Version was already expired.");
         }
 
-        poJSON = isEntryOkay(lsStatus);
-        if (!"success".equals((String) poJSON.get("result"))) return poJSON;
+//        poJSON = isEntryOkay(lsStatus);
+//        if (!"success".equals((String) poJSON.get("result"))) return poJSON;
 
-//        if (!pbWthParent) {
-//            poGRider.beginTrans("UPDATE STATUS", "Confirm", SOURCE_CODE, Master().getTransactionNo());
-//        }
-        poGRider.beginTrans("UPDATE STATUS", "Confirm", SOURCE_CODE, Master().getTransactionNo());
-        poJSON = statusChange(poMaster.getTable(), (String) poMaster.getValue("sTransNox"),
-                remarks, lsStatus, false, true);
-        if (!"success".equals((String) poJSON.get("result"))) {
-            if (!pbWthParent) poGRider.rollbackTrans();
-            return poJSON;
+        MatrixAuthChecker check = null;
+
+        if (!pbWthParent) {
+            //validator
+            poJSON = isEntryOkay(lsStatus);
+            if (!"success".equals((String) poJSON.get("result"))) {
+                return poJSON;
+            }
+            Sales_Qoutation_Validator_MC loValidator = new Sales_Qoutation_Validator_MC();
+            loValidator.setApplicationDriver(poGRider);
+            loValidator.setTransactionStatus(lsStatus);
+            loValidator.setMaster(Master());
+            loValidator.setDetail(new ArrayList<Object>(paDetail));
+
+            poJSON = loValidator.validate();
+            if (!"success".equals((String) poJSON.get("result"))) {
+                return poJSON;
+            }
+            //get the matrix return from isEntryOkey
+            JSONArray loMatrix = (JSONArray) poJSON.get("matrix");
+
+            if (loMatrix != null && !loMatrix.isEmpty()) {
+                poJSON = processMatrixApproval(loMatrix, lsStatus, remarks);
+                // "error" -> stop, "matrix" -> approval still pending (status already logged)
+                if (!"success".equals((String) poJSON.get("result"))) {
+                    return poJSON;
+                }
+            } else {
+                // no matrix request (e.g. no discount): normal approval, then write the status
+                poJSON = seekApproval();
+                if ("error".equalsIgnoreCase((String) poJSON.get("result"))) {
+                    return poJSON;
+                }
+
+                boolean lbOwnTrans = poGRider.getGConnection().getConnection().getAutoCommit();
+                if (lbOwnTrans) {
+                    poGRider.beginTrans("UPDATE STATUS", "Confirm", SOURCE_CODE, Master().getTransactionNo());
+                }
+                poJSON = applyStatus(lsStatus, remarks);
+                if (lbOwnTrans) {
+                    if ("success".equals((String) poJSON.get("result"))) {
+                        poGRider.commitTrans();
+                    } else {
+                        poGRider.rollbackTrans();
+                    }
+                }
+                if (!"success".equals((String) poJSON.get("result"))) {
+                    return poJSON;
+                }
+            }
+        }
+        poJSON.put("result", "success");
+        poJSON.put("message", "Version confirmed successfully.");
+
+        return poJSON;
+    }
+
+    /**
+     * Runs the matrix approval for the request created by the validator.
+     *
+     * One transaction wraps the whole approval. MatrixAuthChecker.authTrans() opens a
+     * transaction on a success path and never commits it, so any later beginTrans()
+     * throws "Guanzon Object Execution Sequence Error". Because the connection is
+     * already in a transaction here, the checker methods see auto-commit = false and
+     * do not begin/commit by themselves.
+     *
+     * @return "success" - every required authorizer approved, status written
+     *         "matrix"  - approval is still pending, status was logged
+     *         "error"   - stop
+     */
+    private JSONObject processMatrixApproval(JSONArray loMatrix, String lsStatus, String remarks)
+            throws SQLException, GuanzonException, ParseException, CloneNotSupportedException {
+
+        // If the caller already owns a transaction, it commits/rolls back; otherwise we do.
+        boolean lbOwnTrans = poGRider.getGConnection().getConnection().getAutoCommit();
+        if (lbOwnTrans) {
+            poGRider.beginTrans("UPDATE STATUS", "Confirm", SOURCE_CODE, Master().getTransactionNo());
         }
 
-        if (!pbWthParent) poGRider.commitTrans();
+        try {
+            JSONObject loResult = runMatrixApproval(loMatrix, lsStatus, remarks);
 
-        poJSON = setJSON("success", "Version confirmed successfully.");
+            if (lbOwnTrans) {
+                if ("error".equals((String) loResult.get("result"))) {
+                    poGRider.rollbackTrans();
+                } else {
+                    poGRider.commitTrans();   // "success" or "matrix"
+                }
+            }
+            return loResult;
+        } catch (Exception ex) {
+            if (lbOwnTrans) {
+                poGRider.rollbackTrans();
+            }
+            throw ex;   // precise rethrow: only the declared exceptions can reach here
+        }
+    }
+
+    /** Approval logic only - no begin/commit/rollback in here. */
+    private JSONObject runMatrixApproval(JSONArray loMatrix, String lsStatus, String remarks)
+            throws SQLException, GuanzonException, ParseException, CloneNotSupportedException {
+
+        MatrixAuthChecker check = new MatrixAuthChecker(poGRider, SOURCE_CODE, Master().getTransactionNo());
+
+        JSONObject loResult = check.loadAuth();
+        if (!"success".equals((String) loResult.get("result"))) {
+            return loResult;
+        }
+
+        // everybody already approved -> write the confirmed status
+        if (check.isAuthOkay()) {
+            return applyStatus(lsStatus, remarks);
+        }
+
+        // approval by the current user / a supervising officer
+        if (!check.isAllowSys()) {
+            String lsAuthType = (String) ((JSONObject) loMatrix.get(0)).get("sAuthType");
+
+            // 1st: is the logged-in user one of the authorizers?
+            loResult = check.authTrans(lsAuthType, poGRider.getUserID());
+
+            if (!"success".equalsIgnoreCase((String) loResult.get("result"))) {
+                // 2nd: ask for an approving officer
+                JSONObject loApprover = ShowDialogFX.getUserApproval(poGRider);
+                if ("error".equals((String) loApprover.get("result"))) {
+                    return loApprover;
+                }
+
+                // authorize with the APPROVING OFFICER, not the logged-in user
+                String lsApproverID = loApprover.get("sUserIDxx").toString();
+                loResult = check.authTrans(lsAuthType, lsApproverID);
+
+                if (!"success".equalsIgnoreCase((String) loResult.get("result"))) {
+                    return loResult;
+                }
+            }
+        }
+
+        // re-evaluate after the approval above -> fully approved, write the confirmed status
+        if (check.isAuthOkay()) {
+            return applyStatus(lsStatus, remarks);
+        }
+
+        // still waiting on other authorizers: log the status and report "matrix"
+        loResult = applyStatus(lsStatus, remarks);
+        if (!"success".equals((String) loResult.get("result"))) {
+            return loResult;
+        }
+
+        loResult.put("result", "matrix");
+        return loResult;
+    }
+
+    /** Writes the status change. Never begins/commits - the caller owns the transaction. */
+    private JSONObject applyStatus(String lsStatus, String remarks)
+            throws SQLException, GuanzonException, ParseException, CloneNotSupportedException {
+        JSONObject loResult = statusChange(poMaster.getTable(), (String) poMaster.getValue("sTransNox"),
+                remarks, lsStatus, false, true);
+        if (!"success".equals((String) loResult.get("result"))) {
+            return loResult;
+        }
+        return setJSON("success", "");
+    }
+    /**
+     * Seek Approval method
+     *
+     * @return JSON
+     * @throws SQLException
+     * @throws GuanzonException
+     */
+    public JSONObject seekApproval()
+            throws SQLException, SQLException, GuanzonException {
+        poJSON = new JSONObject();
+        //Moved only the script for seeking of approval - Arsiela 10-15-2025 - 14:11:01
+
+        //load authorization manager that evaluates current users authority for this process
+        ActionAuthManager loAuth = new ActionAuthManager(poGRider, "cas-purchasing");
+        poJSON = loAuth.isAuthorized();
+
+        //check if currenty user is authorized
+        System.out.println(poGRider.getUserID());
+        if (!((String) poJSON.get("result")).equalsIgnoreCase("true")) {
+            //show process needs authorization
+            ShowMessageFX.Warning((String) poJSON.get("warning"), "Authorization Required", null);
+            //get authorization from authoried personnel
+            poJSON = ShowDialogFX.getUserApproval(poGRider);
+            if ("error".equals((String) poJSON.get("result"))) {
+                return poJSON;
+            }
+
+            //check if approving officer is authorized
+            String lsUserIDxx = poJSON.get("sUserIDxx").toString();
+            int lnUserLevl = Integer.parseInt(poJSON.get("nUserLevl").toString());
+            poJSON = loAuth.isAuthorized(lsUserIDxx, lnUserLevl);
+
+            //if approving is not authorized then do not continue process
+            if (!((String) poJSON.get("result")).equalsIgnoreCase("true")) {
+                ShowMessageFX.Warning((String) poJSON.get("warning"), "Authorization Required", null);
+                poJSON.put("result", "error");
+                poJSON.put("message", "User is not an authorized approving officer..");
+                return poJSON;
+            }
+        }
+
+        poJSON.put("result", "success");
         return poJSON;
     }
     public JSONObject LostTransaction(String remarks)
@@ -546,10 +793,9 @@ public class SalesQoutationVersion extends Transaction {
         poJSON = isEntryOkay(lsStatus);
         if (!"success".equals((String) poJSON.get("result"))) return poJSON;
 
-//        if (!pbWthParent) {
-//            poGRider.beginTrans("UPDATE STATUS", "Confirm", SOURCE_CODE, Master().getTransactionNo());
-//        }
-        poGRider.beginTrans("UPDATE STATUS", "Confirm", SOURCE_CODE, Master().getTransactionNo());
+
+            poGRider.beginTrans("UPDATE STATUS", "Lost", SOURCE_CODE, Master().getTransactionNo());
+
         poJSON = statusChange(poMaster.getTable(), (String) poMaster.getValue("sTransNox"),
                 remarks, lsStatus, false, true);
         if (!"success".equals((String) poJSON.get("result"))) {
@@ -576,10 +822,9 @@ public class SalesQoutationVersion extends Transaction {
         poJSON = isEntryOkay(lsStatus);
         if (!"success".equals((String) poJSON.get("result"))) return poJSON;
 
-//        if (!pbWthParent) {
-//            poGRider.beginTrans("UPDATE STATUS", "Confirm", SOURCE_CODE, Master().getTransactionNo());
-//        }
-        poGRider.beginTrans("UPDATE STATUS", "Confirm", SOURCE_CODE, Master().getTransactionNo());
+
+        poGRider.beginTrans("UPDATE STATUS", "Void", SOURCE_CODE, Master().getTransactionNo());
+
         poJSON = statusChange(poMaster.getTable(), (String) poMaster.getValue("sTransNox"),
                 remarks, lsStatus, false, true);
         if (!"success".equals((String) poJSON.get("result"))) {
@@ -594,12 +839,10 @@ public class SalesQoutationVersion extends Transaction {
     }
 
     /**
-     * Marks a version as SUPERCEDED. Used when a new version replaces it, so the
-     * version number is passed in (the old version is not the one loaded here).
+     * Marks the loaded version as SUPERCEDED. Used when a new version replaces it.
      * Runs inside the parent's transaction, so none is started or committed.
      *
-     * @param versionNo version transaction no. to supersede
-     * @param remarks   status history remarks
+     * @param remarks status history remarks
      */
     public JSONObject SupersedeTransaction(String remarks)
             throws ParseException, SQLException, GuanzonException, CloneNotSupportedException {
@@ -622,6 +865,7 @@ public class SalesQoutationVersion extends Transaction {
         return setJSON("success", "Version superseded successfully.");
     }
 
+
     private JSONObject setJSON(String fsResult, String fsMessage) {
         JSONObject loJSON = new JSONObject();
         loJSON.put("result", fsResult);
@@ -631,5 +875,46 @@ public class SalesQoutationVersion extends Transaction {
 
     public boolean isJSONSuccess(JSONObject foJSON) {
         return ("success".equals((String) foJSON.get("result")) || !"error".equals((String) foJSON.get("result")));
+    }
+
+
+    public String SearchMCItemPromoExpirey(String fsModel,String fsPromoCode) throws SQLException, GuanzonException {
+        String lsExpiry = "";
+        String lsSQL = SalesQoutationsMasterQueries.SQL_MCItemPromo();
+        lsSQL = MiscUtil.addCondition(lsSQL, " b.sModelIDx =  " + SQLUtil.toSQL(fsModel)+
+                " AND a.sPromIDxx = " + SQLUtil.toSQL(fsPromoCode));
+        System.out.println("Execute SQL : " + lsSQL);
+        ResultSet loRS = poGRider.executeQuery(lsSQL);
+        try {
+            if (MiscUtil.RecordCount(loRS) > 0L) {
+                if (loRS.next()) {
+                    lsExpiry = loRS.getString("dThruDate");
+                }
+            }
+            MiscUtil.close(loRS);
+        } catch (SQLException e) {
+            poJSON = setJSON("error", e.getMessage());
+        }
+        return lsExpiry;
+    }
+
+    public  JSONObject VersionStatusChange(String tableName,
+                                         String sourceNo,
+                                         String remarks,
+                                         String statusRequest,
+                                         boolean needConfirmation,
+                                         boolean withParent)
+            throws SQLException, GuanzonException, CloneNotSupportedException{
+        poJSON = new JSONObject();
+
+
+        poJSON = statusChange(tableName, sourceNo, remarks, statusRequest, needConfirmation, withParent);
+        if (!"success".equals((String) poJSON.get("result"))) {
+            poGRider.rollbackTrans();
+            return poJSON;
+        }
+
+        poJSON.put("result", "success");
+        return poJSON;
     }
 }
