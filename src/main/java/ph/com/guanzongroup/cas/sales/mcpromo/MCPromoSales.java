@@ -3119,7 +3119,22 @@ public class MCPromoSales extends Transaction {
                         lnDetailMechanicsCount++;
                         continue;
                     }
+                    //check Give Away must have Qty
+                    for (int lnCtrGiveAway = 0; lnCtrGiveAway < paSalesPromotionGiveAwayItem.size(); lnCtrGiveAway++) {
+                        Model_Sales_Promotion_GiveAway_Item loGiveAway = (Model_Sales_Promotion_GiveAway_Item) paSalesPromotionGiveAwayItem.get(lnCtrGiveAway);
+                        if (loGiveAway.getStockID() != null
+                                && !loGiveAway.getStockID().isEmpty()) {
+                            if (loGiveAway.isWithActive()) {
+                                if (loGiveAway.getQuantity() <= 0) {
+                                    poJSON.put("result", "error");
+                                    poJSON.put("message", "Quantity is not set. Row = " + (lnCtrGiveAway + 1));
+                                    return poJSON;
+                                }
 
+                                lnDetailMechanicsCount++;
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -3157,20 +3172,21 @@ public class MCPromoSales extends Transaction {
                         continue;
                     }
 
-                }
-            }
-        }
+                    //check Give Away must have Qty
+                    for (int lnCtrGiveAway = 0; lnCtrGiveAway < paSalesPromotionGiveAwayItem.size(); lnCtrGiveAway++) {
+                        Model_Sales_Promotion_GiveAway_Item loGiveAway = (Model_Sales_Promotion_GiveAway_Item) paSalesPromotionGiveAwayItem.get(lnCtrGiveAway);
+                        if (loGiveAway.getStockID() != null
+                                && !loGiveAway.getStockID().isEmpty()) {
+                            if (loGiveAway.isWithActive()) {
+                                if (loGiveAway.getQuantity() <= 0) {
+                                    poJSON.put("result", "error");
+                                    poJSON.put("message", "Quantity is not set. Row = " + (lnCtrGiveAway + 1));
+                                    return poJSON;
+                                }
 
-        //check Give Away must have Qty
-        for (int lnCtr = 0; lnCtr < paSalesPromotionGiveAwayItem.size(); lnCtr++) {
-            Model_Sales_Promotion_GiveAway_Item loGiveAway = (Model_Sales_Promotion_GiveAway_Item) paSalesPromotionGiveAwayItem.get(lnCtr);
-            if (loGiveAway.getStockID() != null
-                    && !loGiveAway.getStockID().isEmpty()) {
-                if (loGiveAway.isWithActive()) {
-                    if (loGiveAway.getQuantity() <= 0) {
-                        poJSON.put("result", "error");
-                        poJSON.put("message", "Quantity is not set. Row = " + (lnCtr + 1));
-                        return poJSON;
+                                lnDetailMechanicsCount++;
+                            }
+                        }
                     }
                 }
             }
