@@ -554,9 +554,9 @@ import java.util.logging.Logger;
             //Check if token is still valid within the time frame
             //Request new access token if not in the current period range
 <span class="pc bpc" id="L556" title="1 of 2 branches missed.">            if(current_date.after(date_created)){</span>
-<span class="nc" id="L557">                String[] xargs = new String[] {(String) token.get(&quot;parent&quot;), access};</span>
-<span class="nc" id="L558">                RequestAccess.main(xargs);</span>
-<span class="nc" id="L559">                token = (JSONObject)oParser.parse(new FileReader(access));</span>
+<span class="fc" id="L557">                String[] xargs = new String[] {(String) token.get(&quot;parent&quot;), access};</span>
+<span class="fc" id="L558">                RequestAccess.main(xargs);</span>
+<span class="fc" id="L559">                token = (JSONObject)oParser.parse(new FileReader(access));</span>
             }
 
 <span class="fc" id="L562">            return (String)token.get(&quot;access_key&quot;);</span>

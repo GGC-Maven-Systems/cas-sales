@@ -1,4 +1,4 @@
 -------------------------------------------------------------------------------
-Test set: SalesReservationTest
+Test set: SalesQoutationTest
 -------------------------------------------------------------------------------
-Tests run: 34, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.237 s -- in SalesReservationTest
+Tests run: 99, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 8.541 s -- in SalesQoutationTest

@@ -625,7 +625,6 @@ public class SalesQoutationVersion extends Transaction {
         }
         poJSON.put("result", "success");
         poJSON.put("message", "Version confirmed successfully.");
-
         return poJSON;
     }
 
@@ -733,7 +732,9 @@ public class SalesQoutationVersion extends Transaction {
         if (!"success".equals((String) loResult.get("result"))) {
             return loResult;
         }
-        return setJSON("success", "");
+        poJSON.put("result", "success");
+        poJSON.put("message", "Version confirmed successfully.");
+        return poJSON;
     }
     /**
      * Seek Approval method

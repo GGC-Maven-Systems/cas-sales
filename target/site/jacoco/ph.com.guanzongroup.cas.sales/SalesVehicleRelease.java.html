@@ -19,7 +19,7 @@ import org.json.simple.JSONObject;
 import ph.com.guanzongroup.cas.sales.model.Model_Vehicle_Release_Master;
 import ph.com.guanzongroup.cas.sales.services.SalesControllers;
 import ph.com.guanzongroup.cas.sales.services.SalesModels;
-import ph.com.guanzongroup.cas.sales.status.SalesVehicleReleaseQueries;
+import ph.com.guanzongroup.cas.sales.queries.SalesVehicleReleaseQueries;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;

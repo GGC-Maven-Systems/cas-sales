@@ -1,0 +1,280 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SalesQoutationVersionGiveaways.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">cas-sales</a> &gt; <a href="index.source.html" class="el_package">ph.com.guanzongroup.cas.sales</a> &gt; <span class="el_source">SalesQoutationVersionGiveaways.java</span></div><h1>SalesQoutationVersionGiveaways.java</h1><pre class="source lang-java linenums">/*
+ * Copyright (c) 2026 Guanzon Group of Companies.
+ * All rights reserved.
+ *
+ * @author TEEJEI DE CELIS
+ * @date September 2x, 2026
+ */
+package ph.com.guanzongroup.cas.sales;
+
+import org.guanzon.appdriver.agent.ShowDialogFX;
+import org.guanzon.appdriver.agent.services.Parameter;
+import org.guanzon.appdriver.base.GuanzonException;
+import org.guanzon.appdriver.base.MiscUtil;
+import org.guanzon.appdriver.base.SQLUtil;
+import org.guanzon.appdriver.constant.RecordStatus;
+import org.json.simple.JSONObject;
+import ph.com.guanzongroup.cas.sales.model.Model_Sales_Quotation_Version_Giveaways;
+import ph.com.guanzongroup.cas.sales.services.SalesModels;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Handles the giveaways of a Sales Quotation version
+ * (table Sales_Quotation_Version_Giveaways, keyed by sTransNox + nEntryNox).
+ *
+ * &lt;p&gt;
+ * A version can have many giveaways, so besides the single {@link #getModel()}
+ * required by {@link Parameter}, this class keeps a list of giveaway models.
+ * The list is driven by {@link SalesQoutation}: it loads it when a version is
+ * opened, switches it to update mode, and saves it (numbering the rows and
+ * removing deleted ones) together with the quotation.
+ * &lt;/p&gt;
+ *
+ * @author TEEJEI DE CELIS
+ * @date September 2x, 2026
+ * @module Sales Quotation
+ * @since 1.0
+ */
+<span class="fc" id="L42">public class SalesQoutationVersionGiveaways extends Parameter {</span>
+
+    /** Model required by the {@link Parameter} base class (used for table name and browsing). */
+    Model_Sales_Quotation_Version_Giveaways poModel;
+
+    /** Giveaway rows of the current version. */
+<span class="fc" id="L48">    List&lt;Model_Sales_Quotation_Version_Giveaways&gt; paGiveaways = new ArrayList&lt;&gt;();</span>
+
+    @Override
+    public void initialize() throws SQLException, GuanzonException {
+<span class="fc" id="L52">        psRecdStat = RecordStatus.ACTIVE;</span>
+<span class="fc" id="L53">        poModel = new SalesModels(poGRider).SalesQuotationVersionGiveaways();</span>
+<span class="fc" id="L54">        paGiveaways = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L55">        super.initialize();</span>
+<span class="fc" id="L56">    }</span>
+
+    @Override
+    public Model_Sales_Quotation_Version_Giveaways getModel() {
+<span class="fc" id="L60">        return poModel;</span>
+    }
+
+    // ------------------------------------------------------------------
+    // list of giveaways
+    // ------------------------------------------------------------------
+
+    /** Number of giveaway rows. */
+    public int getGiveawayCount() {
+<span class="fc" id="L69">        return paGiveaways.size();</span>
+    }
+
+    /** Giveaway row (0-based). */
+    public Model_Sales_Quotation_Version_Giveaways Giveaway(int row) {
+<span class="fc" id="L74">        return paGiveaways.get(row);</span>
+    }
+
+    /** All giveaway rows. */
+    public List&lt;Model_Sales_Quotation_Version_Giveaways&gt; Giveaways() {
+<span class="fc" id="L79">        return paGiveaways;</span>
+    }
+
+    /** Removes every row from memory (nothing is deleted from the database). */
+    public void clearGiveaways() {
+<span class="fc" id="L84">        paGiveaways.clear();</span>
+<span class="fc" id="L85">    }</span>
+
+    /** Adds a blank giveaway row. */
+    public JSONObject addGiveaway() throws SQLException, GuanzonException {
+<span class="fc" id="L89">        Model_Sales_Quotation_Version_Giveaways loModel = new SalesModels(poGRider).SalesQuotationVersionGiveaways();</span>
+<span class="fc" id="L90">        poJSON = loModel.newRecord();</span>
+<span class="pc bpc" id="L91" title="1 of 2 branches missed.">        if (!&quot;success&quot;.equals((String) poJSON.get(&quot;result&quot;))) return poJSON;</span>
+
+<span class="fc" id="L93">        paGiveaways.add(loModel);</span>
+
+<span class="fc" id="L95">        poJSON = new JSONObject();</span>
+<span class="fc" id="L96">        poJSON.put(&quot;result&quot;, &quot;success&quot;);</span>
+<span class="fc" id="L97">        return poJSON;</span>
+    }
+
+    /** Removes a giveaway row (0-based); it is deleted from the database on save. */
+    public JSONObject removeGiveaway(int row) {
+<span class="fc" id="L102">        poJSON = new JSONObject();</span>
+<span class="fc bfc" id="L103" title="All 4 branches covered.">        if (row &lt; 0 || row &gt;= paGiveaways.size()) {</span>
+<span class="fc" id="L104">            poJSON.put(&quot;result&quot;, &quot;error&quot;);</span>
+<span class="fc" id="L105">            poJSON.put(&quot;message&quot;, &quot;Invalid row number.&quot;);</span>
+<span class="fc" id="L106">            return poJSON;</span>
+        }
+<span class="fc" id="L108">        paGiveaways.remove(row);</span>
+<span class="fc" id="L109">        poJSON.put(&quot;result&quot;, &quot;success&quot;);</span>
+<span class="fc" id="L110">        return poJSON;</span>
+    }
+
+    /** Loads all giveaways of a version. An empty result is not an error. */
+    public JSONObject loadGiveaways(String versionNo) throws SQLException, GuanzonException {
+<span class="fc" id="L115">        poGRider.ensureConnected();</span>
+<span class="fc" id="L116">        paGiveaways.clear();</span>
+
+<span class="fc" id="L118">        String lsSQL = &quot;SELECT nEntryNox FROM &quot; + poModel.getTable()</span>
+<span class="fc" id="L119">                + &quot; WHERE sTransNox = &quot; + SQLUtil.toSQL(versionNo)</span>
+                + &quot; ORDER BY nEntryNox&quot;;
+<span class="fc" id="L121">        ResultSet loRS = poGRider.executeQuery(lsSQL);</span>
+        try {
+<span class="fc bfc" id="L123" title="All 2 branches covered.">            while (loRS.next()) {</span>
+<span class="fc" id="L124">                Model_Sales_Quotation_Version_Giveaways loModel = new SalesModels(poGRider).SalesQuotationVersionGiveaways();</span>
+<span class="fc" id="L125">                poJSON = loModel.openRecord(versionNo, loRS.getInt(&quot;nEntryNox&quot;));</span>
+<span class="pc bpc" id="L126" title="1 of 2 branches missed.">                if (!&quot;success&quot;.equals((String) poJSON.get(&quot;result&quot;))) {</span>
+<span class="nc" id="L127">                    paGiveaways.clear();</span>
+<span class="nc" id="L128">                    poJSON.put(&quot;message&quot;, &quot;Unable to open giveaway record.&quot;);</span>
+<span class="nc" id="L129">                    return poJSON;</span>
+                }
+<span class="fc" id="L131">                paGiveaways.add(loModel);</span>
+<span class="fc" id="L132">            }</span>
+        } finally {
+<span class="fc" id="L134">            MiscUtil.close(loRS);</span>
+        }
+
+<span class="fc" id="L137">        poJSON = new JSONObject();</span>
+<span class="fc" id="L138">        poJSON.put(&quot;result&quot;, &quot;success&quot;);</span>
+<span class="fc" id="L139">        return poJSON;</span>
+    }
+
+    /** Puts the loaded giveaway rows in update mode. */
+    public JSONObject updateGiveaways() {
+<span class="fc bfc" id="L144" title="All 2 branches covered.">        for (Model_Sales_Quotation_Version_Giveaways loModel : paGiveaways) {</span>
+<span class="fc" id="L145">            poJSON = loModel.updateRecord();</span>
+<span class="pc bpc" id="L146" title="1 of 2 branches missed.">            if (!&quot;success&quot;.equals((String) poJSON.get(&quot;result&quot;))) return poJSON;</span>
+<span class="fc" id="L147">        }</span>
+<span class="fc" id="L148">        poJSON = new JSONObject();</span>
+<span class="fc" id="L149">        poJSON.put(&quot;result&quot;, &quot;success&quot;);</span>
+<span class="fc" id="L150">        return poJSON;</span>
+    }
+
+    /**
+     * Saves the giveaway rows under the given version: drops rows without an
+     * item, numbers the rest from 1, saves them and deletes any old rows
+     * beyond the new count. Must run inside the parent's transaction.
+     */
+    public JSONObject saveGiveaways(String versionNo) throws SQLException, GuanzonException, CloneNotSupportedException {
+        // drop rows without an item
+<span class="fc" id="L160">        paGiveaways.removeIf(m -&gt;</span>
+<span class="pc bpc" id="L161" title="1 of 4 branches missed.">                (m.getStockId() == null || m.getStockId().trim().isEmpty())</span>
+<span class="pc bpc" id="L162" title="1 of 4 branches missed.">                        &amp;&amp; (m.getQuantity() == null || m.getQuantity() == 0)</span>
+<span class="pc bpc" id="L163" title="2 of 4 branches missed.">                        &amp;&amp; (m.getRemarks() == null || m.getRemarks().trim().isEmpty())</span>
+        );
+
+<span class="fc bfc" id="L166" title="All 2 branches covered.">        for (int lnCtr = 0; lnCtr &lt; paGiveaways.size(); lnCtr++) {</span>
+<span class="fc" id="L167">            Integer lnQty = paGiveaways.get(lnCtr).getQuantity();</span>
+<span class="pc bpc" id="L168" title="1 of 4 branches missed.">            if (lnQty == null || lnQty &lt;= 0) {</span>
+<span class="fc" id="L169">                poJSON = new JSONObject();</span>
+<span class="fc" id="L170">                poJSON.put(&quot;result&quot;, &quot;error&quot;);</span>
+<span class="fc" id="L171">                poJSON.put(&quot;message&quot;, &quot;Invalid giveaway quantity at row &quot; + (lnCtr + 1) + &quot;.&quot;);</span>
+<span class="fc" id="L172">                return poJSON;</span>
+            }
+        }
+
+<span class="fc bfc" id="L176" title="All 2 branches covered.">        for (int lnCtr = 0; lnCtr &lt; paGiveaways.size(); lnCtr++) {</span>
+<span class="fc" id="L177">            Model_Sales_Quotation_Version_Giveaways loModel = paGiveaways.get(lnCtr);</span>
+<span class="fc" id="L178">            loModel.setTransactionNo(versionNo);</span>
+<span class="fc" id="L179">            loModel.setEntryNo(lnCtr + 1);</span>
+<span class="fc" id="L180">            loModel.setModifiedDate(poGRider.getServerDate());</span>
+
+<span class="fc" id="L182">            poJSON = loModel.saveRecord();</span>
+<span class="pc bpc" id="L183" title="1 of 2 branches missed.">            if (!&quot;success&quot;.equals((String) poJSON.get(&quot;result&quot;))) return poJSON;</span>
+        }
+
+        // remove old rows that are no longer in the list
+<span class="fc" id="L187">        String lsWhere = &quot; WHERE sTransNox = &quot; + SQLUtil.toSQL(versionNo)</span>
+<span class="fc" id="L188">                + &quot; AND nEntryNox &gt; &quot; + paGiveaways.size();</span>
+        boolean lbHasExtra;
+<span class="fc" id="L190">        ResultSet loRS = poGRider.executeQuery(&quot;SELECT nEntryNox FROM &quot; + poModel.getTable() + lsWhere);</span>
+        try {
+<span class="fc" id="L192">            lbHasExtra = loRS.next();</span>
+        } finally {
+<span class="fc" id="L194">            MiscUtil.close(loRS);</span>
+        }
+<span class="pc bpc" id="L196" title="1 of 2 branches missed.">        if (lbHasExtra) {</span>
+<span class="nc" id="L197">            String lsSQL = &quot;DELETE FROM &quot; + poModel.getTable() + lsWhere;</span>
+<span class="nc bnc" id="L198" title="All 2 branches missed.">            if (poGRider.executeQuery(lsSQL, poModel.getTable(), poGRider.getBranchCode(), &quot;&quot;, &quot;&quot;) &lt;= 0L) {</span>
+<span class="nc" id="L199">                poJSON = new JSONObject();</span>
+<span class="nc" id="L200">                poJSON.put(&quot;result&quot;, &quot;error&quot;);</span>
+<span class="nc" id="L201">                poJSON.put(&quot;message&quot;, &quot;Unable to remove old giveaway records.&quot;);</span>
+<span class="nc" id="L202">                return poJSON;</span>
+            }
+        }
+
+<span class="fc" id="L206">        poJSON = new JSONObject();</span>
+<span class="fc" id="L207">        poJSON.put(&quot;result&quot;, &quot;success&quot;);</span>
+<span class="fc" id="L208">        return poJSON;</span>
+    }
+
+    /** Cleans and validates the rows. Call before anything is saved. */
+    public JSONObject validateGiveaways() {
+        // drop completely blank rows (the UI keeps a blank trailing row)
+<span class="fc" id="L214">        paGiveaways.removeIf(m -&gt;</span>
+<span class="pc bpc" id="L215" title="1 of 4 branches missed.">                (m.getStockId() == null || m.getStockId().trim().isEmpty())</span>
+<span class="pc bpc" id="L216" title="1 of 4 branches missed.">                        &amp;&amp; (m.getQuantity() == null || m.getQuantity() == 0)</span>
+<span class="pc bpc" id="L217" title="1 of 4 branches missed.">                        &amp;&amp; (m.getRemarks() == null || m.getRemarks().trim().isEmpty()));</span>
+
+<span class="fc bfc" id="L219" title="All 2 branches covered.">        for (int lnCtr = 0; lnCtr &lt; paGiveaways.size(); lnCtr++) {</span>
+<span class="fc" id="L220">            Model_Sales_Quotation_Version_Giveaways loModel = paGiveaways.get(lnCtr);</span>
+
+//            if (loModel.getStockId() == null || loModel.getStockId().trim().isEmpty()) {
+//                poJSON = new JSONObject();
+//                poJSON.put(&quot;result&quot;, &quot;error&quot;);
+//                poJSON.put(&quot;message&quot;, &quot;Giveaway item is required at row &quot; + (lnCtr + 1) + &quot;.&quot;);
+//                return poJSON;
+//            }
+<span class="pc bpc" id="L228" title="1 of 4 branches missed.">            if (loModel.getQuantity() == null || loModel.getQuantity() &lt;= 0) {</span>
+<span class="fc" id="L229">                poJSON = new JSONObject();</span>
+<span class="fc" id="L230">                poJSON.put(&quot;result&quot;, &quot;error&quot;);</span>
+<span class="fc" id="L231">                poJSON.put(&quot;message&quot;, &quot;Invalid giveaway quantity at row &quot; + (lnCtr + 1) + &quot;.&quot;);</span>
+<span class="fc" id="L232">                return poJSON;</span>
+            }
+        }
+
+<span class="fc" id="L236">        poJSON = new JSONObject();</span>
+<span class="fc" id="L237">        poJSON.put(&quot;result&quot;, &quot;success&quot;);</span>
+<span class="fc" id="L238">        return poJSON;</span>
+    }
+
+    // ------------------------------------------------------------------
+    // Parameter overrides
+    // ------------------------------------------------------------------
+
+    @Override
+    public JSONObject isEntryOkay() throws SQLException {
+<span class="fc" id="L247">        poJSON = new JSONObject();</span>
+<span class="fc" id="L248">        poModel.setModifiedDate(poGRider.getServerDate());</span>
+
+<span class="fc" id="L250">        poJSON.put(&quot;result&quot;, &quot;success&quot;);</span>
+<span class="fc" id="L251">        return poJSON;</span>
+    }
+
+    /** Browses giveaway records and opens the selected one into {@link #getModel()}. */
+    @Override
+    public JSONObject searchRecord(String value, boolean byCode) throws SQLException, GuanzonException {
+<span class="fc" id="L257">        String lsSQL = MiscUtil.makeSelect(getModel());</span>
+
+<span class="fc" id="L259">        System.out.println(&quot;SEARCH RECORD : &quot; + lsSQL);</span>
+<span class="fc bfc" id="L260" title="All 2 branches covered.">        poJSON = ShowDialogFX.Browse(poGRider,</span>
+                lsSQL,
+                value,
+                &quot;Transaction No.»Entry No.&quot;,
+                &quot;sTransNox»nEntryNox&quot;,
+                &quot;a.sTransNox»a.nEntryNox&quot;,
+                byCode ? 0 : 1);
+
+<span class="fc bfc" id="L268" title="All 2 branches covered.">        if (poJSON != null) {</span>
+<span class="fc" id="L269">            return poModel.openRecord(</span>
+<span class="fc" id="L270">                    String.valueOf(poJSON.get(&quot;sTransNox&quot;)),</span>
+<span class="fc" id="L271">                    String.valueOf(poJSON.get(&quot;nEntryNox&quot;)));</span>
+        } else {
+<span class="fc" id="L273">            poJSON = new JSONObject();</span>
+<span class="fc" id="L274">            poJSON.put(&quot;result&quot;, &quot;error&quot;);</span>
+<span class="fc" id="L275">            poJSON.put(&quot;message&quot;, &quot;No record loaded.&quot;);</span>
+<span class="fc" id="L276">            return poJSON;</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

@@ -2674,17 +2674,17 @@ import ph.com.guanzongroup.cas.sales.validator.SalesInquiryValidatorFactory;
 
     @Override
     public String getSourceCode() {
-<span class="fc" id="L2677">        return SOURCE_CODE;</span>
+<span class="nc" id="L2677">        return SOURCE_CODE;</span>
     }
 
     @Override
     public Model_Sales_Inquiry_Master Master() {
-<span class="fc" id="L2682">        return (Model_Sales_Inquiry_Master) poMaster;</span>
+<span class="nc" id="L2682">        return (Model_Sales_Inquiry_Master) poMaster;</span>
     }
 
     @Override
     public Model_Sales_Inquiry_Detail Detail(int row) {
-<span class="fc" id="L2687">        return (Model_Sales_Inquiry_Detail) paDetail.get(row);</span>
+<span class="nc" id="L2687">        return (Model_Sales_Inquiry_Detail) paDetail.get(row);</span>
     }
 
     public Model_Sales_Inquiry_Detail getDetail() {
@@ -2693,11 +2693,11 @@ import ph.com.guanzongroup.cas.sales.validator.SalesInquiryValidatorFactory;
 
     @Override
     public int getDetailCount() {
-<span class="pc bpc" id="L2696" title="1 of 2 branches missed.">        if (paDetail == null) {</span>
+<span class="nc bnc" id="L2696" title="All 2 branches missed.">        if (paDetail == null) {</span>
 <span class="nc" id="L2697">            paDetail = new ArrayList&lt;&gt;();</span>
         }
 
-<span class="fc" id="L2700">        return paDetail.size();</span>
+<span class="nc" id="L2700">        return paDetail.size();</span>
     }
 
     public JSONObject AddDetail()

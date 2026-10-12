@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SalesQoutationFollowUp.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">cas-sales</a> &gt; <a href="index.source.html" class="el_package">ph.com.guanzongroup.cas.sales</a> &gt; <span class="el_source">SalesQoutationFollowUp.java</span></div><h1>SalesQoutationFollowUp.java</h1><pre class="source lang-java linenums">/*
+ * Copyright (c) 2026 Guanzon Group of Companies.
+ * All rights reserved.
+ *
+ * @author TEEJEI DE CELIS
+ * @date September 2x, 2026
+ */
+package ph.com.guanzongroup.cas.sales;
+
+import org.guanzon.appdriver.agent.ShowDialogFX;
+import org.guanzon.appdriver.agent.services.Parameter;
+import org.guanzon.appdriver.base.GuanzonException;
+import org.guanzon.appdriver.base.MiscUtil;
+import org.guanzon.appdriver.base.SQLUtil;
+import org.guanzon.appdriver.constant.RecordStatus;
+import org.json.simple.JSONObject;
+import ph.com.guanzongroup.cas.sales.model.Model_Sales_Quotation_FollowUp;
+import ph.com.guanzongroup.cas.sales.services.SalesModels;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Handles the follow-ups of a Sales Quotation version
+ * (table Sales_Quotation_FollowUp, keyed by sTransNox + nEntryNox).
+ *
+ * &lt;p&gt;
+ * Every time a version is followed up, a new record is added with the next
+ * entry number, so a version has a history of follow-ups. This class works on
+ * one follow-up at a time; {@link #getFollowUps(String)} returns the history
+ * and {@link #getNextEntryNo(String)} gives the entry number for a new one.
+ * {@link SalesQoutation} sets the quotation number (sTransNox), the version number
+ * (sReferNox) and the entry number when the follow-up is saved.
+ * &lt;/p&gt;
+ *
+ * @author TEEJEI DE CELIS
+ * @date September 2x, 2026
+ * @module Sales Quotation
+ * @since 1.0
+ */
+<span class="fc" id="L43">public class SalesQoutationFollowUp extends Parameter {</span>
+
+    /** Follow-up model that stores the current record. */
+    Model_Sales_Quotation_FollowUp poModel;
+
+    @Override
+    public void initialize() throws SQLException, GuanzonException {
+<span class="fc" id="L50">        psRecdStat = RecordStatus.ACTIVE;</span>
+<span class="fc" id="L51">        poModel = new SalesModels(poGRider).SalesQuotationFollowUp();</span>
+<span class="fc" id="L52">        super.initialize();</span>
+<span class="fc" id="L53">    }</span>
+
+    @Override
+    public Model_Sales_Quotation_FollowUp getModel() {
+<span class="fc" id="L57">        return poModel;</span>
+    }
+
+    /** Next entry number for a quotation's follow-ups (1 when it has none); sTransNox is the quotation no. */
+    public int getNextEntryNo(String quotationNo) throws SQLException {
+<span class="fc" id="L62">        String lsSQL = &quot;SELECT IFNULL(MAX(nEntryNox), 0) + 1 nNextEntr FROM &quot; + poModel.getTable()</span>
+<span class="fc" id="L63">                + &quot; WHERE sTransNox = &quot; + SQLUtil.toSQL(quotationNo);</span>
+<span class="fc" id="L64">        ResultSet loRS = poGRider.executeQuery(lsSQL);</span>
+        try {
+<span class="pc bpc" id="L66" title="1 of 2 branches missed.">            return loRS.next() ? loRS.getInt(&quot;nNextEntr&quot;) : 1;</span>
+        } finally {
+<span class="fc" id="L68">            MiscUtil.close(loRS);</span>
+        }
+    }
+
+    /**
+     * Follow-up history of a version, newest first. Each entry has
+     * sTransNox, nEntryNox, sReferNox, dFollowUp, dNextFlup, sFllwUpby,
+     * cFllwUpTp and sRemarksx.
+     */
+    public List&lt;JSONObject&gt; getFollowUps(String versionNo) throws SQLException {
+<span class="fc" id="L78">        List&lt;JSONObject&gt; laFollowUps = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L79">        String lsSQL = &quot;SELECT sTransNox, nEntryNox, sReferNox, dFollowUp, dNextFlup, sFllwUpby, cFllwUpTp, sRemarksx&quot;</span>
+<span class="fc" id="L80">                + &quot; FROM &quot; + poModel.getTable()</span>
+<span class="fc" id="L81">                + &quot; WHERE sReferNox = &quot; + SQLUtil.toSQL(versionNo)</span>
+                + &quot; ORDER BY nEntryNox DESC&quot;;
+<span class="fc" id="L83">        ResultSet loRS = poGRider.executeQuery(lsSQL);</span>
+        try {
+<span class="fc bfc" id="L85" title="All 2 branches covered.">            while (loRS.next()) {</span>
+<span class="fc" id="L86">                JSONObject loJSON = new JSONObject();</span>
+<span class="fc bfc" id="L87" title="All 2 branches covered.">                for (String lsCol : new String[]{&quot;sTransNox&quot;, &quot;nEntryNox&quot;, &quot;sReferNox&quot;, &quot;dFollowUp&quot;,</span>
+                        &quot;dNextFlup&quot;, &quot;sFllwUpby&quot;, &quot;cFllwUpTp&quot;, &quot;sRemarksx&quot;}) {
+<span class="fc" id="L89">                    loJSON.put(lsCol, loRS.getString(lsCol));</span>
+                }
+<span class="fc" id="L91">                laFollowUps.add(loJSON);</span>
+<span class="fc" id="L92">            }</span>
+        } finally {
+<span class="fc" id="L94">            MiscUtil.close(loRS);</span>
+        }
+<span class="fc" id="L96">        return laFollowUps;</span>
+    }
+
+    /**
+     * Validates the follow-up before it is saved: Transaction No. (the
+     * quotation's number), Reference No. (the version's number; both filled in
+     * by {@link SalesQoutation}), Follow-up Date
+     * and Follow-up Type are required.
+     */
+    @Override
+    public JSONObject isEntryOkay() throws SQLException {
+<span class="fc" id="L107">        poJSON = new JSONObject();</span>
+
+<span class="fc bfc" id="L109" title="All 4 branches covered.">        if (poModel.getTransactionNo() == null || poModel.getTransactionNo().isEmpty()) {</span>
+<span class="fc" id="L110">            poJSON.put(&quot;result&quot;, &quot;error&quot;);</span>
+<span class="fc" id="L111">            poJSON.put(&quot;message&quot;, &quot;Transaction No. must not be empty.&quot;);</span>
+<span class="fc" id="L112">            return poJSON;</span>
+        }
+
+<span class="pc bpc" id="L115" title="1 of 4 branches missed.">        if (poModel.getReferenceNo() == null || poModel.getReferenceNo().isEmpty()) {</span>
+<span class="fc" id="L116">            poJSON.put(&quot;result&quot;, &quot;error&quot;);</span>
+<span class="fc" id="L117">            poJSON.put(&quot;message&quot;, &quot;Reference No. (version) must not be empty.&quot;);</span>
+<span class="fc" id="L118">            return poJSON;</span>
+        }
+
+<span class="pc bpc" id="L121" title="1 of 2 branches missed.">        if (poModel.getFollowUpDate() == null) {</span>
+<span class="nc" id="L122">            poJSON.put(&quot;result&quot;, &quot;error&quot;);</span>
+<span class="nc" id="L123">            poJSON.put(&quot;message&quot;, &quot;Follow-up Date must not be empty.&quot;);</span>
+<span class="nc" id="L124">            return poJSON;</span>
+        }
+
+<span class="pc bpc" id="L127" title="1 of 4 branches missed.">        if (poModel.getFollowUpType() == null || poModel.getFollowUpType().isEmpty()) {</span>
+<span class="fc" id="L128">            poJSON.put(&quot;result&quot;, &quot;error&quot;);</span>
+<span class="fc" id="L129">            poJSON.put(&quot;message&quot;, &quot;Follow-up Type must not be empty.&quot;);</span>
+<span class="fc" id="L130">            return poJSON;</span>
+        }
+
+<span class="fc" id="L133">        poModel.setModifiedDate(poGRider.getServerDate());</span>
+
+<span class="fc" id="L135">        poJSON.put(&quot;result&quot;, &quot;success&quot;);</span>
+<span class="fc" id="L136">        return poJSON;</span>
+    }
+
+    /** Browses follow-up records and opens the selected one. */
+    @Override
+    public JSONObject searchRecord(String value, boolean byCode) throws SQLException, GuanzonException {
+<span class="fc" id="L142">        String lsSQL = MiscUtil.makeSelect(getModel());</span>
+
+<span class="fc" id="L144">        System.out.println(&quot;SEARCH RECORD : &quot; + lsSQL);</span>
+<span class="fc bfc" id="L145" title="All 2 branches covered.">        poJSON = ShowDialogFX.Browse(poGRider,</span>
+                lsSQL,
+                value,
+                &quot;Transaction No.»Entry No.&quot;,
+                &quot;sTransNox»nEntryNox&quot;,
+                &quot;a.sTransNox»a.nEntryNox&quot;,
+                byCode ? 0 : 1);
+
+<span class="fc bfc" id="L153" title="All 2 branches covered.">        if (poJSON != null) {</span>
+<span class="fc" id="L154">            return poModel.openRecord(</span>
+<span class="fc" id="L155">                    String.valueOf(poJSON.get(&quot;sTransNox&quot;)),</span>
+<span class="fc" id="L156">                    String.valueOf(poJSON.get(&quot;nEntryNox&quot;)));</span>
+        } else {
+<span class="fc" id="L158">            poJSON = new JSONObject();</span>
+<span class="fc" id="L159">            poJSON.put(&quot;result&quot;, &quot;error&quot;);</span>
+<span class="fc" id="L160">            poJSON.put(&quot;message&quot;, &quot;No record loaded.&quot;);</span>
+<span class="fc" id="L161">            return poJSON;</span>
+        }
+    }
+
+    public String getSysUser(String fsId) throws SQLException, GuanzonException {
+<span class="fc" id="L166">        String lsEntry = &quot;&quot;;</span>
+<span class="fc" id="L167">        String lsSQL = &quot; SELECT b.sCompnyNm from xxxSysUser a &quot;</span>
+                + &quot; LEFT JOIN Client_Master b ON b.sClientID = a.sEmployNo &quot;;
+<span class="fc" id="L169">        lsSQL = MiscUtil.addCondition(lsSQL, &quot; a.sUserIDxx =  &quot; + SQLUtil.toSQL(fsId));</span>
+<span class="fc" id="L170">        System.out.println(&quot;SQL &quot; + lsSQL);</span>
+<span class="fc" id="L171">        ResultSet loRS = poGRider.executeQuery(lsSQL);</span>
+        try {
+<span class="fc bfc" id="L173" title="All 2 branches covered.">            if (MiscUtil.RecordCount(loRS) &gt; 0L) {</span>
+<span class="pc bpc" id="L174" title="1 of 2 branches missed.">                if (loRS.next()) {</span>
+<span class="fc" id="L175">                    lsEntry = loRS.getString(&quot;sCompnyNm&quot;);</span>
+                }
+            }
+<span class="fc" id="L178">            MiscUtil.close(loRS);</span>
+<span class="nc" id="L179">        } catch (SQLException e) {</span>
+<span class="nc" id="L180">            poJSON.put(&quot;result&quot;, &quot;error&quot;);</span>
+<span class="nc" id="L181">            poJSON.put(&quot;message&quot;, e.getMessage());</span>
+<span class="fc" id="L182">        }</span>
+<span class="fc" id="L183">        return lsEntry;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

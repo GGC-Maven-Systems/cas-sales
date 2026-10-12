@@ -91,7 +91,7 @@ import org.json.simple.JSONObject;
     }
 
     public String getTransactionNo() {
-<span class="fc" id="L94">        return (String) getValue(&quot;sTransNox&quot;);</span>
+<span class="nc" id="L94">        return (String) getValue(&quot;sTransNox&quot;);</span>
     }
 
     public JSONObject setEntryNo(int entryNo) {
@@ -121,7 +121,7 @@ import org.json.simple.JSONObject;
     }
 
     public String getStockId() {
-<span class="fc" id="L124">        return (String) getValue(&quot;sStockIDx&quot;);</span>
+<span class="nc" id="L124">        return (String) getValue(&quot;sStockIDx&quot;);</span>
     }
 
     public JSONObject setModelId(String modelId) {
@@ -185,7 +185,7 @@ import org.json.simple.JSONObject;
 
     @Override
     public String getNextCode() {
-<span class="fc" id="L188">        return &quot;&quot;;</span>
+<span class="nc" id="L188">        return &quot;&quot;;</span>
     }
 
     //reference object models
@@ -218,18 +218,18 @@ import org.json.simple.JSONObject;
     }
     
     public Model_Model Model() throws SQLException, GuanzonException {
-<span class="pc bpc" id="L221" title="1 of 2 branches missed.">        if (!&quot;&quot;.equals((String) getValue(&quot;sModelIDx&quot;))) {</span>
-<span class="pc bpc" id="L222" title="1 of 2 branches missed.">            if (poModel.getEditMode() == EditMode.READY</span>
+<span class="nc bnc" id="L221" title="All 2 branches missed.">        if (!&quot;&quot;.equals((String) getValue(&quot;sModelIDx&quot;))) {</span>
+<span class="nc bnc" id="L222" title="All 2 branches missed.">            if (poModel.getEditMode() == EditMode.READY</span>
 <span class="nc bnc" id="L223" title="All 2 branches missed.">                    &amp;&amp; poModel.getModelId().equals((String) getValue(&quot;sModelIDx&quot;))) {</span>
 <span class="nc" id="L224">                return poModel;</span>
             } else {
-<span class="fc" id="L226">                poJSON = poModel.openRecord((String) getValue(&quot;sModelIDx&quot;));</span>
+<span class="nc" id="L226">                poJSON = poModel.openRecord((String) getValue(&quot;sModelIDx&quot;));</span>
 
-<span class="pc bpc" id="L228" title="1 of 2 branches missed.">                if (&quot;success&quot;.equals((String) poJSON.get(&quot;result&quot;))) {</span>
+<span class="nc bnc" id="L228" title="All 2 branches missed.">                if (&quot;success&quot;.equals((String) poJSON.get(&quot;result&quot;))) {</span>
 <span class="nc" id="L229">                    return poModel;</span>
                 } else {
-<span class="fc" id="L231">                    poModel.initialize();</span>
-<span class="fc" id="L232">                    return poModel;</span>
+<span class="nc" id="L231">                    poModel.initialize();</span>
+<span class="nc" id="L232">                    return poModel;</span>
                 }
             }
         } else {
@@ -239,15 +239,15 @@ import org.json.simple.JSONObject;
     }
     
     public Model_Color Color() throws SQLException, GuanzonException {
-<span class="pc bpc" id="L242" title="1 of 2 branches missed.">        if (!&quot;&quot;.equals((String) getValue(&quot;sColorIDx&quot;))) {</span>
-<span class="pc bpc" id="L243" title="1 of 2 branches missed.">            if (poColor.getEditMode() == EditMode.READY</span>
+<span class="nc bnc" id="L242" title="All 2 branches missed.">        if (!&quot;&quot;.equals((String) getValue(&quot;sColorIDx&quot;))) {</span>
+<span class="nc bnc" id="L243" title="All 2 branches missed.">            if (poColor.getEditMode() == EditMode.READY</span>
 <span class="nc bnc" id="L244" title="All 2 branches missed.">                    &amp;&amp; poColor.getColorId().equals((String) getValue(&quot;sColorIDx&quot;))) {</span>
 <span class="nc" id="L245">                return poColor;</span>
             } else {
-<span class="fc" id="L247">                poJSON = poColor.openRecord((String) getValue(&quot;sColorIDx&quot;));</span>
+<span class="nc" id="L247">                poJSON = poColor.openRecord((String) getValue(&quot;sColorIDx&quot;));</span>
 
-<span class="pc bpc" id="L249" title="1 of 2 branches missed.">                if (&quot;success&quot;.equals((String) poJSON.get(&quot;result&quot;))) {</span>
-<span class="fc" id="L250">                    return poColor;</span>
+<span class="nc bnc" id="L249" title="All 2 branches missed.">                if (&quot;success&quot;.equals((String) poJSON.get(&quot;result&quot;))) {</span>
+<span class="nc" id="L250">                    return poColor;</span>
                 } else {
 <span class="nc" id="L252">                    poColor.initialize();</span>
 <span class="nc" id="L253">                    return poColor;</span>
@@ -260,15 +260,15 @@ import org.json.simple.JSONObject;
     }
     
     public Model_Model_Variant ModelVariant() throws SQLException, GuanzonException {
-<span class="pc bpc" id="L263" title="1 of 2 branches missed.">        if (!&quot;&quot;.equals((String) getValue(&quot;sVrntIDxx&quot;))) {</span>
-<span class="pc bpc" id="L264" title="1 of 2 branches missed.">            if (poModelVariant.getEditMode() == EditMode.READY</span>
+<span class="nc bnc" id="L263" title="All 2 branches missed.">        if (!&quot;&quot;.equals((String) getValue(&quot;sVrntIDxx&quot;))) {</span>
+<span class="nc bnc" id="L264" title="All 2 branches missed.">            if (poModelVariant.getEditMode() == EditMode.READY</span>
 <span class="nc bnc" id="L265" title="All 2 branches missed.">                    &amp;&amp; poModelVariant.getVariantId().equals((String) getValue(&quot;sVrntIDxx&quot;))) {</span>
 <span class="nc" id="L266">                return poModelVariant;</span>
             } else {
-<span class="fc" id="L268">                poJSON = poModelVariant.openRecord((String) getValue(&quot;sVrntIDxx&quot;));</span>
+<span class="nc" id="L268">                poJSON = poModelVariant.openRecord((String) getValue(&quot;sVrntIDxx&quot;));</span>
 
-<span class="pc bpc" id="L270" title="1 of 2 branches missed.">                if (&quot;success&quot;.equals((String) poJSON.get(&quot;result&quot;))) {</span>
-<span class="fc" id="L271">                    return poModelVariant;</span>
+<span class="nc bnc" id="L270" title="All 2 branches missed.">                if (&quot;success&quot;.equals((String) poJSON.get(&quot;result&quot;))) {</span>
+<span class="nc" id="L271">                    return poModelVariant;</span>
                 } else {
 <span class="nc" id="L273">                    poModelVariant.initialize();</span>
 <span class="nc" id="L274">                    return poModelVariant;</span>
@@ -281,7 +281,7 @@ import org.json.simple.JSONObject;
     }
     
     public Model_Inventory Inventory() throws SQLException, GuanzonException {
-<span class="pc bpc" id="L284" title="1 of 2 branches missed.">        if (!&quot;&quot;.equals((String) getValue(&quot;sStockIDx&quot;))) {</span>
+<span class="nc bnc" id="L284" title="All 2 branches missed.">        if (!&quot;&quot;.equals((String) getValue(&quot;sStockIDx&quot;))) {</span>
 <span class="nc bnc" id="L285" title="All 2 branches missed.">            if (poInventory.getEditMode() == EditMode.READY</span>
 <span class="nc bnc" id="L286" title="All 2 branches missed.">                    &amp;&amp; poInventory.getStockId().equals((String) getValue(&quot;sStockIDx&quot;))) {</span>
 <span class="nc" id="L287">                return poInventory;</span>
@@ -296,8 +296,8 @@ import org.json.simple.JSONObject;
                 }
             }
         } else {
-<span class="fc" id="L299">            poInventory.initialize();</span>
-<span class="fc" id="L300">            return poInventory;</span>
+<span class="nc" id="L299">            poInventory.initialize();</span>
+<span class="nc" id="L300">            return poInventory;</span>
         }
     }
     

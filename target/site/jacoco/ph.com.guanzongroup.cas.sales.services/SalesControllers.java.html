@@ -247,45 +247,127 @@ public class SalesControllers {
 <span class="nc" id="L247">        return poVSP;</span>
     }
     public SalesReservation SalesReservation() throws SQLException, GuanzonException {
-<span class="pc bpc" id="L250" title="1 of 2 branches missed.">        if (poGRider == null) {</span>
+<span class="nc bnc" id="L250" title="All 2 branches missed.">        if (poGRider == null) {</span>
 <span class="nc" id="L251">            poLogWrapper.severe(&quot;GLControllers.Disbursement: Application driver is not set.&quot;);</span>
 <span class="nc" id="L252">            return null;</span>
         }
 
-<span class="fc bfc" id="L255" title="All 2 branches covered.">        if (poSalesReservation != null) {</span>
-<span class="fc" id="L256">            return poSalesReservation;</span>
+<span class="nc bnc" id="L255" title="All 2 branches missed.">        if (poSalesReservation != null) {</span>
+<span class="nc" id="L256">            return poSalesReservation;</span>
         }
 
-<span class="fc" id="L259">        poSalesReservation = new SalesReservation();</span>
-<span class="fc" id="L260">        poSalesReservation.setApplicationDriver(poGRider);</span>
-<span class="fc" id="L261">        poSalesReservation.setBranchCode(poGRider.getBranchCode());</span>
-<span class="fc" id="L262">        poSalesReservation.setLogWrapper(poLogWrapper);</span>
-<span class="fc" id="L263">        poSalesReservation.setVerifyEntryNo(true);</span>
-<span class="fc" id="L264">        poSalesReservation.setWithParent(false);</span>
-<span class="fc" id="L265">        return poSalesReservation;</span>
+<span class="nc" id="L259">        poSalesReservation = new SalesReservation();</span>
+<span class="nc" id="L260">        poSalesReservation.setApplicationDriver(poGRider);</span>
+<span class="nc" id="L261">        poSalesReservation.setBranchCode(poGRider.getBranchCode());</span>
+<span class="nc" id="L262">        poSalesReservation.setLogWrapper(poLogWrapper);</span>
+<span class="nc" id="L263">        poSalesReservation.setVerifyEntryNo(true);</span>
+<span class="nc" id="L264">        poSalesReservation.setWithParent(false);</span>
+<span class="nc" id="L265">        return poSalesReservation;</span>
+    }
+
+    public SalesQoutation SalesQoutation(){
+        try {
+<span class="nc bnc" id="L270" title="All 2 branches missed.">            if (poGRider == null) {</span>
+<span class="nc" id="L271">                poLogWrapper.severe(&quot;SalesControllers.Sales Qoutation: Application driver is not set.&quot;);</span>
+<span class="nc" id="L272">                return null;</span>
+            }
+<span class="nc bnc" id="L274" title="All 2 branches missed.">            if (poSalesQoutation != null){</span>
+<span class="nc" id="L275">                return poSalesQoutation;</span>
+            }
+<span class="nc" id="L277">            poSalesQoutation = new SalesQoutation();</span>
+<span class="nc" id="L278">            poSalesQoutation.setApplicationDriver(poGRider);</span>
+<span class="nc" id="L279">            poSalesQoutation.setWithParentClass(false);</span>
+<span class="nc" id="L280">            poSalesQoutation.setLogWrapper(poLogWrapper);</span>
+<span class="nc" id="L281">            poSalesQoutation.initialize();</span>
+<span class="nc" id="L282">        } catch (SQLException | GuanzonException ex) {</span>
+<span class="nc" id="L283">            Logger.getLogger(getClass().getName()).log(Level.SEVERE, MiscUtil.getException(ex), ex);</span>
+<span class="nc" id="L284">        }</span>
+
+<span class="nc" id="L286">        return poSalesQoutation;</span>
+    }
+    public SalesQoutationVersion SalesQoutationVersion() {
+<span class="pc bpc" id="L289" title="1 of 2 branches missed.">        if (poGRider == null) {</span>
+<span class="nc" id="L290">            poLogWrapper.severe(&quot;SalesControllers.Sales Qoutation Version: Application driver is not set.&quot;);</span>
+<span class="nc" id="L291">            return null;</span>
+        }
+<span class="pc bpc" id="L293" title="1 of 2 branches missed.">        if (poSalesQoutationVersion != null) {</span>
+<span class="nc" id="L294">            return poSalesQoutationVersion;</span>
+        }
+
+<span class="fc" id="L297">        poSalesQoutationVersion = new SalesQoutationVersion();</span>
+<span class="fc" id="L298">        poSalesQoutationVersion.setApplicationDriver(poGRider);</span>
+<span class="fc" id="L299">        poSalesQoutationVersion.setBranchCode(poGRider.getBranchCode());</span>
+<span class="fc" id="L300">        poSalesQoutationVersion.setVerifyEntryNo(false);   // true if the detail uses nEntryNox tied to the master</span>
+<span class="fc" id="L301">        poSalesQoutationVersion.setWithParent(false);</span>
+<span class="fc" id="L302">        poSalesQoutationVersion.setLogWrapper(poLogWrapper);</span>
+<span class="fc" id="L303">        return poSalesQoutationVersion;</span>
+    }
+    public SalesQoutationFollowUp SalesQoutationFollowUp(){
+        try {
+<span class="pc bpc" id="L307" title="1 of 2 branches missed.">            if (poGRider == null) {</span>
+<span class="nc" id="L308">                poLogWrapper.severe(&quot;SalesControllers.Sales Qoutation Follow Up: Application driver is not set.&quot;);</span>
+<span class="nc" id="L309">                return null;</span>
+            }
+<span class="pc bpc" id="L311" title="1 of 2 branches missed.">            if (poSalesQoutationFollowUp != null){</span>
+<span class="nc" id="L312">                return poSalesQoutationFollowUp;</span>
+            }
+<span class="fc" id="L314">            poSalesQoutationFollowUp = new SalesQoutationFollowUp();</span>
+<span class="fc" id="L315">            poSalesQoutationFollowUp.setApplicationDriver(poGRider);</span>
+<span class="fc" id="L316">            poSalesQoutationFollowUp.setWithParentClass(false);</span>
+<span class="fc" id="L317">            poSalesQoutationFollowUp.setLogWrapper(poLogWrapper);</span>
+<span class="fc" id="L318">            poSalesQoutationFollowUp.initialize();</span>
+<span class="nc" id="L319">        } catch (SQLException | GuanzonException ex) {</span>
+<span class="nc" id="L320">            Logger.getLogger(getClass().getName()).log(Level.SEVERE, MiscUtil.getException(ex), ex);</span>
+<span class="fc" id="L321">        }</span>
+
+<span class="fc" id="L323">        return poSalesQoutationFollowUp;</span>
+    }
+    public SalesQoutationVersionGiveaways SalesQoutationVersionGiveaways(){
+        try {
+<span class="pc bpc" id="L327" title="1 of 2 branches missed.">            if (poGRider == null) {</span>
+<span class="nc" id="L328">                poLogWrapper.severe(&quot;SalesControllers.Sales Qoutation Version Giveaways: Application driver is not set.&quot;);</span>
+<span class="nc" id="L329">                return null;</span>
+            }
+<span class="pc bpc" id="L331" title="1 of 2 branches missed.">            if (poSalesQoutationVersionGiveaways != null){</span>
+<span class="nc" id="L332">                return poSalesQoutationVersionGiveaways;</span>
+            }
+<span class="fc" id="L334">            poSalesQoutationVersionGiveaways = new SalesQoutationVersionGiveaways();</span>
+<span class="fc" id="L335">            poSalesQoutationVersionGiveaways.setApplicationDriver(poGRider);</span>
+<span class="fc" id="L336">            poSalesQoutationVersionGiveaways.setWithParentClass(false);</span>
+<span class="fc" id="L337">            poSalesQoutationVersionGiveaways.setLogWrapper(poLogWrapper);</span>
+<span class="fc" id="L338">            poSalesQoutationVersionGiveaways.initialize();</span>
+<span class="nc" id="L339">        } catch (SQLException | GuanzonException ex) {</span>
+<span class="nc" id="L340">            Logger.getLogger(getClass().getName()).log(Level.SEVERE, MiscUtil.getException(ex), ex);</span>
+<span class="fc" id="L341">        }</span>
+
+<span class="fc" id="L343">        return poSalesQoutationVersionGiveaways;</span>
     }
     
     @Override
     protected void finalize() throws Throwable {
         try {
-<span class="fc" id="L271">            poSalesInquiry = null;</span>
-<span class="fc" id="L272">            poSalesInquirySources = null;</span>
-<span class="fc" id="L273">            poSalesman = null;</span>
-<span class="fc" id="L274">            poSalesAgent = null;</span>
-<span class="fc" id="L275">            poSalesGiveaways = null;</span>
-<span class="fc" id="L276">            poRequirementSource = null;</span>
-<span class="fc" id="L277">            poRequirementSourcePerGroup = null;</span>
-<span class="fc" id="L278">            poCustomerInquiryFollowUp = null;</span>
-<span class="fc" id="L279">            poSalesCommitment = null;</span>
-<span class="fc" id="L280">            poVSP = null;</span>
-<span class="fc" id="L281">            poSalesReservation = null;</span>
+<span class="fc" id="L349">            poSalesInquiry = null;</span>
+<span class="fc" id="L350">            poSalesInquirySources = null;</span>
+<span class="fc" id="L351">            poSalesman = null;</span>
+<span class="fc" id="L352">            poSalesAgent = null;</span>
+<span class="fc" id="L353">            poSalesGiveaways = null;</span>
+<span class="fc" id="L354">            poRequirementSource = null;</span>
+<span class="fc" id="L355">            poRequirementSourcePerGroup = null;</span>
+<span class="fc" id="L356">            poCustomerInquiryFollowUp = null;</span>
+<span class="fc" id="L357">            poSalesCommitment = null;</span>
+<span class="fc" id="L358">            poVSP = null;</span>
+<span class="fc" id="L359">            poSalesReservation = null;</span>
+<span class="fc" id="L360">            poSalesQoutation = null;</span>
+<span class="fc" id="L361">            poSalesQoutationVersion = null;</span>
+<span class="fc" id="L362">            poSalesQoutationFollowUp = null;</span>
+<span class="fc" id="L363">            poSalesQoutationVersionGiveaways = null;</span>
 
-<span class="fc" id="L283">            poLogWrapper = null;</span>
-<span class="fc" id="L284">            poGRider = null;</span>
+<span class="fc" id="L365">            poLogWrapper = null;</span>
+<span class="fc" id="L366">            poGRider = null;</span>
         } finally {
-<span class="fc" id="L286">            super.finalize();</span>
+<span class="fc" id="L368">            super.finalize();</span>
         }
-<span class="fc" id="L288">    }</span>
+<span class="fc" id="L370">    }</span>
 
     private GRiderCAS poGRider;
     private LogWrapper poLogWrapper;
@@ -302,5 +384,9 @@ public class SalesControllers {
     private SalesCommitment poSalesCommitment;
     private VSP poVSP;
     private SalesReservation poSalesReservation;
+    private SalesQoutation poSalesQoutation;
+    private SalesQoutationVersion poSalesQoutationVersion;
+    private SalesQoutationFollowUp poSalesQoutationFollowUp;
+    private SalesQoutationVersionGiveaways poSalesQoutationVersionGiveaways;
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Model_Sales_Quotation_FollowUp.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">cas-sales</a> &gt; <a href="index.source.html" class="el_package">ph.com.guanzongroup.cas.sales.model</a> &gt; <span class="el_source">Model_Sales_Quotation_FollowUp.java</span></div><h1>Model_Sales_Quotation_FollowUp.java</h1><pre class="source lang-java linenums">/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package ph.com.guanzongroup.cas.sales.model;
+
+import org.guanzon.appdriver.agent.services.Model;
+import org.guanzon.appdriver.agent.services.ReferenceCache;
+import org.guanzon.appdriver.base.GuanzonException;
+import org.guanzon.appdriver.base.MiscUtil;
+import org.guanzon.appdriver.constant.EditMode;
+import org.guanzon.cas.client.model.Model_Client_Master;
+import org.json.simple.JSONObject;
+
+import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.util.Date;
+
+/**
+ * Model class for the Sales Quotation FollowUp transaction.
+ *
+ * &lt;p&gt;
+ * A record is written to this table every time a Sales Quotation Version is
+ * followed up. Each record is identified by the combination of
+ * {@code sTransNox} (the quotation's transaction number) and
+ * {@code nEntryNox} (the follow-up entry number), and captures the
+ * reference number, follow-up date, next follow-up date, who performed the
+ * follow-up, the follow-up type, and remarks.
+ * &lt;/p&gt;
+ *
+ * &lt;p&gt;
+ * Detail records do not generate their own transaction number; the
+ * {@code sTransNox} value is inherited from the parent
+ * {@code Sales_Quotation_Master} record, {@code sReferNox} holds the version's
+ * transaction number, and {@code nEntryNox} is
+ * expected to be assigned by the caller (e.g. the next available follow-up
+ * entry number for the given transaction).
+ * &lt;/p&gt;
+ *
+ * @author TEEJEI DE CELIS
+ * @date September 2x, 2026
+ * @module Sales Quotation FollowUp
+ * @version 1.0
+ */
+<span class="fc" id="L46">public class Model_Sales_Quotation_FollowUp extends Model {</span>
+    private Model_Client_Master poClient;
+    @Override
+    public void initialize() {
+        try {
+<span class="fc" id="L51">            poEntity = MiscUtil.xml2ResultSet(</span>
+<span class="fc" id="L52">                    System.getProperty(&quot;sys.default.path.metadata&quot;) + XML,</span>
+<span class="fc" id="L53">                    getTable()</span>
+            );
+
+<span class="fc" id="L56">            poEntity.last();</span>
+<span class="fc" id="L57">            poEntity.moveToInsertRow();</span>
+
+<span class="fc" id="L59">            MiscUtil.initRowSet(poEntity);</span>
+
+            // assign default values
+<span class="fc" id="L62">            poEntity.updateObject(&quot;dFollowUp&quot;, poGRider.getServerDate());</span>
+<span class="fc" id="L63">            poEntity.updateNull(&quot;dNextFlup&quot;);</span>
+<span class="fc" id="L64">            poEntity.updateNull(&quot;dModified&quot;);</span>
+            // end - assign default values
+
+<span class="fc" id="L67">            poEntity.insertRow();</span>
+<span class="fc" id="L68">            poEntity.moveToCurrentRow();</span>
+<span class="fc" id="L69">            poEntity.absolute(1);</span>
+
+<span class="fc" id="L71">            ID  = &quot;sTransNox&quot;;</span>
+<span class="fc" id="L72">            ID2 = &quot;nEntryNox&quot;;</span>
+
+<span class="nc" id="L74">        } catch (SQLException e) {</span>
+<span class="nc" id="L75">            e.printStackTrace();</span>
+<span class="nc" id="L76">            System.exit(1);</span>
+<span class="fc" id="L77">        }</span>
+<span class="fc" id="L78">    }</span>
+
+    /** The key is assigned by the caller (see SalesQoutation), never generated here. */
+    @Override
+    public String getNextCode() {
+<span class="fc" id="L83">        return &quot;&quot;;</span>
+    }
+
+    public JSONObject setTransactionNo(String transactionNo) {
+<span class="fc" id="L87">        return setValue(&quot;sTransNox&quot;, transactionNo);</span>
+    }
+
+    public String getTransactionNo() {
+<span class="fc" id="L91">        return (String) getValue(&quot;sTransNox&quot;);</span>
+    }
+
+    public JSONObject setEntryNo(Integer entryNo) {
+<span class="fc" id="L95">        return setValue(&quot;nEntryNox&quot;, entryNo);</span>
+    }
+
+    public Integer getEntryNo() {
+<span class="fc" id="L99">        return (Integer) getValue(&quot;nEntryNox&quot;);</span>
+    }
+
+    public JSONObject setReferenceNo(String referenceNo) {
+<span class="fc" id="L103">        return setValue(&quot;sReferNox&quot;, referenceNo);</span>
+    }
+
+    public String getReferenceNo() {
+<span class="fc" id="L107">        return (String) getValue(&quot;sReferNox&quot;);</span>
+    }
+
+    public JSONObject setFollowUpDate(Date followUpDate) {
+<span class="fc" id="L111">        return setValue(&quot;dFollowUp&quot;, followUpDate);</span>
+    }
+
+    public Date getFollowUpDate() {
+<span class="fc" id="L115">        return (Date) getValue(&quot;dFollowUp&quot;);</span>
+    }
+
+    public JSONObject setNextFollowUpDate(Date nextFollowUpDate) {
+<span class="nc" id="L119">        return setValue(&quot;dNextFlup&quot;, nextFollowUpDate);</span>
+    }
+
+    public Date getNextFollowUpDate() {
+<span class="nc" id="L123">        return (Date) getValue(&quot;dNextFlup&quot;);</span>
+    }
+
+    public JSONObject setFollowUpBy(String followUpBy) {
+<span class="fc" id="L127">        return setValue(&quot;sFllwUpby&quot;, followUpBy);</span>
+    }
+
+    public String getFollowUpBy() {
+<span class="fc" id="L131">        return (String) getValue(&quot;sFllwUpby&quot;);</span>
+    }
+
+    public JSONObject setFollowUpType(String followUpType) {
+<span class="fc" id="L135">        return setValue(&quot;cFllwUpTp&quot;, followUpType);</span>
+    }
+
+    public String getFollowUpType() {
+<span class="fc" id="L139">        return (String) getValue(&quot;cFllwUpTp&quot;);</span>
+    }
+
+    public JSONObject setRemarks(String remarks) {
+<span class="fc" id="L143">        return setValue(&quot;sRemarksx&quot;, remarks);</span>
+    }
+
+    public String getRemarks() {
+<span class="fc" id="L147">        return (String) getValue(&quot;sRemarksx&quot;);</span>
+    }
+
+    public JSONObject setModifiedDate(Date modifiedDate) {
+<span class="fc" id="L151">        return setValue(&quot;dModified&quot;, modifiedDate);</span>
+    }
+
+    public Date getModifiedDate() {
+<span class="nc" id="L155">        return (Date) getValue(&quot;dModified&quot;);</span>
+    }
+
+    public Timestamp getTimeStamp() {
+<span class="nc" id="L159">        return (Timestamp) getValue(&quot;dTimeStmp&quot;);</span>
+    }
+
+    public Model_Client_Master Client() throws SQLException, GuanzonException {
+
+<span class="nc bnc" id="L164" title="All 2 branches missed.">        if (poClient == null) {</span>
+<span class="nc" id="L165">            poClient = new Model_Client_Master();</span>
+<span class="nc" id="L166">            poClient.setApplicationDriver(poGRider);</span>
+<span class="nc" id="L167">            poClient.setXML(&quot;Model_Client_Master&quot;);</span>
+<span class="nc" id="L168">            poClient.setTableName(&quot;Client_Master&quot;);</span>
+<span class="nc" id="L169">            poClient.initialize();</span>
+        }
+
+<span class="nc" id="L172">        String clientId = (String) (</span>
+<span class="nc bnc" id="L173" title="All 2 branches missed.">                getValue(&quot;sClientID&quot;) == null</span>
+                        ? &quot;&quot;
+<span class="nc" id="L175">                        : getValue(&quot;sClientID&quot;)</span>
+        );
+
+<span class="nc bnc" id="L178" title="All 2 branches missed.">        if (!&quot;&quot;.equals(clientId)) {</span>
+
+<span class="nc bnc" id="L180" title="All 2 branches missed.">            if (poClient.getEditMode() == EditMode.READY</span>
+<span class="nc bnc" id="L181" title="All 2 branches missed.">                    &amp;&amp; poClient.getClientId().equals(clientId)) {</span>
+<span class="nc" id="L182">                return poClient;</span>
+            }
+
+<span class="nc bnc" id="L185" title="All 2 branches missed.">            if (ReferenceCache.tryLoad(&quot;Client_Master&quot;, clientId, poClient)) {</span>
+<span class="nc" id="L186">                return poClient;</span>
+            }
+
+<span class="nc" id="L189">            poJSON = poClient.openRecord(clientId);</span>
+
+<span class="nc bnc" id="L191" title="All 2 branches missed.">            if (&quot;success&quot;.equals((String) poJSON.get(&quot;result&quot;))) {</span>
+<span class="nc" id="L192">                ReferenceCache.store(&quot;Client_Master&quot;, clientId, poClient);</span>
+<span class="nc" id="L193">                return poClient;</span>
+            } else {
+<span class="nc" id="L195">                poClient.initialize();</span>
+<span class="nc" id="L196">                return poClient;</span>
+            }
+
+        } else {
+<span class="nc" id="L200">            poClient.initialize();</span>
+<span class="nc" id="L201">            return poClient;</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

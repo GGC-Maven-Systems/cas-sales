@@ -29,7 +29,7 @@ import java.util.Date;
  *
  * @author User
  */
-<span class="fc" id="L32">public class Model_Sales_Reservation_Master extends Model {</span>
+<span class="nc" id="L32">public class Model_Sales_Reservation_Master extends Model {</span>
 
     Model_Branch poBranch;
     Model_Company poCompany;
@@ -41,58 +41,58 @@ import java.util.Date;
     @Override
     public void initialize() {
         try {
-<span class="fc" id="L44">            poEntity = MiscUtil.xml2ResultSet(System.getProperty(&quot;sys.default.path.metadata&quot;) + XML, getTable());</span>
+<span class="nc" id="L44">            poEntity = MiscUtil.xml2ResultSet(System.getProperty(&quot;sys.default.path.metadata&quot;) + XML, getTable());</span>
 
-<span class="fc" id="L46">            poEntity.last();</span>
-<span class="fc" id="L47">            poEntity.moveToInsertRow();</span>
+<span class="nc" id="L46">            poEntity.last();</span>
+<span class="nc" id="L47">            poEntity.moveToInsertRow();</span>
             
-<span class="fc" id="L49">            Date dTransact = SQLUtil.toDate(xsDateShort(poGRider.getServerDate()), SQLUtil.FORMAT_SHORT_DATE);</span>
-<span class="fc" id="L50">            poEntity.updateObject(&quot;dTransact&quot;, dTransact);</span>
+<span class="nc" id="L49">            Date dTransact = SQLUtil.toDate(xsDateShort(poGRider.getServerDate()), SQLUtil.FORMAT_SHORT_DATE);</span>
+<span class="nc" id="L50">            poEntity.updateObject(&quot;dTransact&quot;, dTransact);</span>
 
 
-<span class="fc" id="L53">            Calendar cal = Calendar.getInstance();</span>
-<span class="fc" id="L54">            cal.setTime(dTransact);</span>
-<span class="fc" id="L55">            cal.add(Calendar.MONTH, 1);</span>
+<span class="nc" id="L53">            Calendar cal = Calendar.getInstance();</span>
+<span class="nc" id="L54">            cal.setTime(dTransact);</span>
+<span class="nc" id="L55">            cal.add(Calendar.MONTH, 1);</span>
             
-<span class="fc" id="L57">            MiscUtil.initRowSet(poEntity);</span>
-<span class="fc" id="L58">            poEntity.updateObject(&quot;dTransact&quot;, SQLUtil.toDate(xsDateShort(poGRider.getServerDate()), SQLUtil.FORMAT_SHORT_DATE));</span>
-<span class="fc" id="L59">            poEntity.updateObject(&quot;dExpected&quot;, SQLUtil.toDate(xsDateShort(cal.getTime()), SQLUtil.FORMAT_SHORT_DATE));</span>
-<span class="fc" id="L60">            poEntity.updateObject(&quot;nEntryNox&quot;, Sales_Reservation_Static.DefaultValues.default_zero_integer);</span>
-<span class="fc" id="L61">            poEntity.updateObject(&quot;nTranTotl&quot;, Sales_Reservation_Static.DefaultValues.default_zero_amount_double);            </span>
-<span class="fc" id="L62">            poEntity.updateObject(&quot;nRefundxx&quot;, Sales_Reservation_Static.DefaultValues.default_zero_amount_double);</span>
-<span class="fc" id="L63">            poEntity.updateObject(&quot;nAmtPaidx&quot;, Sales_Reservation_Static.DefaultValues.default_zero_amount_double);</span>
-<span class="fc" id="L64">            poEntity.updateObject(&quot;nAppliedx&quot;, Sales_Reservation_Static.DefaultValues.default_zero_amount_double);</span>
-<span class="fc" id="L65">            poEntity.updateString(&quot;cTranStat&quot;, Sales_Reservation_Static.OPEN);</span>
+<span class="nc" id="L57">            MiscUtil.initRowSet(poEntity);</span>
+<span class="nc" id="L58">            poEntity.updateObject(&quot;dTransact&quot;, SQLUtil.toDate(xsDateShort(poGRider.getServerDate()), SQLUtil.FORMAT_SHORT_DATE));</span>
+<span class="nc" id="L59">            poEntity.updateObject(&quot;dExpected&quot;, SQLUtil.toDate(xsDateShort(cal.getTime()), SQLUtil.FORMAT_SHORT_DATE));</span>
+<span class="nc" id="L60">            poEntity.updateObject(&quot;nEntryNox&quot;, Sales_Reservation_Static.DefaultValues.default_zero_integer);</span>
+<span class="nc" id="L61">            poEntity.updateObject(&quot;nTranTotl&quot;, Sales_Reservation_Static.DefaultValues.default_zero_amount_double);            </span>
+<span class="nc" id="L62">            poEntity.updateObject(&quot;nRefundxx&quot;, Sales_Reservation_Static.DefaultValues.default_zero_amount_double);</span>
+<span class="nc" id="L63">            poEntity.updateObject(&quot;nAmtPaidx&quot;, Sales_Reservation_Static.DefaultValues.default_zero_amount_double);</span>
+<span class="nc" id="L64">            poEntity.updateObject(&quot;nAppliedx&quot;, Sales_Reservation_Static.DefaultValues.default_zero_amount_double);</span>
+<span class="nc" id="L65">            poEntity.updateString(&quot;cTranStat&quot;, Sales_Reservation_Static.OPEN);</span>
             
-<span class="fc" id="L67">            poEntity.updateNull(&quot;dEntryDte&quot;);</span>
+<span class="nc" id="L67">            poEntity.updateNull(&quot;dEntryDte&quot;);</span>
 
-<span class="fc" id="L69">            poEntity.insertRow();</span>
-<span class="fc" id="L70">            poEntity.moveToCurrentRow();</span>
+<span class="nc" id="L69">            poEntity.insertRow();</span>
+<span class="nc" id="L70">            poEntity.moveToCurrentRow();</span>
 
-<span class="fc" id="L72">            poEntity.absolute(1);</span>
-<span class="fc" id="L73">            ID = &quot;sTransNox&quot;;</span>
+<span class="nc" id="L72">            poEntity.absolute(1);</span>
+<span class="nc" id="L73">            ID = &quot;sTransNox&quot;;</span>
 
-<span class="fc" id="L75">            ClientModels modelClient = new ClientModels(poGRider);</span>
-<span class="fc" id="L76">            poClientMaster = modelClient.ClientMaster();</span>
-<span class="fc" id="L77">            poClientAddress = modelClient.ClientAddress();</span>
+<span class="nc" id="L75">            ClientModels modelClient = new ClientModels(poGRider);</span>
+<span class="nc" id="L76">            poClientMaster = modelClient.ClientMaster();</span>
+<span class="nc" id="L77">            poClientAddress = modelClient.ClientAddress();</span>
 //            poAPClient = model.ClientMaster();
             
-<span class="fc" id="L80">            ParamModels model = new ParamModels(poGRider);</span>
-<span class="fc" id="L81">            poBranch = model.Branch();</span>
-<span class="fc" id="L82">            poCompany = model.Company();</span>
-<span class="fc" id="L83">            poIndustry = model.Industry();</span>
+<span class="nc" id="L80">            ParamModels model = new ParamModels(poGRider);</span>
+<span class="nc" id="L81">            poBranch = model.Branch();</span>
+<span class="nc" id="L82">            poCompany = model.Company();</span>
+<span class="nc" id="L83">            poIndustry = model.Industry();</span>
 
-<span class="fc" id="L85">            pnEditMode = EditMode.UNKNOWN;</span>
+<span class="nc" id="L85">            pnEditMode = EditMode.UNKNOWN;</span>
 <span class="nc" id="L86">        } catch (SQLException e) {</span>
 <span class="nc" id="L87">            logwrapr.severe(e.getMessage());</span>
 <span class="nc" id="L88">            System.exit(1);</span>
-<span class="fc" id="L89">        }</span>
-<span class="fc" id="L90">    }</span>
+<span class="nc" id="L89">        }</span>
+<span class="nc" id="L90">    }</span>
 
     private static String xsDateShort(Date fdValue) {
-<span class="fc" id="L93">        SimpleDateFormat sdf = new SimpleDateFormat(&quot;yyyy-MM-dd&quot;);</span>
-<span class="fc" id="L94">        String date = sdf.format(fdValue);</span>
-<span class="fc" id="L95">        return date;</span>
+<span class="nc" id="L93">        SimpleDateFormat sdf = new SimpleDateFormat(&quot;yyyy-MM-dd&quot;);</span>
+<span class="nc" id="L94">        String date = sdf.format(fdValue);</span>
+<span class="nc" id="L95">        return date;</span>
     }
 
     public JSONObject setTransactionNo(String transactionNo) {
@@ -100,79 +100,79 @@ import java.util.Date;
     }
 
     public String getTransactionNo() {
-<span class="fc" id="L103">        return (String) getValue(&quot;sTransNox&quot;);</span>
+<span class="nc" id="L103">        return (String) getValue(&quot;sTransNox&quot;);</span>
     }
 
     public JSONObject setIndustryID(String industryID) {
-<span class="fc" id="L107">        return setValue(&quot;sIndstCdx&quot;, industryID);</span>
+<span class="nc" id="L107">        return setValue(&quot;sIndstCdx&quot;, industryID);</span>
     }
 
     public String getIndustryID() {
-<span class="fc" id="L111">        return (String) getValue(&quot;sIndstCdx&quot;);</span>
+<span class="nc" id="L111">        return (String) getValue(&quot;sIndstCdx&quot;);</span>
     }
     
     public JSONObject setCompanyID(String companyID) {
-<span class="fc" id="L115">        return setValue(&quot;sCompnyID&quot;, companyID);</span>
+<span class="nc" id="L115">        return setValue(&quot;sCompnyID&quot;, companyID);</span>
     }
 
     public String getCompanyID() {
-<span class="fc" id="L119">        return (String) getValue(&quot;sCompnyID&quot;);</span>
+<span class="nc" id="L119">        return (String) getValue(&quot;sCompnyID&quot;);</span>
     }
 
     public JSONObject setBranchCode(String branchCode) {
-<span class="fc" id="L123">        return setValue(&quot;sBranchCd&quot;, branchCode);</span>
+<span class="nc" id="L123">        return setValue(&quot;sBranchCd&quot;, branchCode);</span>
     }
 
     public String getBranchCode() {
-<span class="fc" id="L127">        return (String) getValue(&quot;sBranchCd&quot;);</span>
+<span class="nc" id="L127">        return (String) getValue(&quot;sBranchCd&quot;);</span>
     }
     
     public JSONObject setCategoryCode(String categoryCode) {
-<span class="fc" id="L131">        return setValue(&quot;sCategrCd&quot;, categoryCode);</span>
+<span class="nc" id="L131">        return setValue(&quot;sCategrCd&quot;, categoryCode);</span>
     }
 
     public String getCategoryCode() {
-<span class="fc" id="L135">        return (String) getValue(&quot;sCategrCd&quot;);</span>
+<span class="nc" id="L135">        return (String) getValue(&quot;sCategrCd&quot;);</span>
     }
     
     public JSONObject setTransactionDate(Date transactionDate) {
-<span class="fc" id="L139">        return setValue(&quot;dTransact&quot;, transactionDate);</span>
+<span class="nc" id="L139">        return setValue(&quot;dTransact&quot;, transactionDate);</span>
     }
 
     public Date getTransactionDate() {
-<span class="fc" id="L143">        return (Date) getValue(&quot;dTransact&quot;);</span>
+<span class="nc" id="L143">        return (Date) getValue(&quot;dTransact&quot;);</span>
     }
     
     public JSONObject setExpectedDate(Date transactionDate) {
-<span class="fc" id="L147">        return setValue(&quot;dExpected&quot;, transactionDate);</span>
+<span class="nc" id="L147">        return setValue(&quot;dExpected&quot;, transactionDate);</span>
     }
 
     public Date getExpectedDate() {
-<span class="fc" id="L151">        return (Date) getValue(&quot;dExpected&quot;);</span>
+<span class="nc" id="L151">        return (Date) getValue(&quot;dExpected&quot;);</span>
     }
     
     public JSONObject setClientID(String clientID) {
-<span class="fc" id="L155">        return setValue(&quot;sClientID&quot;, clientID);</span>
+<span class="nc" id="L155">        return setValue(&quot;sClientID&quot;, clientID);</span>
     }
 
     public String getClientID() {
-<span class="fc" id="L159">        return (String) getValue(&quot;sClientID&quot;);</span>
+<span class="nc" id="L159">        return (String) getValue(&quot;sClientID&quot;);</span>
     }
         
     public JSONObject setAddressID(String addressID) {
-<span class="fc" id="L163">        return setValue(&quot;sAddrssID&quot;, addressID);</span>
+<span class="nc" id="L163">        return setValue(&quot;sAddrssID&quot;, addressID);</span>
     }
 
     public String getAddressID() {
-<span class="fc" id="L167">        return (String) getValue(&quot;sAddrssID&quot;);</span>
+<span class="nc" id="L167">        return (String) getValue(&quot;sAddrssID&quot;);</span>
     }
         
     public JSONObject setContactID(String contactID) {
-<span class="fc" id="L171">        return setValue(&quot;sContctID&quot;, contactID);</span>
+<span class="nc" id="L171">        return setValue(&quot;sContctID&quot;, contactID);</span>
     }
 
     public String getContactID() {
-<span class="fc" id="L175">        return (String) getValue(&quot;sContctID&quot;);</span>
+<span class="nc" id="L175">        return (String) getValue(&quot;sContctID&quot;);</span>
     }
         
     public JSONObject setReferenceNo(String referenceNo) {
@@ -184,11 +184,11 @@ import java.util.Date;
     }    
             
     public JSONObject setRemarks(String remarks) {
-<span class="fc" id="L187">        return setValue(&quot;sRemarksx&quot;, remarks);</span>
+<span class="nc" id="L187">        return setValue(&quot;sRemarksx&quot;, remarks);</span>
     }
 
     public String getRemarks() {
-<span class="fc" id="L191">        return (String) getValue(&quot;sRemarksx&quot;);</span>
+<span class="nc" id="L191">        return (String) getValue(&quot;sRemarksx&quot;);</span>
     }
     
     public JSONObject setTransactionTotal(double transactionTotal) {
@@ -241,19 +241,19 @@ import java.util.Date;
     }
 
     public JSONObject setSourceCode(String sourceCode) {
-<span class="fc" id="L244">        return setValue(&quot;sSourceCd&quot;, sourceCode);</span>
+<span class="nc" id="L244">        return setValue(&quot;sSourceCd&quot;, sourceCode);</span>
     }
 
     public String getSourceCode() {
-<span class="fc" id="L248">        return (String) getValue(&quot;sSourceCd&quot;);</span>
+<span class="nc" id="L248">        return (String) getValue(&quot;sSourceCd&quot;);</span>
     }
 
     public JSONObject setSourceNo(String sourceNo) {
-<span class="fc" id="L252">        return setValue(&quot;sSourceNo&quot;, sourceNo);</span>
+<span class="nc" id="L252">        return setValue(&quot;sSourceNo&quot;, sourceNo);</span>
     }
 
     public String getSourceNo() {
-<span class="fc" id="L256">        return (String) getValue(&quot;sSourceNo&quot;);</span>
+<span class="nc" id="L256">        return (String) getValue(&quot;sSourceNo&quot;);</span>
     }
     
     public JSONObject setPaymentType(String paymentType) {
@@ -265,11 +265,11 @@ import java.util.Date;
     } 
     
     public JSONObject setEntryNo(int entryNo) {
-<span class="fc" id="L268">        return setValue(&quot;nEntryNox&quot;, entryNo);</span>
+<span class="nc" id="L268">        return setValue(&quot;nEntryNox&quot;, entryNo);</span>
     }
 
     public int getEntryNo() {
-<span class="fc" id="L272">        return (int) getValue(&quot;nEntryNox&quot;);</span>
+<span class="nc" id="L272">        return (int) getValue(&quot;nEntryNox&quot;);</span>
     }
     
     public JSONObject setEntryBy(String entryBy) {
@@ -281,19 +281,19 @@ import java.util.Date;
     }
 
     public JSONObject setEntryDate(Date entryDate) {
-<span class="fc" id="L284">        return setValue(&quot;dEntryDte&quot;, entryDate);</span>
+<span class="nc" id="L284">        return setValue(&quot;dEntryDte&quot;, entryDate);</span>
     }
 
     public Date getEntryDate() {
-<span class="fc" id="L288">        return (Date) getValue(&quot;dEntryDte&quot;);</span>
+<span class="nc" id="L288">        return (Date) getValue(&quot;dEntryDte&quot;);</span>
     }
 
     public JSONObject setTransactionStatus(String transactionStatus) {
-<span class="fc" id="L292">        return setValue(&quot;cTranStat&quot;, transactionStatus);</span>
+<span class="nc" id="L292">        return setValue(&quot;cTranStat&quot;, transactionStatus);</span>
     }
 
     public String getTransactionStatus() {
-<span class="fc" id="L296">        return (String) getValue(&quot;cTranStat&quot;);</span>
+<span class="nc" id="L296">        return (String) getValue(&quot;cTranStat&quot;);</span>
     }
 
     public JSONObject setModifyingId(String modifyingId) {
@@ -305,7 +305,7 @@ import java.util.Date;
     }
 
     public JSONObject setModifiedDate(Date modifiedDate) {
-<span class="fc" id="L308">        return setValue(&quot;dModified&quot;, modifiedDate);</span>
+<span class="nc" id="L308">        return setValue(&quot;dModified&quot;, modifiedDate);</span>
     }
 
     public Date getModifiedDate() {
@@ -314,7 +314,7 @@ import java.util.Date;
 
     @Override
     public String getNextCode() {
-<span class="fc" id="L317">        return MiscUtil.getNextCode(this.getTable(), ID, true, poGRider.getGConnection().getConnection(), poGRider.getBranchCode());</span>
+<span class="nc" id="L317">        return MiscUtil.getNextCode(this.getTable(), ID, true, poGRider.getGConnection().getConnection(), poGRider.getBranchCode());</span>
     }
 
 

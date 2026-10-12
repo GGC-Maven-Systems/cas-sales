@@ -1,0 +1,326 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Sales_Qoutation_Validator_MC.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">cas-sales</a> &gt; <a href="index.source.html" class="el_package">ph.com.guanzongroup.cas.sales.validator</a> &gt; <span class="el_source">Sales_Qoutation_Validator_MC.java</span></div><h1>Sales_Qoutation_Validator_MC.java</h1><pre class="source lang-java linenums">package ph.com.guanzongroup.cas.sales.validator;
+
+import org.guanzon.appdriver.agent.MatrixAuthManager;
+import org.guanzon.appdriver.base.GRiderCAS;
+import org.guanzon.appdriver.base.GuanzonException;
+import org.guanzon.appdriver.base.MiscUtil;
+import org.guanzon.appdriver.base.SQLUtil;
+import org.guanzon.appdriver.iface.GValidator;
+import org.json.simple.JSONObject;
+import ph.com.guanzongroup.cas.sales.model.Model_Sales_Quotation_Version_Detail;
+import ph.com.guanzongroup.cas.sales.model.Model_Sales_Quotation_Version_Master;
+import ph.com.guanzongroup.cas.sales.status.SalesQoutationVersionStatic;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+
+/**
+ * Validator for Sales Quotation Version.
+ *
+ * On CONFIRM it compares the version total against its parent quotation
+ * (Sales_Quotation_Version_Master.sReferNox = Sales_Quotation_Master.sTransNox)
+ * and raises a matrix authorization request when the version total is lower
+ * than the parent's.
+ */
+<span class="nc" id="L26">public class Sales_Qoutation_Validator_MC implements GValidator {</span>
+
+    private static final double TOLERANCE = 0.005;
+
+    // ASSUMPTION: matrix name registered for this source code.
+
+
+    MatrixAuthManager poMatrix;
+    GRiderCAS poGrider;
+    String psTranStat;
+    JSONObject poJSON;
+
+<span class="nc" id="L38">    String SOURCE_CD = SalesQoutationVersionStatic.SOURCE_CODE;</span>
+    Model_Sales_Quotation_Version_Master poMaster;
+<span class="nc" id="L40">    ArrayList&lt;Model_Sales_Quotation_Version_Detail&gt; poDetail = new ArrayList&lt;&gt;();</span>
+
+    @Override
+    public void setApplicationDriver(Object applicationDriver) {
+<span class="nc" id="L44">        poGrider = (GRiderCAS) applicationDriver;</span>
+<span class="nc" id="L45">    }</span>
+
+    @Override
+    public void setTransactionStatus(String transactionStatus) {
+<span class="nc" id="L49">        psTranStat = transactionStatus;</span>
+<span class="nc" id="L50">    }</span>
+
+    @Override
+    public void setMaster(Object value) {
+<span class="nc" id="L54">        poMaster = (Model_Sales_Quotation_Version_Master) value;</span>
+<span class="nc" id="L55">    }</span>
+
+    @Override
+    public void setDetail(ArrayList&lt;Object&gt; value) {
+<span class="nc" id="L59">        poDetail.clear();</span>
+<span class="nc bnc" id="L60" title="All 2 branches missed.">        for (int lnCtr = 0; lnCtr &lt;= value.size() - 1; lnCtr++) {</span>
+<span class="nc" id="L61">            poDetail.add((Model_Sales_Quotation_Version_Detail) value.get(lnCtr));</span>
+        }
+<span class="nc" id="L63">    }</span>
+
+    @Override
+    public void setOthers(ArrayList&lt;Object&gt; value) {
+<span class="nc" id="L67">        throw new UnsupportedOperationException(&quot;Not supported yet.&quot;);</span>
+    }
+
+    @Override
+    public JSONObject validate() {
+<span class="nc bnc" id="L72" title="All 3 branches missed.">        switch (psTranStat) {</span>
+            case SalesQoutationVersionStatic.OPEN:
+<span class="nc" id="L74">                return validateNew();</span>
+            case SalesQoutationVersionStatic.CONFIRMED:
+                try {
+<span class="nc" id="L77">                    return validateConfirmed();</span>
+<span class="nc" id="L78">                } catch (SQLException ex) {</span>
+<span class="nc" id="L79">                    poJSON = new JSONObject();</span>
+<span class="nc" id="L80">                    poJSON.put(&quot;result&quot;, &quot;error&quot;);</span>
+<span class="nc" id="L81">                    poJSON.put(&quot;message&quot;, ex.getMessage());</span>
+<span class="nc" id="L82">                    return poJSON;</span>
+                }
+            default:
+<span class="nc" id="L85">                poJSON = new JSONObject();</span>
+<span class="nc" id="L86">                poJSON.put(&quot;result&quot;, &quot;success&quot;);</span>
+<span class="nc" id="L87">                return poJSON;</span>
+        }
+    }
+
+    private JSONObject validateNew() {
+<span class="nc" id="L92">        poJSON = new JSONObject();</span>
+
+<span class="nc bnc" id="L94" title="All 4 branches missed.">        if (poMaster.getTransactionNo() == null || &quot;&quot;.equals(poMaster.getTransactionNo())) {</span>
+<span class="nc" id="L95">            poJSON.put(&quot;result&quot;, &quot;error&quot;);</span>
+<span class="nc" id="L96">            poJSON.put(&quot;message&quot;, &quot;Please specify transaction no.&quot;);</span>
+<span class="nc" id="L97">            return poJSON;</span>
+        }
+
+<span class="nc bnc" id="L100" title="All 4 branches missed.">        if (poMaster.getParentId() == null || &quot;&quot;.equals(poMaster.getParentId())) {</span>
+<span class="nc" id="L101">            poJSON.put(&quot;result&quot;, &quot;error&quot;);</span>
+<span class="nc" id="L102">            poJSON.put(&quot;message&quot;, &quot;Parent quotation must not be empty.&quot;);</span>
+<span class="nc" id="L103">            return poJSON;</span>
+        }
+
+<span class="nc" id="L106">        poJSON.put(&quot;result&quot;, &quot;success&quot;);</span>
+<span class="nc" id="L107">        return poJSON;</span>
+    }
+
+
+    private static final String DETAIL_TABLE   = &quot;Sales_Quotation_Version_Detail&quot;;
+    private static final String DETAIL_SRP_COL = &quot;nUnitPrce&quot;;
+    private static final String DETAIL_QTY_COL = &quot;nQuantity&quot;;
+
+    /**
+     * Validates the discount of the version and, when a discount exists, creates
+     * the matrix approval request. The returned JSON carries the &quot;matrix&quot; array
+     * (from MatrixAuthManager.processAuth) when an authorization is required.
+     */
+
+    private JSONObject validateConfirmed() throws SQLException {
+<span class="nc" id="L122">        poJSON = new JSONObject();</span>
+<span class="nc" id="L123">        poMatrix = new MatrixAuthManager(poGrider, SOURCE_CD, poMaster.getTransactionNo());</span>
+
+
+        // ---- 1. version master + parent ------------------------------------
+<span class="nc" id="L127">        String lsSQL = &quot;SELECT&quot;</span>
+                + &quot;  vm.sTransNox&quot;
+                + &quot;, pm.sTransNox AS sParentNo&quot;
+                + &quot;, IFNULL(vm.nDiscAmtx, 0) AS nDisAmtx&quot;
+                + &quot;, IFNULL(vm.nAddDiscx, 0) AS nAddDiscx&quot;
+                + &quot; FROM Sales_Quotation_Version_Master vm&quot;
+                + &quot; LEFT JOIN Sales_Quotation_Master pm ON pm.sTransNox = vm.sParentID&quot;
+<span class="nc" id="L134">                + &quot; WHERE vm.sTransNox = &quot; + SQLUtil.toSQL(poMaster.getTransactionNo());</span>
+
+<span class="nc" id="L136">        System.out.println(&quot;Execute SQL : &quot; + lsSQL);</span>
+
+<span class="nc" id="L138">        boolean lbHasParent = false;</span>
+<span class="nc" id="L139">        double lnDiscAmount = 0.00;</span>
+<span class="nc" id="L140">        double lnAddDiscount = 0.00;</span>
+
+<span class="nc" id="L142">        ResultSet loRS = poGrider.executeQuery(lsSQL);</span>
+        try {
+<span class="nc bnc" id="L144" title="All 2 branches missed.">            if (loRS.next()) {</span>
+<span class="nc bnc" id="L145" title="All 2 branches missed.">                lbHasParent = loRS.getString(&quot;sParentNo&quot;) != null;</span>
+<span class="nc" id="L146">                lnDiscAmount = loRS.getDouble(&quot;nDisAmtx&quot;);</span>
+<span class="nc" id="L147">                lnAddDiscount = loRS.getDouble(&quot;nAddDiscx&quot;);</span>
+            }
+        } finally {
+<span class="nc" id="L150">            MiscUtil.close(loRS);</span>
+        }
+
+<span class="nc bnc" id="L153" title="All 2 branches missed.">        if (!lbHasParent) {</span>
+<span class="nc" id="L154">            poJSON.put(&quot;result&quot;, &quot;error&quot;);</span>
+<span class="nc" id="L155">            poJSON.put(&quot;message&quot;, &quot;Parent quotation was not found.&quot;);</span>
+<span class="nc" id="L156">            return poJSON;</span>
+        }
+
+        // ---- 2. basic sanity of the discount values ------------------------
+<span class="nc bnc" id="L160" title="All 2 branches missed.">        if (lnDiscAmount &lt; 0.00) {</span>
+<span class="nc" id="L161">            poJSON.put(&quot;result&quot;, &quot;error&quot;);</span>
+<span class="nc" id="L162">            poJSON.put(&quot;message&quot;, &quot;Discount amount must not be negative.&quot;);</span>
+<span class="nc" id="L163">            return poJSON;</span>
+        }
+
+<span class="nc bnc" id="L166" title="All 2 branches missed.">        if (lnAddDiscount &lt; 0.00) {</span>
+<span class="nc" id="L167">            poJSON.put(&quot;result&quot;, &quot;error&quot;);</span>
+<span class="nc" id="L168">            poJSON.put(&quot;message&quot;, &quot;Additional discount must not be negative.&quot;);</span>
+<span class="nc" id="L169">            return poJSON;</span>
+        }
+
+        // ---- 3. get quotation details and identify big bikes ---------------
+<span class="nc" id="L173">        lsSQL = &quot;SELECT&quot;</span>
+                + &quot; d.sStockIDx&quot;
+                + &quot;, (d.&quot; + DETAIL_SRP_COL + &quot; * d.&quot; + DETAIL_QTY_COL + &quot;) AS nGrossAmt&quot;
+                + &quot;, i.sCategCd2&quot;
+                + &quot; FROM &quot; + DETAIL_TABLE + &quot; d&quot;
+                + &quot; LEFT JOIN Inventory i ON i.sStockIDx = d.sStockIDx&quot;
+                + &quot; WHERE d.sTransNox = &quot;
+<span class="nc" id="L180">                + SQLUtil.toSQL(poMaster.getTransactionNo());</span>
+
+<span class="nc" id="L182">        System.out.println(&quot;Execute SQL : &quot; + lsSQL);</span>
+
+<span class="nc" id="L184">        loRS = poGrider.executeQuery(lsSQL);</span>
+
+<span class="nc" id="L186">        double lnGross = 0.00;</span>
+<span class="nc" id="L187">        double lnBigBikeGross = 0.00;</span>
+<span class="nc" id="L188">        int lnDetailCount = 0;</span>
+<span class="nc" id="L189">        int lnBigBikeCount = 0;</span>
+
+        try {
+<span class="nc bnc" id="L192" title="All 2 branches missed.">            while (loRS.next()) {</span>
+<span class="nc" id="L193">                lnDetailCount++;</span>
+
+<span class="nc" id="L195">                String lsStockID = loRS.getString(&quot;sStockIDx&quot;);</span>
+<span class="nc" id="L196">                String lsCategory = loRS.getString(&quot;sCategCd2&quot;);</span>
+<span class="nc" id="L197">                double lnDetailGross = loRS.getDouble(&quot;nGrossAmt&quot;);</span>
+
+<span class="nc" id="L199">                lnGross += lnDetailGross;</span>
+
+<span class="nc bnc" id="L201" title="All 2 branches missed.">                if (SalesQoutationVersionStatic.BIG_BIKE.equals(lsCategory)) {</span>
+<span class="nc" id="L202">                    lnBigBikeGross += lnDetailGross;</span>
+<span class="nc" id="L203">                    lnBigBikeCount++;</span>
+
+<span class="nc" id="L205">                    System.out.println(&quot;Big bike detected:&quot;</span>
+                            + &quot; StockID=&quot; + lsStockID
+                            + &quot;, Category=&quot; + lsCategory
+                            + &quot;, Gross=&quot; + lnDetailGross);
+                } else {
+<span class="nc" id="L210">                    System.out.println(&quot;Non-big-bike detail:&quot;</span>
+                            + &quot; StockID=&quot; + lsStockID
+                            + &quot;, Category=&quot; + lsCategory
+                            + &quot;, Gross=&quot; + lnDetailGross);
+                }
+<span class="nc" id="L215">            }</span>
+        } finally {
+<span class="nc" id="L217">            MiscUtil.close(loRS);</span>
+        }
+
+<span class="nc bnc" id="L220" title="All 4 branches missed.">        if (lnDetailCount == 0 || lnGross &lt;= 0.00) {</span>
+<span class="nc" id="L221">            poJSON.put(&quot;result&quot;, &quot;error&quot;);</span>
+<span class="nc" id="L222">            poJSON.put(&quot;message&quot;, &quot;Cannot apply a discount to a quotation with no detail amount.&quot;);</span>
+<span class="nc" id="L223">            return poJSON;</span>
+        }
+
+<span class="nc" id="L226">        System.out.println(&quot;lnDetailCount: &quot; + lnDetailCount);</span>
+<span class="nc" id="L227">        System.out.println(&quot;lnBigBikeCount: &quot; + lnBigBikeCount);</span>
+<span class="nc" id="L228">        System.out.println(&quot;lnGross: &quot; + lnGross);</span>
+<span class="nc" id="L229">        System.out.println(&quot;lnBigBikeGross: &quot; + lnBigBikeGross);</span>
+<span class="nc" id="L230">        System.out.println(&quot;lnDiscAmount: &quot; + lnDiscAmount);</span>
+<span class="nc" id="L231">        System.out.println(&quot;lnAddDiscount: &quot; + lnAddDiscount);</span>
+
+        // no discount -&gt; nothing to authorize
+<span class="nc bnc" id="L234" title="All 4 branches missed.">        if (lnDiscAmount == 0.00 &amp;&amp; lnAddDiscount == 0.00) {</span>
+<span class="nc" id="L235">            poJSON.put(&quot;result&quot;, &quot;success&quot;);</span>
+<span class="nc" id="L236">            poJSON.put(&quot;message&quot;, &quot;&quot;);</span>
+<span class="nc" id="L237">            return poJSON;</span>
+        }
+
+        // ---- 4. total discount (amount and percent) -------------------------
+        // nDiscAmtx stores the discount amount.
+<span class="nc" id="L242">        double lnDiscPercent = round2((lnDiscAmount / lnGross) * 100.00);</span>
+
+        // nAddDiscx stores the additional discount amount.
+<span class="nc" id="L245">        double lnAddDiscPct = round2((lnAddDiscount / lnGross) * 100.00);</span>
+
+<span class="nc" id="L247">        double lnTotalDiscAmt = round2(lnDiscAmount + lnAddDiscount);</span>
+<span class="nc" id="L248">        double lnTotalDiscPct = round2(lnDiscPercent + lnAddDiscPct);</span>
+
+<span class="nc" id="L250">        System.out.println(&quot;lnDiscPercent: &quot; + lnDiscPercent);</span>
+<span class="nc" id="L251">        System.out.println(&quot;lnAddDiscPct: &quot; + lnAddDiscPct);</span>
+<span class="nc" id="L252">        System.out.println(&quot;lnTotalDiscAmt: &quot; + lnTotalDiscAmt);</span>
+<span class="nc" id="L253">        System.out.println(&quot;lnTotalDiscPct: &quot; + lnTotalDiscPct);</span>
+
+        // ---- 5. matrix lookup ----------------------------------------------
+        // ---- 5. matrix lookup ----------------------------------------------
+// Use a separate authorization matrix for big bikes.
+        String lsMatrixName;
+
+<span class="nc bnc" id="L260" title="All 2 branches missed.">        if (lnBigBikeCount &gt; 0) {</span>
+<span class="nc" id="L261">            lsMatrixName = SalesQoutationVersionStatic.MATRIX_BIG_BIKE_NAME;</span>
+        } else {
+<span class="nc" id="L263">            lsMatrixName = SalesQoutationVersionStatic.MATRIX_REGULAR_BIKE_NAME;</span>
+        }
+
+<span class="nc" id="L266">        System.out.println(&quot;Selected Matrix: &quot; + lsMatrixName);</span>
+<span class="nc" id="L267">        System.out.println(&quot;Total Discount Amount: &quot; + lnTotalDiscAmt);</span>
+
+<span class="nc" id="L269">        String lsAuthCode = poMatrix.getAuthType(</span>
+                lsMatrixName,
+<span class="nc" id="L271">                String.valueOf(lnTotalDiscAmt),</span>
+                &quot;&quot;
+        );
+
+<span class="nc bnc" id="L275" title="All 4 branches missed.">        if (lsAuthCode == null || lsAuthCode.isEmpty()) {</span>
+<span class="nc" id="L276">            poJSON.put(&quot;result&quot;, &quot;error&quot;);</span>
+<span class="nc" id="L277">            poJSON.put(&quot;message&quot;, &quot;No approval matrix is defined for a total discount of &quot;</span>
+                    + lnTotalDiscAmt + &quot; using matrix &quot; + lsMatrixName + &quot;.&quot;);
+<span class="nc" id="L279">            return poJSON;</span>
+        }
+
+<span class="nc bnc" id="L282" title="All 4 branches missed.">        if (lsAuthCode == null || lsAuthCode.isEmpty()) {</span>
+<span class="nc" id="L283">            poJSON.put(&quot;result&quot;, &quot;error&quot;);</span>
+<span class="nc" id="L284">            poJSON.put(&quot;message&quot;, &quot;No approval matrix is defined for a total discount of &quot;</span>
+                    + lnTotalDiscAmt + &quot;.&quot;);
+<span class="nc" id="L286">            return poJSON;</span>
+        }
+
+<span class="nc" id="L289">        String lsRemarks = poMaster.getBranchCode()</span>
+<span class="nc" id="L290">                + &quot;/&quot; + poMaster.getTransactionNo()</span>
+<span class="nc" id="L291">                + &quot;;&quot; + SQLUtil.dateFormat(poMaster.getTransactionDate(), &quot;yyyy-MM-dd&quot;)</span>
+                + &quot;;gross=&quot; + lnGross
+                + &quot;;bigBikeGross=&quot; + lnBigBikeGross
+                + &quot;;bigBikeCount=&quot; + lnBigBikeCount
+                + &quot;;discAmt=&quot; + lnDiscAmount
+                + &quot;;disc%=&quot; + lnDiscPercent
+                + &quot;;addDisc=&quot; + lnAddDiscount
+                + &quot;;addDisc%=&quot; + lnAddDiscPct
+                + &quot;;totalDisc=&quot; + lnTotalDiscAmt
+                + &quot;;totalDisc%=&quot; + lnTotalDiscPct
+<span class="nc" id="L301">                + &quot;;&quot; + poMaster.getRemarks();</span>
+
+<span class="nc" id="L303">        poMatrix.addAuthRequest(lsAuthCode, &quot;&quot;, &quot;&quot;, lsRemarks);</span>
+
+        // ---- 6. create / load the approval request --------------------------
+        try {
+<span class="nc" id="L307">            poJSON = poMatrix.processAuth();</span>
+
+<span class="nc bnc" id="L309" title="All 2 branches missed.">            if (&quot;error&quot;.equals(poJSON.get(&quot;result&quot;))) {</span>
+<span class="nc" id="L310">                return poJSON;</span>
+            }
+<span class="nc" id="L312">        } catch (GuanzonException ex) {</span>
+<span class="nc" id="L313">            poJSON = new JSONObject();</span>
+<span class="nc" id="L314">            poJSON.put(&quot;result&quot;, &quot;error&quot;);</span>
+<span class="nc" id="L315">            poJSON.put(&quot;message&quot;, ex.getMessage());</span>
+<span class="nc" id="L316">            return poJSON;</span>
+<span class="nc" id="L317">        }</span>
+
+<span class="nc" id="L319">        return poJSON;</span>
+    }
+
+    private static double round2(double fnValue) {
+<span class="nc" id="L323">        return Math.round(fnValue * 100.0) / 100.0;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

@@ -203,6 +203,57 @@ public final class SalesQoutationStatic {
             ""
     };
 
+    public static final class StatusFilter {
+
+        /**
+         * Prevents instantiation of this utility class.
+         */
+        private StatusFilter() {
+            throw new UnsupportedOperationException("Utility class cannot be instantiated.");
+        }
+
+        public static final String OPEN = "0";
+
+        public static final String CONFIRMED = "1";
+        /**
+         * Indicates that the quotation transaction has been confirmed.
+         */
+        public static final String SALES = "2";
+
+        /**
+         * Indicates that the quotation transaction has been cancelled.
+         */
+        public static final String LOST = "3";
+
+        /**
+         * Indicates that the quotation transaction has been voided.
+         */
+        public static final String VOID = "4";
+    }
+
+    /**
+     * Payment type descriptions used in JavaFX ComboBox controls.
+     */
+    public static final ObservableList<String> STATUS_TYPE_DESCRIPTION =
+            FXCollections.observableArrayList(
+                    "OPEN",
+                    "CONFIRMED",
+                    "SALES",
+                    "LOST",
+                    "VOID"
+            );
+
+    /**
+     * Payment type codes corresponding to {@link SalesQoutationVersionStatic.PaymentType}.
+     */
+    public static final String[] STATUS_TYPE_CODE = {
+            "0",
+            "1",
+            "2",
+            "3",
+            "4"
+    };
+
     // -------------------------------------------------------------------------
     // Insurance
     // -------------------------------------------------------------------------

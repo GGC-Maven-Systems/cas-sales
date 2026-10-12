@@ -444,79 +444,125 @@ public class SalesQoutation extends Parameter {
     public List<JSONObject> getQuotationList(String industryCode, String categoryCode,
                                              String transNo, String customer, String status) throws SQLException {
         poGRider.ensureConnected();
-
-        // conditions shared by both queries (a = quotation, b = client)
+// Conditions shared by the parent and version queries
         String lsCondition = "";
-        if (industryCode != null && !industryCode.isEmpty()) {
-            lsCondition = andCondition(lsCondition, "a.sIndstCdx = " + SQLUtil.toSQL(industryCode));
-        }
-        if (categoryCode != null && !categoryCode.isEmpty()) {
-            lsCondition = andCondition(lsCondition, "a.sCategrCd = " + SQLUtil.toSQL(categoryCode));
-        }
-        if (transNo != null && !transNo.trim().isEmpty()) {
-            lsCondition = andCondition(lsCondition, "a.sTransNox LIKE " + SQLUtil.toSQL("%" + transNo.trim() + "%"));
-        }
-        if (customer != null && !customer.trim().isEmpty()) {
-            lsCondition = andCondition(lsCondition, "b.sCompnyNm LIKE " + SQLUtil.toSQL("%" + customer.trim() + "%"));
-        }
-        if (status != null && !status.isEmpty()) {
-            StringBuilder lsIn = new StringBuilder();
-            for (int lnCtr = 0; lnCtr < status.length(); lnCtr++) {
-                if (lnCtr > 0) lsIn.append(", ");
-                lsIn.append(SQLUtil.toSQL(Character.toString(status.charAt(lnCtr))));
-            }
-            lsCondition = andCondition(lsCondition, "a.cTranStat IN (" + lsIn + ")");
+
+        if (industryCode != null && !industryCode.trim().isEmpty()) {
+            lsCondition = andCondition(lsCondition,
+                    "a.sIndstCdx = " + SQLUtil.toSQL(industryCode.trim()));
         }
 
-        // 1. quotations (parents)
+        if (categoryCode != null && !categoryCode.trim().isEmpty()) {
+            lsCondition = andCondition(lsCondition,
+                    "a.sCategrCd = " + SQLUtil.toSQL(categoryCode.trim()));
+        }
+
+        if (transNo != null && !transNo.trim().isEmpty()) {
+            lsCondition = andCondition(lsCondition,
+                    "a.sTransNox LIKE " + SQLUtil.toSQL("%" + transNo.trim() + "%"));
+        }
+
+        if (customer != null && !customer.trim().isEmpty()) {
+            lsCondition = andCondition(lsCondition,
+                    "b.sCompnyNm LIKE " + SQLUtil.toSQL("%" + customer.trim() + "%"));
+        }
+
+        System.out.println("Selected Status: [" + status + "]");
+        System.out.println("Status is null: " + (status == null));
+
+// Status condition applies ONLY to the parent quotation query
+        String lsParentCondition = "";
+
+        if (status != null && !status.trim().isEmpty()) {
+            lsParentCondition = "a.cTranStat = " + SQLUtil.toSQL(status.trim());
+        }
+
+// 1. Retrieve parent quotations using the supplied filters
         Map<String, JSONObject> loQuotations = new LinkedHashMap<>();
+
         String lsSQL = SalesQoutationsMasterQueries.SQL_QuotationList();
-        if (!lsCondition.isEmpty()) lsSQL = MiscUtil.addCondition(lsSQL, lsCondition);
-        lsSQL = lsSQL + " ORDER BY a.sTransNox DESC";
-        System.out.println("Executing SQL: " + lsSQL);
+
+        if (!lsCondition.isEmpty()) {
+            lsSQL = MiscUtil.addCondition(lsSQL, lsCondition);
+        }
+
+        if (!lsParentCondition.isEmpty()) {
+            lsSQL = MiscUtil.addCondition(lsSQL, lsParentCondition);
+        }
+
+        lsSQL += " ORDER BY a.sTransNox DESC";
+
+        System.out.println("Executing Parent SQL: " + lsSQL);
+
         ResultSet loRS = poGRider.executeQuery(lsSQL);
+
         try {
             while (loRS.next()) {
                 JSONObject loJSON = new JSONObject();
+
                 loJSON.put("sTransNox", nvl(loRS.getString("sTransNox")));
                 loJSON.put("dTransact", nvl(loRS.getString("dTransact")));
                 loJSON.put("cTranStat", nvl(loRS.getString("cTranStat")));
-                loJSON.put("xStatus", oSalesQoutationVersion.getStatus(nvl(loRS.getString("cTranStat"))));
+                loJSON.put("xStatus", oSalesQoutationVersion.getStatus(
+                        nvl(loRS.getString("cTranStat"))));
                 loJSON.put("sClientID", nvl(loRS.getString("sClientID")));
                 loJSON.put("sCompnyNm", nvl(loRS.getString("sCompnyNm")));
-                loJSON.put("dConfirmd", nvl(loRS.getString("dConfirmd")));   // empty unless the quotation is confirmed
+                loJSON.put("dConfirmd", nvl(loRS.getString("dConfirmd")));
                 loJSON.put("aVersions", new ArrayList<JSONObject>());
+
                 loQuotations.put((String) loJSON.get("sTransNox"), loJSON);
             }
         } finally {
             MiscUtil.close(loRS);
         }
-        if (loQuotations.isEmpty()) return new ArrayList<>();
 
-        // 2. versions of those quotations, newest first inside each quotation
+// No matching parent quotations
+        if (loQuotations.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+// 2. Retrieve all versions belonging to the selected parent quotations
+// Do not apply lsParentCondition here
         lsSQL = SalesQoutationsMasterQueries.SQL_QuotationVersionList();
-        if (!lsCondition.isEmpty()) lsSQL = MiscUtil.addCondition(lsSQL, lsCondition);
-        lsSQL = lsSQL + " ORDER BY v.sParentID, v.sTransNox DESC";
-        System.out.println("Executing SQL: " + lsSQL);
+
+        if (!lsCondition.isEmpty()) {
+            lsSQL = MiscUtil.addCondition(lsSQL, lsCondition);
+        }
+
+        lsSQL += " ORDER BY v.sParentID, v.sTransNox DESC";
+
+        System.out.println("Executing Version SQL: " + lsSQL);
+
         loRS = poGRider.executeQuery(lsSQL);
+
         try {
             while (loRS.next()) {
                 JSONObject loParent = loQuotations.get(loRS.getString("sParentID"));
-                if (loParent == null) continue;
+
+                // Skip versions whose parent is not in the filtered parent list
+                if (loParent == null) {
+                    continue;
+                }
 
                 @SuppressWarnings("unchecked")
-                List<JSONObject> laVersions = (List<JSONObject>) loParent.get("aVersions");
+                List<JSONObject> laVersions =
+                        (List<JSONObject>) loParent.get("aVersions");
 
                 JSONObject loJSON = new JSONObject();
+
                 loJSON.put("sTransNox", nvl(loRS.getString("sTransNox")));
                 loJSON.put("sParentID", nvl(loRS.getString("sParentID")));
                 loJSON.put("dTransact", nvl(loRS.getString("dTransact")));
                 loJSON.put("cTranStat", nvl(loRS.getString("cTranStat")));
-                loJSON.put("xStatus", oSalesQoutationVersion.getStatus(nvl(loRS.getString("cTranStat"))));
+                loJSON.put("xStatus", oSalesQoutationVersion.getStatus(
+                        nvl(loRS.getString("cTranStat"))));
                 loJSON.put("nTranTotl", nvl(loRS.getString("nTranTotl")));
                 loJSON.put("dValdThru", nvl(loRS.getString("dValdThru")));
                 loJSON.put("dConfirmd", nvl(loRS.getString("dConfirmd")));
-                loJSON.put("bLatest", laVersions.isEmpty());   // first row = newest
+
+                // Versions are ordered newest first; the first is the latest
+                loJSON.put("bLatest", laVersions.isEmpty());
+
                 laVersions.add(loJSON);
             }
         } finally {
@@ -668,7 +714,7 @@ public class SalesQoutation extends Parameter {
                 "a.cTranStat = " + SQLUtil.toSQL(SalesQoutationStatic.OPEN));
 
         System.out.println("SEARCH RECORD : " + lsSQL);
-        poJSON = ShowDialogFX.Browse(poGRider,
+        poJSON = ShowDialogFX.Search(poGRider,
                 lsSQL,
                 value,
                 "Transaction No.»Date»Client»Version No.",

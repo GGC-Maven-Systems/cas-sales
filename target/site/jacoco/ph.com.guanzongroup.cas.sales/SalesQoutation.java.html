@@ -1,0 +1,1729 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SalesQoutation.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">cas-sales</a> &gt; <a href="index.source.html" class="el_package">ph.com.guanzongroup.cas.sales</a> &gt; <span class="el_source">SalesQoutation.java</span></div><h1>SalesQoutation.java</h1><pre class="source lang-java linenums">/*
+ * Copyright (c) 2026 Guanzon Group of Companies.
+ * All rights reserved.
+ *
+ * @author TEEJEI DE CELIS
+ * @date September 2x, 2026
+ */
+package ph.com.guanzongroup.cas.sales;
+
+import org.guanzon.appdriver.agent.ShowDialogFX;
+import org.guanzon.appdriver.agent.services.Parameter;
+import org.guanzon.appdriver.base.CommonUtils;
+import org.guanzon.appdriver.base.GuanzonException;
+import org.guanzon.appdriver.base.MiscUtil;
+import org.guanzon.appdriver.base.SQLUtil;
+import org.guanzon.appdriver.constant.ClientType;
+import org.guanzon.appdriver.constant.EditMode;
+import org.guanzon.appdriver.constant.RecordStatus;
+import org.guanzon.cas.client.Client;
+import org.guanzon.cas.client.ClientGUI;
+import org.guanzon.cas.client.services.ClientControllers;
+import org.guanzon.cas.inv.model.Model_Inventory;
+import org.guanzon.cas.inv.services.InvModels;
+import org.guanzon.cas.parameter.Branch;
+import org.guanzon.cas.parameter.Brand;
+import org.guanzon.cas.parameter.Term;
+import org.guanzon.cas.parameter.model.Model_Model;
+import org.guanzon.cas.parameter.model.Model_Term;
+import org.guanzon.cas.parameter.services.ParamControllers;
+import org.guanzon.cas.parameter.services.ParamModels;
+import org.json.simple.JSONObject;
+import ph.com.guanzongroup.cas.sales.model.Model_Sales_Quotation_Master;
+import ph.com.guanzongroup.cas.sales.model.Model_Sales_Quotation_Version_Detail;
+import ph.com.guanzongroup.cas.sales.model.Model_Sales_Quotation_Version_Giveaways;
+import ph.com.guanzongroup.cas.sales.queries.SalesQoutationsMasterQueries;
+import ph.com.guanzongroup.cas.sales.services.SalesControllers;
+import ph.com.guanzongroup.cas.sales.services.SalesModels;
+import ph.com.guanzongroup.cas.sales.status.SalesQoutationStatic;
+import ph.com.guanzongroup.cas.sales.status.SalesQoutationVersionStatic;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.text.ParseException;
+import net.sf.jasperreports.engine.JRException;
+import net.sf.jasperreports.engine.JasperCompileManager;
+import net.sf.jasperreports.engine.JasperExportManager;
+import net.sf.jasperreports.engine.JasperFillManager;
+import net.sf.jasperreports.engine.JasperPrint;
+import net.sf.jasperreports.engine.JasperReport;
+import net.sf.jasperreports.engine.JREmptyDataSource;
+import net.sf.jasperreports.engine.data.JRMapCollectionDataSource;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+/**
+ * Handles Sales Quotation transactions within the CAS Sales module.
+ *
+ * &lt;p&gt;
+ * The quotation master ({@link Model_Sales_Quotation_Master}) is the parent.
+ * New, open, update and save cascade to its children:
+ * &lt;/p&gt;
+ * &lt;ul&gt;
+ *     &lt;li&gt;{@link SalesQoutationVersion} - version master and detail. A quotation
+ *         has many versions; only the latest can be edited.&lt;/li&gt;
+ *     &lt;li&gt;{@link SalesQoutationVersionGiveaways} - many giveaways per version.&lt;/li&gt;
+ *     &lt;li&gt;{@link SalesQoutationFollowUp} - many follow-ups per version; a new
+ *         record is added every time the version is followed up.&lt;/li&gt;
+ * &lt;/ul&gt;
+ *
+ * @author TEEJEI DE CELIS
+ * @date September 2x, 2026
+ * @module Sales Quotation
+ * @since 1.0
+ */
+<span class="fc" id="L78">public class SalesQoutation extends Parameter {</span>
+
+    Model_Sales_Quotation_Master poModel;
+    SalesQoutationVersion oSalesQoutationVersion;
+    SalesQoutationVersionGiveaways oSalesQoutationVersionGiveaways;
+    SalesQoutationFollowUp oSalesQoutationFollowUp;
+<span class="fc" id="L84">    private String psSupersedeVersionNo = &quot;&quot;;</span>
+    /** true when the opened version is the quotation's latest one (only that one may be edited). */
+<span class="fc" id="L86">    boolean pbLatestVersion = true;</span>
+
+    @Override
+    public void initialize() throws SQLException, GuanzonException {
+<span class="fc" id="L90">        psRecdStat = RecordStatus.ACTIVE;</span>
+<span class="fc" id="L91">        poModel = new SalesModels(poGRider).SalesQuotationsMaster();</span>
+
+<span class="fc" id="L93">        oSalesQoutationVersion = new SalesControllers(poGRider, logwrapr).SalesQoutationVersion();</span>
+<span class="fc" id="L94">        oSalesQoutationVersion.setBranchCode(poGRider.getBranchCode());</span>
+<span class="fc" id="L95">        oSalesQoutationVersion.setWithParent(true);</span>
+<span class="fc" id="L96">        oSalesQoutationVersion.InitTransaction();</span>
+
+<span class="fc" id="L98">        oSalesQoutationVersionGiveaways = new SalesControllers(poGRider, logwrapr).SalesQoutationVersionGiveaways();</span>
+<span class="fc" id="L99">        oSalesQoutationVersionGiveaways.setWithParentClass(true);</span>
+<span class="fc" id="L100">        oSalesQoutationVersionGiveaways.initialize();</span>
+
+        // follow-up is created on demand, see FollowUp()
+<span class="fc" id="L103">        oSalesQoutationFollowUp = null;</span>
+
+<span class="fc" id="L105">        super.initialize();</span>
+<span class="fc" id="L106">    }</span>
+
+    @Override
+    public Model_Sales_Quotation_Master getModel() {
+<span class="fc" id="L110">        return poModel;</span>
+    }
+
+    /** Accessor for the version controller. */
+    public SalesQoutationVersion Version() {
+<span class="fc" id="L115">        return oSalesQoutationVersion;</span>
+    }
+
+    /** Accessor for the giveaways of the current version. */
+    public SalesQoutationVersionGiveaways Giveaways() {
+<span class="fc" id="L120">        return oSalesQoutationVersionGiveaways;</span>
+    }
+
+    /** Follow-up controller, created the first time it is requested. */
+    public SalesQoutationFollowUp FollowUp() throws SQLException, GuanzonException {
+<span class="fc bfc" id="L125" title="All 2 branches covered.">        if (oSalesQoutationFollowUp == null) {</span>
+<span class="fc" id="L126">            oSalesQoutationFollowUp = new SalesControllers(poGRider, logwrapr).SalesQoutationFollowUp();</span>
+<span class="fc" id="L127">            oSalesQoutationFollowUp.setWithParentClass(true);   // the factory already initialized it</span>
+        }
+<span class="fc" id="L129">        return oSalesQoutationFollowUp;</span>
+    }
+
+    // ------------------------------------------------------------------
+    // follow-up (history per version)
+    // ------------------------------------------------------------------
+
+    /** Follow-up history of the currently opened version, newest first. */
+    public List&lt;JSONObject&gt; getFollowUps() throws SQLException, GuanzonException {
+<span class="fc" id="L138">        return FollowUp().getFollowUps(oSalesQoutationVersion.Master().getTransactionNo());</span>
+    }
+
+    /**
+     * Starts a new follow-up for the current version; its entry no. is
+     * assigned on save and &quot;follow-up by&quot; defaults to the current user.
+     */
+    public JSONObject newFollowUp() throws SQLException, GuanzonException {
+<span class="fc" id="L146">        poJSON = FollowUp().newRecord();</span>
+<span class="pc bpc" id="L147" title="1 of 2 branches missed.">        if (!&quot;success&quot;.equals((String) poJSON.get(&quot;result&quot;))) return poJSON;</span>
+
+<span class="fc" id="L149">        FollowUp().getModel().setFollowUpBy(poGRider.getUserID());</span>
+
+<span class="fc" id="L151">        poJSON = new JSONObject();</span>
+<span class="fc" id="L152">        poJSON.put(&quot;result&quot;, &quot;success&quot;);</span>
+<span class="fc" id="L153">        return poJSON;</span>
+    }
+
+    /** Opens an existing follow-up (entry no.) of the current version for viewing. */
+    public JSONObject openFollowUp(int entryNo) throws SQLException, GuanzonException {
+<span class="fc" id="L158">        return FollowUp().openRecord(poModel.getTransactionNo(), String.valueOf(entryNo));</span>
+    }
+
+    /**
+     * Saves the pending follow-up on its own, without editing the quotation.
+     * Only the latest version can be followed up.
+     */
+    public JSONObject saveFollowUp() throws SQLException, GuanzonException, CloneNotSupportedException {
+<span class="fc bfc" id="L166" title="All 2 branches covered.">        if (!isPending(oSalesQoutationFollowUp)) {</span>
+<span class="fc" id="L167">            return setError(&quot;No follow-up to save.&quot;);</span>
+        }
+<span class="fc bfc" id="L169" title="All 2 branches covered.">        if (!pbLatestVersion) {</span>
+<span class="fc" id="L170">            return setError(&quot;Only the latest version can be followed up.&quot;);</span>
+        }
+
+<span class="fc" id="L173">        keyFollowUp(poModel.getTransactionNo(), oSalesQoutationVersion.Master().getTransactionNo());</span>
+
+<span class="fc" id="L175">        oSalesQoutationFollowUp.setWithParentClass(false);   // own transaction</span>
+        try {
+<span class="fc" id="L177">            poJSON = oSalesQoutationFollowUp.saveRecord();</span>
+        } finally {
+<span class="fc" id="L179">            oSalesQoutationFollowUp.setWithParentClass(true);</span>
+        }
+<span class="fc" id="L181">        return poJSON;</span>
+    }
+
+    /**
+     * true only when the follow-up controller exists and holds a record that
+     * is being added or edited. A controller that was merely created (no
+     * newFollowUp()) or a record that was only opened must not be saved.
+     */
+    private boolean isPending(SalesQoutationFollowUp followUp) {
+<span class="fc bfc" id="L190" title="All 2 branches covered.">        if (followUp == null) return false;</span>
+<span class="fc" id="L191">        int lnMode = followUp.getEditMode();</span>
+<span class="pc bpc" id="L192" title="3 of 4 branches missed.">        return lnMode == EditMode.ADDNEW || lnMode == EditMode.UPDATE;</span>
+    }
+
+    /**
+     * For a new follow-up sets the quotation no. (sTransNox), the version no.
+     * (sReferNox) and the next entry no. (counted per quotation, because
+     * sTransNox + nEntryNox is the key).
+     */
+    private void keyFollowUp(String quotationNo, String versionNo) throws SQLException {
+<span class="pc bpc" id="L201" title="1 of 2 branches missed.">        if (oSalesQoutationFollowUp.getEditMode() == EditMode.ADDNEW) {</span>
+<span class="fc" id="L202">            oSalesQoutationFollowUp.getModel().setTransactionNo(quotationNo);</span>
+<span class="fc" id="L203">            oSalesQoutationFollowUp.getModel().setReferenceNo(versionNo);</span>
+<span class="fc" id="L204">            oSalesQoutationFollowUp.getModel().setEntryNo(oSalesQoutationFollowUp.getNextEntryNo(quotationNo));</span>
+        }
+<span class="fc" id="L206">    }</span>
+
+    // ------------------------------------------------------------------
+    // new / open / update / save
+    // ------------------------------------------------------------------
+
+    @Override
+    public JSONObject newRecord() throws SQLException, GuanzonException {
+<span class="fc" id="L214">        poJSON = super.newRecord();   // master record + poEvent &quot;ADD NEW&quot;</span>
+<span class="pc bpc" id="L215" title="1 of 2 branches missed.">        if (&quot;error&quot;.equals((String) poJSON.get(&quot;result&quot;))) return poJSON;</span>
+<span class="fc" id="L216">        System.out.println(&quot;category code : &quot; + poModel.getCategoryCode());</span>
+        // drop any follow-up / giveaways left over from a previous record
+<span class="fc" id="L218">        oSalesQoutationFollowUp = null;</span>
+<span class="fc" id="L219">        oSalesQoutationVersionGiveaways.clearGiveaways();</span>
+<span class="fc" id="L220">        pbLatestVersion = true;</span>
+<span class="fc" id="L221">        psSupersedeVersionNo = &quot;&quot;;</span>
+
+        try {
+<span class="fc" id="L224">            poJSON = oSalesQoutationVersion.NewTransaction();</span>
+<span class="pc bpc" id="L225" title="1 of 2 branches missed.">            if (&quot;error&quot;.equals((String) poJSON.get(&quot;result&quot;))) return poJSON;</span>
+<span class="fc" id="L226">            oSalesQoutationVersion.setBranchCode(poGRider.getBranchCode());</span>
+<span class="nc" id="L227">        } catch (CloneNotSupportedException e) {</span>
+<span class="nc" id="L228">            return setError(e.getMessage());</span>
+<span class="fc" id="L229">        }</span>
+
+<span class="fc" id="L231">        poJSON = new JSONObject();</span>
+<span class="fc" id="L232">        poJSON.put(&quot;result&quot;, &quot;success&quot;);</span>
+<span class="fc" id="L233">        return poJSON;</span>
+    }
+
+    /** A new quotation starts at version 1 (the model defaults nVersionx to 0). */
+    @Override
+    protected JSONObject initFields() throws SQLException, GuanzonException {
+<span class="fc" id="L239">        poModel.setVersion(1);</span>
+
+<span class="fc" id="L241">        poJSON = new JSONObject();</span>
+<span class="fc" id="L242">        poJSON.put(&quot;result&quot;, &quot;success&quot;);</span>
+<span class="fc" id="L243">        return poJSON;</span>
+    }
+
+    /**
+     * Opens the quotation with its &lt;b&gt;latest&lt;/b&gt; version.
+     *
+     * @param Id quotation transaction no.
+     */
+    @Override
+    public JSONObject openRecord(String Id) throws SQLException, GuanzonException {
+<span class="fc" id="L253">        return openRecord(Id, &quot;&quot;);</span>
+    }
+
+    /**
+     * Opens the quotation together with one of its versions and that
+     * version's giveaways. Used by the tree table: selecting the quotation row
+     * opens the latest version, selecting an older version row opens that
+     * version. Follow-ups are read through {@link #getFollowUps()}.
+     *
+     * @param Id  quotation transaction no.
+     * @param Id2 version transaction no.; null or empty opens the latest version
+     */
+    @Override
+    public JSONObject openRecord(String Id, String Id2) throws SQLException, GuanzonException {
+        // clear anything left over from a previously opened record
+<span class="fc" id="L268">        oSalesQoutationFollowUp = null;</span>
+<span class="fc" id="L269">        oSalesQoutationVersionGiveaways.clearGiveaways();</span>
+<span class="fc" id="L270">        pbLatestVersion = true;</span>
+<span class="fc" id="L271">        psSupersedeVersionNo = &quot;&quot;;</span>
+
+<span class="fc" id="L273">        poJSON = super.openRecord(Id);                       // quotation master</span>
+<span class="fc bfc" id="L274" title="All 2 branches covered.">        if (!&quot;success&quot;.equals((String) poJSON.get(&quot;result&quot;))) return poJSON;</span>
+
+        try {
+<span class="fc" id="L277">            String lsLatestNo = getVersionNo(Id, &quot;&quot;);</span>
+<span class="fc bfc" id="L278" title="All 2 branches covered.">            if (lsLatestNo.isEmpty()) {</span>
+<span class="fc" id="L279">                return setError(&quot;No version found for quotation &quot; + Id + &quot;.&quot;);</span>
+            }
+
+<span class="fc" id="L282">            String lsVersionNo = lsLatestNo;</span>
+<span class="fc bfc" id="L283" title="All 4 branches covered.">            if (Id2 != null &amp;&amp; !Id2.isEmpty()) {</span>
+<span class="fc" id="L284">                lsVersionNo = getVersionNo(Id, Id2);         // must belong to this quotation</span>
+<span class="fc bfc" id="L285" title="All 2 branches covered.">                if (lsVersionNo.isEmpty()) {</span>
+<span class="fc" id="L286">                    return setError(&quot;Version &quot; + Id2 + &quot; does not belong to quotation &quot; + Id + &quot;.&quot;);</span>
+                }
+            }
+<span class="fc" id="L289">            pbLatestVersion = lsVersionNo.equals(lsLatestNo);</span>
+
+            // version master + detail
+<span class="fc" id="L292">            poJSON = oSalesQoutationVersion.OpenTransaction(lsVersionNo);</span>
+<span class="pc bpc" id="L293" title="1 of 2 branches missed.">            if (!&quot;success&quot;.equals((String) poJSON.get(&quot;result&quot;))) return poJSON;</span>
+
+            // giveaways of the version (none is fine)
+<span class="fc" id="L296">            poJSON = oSalesQoutationVersionGiveaways.loadGiveaways(lsVersionNo);</span>
+<span class="pc bpc" id="L297" title="1 of 2 branches missed.">            if (!&quot;success&quot;.equals((String) poJSON.get(&quot;result&quot;))) return poJSON;</span>
+<span class="nc" id="L298">        } catch (CloneNotSupportedException e) {</span>
+<span class="nc" id="L299">            return setError(e.getMessage());</span>
+<span class="fc" id="L300">        }</span>
+
+<span class="fc" id="L302">        poJSON = new JSONObject();</span>
+<span class="fc" id="L303">        poJSON.put(&quot;result&quot;, &quot;success&quot;);</span>
+<span class="fc" id="L304">        return poJSON;</span>
+    }
+
+    /** true if the currently opened version is the quotation's latest one. */
+    public boolean isLatestVersion() {
+<span class="fc" id="L309">        return pbLatestVersion;</span>
+    }
+
+    /**
+     * Versions of a quotation, newest first, for the child rows of the tree
+     * table. Each entry has {@code sTransNox}, {@code dTransact},
+     * {@code cTranStat}, {@code xStatus} (description) and {@code bLatest}.
+     */
+    public List&lt;JSONObject&gt; getVersions(String quotationNo) throws SQLException {
+<span class="fc" id="L318">        List&lt;JSONObject&gt; laVersions = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L319">        String lsSQL = &quot;SELECT sTransNox, dTransact, cTranStat FROM &quot;</span>
+<span class="fc" id="L320">                + oSalesQoutationVersion.Master().getTable()</span>
+<span class="fc" id="L321">                + &quot; WHERE sParentID = &quot; + SQLUtil.toSQL(quotationNo)</span>
+                + &quot; ORDER BY sTransNox DESC&quot;;
+<span class="fc" id="L323">        ResultSet loRS = poGRider.executeQuery(lsSQL);</span>
+        try {
+<span class="fc bfc" id="L325" title="All 2 branches covered.">            while (loRS.next()) {</span>
+<span class="fc" id="L326">                JSONObject loJSON = new JSONObject();</span>
+<span class="fc" id="L327">                loJSON.put(&quot;sTransNox&quot;, loRS.getString(&quot;sTransNox&quot;));</span>
+<span class="fc" id="L328">                loJSON.put(&quot;dTransact&quot;, loRS.getString(&quot;dTransact&quot;));</span>
+<span class="fc" id="L329">                loJSON.put(&quot;cTranStat&quot;, loRS.getString(&quot;cTranStat&quot;));</span>
+<span class="fc" id="L330">                loJSON.put(&quot;xStatus&quot;, oSalesQoutationVersion.getStatus(loRS.getString(&quot;cTranStat&quot;)));</span>
+<span class="fc" id="L331">                loJSON.put(&quot;bLatest&quot;, laVersions.isEmpty());   // first row = newest</span>
+<span class="fc" id="L332">                laVersions.add(loJSON);</span>
+<span class="fc" id="L333">            }</span>
+        } finally {
+<span class="fc" id="L335">            MiscUtil.close(loRS);</span>
+        }
+<span class="fc" id="L337">        return laVersions;</span>
+    }
+
+    // ------------------------------------------------------------------
+    // list for the tree table (quotations with their versions)
+    // ------------------------------------------------------------------
+
+    /**
+     * Retrieves quotations together with all their versions for the tree
+     * table, using two queries (quotations, then every version of those
+     * quotations) instead of one query per quotation.
+     *
+     * &lt;p&gt;Every entry is a quotation with {@code sTransNox}, {@code dTransact},
+     * {@code cTranStat}, {@code xStatus}, {@code sClientID}, {@code sCompnyNm}
+     * and {@code aVersions}, a {@code List&lt;JSONObject&gt;} (newest first) whose
+     * entries have {@code sTransNox}, {@code sParentID}, {@code dTransact},
+     * {@code cTranStat}, {@code xStatus}, {@code nTranTotl}, {@code dValdThru}
+     * and {@code bLatest}.&lt;/p&gt;
+     *
+     * @param industryCode industry filter, null or empty for all
+     * @param categoryCode category filter, null or empty for all
+     * @param transNo      partial quotation no., null or empty for all
+     * @param customer     partial customer name, null or empty for all
+     * @param status       quotation status code(s), null or empty for all
+     */
+//    public List&lt;JSONObject&gt; getQuotationList(String industryCode, String categoryCode,
+//                                             String transNo, String customer, String status) throws SQLException {
+//        poGRider.ensureConnected();
+//
+//        // conditions shared by both queries (a = quotation, b = client)
+//        String lsCondition = &quot;&quot;;
+//        if (industryCode != null &amp;&amp; !industryCode.isEmpty()) {
+//            lsCondition = andCondition(lsCondition, &quot;a.sIndstCdx = &quot; + SQLUtil.toSQL(industryCode));
+//        }
+//        if (categoryCode != null &amp;&amp; !categoryCode.isEmpty()) {
+//            lsCondition = andCondition(lsCondition, &quot;a.sCategrCd = &quot; + SQLUtil.toSQL(categoryCode));
+//        }
+//        if (transNo != null &amp;&amp; !transNo.trim().isEmpty()) {
+//            lsCondition = andCondition(lsCondition, &quot;a.sTransNox LIKE &quot; + SQLUtil.toSQL(&quot;%&quot; + transNo.trim() + &quot;%&quot;));
+//        }
+//        if (customer != null &amp;&amp; !customer.trim().isEmpty()) {
+//            lsCondition = andCondition(lsCondition, &quot;b.sCompnyNm LIKE &quot; + SQLUtil.toSQL(&quot;%&quot; + customer.trim() + &quot;%&quot;));
+//        }
+//        if (status != null &amp;&amp; !status.isEmpty()) {
+//            StringBuilder lsIn = new StringBuilder();
+//            for (int lnCtr = 0; lnCtr &lt; status.length(); lnCtr++) {
+//                if (lnCtr &gt; 0) lsIn.append(&quot;, &quot;);
+//                lsIn.append(SQLUtil.toSQL(Character.toString(status.charAt(lnCtr))));
+//            }
+//            lsCondition = andCondition(lsCondition, &quot;a.cTranStat IN (&quot; + lsIn + &quot;)&quot;);
+//        }
+//
+//        // 1. quotations (parents)
+//        Map&lt;String, JSONObject&gt; loQuotations = new LinkedHashMap&lt;&gt;();
+//        String lsSQL = SalesQoutationsMasterQueries.SQL_QuotationList();
+//        if (!lsCondition.isEmpty()) lsSQL = MiscUtil.addCondition(lsSQL, lsCondition);
+//        lsSQL = lsSQL + &quot; ORDER BY a.sTransNox DESC&quot;;
+//        System.out.println(&quot;Executing SQL: &quot; + lsSQL);
+//        ResultSet loRS = poGRider.executeQuery(lsSQL);
+//        try {
+//            while (loRS.next()) {
+//                JSONObject loJSON = new JSONObject();
+//                loJSON.put(&quot;sTransNox&quot;, nvl(loRS.getString(&quot;sTransNox&quot;)));
+//                loJSON.put(&quot;dTransact&quot;, nvl(loRS.getString(&quot;dTransact&quot;)));
+//                loJSON.put(&quot;cTranStat&quot;, nvl(loRS.getString(&quot;cTranStat&quot;)));
+//                loJSON.put(&quot;xStatus&quot;, oSalesQoutationVersion.getStatus(nvl(loRS.getString(&quot;cTranStat&quot;))));
+//                loJSON.put(&quot;sClientID&quot;, nvl(loRS.getString(&quot;sClientID&quot;)));
+//                loJSON.put(&quot;sCompnyNm&quot;, nvl(loRS.getString(&quot;sCompnyNm&quot;)));
+//                loJSON.put(&quot;aVersions&quot;, new ArrayList&lt;JSONObject&gt;());
+//                loQuotations.put((String) loJSON.get(&quot;sTransNox&quot;), loJSON);
+//            }
+//        } finally {
+//            MiscUtil.close(loRS);
+//        }
+//        if (loQuotations.isEmpty()) return new ArrayList&lt;&gt;();
+//
+//        // 2. versions of those quotations, newest first inside each quotation
+//        lsSQL = SalesQoutationsMasterQueries.SQL_QuotationVersionList();
+//        if (!lsCondition.isEmpty()) lsSQL = MiscUtil.addCondition(lsSQL, lsCondition);
+//        lsSQL = lsSQL + &quot; ORDER BY v.sParentID, v.sTransNox DESC&quot;;
+//        System.out.println(&quot;Executing SQL: &quot; + lsSQL);
+//        loRS = poGRider.executeQuery(lsSQL);
+//        try {
+//            while (loRS.next()) {
+//                JSONObject loParent = loQuotations.get(loRS.getString(&quot;sParentID&quot;));
+//                if (loParent == null) continue;
+//
+//                @SuppressWarnings(&quot;unchecked&quot;)
+//                List&lt;JSONObject&gt; laVersions = (List&lt;JSONObject&gt;) loParent.get(&quot;aVersions&quot;);
+//
+//                JSONObject loJSON = new JSONObject();
+//                loJSON.put(&quot;sTransNox&quot;, nvl(loRS.getString(&quot;sTransNox&quot;)));
+//                loJSON.put(&quot;sParentID&quot;, nvl(loRS.getString(&quot;sParentID&quot;)));
+//                loJSON.put(&quot;dTransact&quot;, nvl(loRS.getString(&quot;dTransact&quot;)));
+//                loJSON.put(&quot;cTranStat&quot;, nvl(loRS.getString(&quot;cTranStat&quot;)));
+//                loJSON.put(&quot;xStatus&quot;, oSalesQoutationVersion.getStatus(nvl(loRS.getString(&quot;cTranStat&quot;))));
+//                loJSON.put(&quot;nTranTotl&quot;, nvl(loRS.getString(&quot;nTranTotl&quot;)));
+//                loJSON.put(&quot;dValdThru&quot;, nvl(loRS.getString(&quot;dValdThru&quot;)));
+//                loJSON.put(&quot;bLatest&quot;, laVersions.isEmpty());   // first row = newest
+//                laVersions.add(loJSON);
+//            }
+//        } finally {
+//            MiscUtil.close(loRS);
+//        }
+//
+//        return new ArrayList&lt;&gt;(loQuotations.values());
+//    }
+    public List&lt;JSONObject&gt; getQuotationList(String industryCode, String categoryCode,
+                                             String transNo, String customer, String status) throws SQLException {
+<span class="fc" id="L446">        poGRider.ensureConnected();</span>
+// Conditions shared by the parent and version queries
+<span class="fc" id="L448">        String lsCondition = &quot;&quot;;</span>
+
+<span class="pc bpc" id="L450" title="1 of 4 branches missed.">        if (industryCode != null &amp;&amp; !industryCode.trim().isEmpty()) {</span>
+<span class="fc" id="L451">            lsCondition = andCondition(lsCondition,</span>
+<span class="fc" id="L452">                    &quot;a.sIndstCdx = &quot; + SQLUtil.toSQL(industryCode.trim()));</span>
+        }
+
+<span class="pc bpc" id="L455" title="1 of 4 branches missed.">        if (categoryCode != null &amp;&amp; !categoryCode.trim().isEmpty()) {</span>
+<span class="fc" id="L456">            lsCondition = andCondition(lsCondition,</span>
+<span class="fc" id="L457">                    &quot;a.sCategrCd = &quot; + SQLUtil.toSQL(categoryCode.trim()));</span>
+        }
+
+<span class="pc bpc" id="L460" title="1 of 4 branches missed.">        if (transNo != null &amp;&amp; !transNo.trim().isEmpty()) {</span>
+<span class="fc" id="L461">            lsCondition = andCondition(lsCondition,</span>
+<span class="fc" id="L462">                    &quot;a.sTransNox LIKE &quot; + SQLUtil.toSQL(&quot;%&quot; + transNo.trim() + &quot;%&quot;));</span>
+        }
+
+<span class="fc bfc" id="L465" title="All 4 branches covered.">        if (customer != null &amp;&amp; !customer.trim().isEmpty()) {</span>
+<span class="fc" id="L466">            lsCondition = andCondition(lsCondition,</span>
+<span class="fc" id="L467">                    &quot;b.sCompnyNm LIKE &quot; + SQLUtil.toSQL(&quot;%&quot; + customer.trim() + &quot;%&quot;));</span>
+        }
+
+<span class="fc" id="L470">        System.out.println(&quot;Selected Status: [&quot; + status + &quot;]&quot;);</span>
+<span class="fc bfc" id="L471" title="All 2 branches covered.">        System.out.println(&quot;Status is null: &quot; + (status == null));</span>
+
+// Status condition applies ONLY to the parent quotation query
+<span class="fc" id="L474">        String lsParentCondition = &quot;&quot;;</span>
+
+<span class="pc bpc" id="L476" title="1 of 4 branches missed.">        if (status != null &amp;&amp; !status.trim().isEmpty()) {</span>
+<span class="fc" id="L477">            lsParentCondition = &quot;a.cTranStat = &quot; + SQLUtil.toSQL(status.trim());</span>
+        }
+
+// 1. Retrieve parent quotations using the supplied filters
+<span class="fc" id="L481">        Map&lt;String, JSONObject&gt; loQuotations = new LinkedHashMap&lt;&gt;();</span>
+
+<span class="fc" id="L483">        String lsSQL = SalesQoutationsMasterQueries.SQL_QuotationList();</span>
+
+<span class="fc bfc" id="L485" title="All 2 branches covered.">        if (!lsCondition.isEmpty()) {</span>
+<span class="fc" id="L486">            lsSQL = MiscUtil.addCondition(lsSQL, lsCondition);</span>
+        }
+
+<span class="fc bfc" id="L489" title="All 2 branches covered.">        if (!lsParentCondition.isEmpty()) {</span>
+<span class="fc" id="L490">            lsSQL = MiscUtil.addCondition(lsSQL, lsParentCondition);</span>
+        }
+
+<span class="fc" id="L493">        lsSQL += &quot; ORDER BY a.sTransNox DESC&quot;;</span>
+
+<span class="fc" id="L495">        System.out.println(&quot;Executing Parent SQL: &quot; + lsSQL);</span>
+
+<span class="fc" id="L497">        ResultSet loRS = poGRider.executeQuery(lsSQL);</span>
+
+        try {
+<span class="fc bfc" id="L500" title="All 2 branches covered.">            while (loRS.next()) {</span>
+<span class="fc" id="L501">                JSONObject loJSON = new JSONObject();</span>
+
+<span class="fc" id="L503">                loJSON.put(&quot;sTransNox&quot;, nvl(loRS.getString(&quot;sTransNox&quot;)));</span>
+<span class="fc" id="L504">                loJSON.put(&quot;dTransact&quot;, nvl(loRS.getString(&quot;dTransact&quot;)));</span>
+<span class="fc" id="L505">                loJSON.put(&quot;cTranStat&quot;, nvl(loRS.getString(&quot;cTranStat&quot;)));</span>
+<span class="fc" id="L506">                loJSON.put(&quot;xStatus&quot;, oSalesQoutationVersion.getStatus(</span>
+<span class="fc" id="L507">                        nvl(loRS.getString(&quot;cTranStat&quot;))));</span>
+<span class="fc" id="L508">                loJSON.put(&quot;sClientID&quot;, nvl(loRS.getString(&quot;sClientID&quot;)));</span>
+<span class="fc" id="L509">                loJSON.put(&quot;sCompnyNm&quot;, nvl(loRS.getString(&quot;sCompnyNm&quot;)));</span>
+<span class="fc" id="L510">                loJSON.put(&quot;dConfirmd&quot;, nvl(loRS.getString(&quot;dConfirmd&quot;)));</span>
+<span class="fc" id="L511">                loJSON.put(&quot;aVersions&quot;, new ArrayList&lt;JSONObject&gt;());</span>
+
+<span class="fc" id="L513">                loQuotations.put((String) loJSON.get(&quot;sTransNox&quot;), loJSON);</span>
+<span class="fc" id="L514">            }</span>
+        } finally {
+<span class="fc" id="L516">            MiscUtil.close(loRS);</span>
+        }
+
+// No matching parent quotations
+<span class="fc bfc" id="L520" title="All 2 branches covered.">        if (loQuotations.isEmpty()) {</span>
+<span class="fc" id="L521">            return new ArrayList&lt;&gt;();</span>
+        }
+
+// 2. Retrieve all versions belonging to the selected parent quotations
+// Do not apply lsParentCondition here
+<span class="fc" id="L526">        lsSQL = SalesQoutationsMasterQueries.SQL_QuotationVersionList();</span>
+
+<span class="fc bfc" id="L528" title="All 2 branches covered.">        if (!lsCondition.isEmpty()) {</span>
+<span class="fc" id="L529">            lsSQL = MiscUtil.addCondition(lsSQL, lsCondition);</span>
+        }
+
+<span class="fc" id="L532">        lsSQL += &quot; ORDER BY v.sParentID, v.sTransNox DESC&quot;;</span>
+
+<span class="fc" id="L534">        System.out.println(&quot;Executing Version SQL: &quot; + lsSQL);</span>
+
+<span class="fc" id="L536">        loRS = poGRider.executeQuery(lsSQL);</span>
+
+        try {
+<span class="fc bfc" id="L539" title="All 2 branches covered.">            while (loRS.next()) {</span>
+<span class="fc" id="L540">                JSONObject loParent = loQuotations.get(loRS.getString(&quot;sParentID&quot;));</span>
+
+                // Skip versions whose parent is not in the filtered parent list
+<span class="fc bfc" id="L543" title="All 2 branches covered.">                if (loParent == null) {</span>
+<span class="fc" id="L544">                    continue;</span>
+                }
+
+                @SuppressWarnings(&quot;unchecked&quot;)
+<span class="fc" id="L548">                List&lt;JSONObject&gt; laVersions =</span>
+<span class="fc" id="L549">                        (List&lt;JSONObject&gt;) loParent.get(&quot;aVersions&quot;);</span>
+
+<span class="fc" id="L551">                JSONObject loJSON = new JSONObject();</span>
+
+<span class="fc" id="L553">                loJSON.put(&quot;sTransNox&quot;, nvl(loRS.getString(&quot;sTransNox&quot;)));</span>
+<span class="fc" id="L554">                loJSON.put(&quot;sParentID&quot;, nvl(loRS.getString(&quot;sParentID&quot;)));</span>
+<span class="fc" id="L555">                loJSON.put(&quot;dTransact&quot;, nvl(loRS.getString(&quot;dTransact&quot;)));</span>
+<span class="fc" id="L556">                loJSON.put(&quot;cTranStat&quot;, nvl(loRS.getString(&quot;cTranStat&quot;)));</span>
+<span class="fc" id="L557">                loJSON.put(&quot;xStatus&quot;, oSalesQoutationVersion.getStatus(</span>
+<span class="fc" id="L558">                        nvl(loRS.getString(&quot;cTranStat&quot;))));</span>
+<span class="fc" id="L559">                loJSON.put(&quot;nTranTotl&quot;, nvl(loRS.getString(&quot;nTranTotl&quot;)));</span>
+<span class="fc" id="L560">                loJSON.put(&quot;dValdThru&quot;, nvl(loRS.getString(&quot;dValdThru&quot;)));</span>
+<span class="fc" id="L561">                loJSON.put(&quot;dConfirmd&quot;, nvl(loRS.getString(&quot;dConfirmd&quot;)));</span>
+
+                // Versions are ordered newest first; the first is the latest
+<span class="fc" id="L564">                loJSON.put(&quot;bLatest&quot;, laVersions.isEmpty());</span>
+
+<span class="fc" id="L566">                laVersions.add(loJSON);</span>
+<span class="fc" id="L567">            }</span>
+        } finally {
+<span class="fc" id="L569">            MiscUtil.close(loRS);</span>
+        }
+
+<span class="fc" id="L572">        return new ArrayList&lt;&gt;(loQuotations.values());</span>
+    }
+    /** Joins conditions with AND (no WHERE; MiscUtil.addCondition adds it). */
+    private String andCondition(String where, String condition) {
+<span class="fc bfc" id="L576" title="All 2 branches covered.">        return where.isEmpty() ? condition : where + &quot; AND &quot; + condition;</span>
+    }
+
+    private String nvl(String value) {
+<span class="fc bfc" id="L580" title="All 2 branches covered.">        return value == null ? &quot;&quot; : value;</span>
+    }
+
+
+    /**
+     * Puts the quotation, its version and the giveaways in update mode. A
+     * follow-up is not touched; it is added through {@link #newFollowUp()}.
+     * Only the latest version can be modified.
+     */
+    @Override
+    public JSONObject updateRecord() {
+<span class="fc bfc" id="L591" title="All 2 branches covered.">        if (!pbLatestVersion) {</span>
+<span class="fc" id="L592">            return setError(&quot;Only the latest version can be modified.&quot;);</span>
+        }
+
+<span class="fc" id="L595">        poJSON = super.updateRecord();                       // quotation master</span>
+<span class="pc bpc" id="L596" title="1 of 2 branches missed.">        if (!&quot;success&quot;.equals((String) poJSON.get(&quot;result&quot;))) return poJSON;</span>
+
+<span class="fc" id="L598">        poJSON = oSalesQoutationVersion.UpdateTransaction(); // version master + detail</span>
+<span class="pc bpc" id="L599" title="1 of 2 branches missed.">        if (!&quot;success&quot;.equals((String) poJSON.get(&quot;result&quot;))) return poJSON;</span>
+
+<span class="fc" id="L601">        poJSON = oSalesQoutationVersionGiveaways.updateGiveaways();</span>
+<span class="pc bpc" id="L602" title="1 of 2 branches missed.">        if (!&quot;success&quot;.equals((String) poJSON.get(&quot;result&quot;))) return poJSON;</span>
+
+<span class="fc" id="L604">        poJSON = new JSONObject();</span>
+<span class="fc" id="L605">        poJSON.put(&quot;result&quot;, &quot;success&quot;);</span>
+<span class="fc" id="L606">        return poJSON;</span>
+    }
+
+    /**
+     * Called by {@link Parameter#saveRecord()} after the quotation master is
+     * saved. Saves version (master + detail), giveaways and, if pending, the
+     * follow-up. Any failure is returned as an error so the parent rolls back
+     * everything.
+     */
+    @Override
+    protected JSONObject saveOthers() throws SQLException, GuanzonException {
+        try {
+<span class="fc" id="L618">            String lsQuotationNo = poModel.getTransactionNo();</span>
+
+            // version: master points to the quotation, detail rows are keyed in its willSave()
+<span class="fc" id="L621">            oSalesQoutationVersion.Master().setParentId(lsQuotationNo);</span>
+<span class="fc" id="L622">            poJSON = oSalesQoutationVersion.SaveTransaction();</span>
+<span class="fc bfc" id="L623" title="All 2 branches covered.">            if (!&quot;success&quot;.equals((String) poJSON.get(&quot;result&quot;))) {</span>
+<span class="fc" id="L624">                return poJSON;</span>
+            }
+
+<span class="fc" id="L627">            String lsVersionNo = oSalesQoutationVersion.Master().getTransactionNo();</span>
+
+            // giveaways: numbered and keyed by the version's number
+<span class="fc" id="L630">            poJSON = oSalesQoutationVersionGiveaways.saveGiveaways(lsVersionNo);</span>
+<span class="pc bpc" id="L631" title="1 of 2 branches missed.">            if (!&quot;success&quot;.equals((String) poJSON.get(&quot;result&quot;))) {</span>
+<span class="nc" id="L632">                return poJSON;</span>
+            }
+
+<span class="fc bfc" id="L635" title="All 2 branches covered.">            if (!psSupersedeVersionNo.isEmpty()) {</span>
+<span class="fc" id="L636">                String lsNewVersionNo = oSalesQoutationVersion.Master().getTransactionNo();</span>
+
+<span class="fc" id="L638">                poJSON = oSalesQoutationVersion.OpenTransaction(psSupersedeVersionNo);</span>
+<span class="pc bpc" id="L639" title="1 of 2 branches missed.">                if (!&quot;success&quot;.equals((String) poJSON.get(&quot;result&quot;))) {</span>
+<span class="nc" id="L640">                    return poJSON;</span>
+                }
+
+<span class="fc" id="L643">                poJSON = oSalesQoutationVersion.SupersedeTransaction(&quot;Superseded by a new version.&quot;);</span>
+<span class="pc bpc" id="L644" title="1 of 2 branches missed.">                if (!&quot;success&quot;.equals((String) poJSON.get(&quot;result&quot;))) {</span>
+<span class="nc" id="L645">                    return poJSON;</span>
+                }
+
+<span class="fc" id="L648">                poJSON = oSalesQoutationVersion.OpenTransaction(lsNewVersionNo);</span>
+<span class="pc bpc" id="L649" title="1 of 2 branches missed.">                if (!&quot;success&quot;.equals((String) poJSON.get(&quot;result&quot;))) {</span>
+<span class="nc" id="L650">                    return poJSON;</span>
+                }
+<span class="fc" id="L652">                psSupersedeVersionNo = &quot;&quot;;</span>
+            }
+
+            // follow-up: only if one is being added or edited
+<span class="fc bfc" id="L656" title="All 2 branches covered.">            if (isPending(oSalesQoutationFollowUp)) {</span>
+<span class="fc" id="L657">                keyFollowUp(lsQuotationNo, lsVersionNo);</span>
+<span class="fc" id="L658">                poJSON = oSalesQoutationFollowUp.saveRecord();</span>
+<span class="pc bpc" id="L659" title="1 of 2 branches missed.">                if (!&quot;success&quot;.equals((String) poJSON.get(&quot;result&quot;))) {</span>
+<span class="nc" id="L660">                    return poJSON;</span>
+                }
+            }
+
+<span class="fc" id="L664">            poJSON = new JSONObject();</span>
+<span class="fc" id="L665">            poJSON.put(&quot;result&quot;, &quot;success&quot;);</span>
+<span class="fc" id="L666">            return poJSON;</span>
+<span class="fc" id="L667">        } catch (CloneNotSupportedException | SQLException | GuanzonException |  ParseException e) {</span>
+<span class="fc" id="L668">            return setError(e.getMessage());</span>
+        }
+    }
+
+    @Override
+    public JSONObject isEntryOkay() throws SQLException {
+<span class="fc" id="L674">        poJSON = new JSONObject();</span>
+
+//        if (poGRider.getUserLevel() &lt; UserRight.BRANCH_MANAGER) {
+//            poJSON.put(&quot;result&quot;, &quot;error&quot;);
+//            poJSON.put(&quot;message&quot;, &quot;User is not allowed to save record.&quot;);
+//            return poJSON;
+//        }
+
+<span class="pc bpc" id="L682" title="1 of 4 branches missed.">        if (poModel.getClientId() == null || poModel.getClientId().isEmpty()) {</span>
+<span class="fc" id="L683">            return setError(&quot;Client must not be empty.&quot;);</span>
+        }
+
+<span class="pc bpc" id="L686" title="1 of 4 branches missed.">        if (poModel.getIndustryCode() == null || poModel.getIndustryCode().isEmpty()) {</span>
+<span class="fc" id="L687">            return setError(&quot;Industry Code must not be empty.&quot;);</span>
+        }
+
+<span class="pc bpc" id="L690" title="1 of 4 branches missed.">        if (poModel.getCategoryCode() == null || poModel.getCategoryCode().isEmpty()) {</span>
+<span class="fc" id="L691">            return setError(&quot;Category Code must not be empty.&quot;);</span>
+        }
+
+<span class="fc" id="L694">        poJSON = oSalesQoutationVersionGiveaways.validateGiveaways();</span>
+<span class="fc bfc" id="L695" title="All 2 branches covered.">        if (!&quot;success&quot;.equals((String) poJSON.get(&quot;result&quot;))) return poJSON;</span>
+<span class="fc" id="L696">        poJSON = new JSONObject();</span>
+
+<span class="fc" id="L698">        poModel.setModifyingId(poGRider.Encrypt(poGRider.getUserID()));</span>
+<span class="fc" id="L699">        poModel.setModifiedDate(poGRider.getServerDate());</span>
+
+<span class="fc" id="L701">        poJSON.put(&quot;result&quot;, &quot;success&quot;);</span>
+<span class="fc" id="L702">        return poJSON;</span>
+    }
+
+    /**
+     * Browses Sales Quotations and opens the selected one (latest version).
+     *
+     * @param value  search text
+     * @param byCode true to search by transaction number, false by client name
+     */
+    @Override
+    public JSONObject searchRecord(String value, boolean byCode) throws SQLException, GuanzonException {
+<span class="fc" id="L713">        String lsSQL = MiscUtil.addCondition(SalesQoutationsMasterQueries.SQL_QuotationList(),</span>
+<span class="fc" id="L714">                &quot;a.cTranStat = &quot; + SQLUtil.toSQL(SalesQoutationStatic.OPEN));</span>
+
+<span class="fc" id="L716">        System.out.println(&quot;SEARCH RECORD : &quot; + lsSQL);</span>
+<span class="pc bpc" id="L717" title="1 of 2 branches missed.">        poJSON = ShowDialogFX.Search(poGRider,</span>
+                lsSQL,
+                value,
+                &quot;Transaction No.»Date»Client»Version No.&quot;,
+                &quot;sTransNox»dTransact»sCompnyNm»sVersnNox&quot;,
+                &quot;a.sTransNox»a.dTransact»IFNULL(b.sCompnyNm, '')»v.sTransNox&quot;,
+                byCode ? 0 : 2);
+
+<span class="pc bpc" id="L725" title="1 of 2 branches missed.">        if (poJSON != null) {</span>
+<span class="nc" id="L726">            return openRecord((String) poJSON.get(&quot;sTransNox&quot;));</span>
+        } else {
+<span class="fc" id="L728">            return setError(&quot;No record loaded.&quot;);</span>
+        }
+    }
+
+    /**
+     * Version no. of a quotation.
+     *
+     * @param versionNo a specific version to verify, or &quot;&quot; for the latest one
+     * @return the version no., or &quot;&quot; if not found
+     */
+    private String getVersionNo(String quotationNo, String versionNo) throws SQLException {
+<span class="fc" id="L739">        String lsSQL = &quot;SELECT sTransNox FROM &quot; + oSalesQoutationVersion.Master().getTable()</span>
+<span class="fc" id="L740">                + &quot; WHERE sParentID = &quot; + SQLUtil.toSQL(quotationNo)</span>
+<span class="fc bfc" id="L741" title="All 2 branches covered.">                + (versionNo.isEmpty() ? &quot;&quot; : &quot; AND sTransNox = &quot; + SQLUtil.toSQL(versionNo))</span>
+                + &quot; ORDER BY sTransNox DESC LIMIT 1&quot;;
+<span class="fc" id="L743">        ResultSet loRS = poGRider.executeQuery(lsSQL);</span>
+        try {
+<span class="fc bfc" id="L745" title="All 2 branches covered.">            return loRS.next() ? loRS.getString(&quot;sTransNox&quot;) : &quot;&quot;;</span>
+        } finally {
+<span class="fc" id="L747">            MiscUtil.close(loRS);</span>
+        }
+    }
+    /** Version number (1, 2, 3...) of a version = how many versions of the quotation are at or below it. */
+    public int getVersionNumber(String quotationNo, String versionNo) throws SQLException {
+<span class="fc" id="L752">        String lsSQL = &quot;SELECT COUNT(*) nVersionNo FROM &quot; + oSalesQoutationVersion.Master().getTable()</span>
+<span class="fc" id="L753">                + &quot; WHERE sParentID = &quot; + SQLUtil.toSQL(quotationNo)</span>
+<span class="fc" id="L754">                + &quot; AND sTransNox &lt;= &quot; + SQLUtil.toSQL(versionNo);</span>
+<span class="fc" id="L755">        ResultSet loRS = poGRider.executeQuery(lsSQL);</span>
+        try {
+<span class="pc bpc" id="L757" title="1 of 2 branches missed.">            return loRS.next() ? loRS.getInt(&quot;nVersionNo&quot;) : 0;</span>
+        } finally {
+<span class="fc" id="L759">            MiscUtil.close(loRS);</span>
+        }
+    }
+    public boolean isNewVersionPending() {
+<span class="fc bfc" id="L763" title="All 2 branches covered.">        return !psSupersedeVersionNo.isEmpty();</span>
+    }
+    // ------------------------------------------------------------------
+    // confirm
+    // ------------------------------------------------------------------
+
+    public JSONObject confirmVersion(String remarks)
+            throws SQLException, GuanzonException, CloneNotSupportedException, java.text.ParseException {
+<span class="fc bfc" id="L771" title="All 2 branches covered.">        if (poModel.getEditMode() != EditMode.READY) {</span>
+<span class="fc" id="L772">            return setError(&quot;No quotation was loaded, or it is still being added/edited.&quot;);</span>
+        }
+<span class="fc bfc" id="L774" title="All 2 branches covered.">        if (!pbLatestVersion) {</span>
+<span class="fc" id="L775">            return setError(&quot;Only the latest version can be confirmed.&quot;);</span>
+        }
+<span class="pc bpc" id="L777" title="1 of 2 branches missed.">        if (SalesQoutationVersionStatic.CONFIRMED.equals(oSalesQoutationVersion.Master().getTransactionStatus())) {</span>
+<span class="fc" id="L778">            return setError(&quot;Version was already confirmed.&quot;);</span>
+        }
+
+<span class="nc" id="L781">        return oSalesQoutationVersion.ConfirmTransaction(remarks);</span>
+
+    }
+
+    /**
+     * Confirms the opened quotation and its (latest) version together. Both
+     * status updates run in one transaction: if either fails, both are rolled
+     * back. The quotation must be open (not being added or edited) and the
+     * opened version must be the latest one.
+     *
+     * @param remarks confirmation remarks (stored in the version's status history)
+     */
+    public JSONObject confirmRecord(String remarks)
+            throws SQLException, GuanzonException, CloneNotSupportedException, java.text.ParseException {
+<span class="fc bfc" id="L795" title="All 2 branches covered.">        if (poModel.getEditMode() != EditMode.READY) {</span>
+<span class="fc" id="L796">            return setError(&quot;No quotation was loaded, or it is still being added/edited.&quot;);</span>
+        }
+<span class="fc bfc" id="L798" title="All 2 branches covered.">        if (!pbLatestVersion) {</span>
+<span class="fc" id="L799">            return setError(&quot;Only the latest version can be confirmed.&quot;);</span>
+        }
+<span class="fc bfc" id="L801" title="All 2 branches covered.">        if (SalesQoutationStatic.CONFIRMED.equals(poModel.getTransactionStatus())) {</span>
+<span class="fc" id="L802">            return setError(&quot;Quotation was already confirmed.&quot;);</span>
+        }
+<span class="pc bpc" id="L804" title="1 of 2 branches missed.">        if (!SalesQoutationStatic.OPEN.equals(poModel.getTransactionStatus())) {</span>
+<span class="fc" id="L805">            return setError(&quot;Only an open quotation can be confirmed.&quot;);</span>
+        }
+
+<span class="nc" id="L808">        String lsQuotationNo = poModel.getTransactionNo();</span>
+<span class="nc" id="L809">        String lsVersionNo = oSalesQoutationVersion.Master().getTransactionNo();</span>
+
+<span class="nc" id="L811">        poJSON = statusChange(poModel.getTable(), (String) poModel.getValue(&quot;sTransNox&quot;), remarks, SalesQoutationStatic.CONFIRMED, false, pbWthParent);</span>
+<span class="nc bnc" id="L812" title="All 2 branches missed.">        if (!&quot;success&quot;.equals((String) poJSON.get(&quot;result&quot;))) {</span>
+<span class="nc" id="L813">            return poJSON;</span>
+        }
+
+        // 2. version (runs under this transaction, see setWithParent(true))
+<span class="nc" id="L817">        poJSON = oSalesQoutationVersion.ConfirmTransaction(remarks);</span>
+<span class="nc bnc" id="L818" title="All 2 branches missed.">        if (!&quot;success&quot;.equals((String) poJSON.get(&quot;result&quot;))) {</span>
+<span class="nc" id="L819">            poGRider.rollbackTrans();</span>
+<span class="nc" id="L820">            return poJSON;</span>
+        }
+
+<span class="nc" id="L823">        poGRider.commitTrans();</span>
+
+        // reload so the screen shows the new status of both records
+<span class="nc" id="L826">        poJSON = openRecord(lsQuotationNo, lsVersionNo);</span>
+<span class="nc bnc" id="L827" title="All 2 branches missed.">        if (!&quot;success&quot;.equals((String) poJSON.get(&quot;result&quot;))) return poJSON;</span>
+
+<span class="nc" id="L829">        return setResult(&quot;success&quot;, &quot;Quotation and version confirmed successfully.&quot;);</span>
+    }
+
+    public JSONObject lostRecord(String remarks)
+            throws SQLException, GuanzonException, CloneNotSupportedException, java.text.ParseException {
+<span class="fc bfc" id="L834" title="All 2 branches covered.">        if (poModel.getEditMode() != EditMode.READY) {</span>
+<span class="fc" id="L835">            return setError(&quot;No quotation was loaded, or it is still being added/edited.&quot;);</span>
+        }
+<span class="fc bfc" id="L837" title="All 2 branches covered.">        if (!SalesQoutationStatic.OPEN.equals(poModel.getTransactionStatus())) {</span>
+<span class="fc bfc" id="L838" title="All 2 branches covered.">            if (SalesQoutationStatic.LOST.equals(poModel.getTransactionStatus())) {</span>
+<span class="fc" id="L839">                return setError(&quot;Quotation was already marked as lost.&quot;);</span>
+            }
+<span class="fc" id="L841">            return setError(&quot;Only an open quotation can be marked as lost.&quot;);</span>
+        }
+<span class="fc" id="L843">        String lsQuotationNo = poModel.getTransactionNo();</span>
+<span class="fc" id="L844">        String lsVersionNo = oSalesQoutationVersion.Master().getTransactionNo();</span>
+
+
+<span class="fc" id="L847">        poJSON = statusChange(poModel.getTable(), (String) poModel.getValue(&quot;sTransNox&quot;), remarks, SalesQoutationStatic.LOST, false, pbWthParent);</span>
+<span class="pc bpc" id="L848" title="1 of 2 branches missed.">        if (!&quot;success&quot;.equals((String) poJSON.get(&quot;result&quot;))) {</span>
+<span class="nc" id="L849">            return poJSON;</span>
+        }
+
+        // 2. version (runs under this transaction, see setWithParent(true))
+<span class="fc" id="L853">        poJSON = oSalesQoutationVersion.LostTransaction(remarks);</span>
+<span class="pc bpc" id="L854" title="1 of 2 branches missed.">        if (!&quot;success&quot;.equals((String) poJSON.get(&quot;result&quot;))) {</span>
+<span class="nc" id="L855">            poGRider.rollbackTrans();</span>
+<span class="nc" id="L856">            return poJSON;</span>
+        }
+
+<span class="fc" id="L859">        poGRider.commitTrans();</span>
+
+        // reload so the screen shows the new status of both records
+<span class="fc" id="L862">        poJSON = openRecord(lsQuotationNo, lsVersionNo);</span>
+<span class="pc bpc" id="L863" title="1 of 2 branches missed.">        if (!&quot;success&quot;.equals((String) poJSON.get(&quot;result&quot;))) return poJSON;</span>
+
+<span class="fc" id="L865">        return setResult(&quot;success&quot;, &quot;Quotation and version marked as lost successfully.&quot;);</span>
+    }
+
+    public JSONObject voidRecord(String remarks)
+            throws SQLException, GuanzonException, CloneNotSupportedException, java.text.ParseException {
+<span class="fc bfc" id="L870" title="All 2 branches covered.">        if (poModel.getEditMode() != EditMode.READY) {</span>
+<span class="fc" id="L871">            return setError(&quot;No quotation was loaded, or it is still being added/edited.&quot;);</span>
+        }
+<span class="fc bfc" id="L873" title="All 2 branches covered.">        if (!SalesQoutationStatic.OPEN.equals(poModel.getTransactionStatus())) {</span>
+<span class="fc bfc" id="L874" title="All 2 branches covered.">            if (SalesQoutationStatic.VOID.equals(poModel.getTransactionStatus())) {</span>
+<span class="fc" id="L875">                return setError(&quot;Quotation was already marked as void.&quot;);</span>
+            }
+<span class="fc" id="L877">            return setError(&quot;Only an open quotation can be marked as void.&quot;);</span>
+        }
+<span class="fc" id="L879">        String lsQuotationNo = poModel.getTransactionNo();</span>
+<span class="fc" id="L880">        String lsVersionNo = oSalesQoutationVersion.Master().getTransactionNo();</span>
+
+<span class="fc" id="L882">        poJSON = statusChange(poModel.getTable(), (String) poModel.getValue(&quot;sTransNox&quot;), remarks, SalesQoutationStatic.VOID, false, pbWthParent);</span>
+<span class="pc bpc" id="L883" title="1 of 2 branches missed.">        if (!&quot;success&quot;.equals((String) poJSON.get(&quot;result&quot;))) {</span>
+<span class="nc" id="L884">            return poJSON;</span>
+        }
+
+        // 2. version (runs under this transaction, see setWithParent(true))
+<span class="fc" id="L888">        poJSON = oSalesQoutationVersion.VoidTransaction(remarks);</span>
+<span class="pc bpc" id="L889" title="1 of 2 branches missed.">        if (!&quot;success&quot;.equals((String) poJSON.get(&quot;result&quot;))) {</span>
+<span class="nc" id="L890">            poGRider.rollbackTrans();</span>
+<span class="nc" id="L891">            return poJSON;</span>
+        }
+<span class="fc" id="L893">        poGRider.commitTrans();</span>
+
+        // reload so the screen shows the new status of both records
+<span class="fc" id="L896">        poJSON = openRecord(lsQuotationNo, lsVersionNo);</span>
+<span class="pc bpc" id="L897" title="1 of 2 branches missed.">        if (!&quot;success&quot;.equals((String) poJSON.get(&quot;result&quot;))) return poJSON;</span>
+
+<span class="fc" id="L899">        return setResult(&quot;success&quot;, &quot;Quotation and version successfully voided.&quot;);</span>
+    }
+
+    private JSONObject setError(String message) {
+<span class="fc" id="L903">        JSONObject loJSON = new JSONObject();</span>
+<span class="fc" id="L904">        loJSON.put(&quot;result&quot;, &quot;error&quot;);</span>
+<span class="fc" id="L905">        loJSON.put(&quot;message&quot;, message);</span>
+<span class="fc" id="L906">        return loJSON;</span>
+    }
+
+    private JSONObject setResult(String result, String message) {
+<span class="fc" id="L910">        JSONObject loJSON = new JSONObject();</span>
+<span class="fc" id="L911">        loJSON.put(&quot;result&quot;, result);</span>
+<span class="fc" id="L912">        loJSON.put(&quot;message&quot;, message);</span>
+<span class="fc" id="L913">        return loJSON;</span>
+    }
+
+
+    /*Search Master References*/
+    /**
+     * Search for Inquiring customer
+     * @param value
+     * @param byCode
+     * @return JSONObject success or error
+     * @throws SQLException
+     * @throws GuanzonException
+     */
+    public JSONObject SearchClient(String value, boolean byCode)
+            throws SQLException,
+            GuanzonException {
+<span class="fc" id="L929">        poJSON = new JSONObject();</span>
+
+<span class="fc" id="L931">        Client object = new ClientControllers(poGRider, logwrapr).Client();</span>
+<span class="fc" id="L932">        object.Master().setRecordStatus(RecordStatus.ACTIVE);</span>
+<span class="fc" id="L933">        object.Master().setClientType(poModel.getClientType());</span>
+<span class="fc" id="L934">        poJSON = object.Master().searchRecord(value, byCode);</span>
+<span class="fc bfc" id="L935" title="All 2 branches covered.">        if (&quot;success&quot;.equals((String) poJSON.get(&quot;result&quot;))) {</span>
+
+
+<span class="fc" id="L938">            poModel.setClientId(object.Master().getModel().getClientId());</span>
+<span class="fc" id="L939">            System.out.println(&quot;Get Address &quot; + poModel.ClientAddress().getAddressId());</span>
+<span class="fc" id="L940">            poModel.setAddressId(poModel.ClientAddress().getAddressId()); //TODO</span>
+<span class="fc" id="L941">            poModel.setContactId(poModel.ClientMobile().getMobileId()); //TODO</span>
+        }
+
+<span class="fc" id="L944">        System.out.println(&quot;Client ID : &quot; + poModel.getClientId());</span>
+<span class="fc" id="L945">        System.out.println(&quot;Address ID : &quot; + poModel.getAddressId());</span>
+<span class="fc" id="L946">        System.out.println(&quot;Contact ID : &quot; + poModel.getContactId());</span>
+
+<span class="fc" id="L948">        return poJSON;</span>
+    }
+    public JSONObject addClient() throws SQLException, GuanzonException, Exception {
+<span class="fc" id="L951">        JSONObject loResult = new JSONObject();</span>
+<span class="fc" id="L952">        String lsClientId = poModel.getClientId();</span>
+<span class="pc bpc" id="L953" title="2 of 4 branches missed.">        lsClientId = (lsClientId == null || lsClientId.isEmpty()) ? &quot;&quot; : lsClientId;</span>
+
+<span class="fc" id="L955">        ClientGUI loClient = new ClientGUI();</span>
+
+<span class="fc" id="L957">        loClient.setGRider(poGRider);</span>
+<span class="fc" id="L958">        loClient.setLogWrapper(null);</span>
+
+<span class="fc" id="L960">        loClient.setClientType(ClientType.INDIVIDUAL);</span>
+<span class="pc bpc" id="L961" title="1 of 2 branches missed.">        if(!ClientType.INDIVIDUAL.equals(poModel.getClientType())){</span>
+<span class="fc" id="L962">            loClient.setCategoryCode(poModel.getCategoryCode());</span>
+        }
+<span class="fc" id="L964">        loClient.setByCode(false);</span>
+<span class="fc" id="L965">        loClient.setClientId(lsClientId);</span>
+<span class="fc" id="L966">        CommonUtils.showModal(loClient);</span>
+
+<span class="fc bfc" id="L968" title="All 2 branches covered.">        if (!loClient.isCancelled()) {</span>
+<span class="fc" id="L969">            lsClientId = loClient.getClient().getModel().getClientId();</span>
+<span class="pc bpc" id="L970" title="1 of 2 branches missed.">            poModel.setClientId(lsClientId != null ? lsClientId : &quot;&quot;);</span>
+<span class="fc" id="L971">            poModel.setAddressId(poModel.ClientAddress().getAddressId());</span>
+<span class="fc" id="L972">            poModel.setContactId(poModel.ClientMobile().getMobileId());</span>
+        }
+<span class="fc" id="L974">        loResult.put(&quot;result&quot;, &quot;success&quot;);</span>
+<span class="fc" id="L975">        return loResult;</span>
+    }
+
+    public JSONObject SearchTerm(String value, boolean byCode) throws ExceptionInInitializerError, SQLException, GuanzonException {
+<span class="fc" id="L979">        Term object = new ParamControllers(poGRider, logwrapr).Term();</span>
+<span class="fc" id="L980">        object.setRecordStatus(&quot;1&quot;);</span>
+
+<span class="fc bfc" id="L982" title="All 2 branches covered.">        if(!pbWithUI){</span>
+<span class="fc" id="L983">            poJSON.put(&quot;result&quot;, &quot;success&quot;);</span>
+<span class="fc" id="L984">            poJSON.put(&quot;message&quot;, &quot;withUI&quot;);</span>
+<span class="fc" id="L985">            return poJSON;</span>
+        }
+<span class="fc" id="L987">        poJSON = object.searchRecord(value, byCode);</span>
+
+<span class="fc bfc" id="L989" title="All 2 branches covered.">        if (&quot;success&quot;.equals((String) poJSON.get(&quot;result&quot;))) {</span>
+<span class="fc" id="L990">            oSalesQoutationVersion.Master().setTermId((object.getModel().getTermId()));</span>
+<span class="fc" id="L991">            System.out.println(&quot;Term ID : &quot; + oSalesQoutationVersion.Master().getTermId());</span>
+        }
+
+<span class="fc" id="L994">        return poJSON;</span>
+    }
+
+    public JSONObject SearchBranch(String value, boolean byCode) throws ExceptionInInitializerError, SQLException, GuanzonException {
+<span class="fc" id="L998">        Branch object = new ParamControllers(poGRider, logwrapr).Branch();</span>
+<span class="fc" id="L999">        object.setRecordStatus(&quot;1&quot;);</span>
+
+<span class="fc bfc" id="L1001" title="All 2 branches covered.">        if(!pbWithUI){</span>
+<span class="fc" id="L1002">            poJSON.put(&quot;result&quot;, &quot;success&quot;);</span>
+<span class="fc" id="L1003">            poJSON.put(&quot;message&quot;, &quot;withUI&quot;);</span>
+<span class="fc" id="L1004">            return poJSON;</span>
+        }
+<span class="fc" id="L1006">        poJSON = object.searchRecord(value, byCode);</span>
+
+<span class="fc bfc" id="L1008" title="All 2 branches covered.">        if (&quot;success&quot;.equals((String) poJSON.get(&quot;result&quot;))) {</span>
+<span class="fc" id="L1009">            oSalesQoutationVersion.Master().setBranchCode((object.getModel().getBranchCode()));</span>
+<span class="fc" id="L1010">            System.out.println(&quot;Branch ID : &quot; + oSalesQoutationVersion.Master().getBranchCode());</span>
+        }
+
+<span class="fc" id="L1013">        return poJSON;</span>
+    }
+
+    public JSONObject SearchDetailItem(String value, int MCITemRow, String Category, int byCode) throws SQLException, GuanzonException {
+<span class="fc bfc" id="L1017" title="All 4 branches covered.">        if (MCITemRow &lt; 0 || MCITemRow &gt;= oSalesQoutationVersion.getDetailCount()) {</span>
+<span class="fc" id="L1018">            return setError(&quot;Select an item row first.&quot;);</span>
+        }
+
+<span class="fc" id="L1021">        String lsSQL = MiscUtil.addCondition(SalesQoutationsMasterQueries.SQL_MCItem(),</span>
+<span class="fc" id="L1022">                &quot;a.sIndstCdx = &quot; + SQLUtil.toSQL(poModel.getIndustryCode()) + &quot; AND a.sCategCd1 = &quot; + SQLUtil.toSQL(Category));</span>
+<span class="fc" id="L1023">        System.out.println(&quot;Executing SQL: &quot; + lsSQL);</span>
+
+<span class="fc" id="L1025">        JSONObject  loBrowse = ShowDialogFX.Browse(poGRider,</span>
+                lsSQL,
+                value,
+                &quot;Stock ID»Brand»Model»Variant»Color&quot;,
+                &quot;sStockIDx»xBrandNme»xModelNme»xVrntName»xColorNme&quot;,
+                &quot;a.sStockIDx»c.sDescript»b.sDescript»d.sDescript»e.sDescript&quot;,
+                byCode);
+
+<span class="fc bfc" id="L1033" title="All 4 branches covered.">        if (loBrowse == null || loBrowse.get(&quot;sStockIDx&quot;) == null) {</span>
+<span class="fc" id="L1034">            return setError(&quot;No record loaded.&quot;);</span>
+        }
+<span class="fc" id="L1036">        System.out.println(&quot;Stock ID : &quot; + loBrowse.get(&quot;sStockIDx&quot;));</span>
+<span class="fc" id="L1037">        System.out.println(&quot;Unit Price : &quot; + loBrowse.get(&quot;nUnitPrce&quot;));</span>
+<span class="fc" id="L1038">        String lsStockId = (String) loBrowse.get(&quot;sStockIDx&quot;);</span>
+
+<span class="fc" id="L1040">        double lnUnitPrice = 0.00;</span>
+<span class="fc" id="L1041">        Object loPrice = loBrowse.get(&quot;nUnitPrce&quot;);</span>
+<span class="pc bpc" id="L1042" title="1 of 4 branches missed.">        if (loPrice != null &amp;&amp; !loPrice.toString().trim().isEmpty()) {</span>
+            try {
+<span class="fc" id="L1044">                lnUnitPrice = Double.parseDouble(loPrice.toString().replace(&quot;,&quot;, &quot;&quot;).trim());</span>
+<span class="fc" id="L1045">            } catch (NumberFormatException e) {</span>
+<span class="fc" id="L1046">                lnUnitPrice = 0.00;</span>
+<span class="fc" id="L1047">            }</span>
+        }
+        // duplicate check: same stock id on any other row
+<span class="fc bfc" id="L1050" title="All 2 branches covered.">        for (int lnCtr = 0; lnCtr &lt; oSalesQoutationVersion.getDetailCount(); lnCtr++) {</span>
+<span class="fc bfc" id="L1051" title="All 2 branches covered.">            if (lnCtr == MCITemRow) continue;</span>
+
+<span class="fc" id="L1053">            String lsExisting = oSalesQoutationVersion.Detail(lnCtr).getStockId();</span>
+<span class="pc bpc" id="L1054" title="2 of 4 branches missed.">            if (lsExisting != null &amp;&amp; lsExisting.equals(lsStockId)) {</span>
+<span class="fc" id="L1055">                return setError(&quot;Item &quot; + lsStockId + &quot; is already added in row &quot; + (lnCtr + 1) + &quot;.&quot;);</span>
+            }
+        }
+<span class="fc" id="L1058">        oSalesQoutationVersion.Detail(MCITemRow).setStockId(lsStockId);</span>
+<span class="fc" id="L1059">        oSalesQoutationVersion.Detail(MCITemRow).setUnitPrice(lnUnitPrice);</span>
+
+<span class="fc" id="L1061">        JSONObject loResult = new JSONObject();</span>
+<span class="fc" id="L1062">        loResult.put(&quot;result&quot;, &quot;success&quot;);</span>
+<span class="fc" id="L1063">        return loResult;</span>
+    }
+
+    public JSONObject SearchGawayItem(String value, int GawayITemRow, String Category, int byCode) throws SQLException, GuanzonException {
+<span class="pc bpc" id="L1067" title="1 of 4 branches missed.">        if (GawayITemRow &lt; 0 || GawayITemRow &gt;= Giveaways().getGiveawayCount()) {</span>
+<span class="fc" id="L1068">            return setError(&quot;Select an item row first.&quot;);</span>
+        }
+
+<span class="fc" id="L1071">        String lsSQL = MiscUtil.addCondition(SalesQoutationsMasterQueries.SQL_GawayItem(),</span>
+<span class="fc" id="L1072">                &quot;a.sIndstCdx = &quot; + SQLUtil.toSQL(poModel.getIndustryCode()));</span>
+<span class="fc" id="L1073">        System.out.println(&quot;Executing SQL: &quot; + lsSQL);</span>
+
+<span class="pc bpc" id="L1075" title="1 of 4 branches missed.">        if (Category != null &amp;&amp; !Category.isEmpty()) {</span>
+<span class="fc" id="L1076">            lsSQL = lsSQL + &quot; AND a.sCategCd1 = &quot; + SQLUtil.toSQL(Category);</span>
+        }
+<span class="fc" id="L1078">        JSONObject  loBrowse = ShowDialogFX.Browse(poGRider,</span>
+                lsSQL,
+                value,
+                &quot;Stock ID»Barcode»Description»Color&quot;,
+                &quot;sStockIDx»sBarCodex»xStockDesc»xColorNme&quot;,
+                &quot;a.sStockIDx»a.sBarCodex»a.sDescript»e.sDescript&quot;,
+                byCode);
+
+<span class="pc bpc" id="L1086" title="1 of 4 branches missed.">        if (loBrowse == null || loBrowse.get(&quot;sStockIDx&quot;) == null) {</span>
+<span class="fc" id="L1087">            return setError(&quot;No record loaded.&quot;);</span>
+        }
+<span class="fc" id="L1089">        System.out.println(&quot;Stock ID : &quot; + loBrowse.get(&quot;sStockIDx&quot;));</span>
+<span class="fc" id="L1090">        System.out.println(&quot;Unit Price : &quot; + loBrowse.get(&quot;nUnitPrce&quot;));</span>
+<span class="fc" id="L1091">        String lsStockId = (String) loBrowse.get(&quot;sStockIDx&quot;);</span>
+
+
+        // duplicate check: same stock id on any other row
+<span class="fc bfc" id="L1095" title="All 2 branches covered.">        for (int lnCtr = 0; lnCtr &lt; oSalesQoutationVersion.getDetailCount(); lnCtr++) {</span>
+<span class="fc bfc" id="L1096" title="All 2 branches covered.">            if (lnCtr == GawayITemRow) continue;</span>
+
+<span class="fc" id="L1098">            String lsExisting = oSalesQoutationVersion.Detail(lnCtr).getStockId();</span>
+<span class="pc bpc" id="L1099" title="2 of 4 branches missed.">            if (lsExisting != null &amp;&amp; lsExisting.equals(lsStockId)) {</span>
+<span class="fc" id="L1100">                return setError(&quot;Item &quot; + lsStockId + &quot; is already added in row &quot; + (lnCtr + 1) + &quot;.&quot;);</span>
+            }
+        }
+<span class="fc" id="L1103">        Giveaways().Giveaway(GawayITemRow).setStockId(lsStockId);</span>
+<span class="fc" id="L1104">        JSONObject loResult = new JSONObject();</span>
+<span class="fc" id="L1105">        loResult.put(&quot;result&quot;, &quot;success&quot;);</span>
+<span class="fc" id="L1106">        return loResult;</span>
+    }
+
+    public JSONObject SearchMCItemPromo(String value, int MCItemRow, int byCode) throws SQLException, GuanzonException {
+<span class="pc bpc" id="L1110" title="1 of 4 branches missed.">        if (MCItemRow &lt; 0 || MCItemRow &gt;= oSalesQoutationVersion.getDetailCount()) {</span>
+<span class="fc" id="L1111">            return setError(&quot;Select an item row first.&quot;);</span>
+        }
+
+<span class="fc" id="L1114">        String lsSQL = MiscUtil.addCondition(SalesQoutationsMasterQueries.SQL_MCItemPromo(),</span>
+<span class="fc" id="L1115">                &quot;a.sIndstCdx = &quot; + SQLUtil.toSQL(poModel.getIndustryCode())</span>
+<span class="fc" id="L1116">                        + &quot; AND b.sModelIDx = &quot; + SQLUtil.toSQL(oSalesQoutationVersion.Detail(MCItemRow).Inventory().getModelId()));</span>
+<span class="fc" id="L1117">        System.out.println(&quot;Executing SQL: &quot; + lsSQL);</span>
+
+<span class="fc" id="L1119">        JSONObject  loBrowse = ShowDialogFX.Browse(poGRider,</span>
+                lsSQL,
+                value,
+                &quot;Promo ID»Description»Promo From»Promo To&quot;,
+                &quot;sPromIDxx»sPromDesc»dFromDate»dThruDate&quot;,
+                &quot;a.sPromIDxx»a.sPromDesc»a.dFromDate»a.dThruDate&quot;,
+                byCode);
+
+<span class="pc bpc" id="L1127" title="1 of 4 branches missed.">        if (loBrowse == null || loBrowse.get(&quot;sPromIDxx&quot;) == null) {</span>
+<span class="fc" id="L1128">            return setError(&quot;No record loaded.&quot;);</span>
+        }
+<span class="fc" id="L1130">        System.out.println(&quot;Promo ID : &quot; + loBrowse.get(&quot;sPromIDxx&quot;));</span>
+<span class="fc" id="L1131">        System.out.println(&quot;Promo ID : &quot; + loBrowse.get(&quot;nDiscRate&quot;));</span>
+<span class="fc" id="L1132">        System.out.println(&quot;Promo ID : &quot; + loBrowse.get(&quot;nDiscAmtx&quot;));</span>
+<span class="fc" id="L1133">        System.out.println(&quot;Promo ID : &quot; + loBrowse.get(&quot;nFreightx&quot;));</span>
+<span class="fc" id="L1134">        oSalesQoutationVersion.Detail(MCItemRow).setPromoCode((String) loBrowse.get(&quot;sPromIDxx&quot;));</span>
+<span class="fc" id="L1135">        oSalesQoutationVersion.Detail(MCItemRow).setDiscount(Double.parseDouble((String)loBrowse.get(&quot;nDiscRate&quot;)));</span>
+<span class="fc" id="L1136">        oSalesQoutationVersion.Detail(MCItemRow).setAdditionalDiscount(Double.parseDouble((String)loBrowse.get(&quot;nDiscAmtx&quot;)));</span>
+<span class="fc" id="L1137">        oSalesQoutationVersion.Detail(MCItemRow).setFreight(Double.parseDouble((String)loBrowse.get(&quot;nFreightx&quot;)));</span>
+
+<span class="fc" id="L1139">        JSONObject loResult = new JSONObject();</span>
+<span class="fc" id="L1140">        loResult.put(&quot;PromoDesc&quot;, (String) loBrowse.get(&quot;sPromDesc&quot;));</span>
+<span class="fc" id="L1141">        loResult.put(&quot;result&quot;, &quot;success&quot;);</span>
+<span class="fc" id="L1142">        return loResult;</span>
+    }
+
+    public double computeMCItemDetail(
+            double srp,
+            int qty,
+            double discount,           // percentage
+            double additionaldiscount, // fixed amount
+            double freight,
+            double registration,
+            double insurance,
+            String vatType
+    ) {
+        // ============================================
+        // TRANSACTION TOTAL
+        // ============================================
+<span class="fc" id="L1158">        double grossUnitSRP = srp * qty;</span>
+        // ============================================
+        // SALES COMPUTATION
+        // ============================================
+        // Discount is percentage
+<span class="fc" id="L1163">        double discountAmount =</span>
+                grossUnitSRP * (discount / 100.0);
+        // Net sales after percentage discount
+<span class="fc" id="L1166">        double netSales =</span>
+                grossUnitSRP - (discountAmount + additionaldiscount);
+<span class="fc bfc" id="L1168" title="All 2 branches covered.">        if (netSales &lt; 0) {</span>
+<span class="fc" id="L1169">            netSales = 0;</span>
+        }
+<span class="fc" id="L1171">        double totalfreight = freight * qty;</span>
+<span class="fc" id="L1172">        double totalregistration = registration * qty;</span>
+<span class="fc" id="L1173">        double totalinsurance = insurance * qty;</span>
+        // ============================================
+        // TOTAL AMOUNT
+        // ============================================
+        double totalAmount;
+        // No VAT
+<span class="fc bfc" id="L1179" title="All 4 branches covered.">        if (vatType == null || vatType.trim().isEmpty()) {</span>
+
+<span class="fc" id="L1181">            totalAmount =</span>
+                    netSales
+                            + totalfreight
+                            + totalregistration
+                            + totalinsurance;
+        }
+        // VAT Inclusive
+<span class="fc bfc" id="L1188" title="All 2 branches covered.">        else if (SalesQoutationVersionStatic.VatType.VAT_INCLUSIVE.equalsIgnoreCase(vatType.trim())) {</span>
+            // Net sales already includes VAT
+<span class="fc" id="L1190">            double vatableSales = netSales / 1.12;</span>
+<span class="fc" id="L1191">            double vatAmount = netSales - vatableSales;</span>
+
+<span class="fc" id="L1193">            totalAmount =</span>
+                    netSales
+                            + totalfreight
+                            + totalregistration
+                            + totalinsurance;
+<span class="fc" id="L1198">        }</span>
+        // VAT Exclusive
+<span class="fc bfc" id="L1200" title="All 2 branches covered.">        else if (SalesQoutationVersionStatic.VatType.VAT_EXCLUSIVE.equalsIgnoreCase(vatType.trim())) {</span>
+
+<span class="fc" id="L1202">            double vatAmount = netSales * 0.12;</span>
+
+<span class="fc" id="L1204">            totalAmount =</span>
+                    netSales
+                            + vatAmount
+                            + totalfreight
+                            + totalregistration
+                            + totalinsurance;
+<span class="fc" id="L1210">        }</span>
+        // Unknown VAT type
+        else {
+
+<span class="fc" id="L1214">            totalAmount =</span>
+                    netSales
+                            + totalfreight
+                            + totalregistration
+                            + totalinsurance;
+        }
+<span class="fc" id="L1220">        return totalAmount;</span>
+    }
+
+
+    /** Plain holder for one detail row, so the old values survive NewTransaction(). */
+    private static class DetailCopy {
+        String stockId;
+        Integer quantity;
+        Double unitPrice;
+        Double discount;
+        Double additionalDiscount;
+        Double freight;
+        Double registrationAmount;
+        Double insuranceAmount;
+        String promoCode;
+    }
+
+    /**
+     * Starts a new version of the opened quotation: quotation nVersionx + 1, and the
+     * latest version (master, detail, giveaways) copied into a new, unsaved version.
+     * The old version becomes SUPERCEDED when this is saved (see saveOthers()).
+     */
+    public JSONObject createFromVersion() throws SQLException, GuanzonException, CloneNotSupportedException {
+<span class="fc bfc" id="L1243" title="All 2 branches covered.">        if (poModel.getEditMode() != EditMode.READY) {</span>
+<span class="fc" id="L1244">            return setError(&quot;No quotation was loaded, or it is still being added/edited.&quot;);</span>
+        }
+<span class="fc bfc" id="L1246" title="All 2 branches covered.">        if (!pbLatestVersion) {</span>
+<span class="fc" id="L1247">            return setError(&quot;Only the latest version can be used to create a new version.&quot;);</span>
+        }
+//        if (!SalesQoutationStatic.OPEN.equals(poModel.getTransactionStatus())) {
+//            return setError(&quot;Only an open quotation can have a new version.&quot;);
+//        }
+
+<span class="fc" id="L1253">        String lsOldVersionNo = oSalesQoutationVersion.Master().getTransactionNo();</span>
+
+        // 1. keep the old values BEFORE the version controller is reset
+<span class="fc" id="L1256">        String lsTitle = oSalesQoutationVersion.Master().getTitleName();</span>
+<span class="fc" id="L1257">        java.util.Date ldExpected = oSalesQoutationVersion.Master().getExpectedDate();</span>
+<span class="fc" id="L1258">        java.util.Date ldValidThru = oSalesQoutationVersion.Master().getValidThruDate();</span>
+<span class="fc" id="L1259">        String lsReasons = oSalesQoutationVersion.Master().getReasons();</span>
+<span class="fc" id="L1260">        String lsDeliveryType = oSalesQoutationVersion.Master().getDeliveryType();</span>
+<span class="fc" id="L1261">        String lsDeliverTo = oSalesQoutationVersion.Master().getDeliverTo();</span>
+<span class="fc" id="L1262">        String lsBranch = oSalesQoutationVersion.Master().getBranchCode();</span>
+<span class="fc" id="L1263">        String lsPaymentForm = oSalesQoutationVersion.Master().getPaymentForm();</span>
+<span class="fc" id="L1264">        String lsTermId = oSalesQoutationVersion.Master().getTermId();</span>
+<span class="fc" id="L1265">        String lsRemarks = oSalesQoutationVersion.Master().getRemarks();</span>
+<span class="fc" id="L1266">        String lsRemarks1 = oSalesQoutationVersion.Master().getRemarks1();</span>
+<span class="fc" id="L1267">        String lsRemarks2 = oSalesQoutationVersion.Master().getRemarks2();</span>
+
+<span class="fc" id="L1269">        List&lt;DetailCopy&gt; laOldDetail = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L1270" title="All 2 branches covered.">        for (int lnCtr = 0; lnCtr &lt; oSalesQoutationVersion.getDetailCount(); lnCtr++) {</span>
+<span class="fc" id="L1271">            Model_Sales_Quotation_Version_Detail loRow = oSalesQoutationVersion.Detail(lnCtr);</span>
+<span class="pc bpc" id="L1272" title="2 of 4 branches missed.">            if (loRow.getStockId() == null || loRow.getStockId().isEmpty()) continue;   // blank trailing row</span>
+
+<span class="fc" id="L1274">            DetailCopy loCopy = new DetailCopy();</span>
+<span class="fc" id="L1275">            loCopy.stockId = loRow.getStockId();</span>
+<span class="fc" id="L1276">            loCopy.quantity = loRow.getQuantity();</span>
+<span class="fc" id="L1277">            loCopy.unitPrice = loRow.getUnitPrice();</span>
+<span class="fc" id="L1278">            loCopy.discount = loRow.getDiscount();</span>
+<span class="fc" id="L1279">            loCopy.additionalDiscount = loRow.getAdditionalDiscount();</span>
+<span class="fc" id="L1280">            loCopy.freight = loRow.getFreight();</span>
+<span class="fc" id="L1281">            loCopy.registrationAmount = loRow.getRegistrationAmount();</span>
+<span class="fc" id="L1282">            loCopy.insuranceAmount = loRow.getInsuranceAmount();</span>
+<span class="fc" id="L1283">            loCopy.promoCode = loRow.getPromoCode();</span>
+<span class="fc" id="L1284">            laOldDetail.add(loCopy);</span>
+        }
+
+        // giveaway rows: the old model objects stay valid after clearGiveaways(), so just keep them
+<span class="fc" id="L1288">        List&lt;Model_Sales_Quotation_Version_Giveaways&gt; laOldGiveaway =</span>
+<span class="fc" id="L1289">                new ArrayList&lt;&gt;(oSalesQoutationVersionGiveaways.Giveaways());</span>
+
+        // 2. quotation master: edit mode, version + 1
+<span class="fc" id="L1292">        poJSON = super.updateRecord();</span>
+<span class="pc bpc" id="L1293" title="1 of 2 branches missed.">        if (!&quot;success&quot;.equals((String) poJSON.get(&quot;result&quot;))) return poJSON;</span>
+<span class="fc" id="L1294">        poModel.setVersion(poModel.getVersion() + 1);</span>
+
+        // 3. new version (fresh transaction no., status OPEN) with the same content
+<span class="fc" id="L1297">        poJSON = oSalesQoutationVersion.NewTransaction();</span>
+<span class="pc bpc" id="L1298" title="1 of 2 branches missed.">        if (!&quot;success&quot;.equals((String) poJSON.get(&quot;result&quot;))) return poJSON;</span>
+<span class="fc" id="L1299">        oSalesQoutationVersion.setBranchCode(poGRider.getBranchCode());</span>
+
+<span class="fc" id="L1301">        oSalesQoutationVersion.Master().setTitleName(lsTitle);</span>
+<span class="fc" id="L1302">        oSalesQoutationVersion.Master().setExpectedDate(ldExpected);</span>
+<span class="fc" id="L1303">        oSalesQoutationVersion.Master().setValidThruDate(ldValidThru);</span>
+<span class="fc" id="L1304">        oSalesQoutationVersion.Master().setReasons(lsReasons);</span>
+<span class="fc" id="L1305">        oSalesQoutationVersion.Master().setDeliveryType(lsDeliveryType);</span>
+<span class="fc" id="L1306">        oSalesQoutationVersion.Master().setDeliverTo(lsDeliverTo);</span>
+<span class="fc" id="L1307">        oSalesQoutationVersion.Master().setBranchCode(lsBranch);</span>
+<span class="fc" id="L1308">        oSalesQoutationVersion.Master().setPaymentForm(lsPaymentForm);</span>
+<span class="fc" id="L1309">        oSalesQoutationVersion.Master().setTermId(lsTermId);</span>
+<span class="fc" id="L1310">        oSalesQoutationVersion.Master().setRemarks(lsRemarks);</span>
+<span class="fc" id="L1311">        oSalesQoutationVersion.Master().setRemarks1(lsRemarks1);</span>
+<span class="fc" id="L1312">        oSalesQoutationVersion.Master().setRemarks2(lsRemarks2);</span>
+
+<span class="fc bfc" id="L1314" title="All 2 branches covered.">        for (int lnCtr = 0; lnCtr &lt; laOldDetail.size(); lnCtr++) {</span>
+<span class="fc bfc" id="L1315" title="All 2 branches covered.">            if (lnCtr &gt;= oSalesQoutationVersion.getDetailCount()) {</span>
+<span class="fc" id="L1316">                poJSON = oSalesQoutationVersion.AddDetail();</span>
+<span class="pc bpc" id="L1317" title="1 of 2 branches missed.">                if (!&quot;success&quot;.equals((String) poJSON.get(&quot;result&quot;))) return poJSON;</span>
+            }
+<span class="fc" id="L1319">            DetailCopy loCopy = laOldDetail.get(lnCtr);</span>
+<span class="fc" id="L1320">            Model_Sales_Quotation_Version_Detail loNew = oSalesQoutationVersion.Detail(lnCtr);</span>
+<span class="fc" id="L1321">            loNew.setStockId(loCopy.stockId);</span>
+<span class="fc" id="L1322">            loNew.setQuantity(loCopy.quantity);</span>
+<span class="fc" id="L1323">            loNew.setUnitPrice(loCopy.unitPrice);</span>
+<span class="fc" id="L1324">            loNew.setDiscount(loCopy.discount);</span>
+<span class="fc" id="L1325">            loNew.setAdditionalDiscount(loCopy.additionalDiscount);</span>
+<span class="fc" id="L1326">            loNew.setFreight(loCopy.freight);</span>
+<span class="fc" id="L1327">            loNew.setRegistrationAmount(loCopy.registrationAmount);</span>
+<span class="fc" id="L1328">            loNew.setInsuranceAmount(loCopy.insuranceAmount);</span>
+<span class="fc" id="L1329">            loNew.setPromoCode(loCopy.promoCode);</span>
+        }
+
+        // 4. giveaways: new rows, numbered and keyed in saveGiveaways()
+<span class="fc" id="L1333">        oSalesQoutationVersionGiveaways.clearGiveaways();</span>
+<span class="fc bfc" id="L1334" title="All 2 branches covered.">        for (Model_Sales_Quotation_Version_Giveaways loOld : laOldGiveaway) {</span>
+<span class="fc" id="L1335">            poJSON = oSalesQoutationVersionGiveaways.addGiveaway();</span>
+<span class="pc bpc" id="L1336" title="1 of 2 branches missed.">            if (!&quot;success&quot;.equals((String) poJSON.get(&quot;result&quot;))) return poJSON;</span>
+
+<span class="fc" id="L1338">            Model_Sales_Quotation_Version_Giveaways loNew = oSalesQoutationVersionGiveaways</span>
+<span class="fc" id="L1339">                    .Giveaway(oSalesQoutationVersionGiveaways.getGiveawayCount() - 1);</span>
+<span class="fc" id="L1340">            loNew.setStockId(loOld.getStockId());</span>
+<span class="fc" id="L1341">            loNew.setQuantity(loOld.getQuantity());</span>
+<span class="fc" id="L1342">            loNew.setRemarks(loOld.getRemarks());</span>
+<span class="fc" id="L1343">        }</span>
+
+<span class="fc" id="L1345">        oSalesQoutationFollowUp = null;     // follow-ups stay with the old version</span>
+<span class="fc" id="L1346">        pbLatestVersion = true;</span>
+<span class="fc" id="L1347">        psSupersedeVersionNo = lsOldVersionNo;</span>
+
+<span class="fc" id="L1349">        return setResult(&quot;success&quot;, &quot;New version has been created successfully. Please review the details before saving.&quot;);</span>
+    }
+
+    // ------------------------------------------------------------------
+    // print (Jasper) - report: reports/SalesQoutationVersion.jrxml
+    // ------------------------------------------------------------------
+
+    /**
+     * Prints the opened quotation version with {@code SalesQoutationVersion.jrxml}.
+     *
+     * &lt;p&gt;The report prints one version: header (date, customer, quotation no.,
+     * version), the motorcycle unit list ({@code ModelDataSource}), the giveaway /
+     * service list ({@code GiveAwayDataSource}), remarks and the signatories.
+     * On Windows the Jasper viewer is shown; on other systems a PDF is written
+     * to {@code sys.default.path.config/temp/}.&lt;/p&gt;
+     */
+    public JSONObject printTransaction() {
+        try {
+<span class="fc bfc" id="L1367" title="All 2 branches covered.">            if (poModel.getEditMode() != EditMode.READY) {</span>
+<span class="fc" id="L1368">                return setError(&quot;Open a quotation first. Printing is only available in view mode.&quot;);</span>
+            }
+
+<span class="nc" id="L1371">            JasperPrint loPrint = buildJasperPrint();</span>
+
+<span class="nc bnc" id="L1373" title="All 2 branches missed.">            if (System.getProperty(&quot;os.name&quot;).toLowerCase().contains(&quot;win&quot;)) {</span>
+<span class="nc" id="L1374">                javax.swing.SwingUtilities.invokeLater(() -&gt; net.sf.jasperreports.view.JasperViewer.viewReport(loPrint, false));</span>
+            } else {
+<span class="nc" id="L1376">                JasperExportManager.exportReportToPdfFile(loPrint, System.getProperty(&quot;sys.default.path.config&quot;)</span>
+<span class="nc" id="L1377">                        + &quot;/temp/&quot; + poModel.getTransactionNo() + &quot;.pdf&quot;);</span>
+            }
+
+<span class="nc" id="L1380">            return setResult(&quot;success&quot;, &quot;Quotation printed successfully.&quot;);</span>
+<span class="fc" id="L1381">        } catch (JRException | SQLException | GuanzonException e) {</span>
+<span class="fc" id="L1382">            e.printStackTrace();</span>
+<span class="fc" id="L1383">            return setError(&quot;Quotation print aborted! &quot; + e.getMessage());</span>
+        }
+    }
+
+    /**
+     * Exports the opened quotation version straight to a PDF (no preview), using
+     * the same report and data as {@link #printTransaction()}, then reveals the
+     * file in its folder. If an Explorer window for that folder is already open,
+     * it is reused: the exported file is selected and the window is brought to
+     * the front instead of opening another one.
+     *
+     * &lt;p&gt;The file is saved to {@code sys.default.path.config/temp/} as
+     * {@code &lt;customer&gt;_&lt;quotation no.&gt;_V&lt;version no.&gt;.pdf}. If a file with that
+     * name already exists, it is kept and the new export is saved as
+     * {@code ..._V&lt;version no.&gt; (1).pdf}, {@code (2)}, and so on. On success the
+     * result also has {@code path}, the full path of the PDF.&lt;/p&gt;
+     */
+    public JSONObject exportTransaction() {
+        try {
+<span class="fc bfc" id="L1402" title="All 2 branches covered.">            if (poModel.getEditMode() != EditMode.READY) {</span>
+<span class="fc" id="L1403">                return setError(&quot;Open a quotation first. Export is only available in view mode.&quot;);</span>
+            }
+
+<span class="nc" id="L1406">            JasperPrint loPrint = buildJasperPrint();</span>
+
+<span class="nc" id="L1408">            java.io.File loFolder = new java.io.File(System.getProperty(&quot;sys.default.path.config&quot;) + &quot;/temp/&quot;);</span>
+<span class="nc bnc" id="L1409" title="All 4 branches missed.">            if (!loFolder.exists() &amp;&amp; !loFolder.mkdirs()) {</span>
+<span class="nc" id="L1410">                return setError(&quot;Unable to create the export folder &quot; + loFolder.getAbsolutePath() + &quot;.&quot;);</span>
+            }
+
+<span class="nc" id="L1413">            String lsQuotationNo = poModel.getTransactionNo();</span>
+<span class="nc" id="L1414">            String lsCustomerName = sanitizeFileName(poModel.Client().getCompanyName());</span>
+<span class="nc" id="L1415">            int lnVersion = getVersionNumber(lsQuotationNo, oSalesQoutationVersion.Master().getTransactionNo());</span>
+
+<span class="nc" id="L1417">            String lsBaseName = lsCustomerName + &quot;_&quot; + lsQuotationNo + &quot;_V&quot; + lnVersion;</span>
+<span class="nc" id="L1418">            java.io.File loFile = getUniqueFile(loFolder, lsBaseName, &quot;.pdf&quot;);</span>
+
+<span class="nc" id="L1420">            JasperExportManager.exportReportToPdfFile(loPrint, loFile.getAbsolutePath());</span>
+
+<span class="nc" id="L1422">            boolean lbOpened = openFileLocation(loFile);</span>
+
+<span class="nc bnc" id="L1424" title="All 2 branches missed.">            JSONObject loResult = setResult(&quot;success&quot;, &quot;Quotation exported to:\n&quot; + loFile.getAbsolutePath()</span>
+                    + (lbOpened ? &quot;&quot; : &quot;\n(The folder could not be opened automatically.)&quot;));
+<span class="nc" id="L1426">            loResult.put(&quot;path&quot;, loFile.getAbsolutePath());</span>
+<span class="nc" id="L1427">            return loResult;</span>
+<span class="fc" id="L1428">        } catch (JRException | SQLException | GuanzonException e) {</span>
+<span class="fc" id="L1429">            e.printStackTrace();</span>
+<span class="fc" id="L1430">            return setError(&quot;Quotation export aborted! &quot; + e.getMessage());</span>
+        }
+    }
+    /**
+     * Returns a file in the folder that does not exist yet. If {@code baseName + extension}
+     * is free it is used as is; otherwise &quot; (1)&quot;, &quot; (2)&quot;, ... is appended to the base name.
+     */
+    private java.io.File getUniqueFile(java.io.File folder, String baseName, String extension) {
+<span class="fc" id="L1438">        java.io.File loFile = new java.io.File(folder, baseName + extension);</span>
+<span class="fc" id="L1439">        int lnCounter = 1;</span>
+<span class="fc bfc" id="L1440" title="All 2 branches covered.">        while (loFile.exists()) {</span>
+<span class="fc" id="L1441">            loFile = new java.io.File(folder, baseName + &quot; (&quot; + lnCounter + &quot;)&quot; + extension);</span>
+<span class="fc" id="L1442">            lnCounter++;</span>
+        }
+<span class="fc" id="L1444">        return loFile;</span>
+    }
+
+    /** Removes characters that are illegal in Windows file names (customer names can contain / : * ? etc.). */
+    private String sanitizeFileName(String name) {
+<span class="fc bfc" id="L1449" title="All 4 branches covered.">        if (name == null || name.trim().isEmpty()) {</span>
+<span class="fc" id="L1450">            return &quot;Quotation&quot;;</span>
+        }
+<span class="fc" id="L1452">        return name.replaceAll(&quot;[\\\\/:*?\&quot;&lt;&gt;|]&quot;, &quot;_&quot;).trim();</span>
+    }
+
+    /**
+     * Reveals a file in its folder. On Windows, an already-open Explorer window for
+     * that folder is reused (file re-selected, window brought to front); otherwise a
+     * new window is opened. Returns false if nothing could be opened.
+     */
+    private boolean openFileLocation(java.io.File file) {
+        try {
+<span class="pc bpc" id="L1462" title="1 of 2 branches missed.">            if (System.getProperty(&quot;os.name&quot;).toLowerCase().contains(&quot;win&quot;)) {</span>
+<span class="fc bfc" id="L1463" title="All 2 branches covered.">                if (reuseExplorerWindow(file)) {</span>
+<span class="fc" id="L1464">                    return true;</span>
+                }
+<span class="fc" id="L1466">                new ProcessBuilder(&quot;explorer.exe&quot;, &quot;/select,&quot;, file.getAbsolutePath()).start();</span>
+<span class="fc" id="L1467">                return true;</span>
+            }
+<span class="nc bnc" id="L1469" title="All 2 branches missed.">            if (java.awt.Desktop.isDesktopSupported()</span>
+<span class="nc bnc" id="L1470" title="All 2 branches missed.">                    &amp;&amp; java.awt.Desktop.getDesktop().isSupported(java.awt.Desktop.Action.OPEN)) {</span>
+<span class="nc" id="L1471">                java.awt.Desktop.getDesktop().open(file.getParentFile());</span>
+<span class="nc" id="L1472">                return true;</span>
+            }
+<span class="fc" id="L1474">        } catch (java.io.IOException | RuntimeException e) {</span>
+<span class="fc" id="L1475">            e.printStackTrace();</span>
+<span class="nc" id="L1476">        }</span>
+<span class="fc" id="L1477">        return false;</span>
+    }
+
+    /**
+     * Looks for an open Explorer window showing the file's folder. If found, selects
+     * the file in it and brings the window to the front.
+     *
+     * @return true if an existing window was reused, false if none was found (or the
+     *         lookup failed) and the caller should open a new one.
+     */
+    private boolean reuseExplorerWindow(java.io.File file) {
+        // Script is passed Base64/UTF-16LE encoded (-EncodedCommand) to avoid any quoting issues.
+        // The file path is passed through an environment variable for the same reason.
+<span class="fc" id="L1490">        final String script =</span>
+                &quot;$file = $env:EXPORT_FILE_PATH\n&quot;
+                        + &quot;$folder = [System.IO.Path]::GetDirectoryName($file).TrimEnd('\\')\n&quot;
+                        + &quot;$name = [System.IO.Path]::GetFileName($file)\n&quot;
+                        + &quot;$shell = New-Object -ComObject Shell.Application\n&quot;
+                        + &quot;$target = $null\n&quot;
+                        + &quot;foreach ($w in $shell.Windows()) {\n&quot;
+                        + &quot;  try {\n&quot;
+                        + &quot;    $p = $w.Document.Folder.Self.Path\n&quot;
+                        + &quot;    if ($p -and ($p.TrimEnd('\\') -ieq $folder)) { $target = $w; break }\n&quot;
+                        + &quot;  } catch {}\n&quot;
+                        + &quot;}\n&quot;
+                        + &quot;if ($null -eq $target) { exit 1 }\n&quot;
+                        + &quot;$item = $target.Document.Folder.ParseName($name)\n&quot;
+                        + &quot;if ($item) { $target.Document.SelectItem($item, 29) }\n&quot;   // 1=select 4=deselect others 8=ensure visible 16=focus
+                        + &quot;Add-Type -TypeDefinition @'\n&quot;
+                        + &quot;using System;\n&quot;
+                        + &quot;using System.Runtime.InteropServices;\n&quot;
+                        + &quot;public class WinFront {\n&quot;
+                        + &quot;  [DllImport(\&quot;user32.dll\&quot;)] public static extern bool SetForegroundWindow(IntPtr h);\n&quot;
+                        + &quot;  [DllImport(\&quot;user32.dll\&quot;)] public static extern bool ShowWindow(IntPtr h, int c);\n&quot;
+                        + &quot;  [DllImport(\&quot;user32.dll\&quot;)] public static extern bool IsIconic(IntPtr h);\n&quot;
+                        + &quot;  [DllImport(\&quot;user32.dll\&quot;)] public static extern void keybd_event(byte k, byte s, uint f, UIntPtr e);\n&quot;
+                        + &quot;}\n&quot;
+                        + &quot;'@\n&quot;
+                        + &quot;$h = [IntPtr]$target.HWND\n&quot;
+                        + &quot;if ([WinFront]::IsIconic($h)) { [void][WinFront]::ShowWindow($h, 9) }\n&quot;  // SW_RESTORE
+                        + &quot;[WinFront]::keybd_event(0x12, 0, 0, [UIntPtr]::Zero)\n&quot;                 // Alt down/up: lets us take foreground
+                        + &quot;[WinFront]::keybd_event(0x12, 0, 2, [UIntPtr]::Zero)\n&quot;
+                        + &quot;[void][WinFront]::SetForegroundWindow($h)\n&quot;
+                        + &quot;exit 0\n&quot;;
+
+        try {
+<span class="fc" id="L1523">            String lsEncoded = java.util.Base64.getEncoder()</span>
+<span class="fc" id="L1524">                    .encodeToString(script.getBytes(java.nio.charset.StandardCharsets.UTF_16LE));</span>
+
+<span class="fc" id="L1526">            ProcessBuilder loBuilder = new ProcessBuilder(</span>
+                    &quot;powershell.exe&quot;, &quot;-NoProfile&quot;, &quot;-NonInteractive&quot;,
+                    &quot;-WindowStyle&quot;, &quot;Hidden&quot;, &quot;-EncodedCommand&quot;, lsEncoded);
+<span class="fc" id="L1529">            loBuilder.environment().put(&quot;EXPORT_FILE_PATH&quot;, file.getAbsolutePath());</span>
+<span class="fc" id="L1530">            loBuilder.redirectErrorStream(true);</span>
+
+<span class="fc" id="L1532">            Process loProcess = loBuilder.start();</span>
+<span class="fc" id="L1533">            loProcess.getInputStream().close(); // we don't need the output</span>
+
+<span class="fc bfc" id="L1535" title="All 2 branches covered.">            if (!loProcess.waitFor(8, java.util.concurrent.TimeUnit.SECONDS)) {</span>
+<span class="fc" id="L1536">                loProcess.destroyForcibly();</span>
+<span class="fc" id="L1537">                return false;</span>
+            }
+<span class="fc bfc" id="L1539" title="All 2 branches covered.">            return loProcess.exitValue() == 0;</span>
+<span class="fc" id="L1540">        } catch (java.io.IOException e) {</span>
+<span class="fc" id="L1541">            e.printStackTrace();</span>
+<span class="fc" id="L1542">            return false;</span>
+<span class="nc" id="L1543">        } catch (InterruptedException e) {</span>
+<span class="nc" id="L1544">            Thread.currentThread().interrupt();</span>
+<span class="nc" id="L1545">            return false;</span>
+        }
+    }
+
+    /**
+     * Builds the filled report for the opened version (parameters, motorcycle
+     * units and giveaways). Shared by print and export so both give the same
+     * document.
+     */
+    private JasperPrint buildJasperPrint() throws JRException, SQLException, GuanzonException {
+<span class="fc" id="L1555">        String lsConfig = System.getProperty(&quot;sys.default.path.config&quot;);</span>
+<span class="fc" id="L1556">        String lsImages = lsConfig + &quot;/reports/images/&quot;;</span>
+<span class="fc" id="L1557">        String lsQuotationNo = poModel.getTransactionNo();</span>
+<span class="fc" id="L1558">        String lsVersionNo = oSalesQoutationVersion.Master().getTransactionNo();</span>
+
+        // ---------------- parameters ----------------
+<span class="fc" id="L1561">        Map&lt;String, Object&gt; parameters = new HashMap&lt;&gt;();</span>
+
+        // watermark: DRAFT until the version is confirmed
+<span class="fc" id="L1564">        String lsWatermark = lsImages + &quot;draft.png&quot;;</span>
+<span class="fc" id="L1565">        String lsVersionStat = oSalesQoutationVersion.Master().getTransactionStatus();</span>
+<span class="pc bpc" id="L1566" title="1 of 2 branches missed.">        if (SalesQoutationVersionStatic.CONFIRMED.equals(lsVersionStat)</span>
+<span class="pc bpc" id="L1567" title="1 of 2 branches missed.">                || SalesQoutationVersionStatic.SALES.equals(lsVersionStat)) {</span>
+<span class="nc" id="L1568">            lsWatermark = lsImages + &quot;approved.png&quot;;</span>
+        }
+<span class="fc" id="L1570">        parameters.put(&quot;watermarkImagePath&quot;, lsWatermark);</span>
+<span class="fc" id="L1571">        parameters.put(&quot;TitlewatermarkImagePath&quot;, lsImages + &quot;Guanzon We Believe Logo.png&quot;);</span>
+<span class="fc" id="L1572">        parameters.put(&quot;HeaderDefault&quot;, lsImages + &quot;TemplateHeader.png&quot;);</span>
+<span class="fc" id="L1573">        parameters.put(&quot;FooterDefault&quot;, lsImages + &quot;TemplateFooter.png&quot;);</span>
+
+        // header block
+<span class="fc" id="L1576">        java.util.Date ldDate = oSalesQoutationVersion.Master().getTransactionDate();</span>
+<span class="pc bpc" id="L1577" title="1 of 2 branches missed.">        parameters.put(&quot;QoutationDate&quot;, ldDate == null ? &quot;&quot;</span>
+<span class="fc" id="L1578">                : new java.text.SimpleDateFormat(&quot;MMMM dd, yyyy&quot;).format(ldDate));</span>
+<span class="fc" id="L1579">        parameters.put(&quot;CustomerName&quot;, safeString(poModel.Client().getCompanyName()));</span>
+<span class="nc" id="L1580">        parameters.put(&quot;CustomerAddress&quot;, getCustomerAddress());</span>
+<span class="nc" id="L1581">        parameters.put(&quot;QoutationTitle&quot;, safeString(oSalesQoutationVersion.Master().getTitleName()));</span>
+<span class="nc" id="L1582">        parameters.put(&quot;QoutationTransactionNo&quot;, safeString(lsQuotationNo));</span>
+<span class="nc" id="L1583">        parameters.put(&quot;QoutationVersion&quot;,</span>
+<span class="nc" id="L1584">                String.valueOf(getVersionNumber(lsQuotationNo, lsVersionNo)));</span>
+
+        // summary block
+//        if(oSalesQoutationVersion.Master().getDeliveryType() != null
+//                &amp;&amp; oSalesQoutationVersion.Master().getDeliveryType().equalsIgnoreCase(SalesQoutationVersionStatic.DeliveryType.DELIVERY)){
+//            parameters.put(&quot;DeliveryType&quot;, &quot;Deliver to Branch&quot;);
+//        } else if(oSalesQoutationVersion.Master().getDeliveryType() != null &amp;&amp; oSalesQoutationVersion.Master().getDeliveryType().equalsIgnoreCase(&quot;2&quot;)){
+//            parameters.put(&quot;DeliveryType&quot;, &quot;Deliver to Customer&quot;);
+//        } else {
+//            parameters.put(&quot;DeliveryType&quot;, &quot;N/A&quot;);
+//        }
+<span class="nc" id="L1595">        parameters.put(&quot;QoutationValidity&quot;, safeString(oSalesQoutationVersion.Master().getValidThruDate()));</span>
+<span class="nc" id="L1596">        parameters.put(&quot;Remarks&quot;, safeString(oSalesQoutationVersion.Master().getRemarks2()));</span>
+
+<span class="nc" id="L1598">        JSONObject loEntry = oSalesQoutationVersion.getEntryBy();</span>
+<span class="nc bnc" id="L1599" title="All 4 branches missed.">        parameters.put(&quot;PrepNme&quot;, loEntry != null &amp;&amp; !&quot;error&quot;.equals((String) loEntry.get(&quot;result&quot;))</span>
+<span class="nc" id="L1600">                ? safeString(loEntry.get(&quot;sCompnyNm&quot;)) : &quot;&quot;);</span>
+
+<span class="nc" id="L1602">        String lsConfirmedBy = &quot;&quot;;</span>
+<span class="nc bnc" id="L1603" title="All 2 branches missed.">        if (SalesQoutationVersionStatic.CONFIRMED.equals(lsVersionStat)</span>
+<span class="nc bnc" id="L1604" title="All 2 branches missed.">                || SalesQoutationVersionStatic.SALES.equals(lsVersionStat)) {</span>
+<span class="nc" id="L1605">            lsConfirmedBy = oSalesQoutationVersion.getConfirmedBy();</span>
+        }
+<span class="nc" id="L1607">        parameters.put(&quot;ConfirmNme&quot;, lsConfirmedBy);</span>
+
+        // declared by the report but not printed by its layout
+<span class="nc" id="L1610">        parameters.put(&quot;ReceivrNme&quot;, &quot;&quot;);</span>
+<span class="nc" id="L1611">        parameters.put(&quot;ImplentTo&quot;, &quot;&quot;);</span>
+<span class="nc" id="L1612">        parameters.put(&quot;ReferNo&quot;, lsVersionNo);</span>
+
+        // ---------------- motorcycle units ----------------
+<span class="nc" id="L1615">        List&lt;Map&lt;String, ?&gt;&gt; laModels = new ArrayList&lt;&gt;();</span>
+<span class="nc bnc" id="L1616" title="All 2 branches missed.">        for (int lnCtr = 0; lnCtr &lt; oSalesQoutationVersion.getDetailCount(); lnCtr++) {</span>
+<span class="nc" id="L1617">            Model_Sales_Quotation_Version_Detail loRow = oSalesQoutationVersion.Detail(lnCtr);</span>
+<span class="nc bnc" id="L1618" title="All 4 branches missed.">            if (loRow.getStockId() == null || loRow.getStockId().isEmpty()) continue;   // blank trailing row</span>
+
+<span class="nc" id="L1620">            double lnSrp = nz(loRow.getUnitPrice());</span>
+<span class="nc bnc" id="L1621" title="All 2 branches missed.">            if (lnSrp &lt;= 0.00) {   // fall back to the item's selling price</span>
+<span class="nc" id="L1622">                Object loPrice = loRow.Inventory().getSellingPrice();   // Object: works for boxed or primitive</span>
+<span class="nc bnc" id="L1623" title="All 2 branches missed.">                if (loPrice != null) {</span>
+                    try {
+<span class="nc" id="L1625">                        lnSrp = Double.parseDouble(loPrice.toString().replace(&quot;,&quot;, &quot;&quot;).trim());</span>
+<span class="nc" id="L1626">                    } catch (NumberFormatException e) {</span>
+<span class="nc" id="L1627">                        lnSrp = 0.00;</span>
+<span class="nc" id="L1628">                    }</span>
+                }
+            }
+<span class="nc" id="L1631">            int lnQty = (int) nz(loRow.getQuantity());</span>
+<span class="nc" id="L1632">            double lnDisc = nz(loRow.getDiscount());</span>
+<span class="nc" id="L1633">            double lnAddDisc = nz(loRow.getAdditionalDiscount());</span>
+<span class="nc" id="L1634">            double lnFreight = nz(loRow.getFreight());</span>
+<span class="nc" id="L1635">            double lnReg = nz(loRow.getRegistrationAmount());</span>
+<span class="nc" id="L1636">            double lnIns = nz(loRow.getInsuranceAmount());</span>
+
+            // same computation as the screen's item table
+<span class="nc" id="L1639">            double lnTotal = computeMCItemDetail(lnSrp, lnQty, lnDisc, lnAddDisc, lnFreight, lnReg, lnIns, null);</span>
+
+<span class="nc" id="L1641">            Map&lt;String, Object&gt; loMap = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L1642">            loMap.put(&quot;Brand&quot;, htmlSafe(loRow.Inventory().Brand().getDescription()));</span>
+<span class="nc" id="L1643">            loMap.put(&quot;Model&quot;, htmlSafe(loRow.Inventory().Model().getDescription()));</span>
+<span class="nc" id="L1644">            loMap.put(&quot;Description&quot;, htmlSafe(loRow.Inventory().getDescription()));</span>
+<span class="nc" id="L1645">            loMap.put(&quot;Color&quot;, htmlSafe(loRow.Inventory().Color().getDescription()));</span>
+<span class="nc" id="L1646">            loMap.put(&quot;SRP&quot;, money(lnSrp));</span>
+<span class="nc" id="L1647">            loMap.put(&quot;Discount&quot;, money(lnDisc));</span>
+<span class="nc" id="L1648">            loMap.put(&quot;Add_Desc&quot;, money(lnAddDisc));</span>
+<span class="nc" id="L1649">            loMap.put(&quot;Freight&quot;, money(lnFreight));</span>
+<span class="nc" id="L1650">            loMap.put(&quot;Reg&quot;, money(lnReg));</span>
+<span class="nc" id="L1651">            loMap.put(&quot;Insur&quot;, money(lnIns));</span>
+<span class="nc" id="L1652">            loMap.put(&quot;Qty&quot;, String.valueOf(lnQty));</span>
+<span class="nc" id="L1653">            loMap.put(&quot;Total&quot;, money(lnTotal));</span>
+<span class="nc" id="L1654">            laModels.add(loMap);</span>
+        }
+
+        // ---------------- giveaways and services ----------------
+<span class="nc" id="L1658">        List&lt;Map&lt;String, ?&gt;&gt; laGiveaways = new ArrayList&lt;&gt;();</span>
+<span class="nc bnc" id="L1659" title="All 2 branches missed.">        for (int lnCtr = 0; lnCtr &lt; oSalesQoutationVersionGiveaways.getGiveawayCount(); lnCtr++) {</span>
+<span class="nc" id="L1660">            Model_Sales_Quotation_Version_Giveaways loRow = oSalesQoutationVersionGiveaways.Giveaway(lnCtr);</span>
+<span class="nc bnc" id="L1661" title="All 4 branches missed.">            boolean lbHasItem = loRow.getStockId() != null &amp;&amp; !loRow.getStockId().trim().isEmpty();</span>
+<span class="nc bnc" id="L1662" title="All 4 branches missed.">            boolean lbHasQty = loRow.getQuantity() != null &amp;&amp; loRow.getQuantity() &gt; 0;</span>
+<span class="nc bnc" id="L1663" title="All 4 branches missed.">            boolean lbHasRemarks = loRow.getRemarks() != null &amp;&amp; !loRow.getRemarks().trim().isEmpty();</span>
+<span class="nc bnc" id="L1664" title="All 6 branches missed.">            if (!lbHasItem &amp;&amp; !lbHasQty &amp;&amp; !lbHasRemarks) continue;                      // blank trailing row</span>
+
+<span class="nc" id="L1666">            Map&lt;String, Object&gt; loMap = new HashMap&lt;&gt;();</span>
+<span class="nc bnc" id="L1667" title="All 2 branches missed.">            loMap.put(&quot;Inv_Type&quot;, lbHasItem ? &quot;Giveaways&quot; : &quot;Service&quot;);                  // same rule as the screen</span>
+<span class="nc bnc" id="L1668" title="All 2 branches missed.">            loMap.put(&quot;Barrcode&quot;, lbHasItem ? htmlSafe(loRow.Inventory().getBarCode()) : &quot;&quot;);</span>
+<span class="nc bnc" id="L1669" title="All 2 branches missed.">            loMap.put(&quot;Description&quot;, lbHasItem ? htmlSafe(loRow.Inventory().getDescription()) : &quot;&quot;);</span>
+<span class="nc bnc" id="L1670" title="All 2 branches missed.">            loMap.put(&quot;Qty&quot;, lbHasQty ? String.valueOf(loRow.getQuantity()) : &quot;&quot;);</span>
+<span class="nc" id="L1671">            loMap.put(&quot;Remarks&quot;, htmlSafe(loRow.getRemarks()));</span>
+<span class="nc" id="L1672">            laGiveaways.add(loMap);</span>
+        }
+
+        // the list components read these; the layout shows a section only when its flag is true
+<span class="nc bnc" id="L1676" title="All 2 branches missed.">        parameters.put(&quot;HasModel&quot;, !laModels.isEmpty());</span>
+<span class="nc bnc" id="L1677" title="All 2 branches missed.">        parameters.put(&quot;HasGiveAway&quot;, !laGiveaways.isEmpty());</span>
+<span class="nc" id="L1678">        parameters.put(&quot;HasBrand&quot;, false);</span>
+<span class="nc" id="L1679">        parameters.put(&quot;HasModelException&quot;, false);</span>
+<span class="nc" id="L1680">        parameters.put(&quot;ModelDataSource&quot;, new JRMapCollectionDataSource(laModels));</span>
+<span class="nc" id="L1681">        parameters.put(&quot;GiveAwayDataSource&quot;, new JRMapCollectionDataSource(laGiveaways));</span>
+<span class="nc" id="L1682">        parameters.put(&quot;BrandDataSource&quot;, new JRMapCollectionDataSource(new ArrayList&lt;Map&lt;String, ?&gt;&gt;()));</span>
+<span class="nc" id="L1683">        parameters.put(&quot;ModelExceptionDataSource&quot;, new JRMapCollectionDataSource(new ArrayList&lt;Map&lt;String, ?&gt;&gt;()));</span>
+
+        // ---------------- compile and fill ----------------
+<span class="nc" id="L1686">        String lsJrxml = lsConfig + &quot;/reports/SalesQoutationVersion.jrxml&quot;;</span>
+<span class="nc" id="L1687">        JasperReport loReport = JasperCompileManager.compileReport(lsJrxml);</span>
+
+        // the report has no query: one empty record makes the detail bands print once,
+        // and the data comes from the two list datasources above
+<span class="nc" id="L1691">        JasperPrint loPrint = JasperFillManager.fillReport(loReport, parameters, new JREmptyDataSource(1));</span>
+<span class="nc" id="L1692">        return loPrint;</span>
+    }
+
+    /** Customer address as one line: street, barangay, town, province. */
+    private String getCustomerAddress() throws SQLException, GuanzonException {
+<span class="fc" id="L1697">        StringBuilder loAddress = new StringBuilder();</span>
+<span class="fc" id="L1698">        appendPart(loAddress, poModel.ClientAddress().getAddress());</span>
+<span class="nc" id="L1699">        appendPart(loAddress, poModel.ClientAddress().Barangay().getBarangayName());</span>
+<span class="nc" id="L1700">        appendPart(loAddress, poModel.ClientAddress().Town().getDescription());</span>
+<span class="nc" id="L1701">        appendPart(loAddress, poModel.ClientAddress().Town().Province().getDescription());</span>
+<span class="nc" id="L1702">        return loAddress.toString();</span>
+    }
+
+    private void appendPart(StringBuilder builder, String part) {
+<span class="fc bfc" id="L1706" title="All 4 branches covered.">        if (part == null || part.trim().isEmpty()) return;</span>
+<span class="fc bfc" id="L1707" title="All 2 branches covered.">        if (builder.length() &gt; 0) builder.append(&quot;, &quot;);</span>
+<span class="fc" id="L1708">        builder.append(part.trim());</span>
+<span class="fc" id="L1709">    }</span>
+
+    private String safeString(Object value) {
+<span class="fc bfc" id="L1712" title="All 2 branches covered.">        return value == null ? &quot;&quot; : value.toString();</span>
+    }
+
+    private double nz(Number value) {
+<span class="fc bfc" id="L1716" title="All 2 branches covered.">        return value == null ? 0.00 : value.doubleValue();</span>
+    }
+
+    private String money(double value) {
+<span class="fc" id="L1720">        return String.format(&quot;%,.2f&quot;, value);</span>
+    }
+
+    /** The report's list fields use markup=&quot;html&quot;, so escape characters that would be read as tags. */
+    private String htmlSafe(String value) {
+<span class="fc bfc" id="L1725" title="All 2 branches covered.">        if (value == null) return &quot;&quot;;</span>
+<span class="fc" id="L1726">        return value.replace(&quot;&amp;&quot;, &quot;&amp;amp;&quot;).replace(&quot;&lt;&quot;, &quot;&amp;lt;&quot;).replace(&quot;&gt;&quot;, &quot;&amp;gt;&quot;);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

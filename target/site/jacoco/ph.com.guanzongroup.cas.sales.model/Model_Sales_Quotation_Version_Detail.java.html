@@ -1,0 +1,262 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Model_Sales_Quotation_Version_Detail.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">cas-sales</a> &gt; <a href="index.source.html" class="el_package">ph.com.guanzongroup.cas.sales.model</a> &gt; <span class="el_source">Model_Sales_Quotation_Version_Detail.java</span></div><h1>Model_Sales_Quotation_Version_Detail.java</h1><pre class="source lang-java linenums">
+        /*
+         * To change this license header, choose License Headers in Project Properties.
+         * To change this template file, choose Tools | Templates
+         * and open the template in the editor.
+         */
+        package ph.com.guanzongroup.cas.sales.model;
+
+import org.guanzon.appdriver.agent.services.Model;
+import org.guanzon.appdriver.agent.services.ReferenceCache;
+import org.guanzon.appdriver.base.GuanzonException;
+import org.guanzon.appdriver.base.MiscUtil;
+import org.guanzon.appdriver.base.SQLUtil;
+import org.guanzon.appdriver.constant.EditMode;
+import org.guanzon.cas.inv.model.Model_Inventory;
+import org.guanzon.cas.parameter.model.Model_Term;
+import org.json.simple.JSONObject;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.util.Date;
+
+/**
+ * Model class for the Sales Quotation Version Detail transaction.
+ *
+ * &lt;p&gt;
+ * This class represents a line item of a Sales Quotation Version. Each
+ * record is identified by the combination of {@code sTransNox} (the parent
+ * version's transaction number) and {@code nEntryNox} (the line entry
+ * number), and captures the stocked item, quantity, pricing, discounts,
+ * freight, registration/insurance amounts, and VAT flag for that line.
+ * &lt;/p&gt;
+ *
+ * &lt;p&gt;
+ * Detail records do not generate their own transaction number; the
+ * {@code sTransNox} value is inherited from the parent
+ * {@code Sales_Quotation_Version_Master} record, and {@code nEntryNox} is
+ * expected to be assigned by the caller.
+ * &lt;/p&gt;
+ *
+ * @author TEEJEI DE CELIS
+ * @date September 2x, 2026
+ * @module Sales Quotation Version Detail
+ * @version 1.0
+ */
+<span class="fc" id="L47">public class Model_Sales_Quotation_Version_Detail extends Model {</span>
+
+    private Model_Inventory poInventory;
+    @Override
+    public void initialize() {
+        try {
+<span class="fc" id="L53">            poEntity = MiscUtil.xml2ResultSet(</span>
+<span class="fc" id="L54">                    System.getProperty(&quot;sys.default.path.metadata&quot;) + XML,</span>
+<span class="fc" id="L55">                    getTable()</span>
+            );
+
+<span class="fc" id="L58">            poEntity.last();</span>
+<span class="fc" id="L59">            poEntity.moveToInsertRow();</span>
+
+<span class="fc" id="L61">            MiscUtil.initRowSet(poEntity);</span>
+
+            // assign default values
+<span class="fc" id="L64">            poEntity.updateObject(&quot;nEntryNox&quot;, 0);</span>
+<span class="fc" id="L65">            poEntity.updateNull(&quot;dModified&quot;);</span>
+<span class="fc" id="L66">            poEntity.updateObject(&quot;nQuantity&quot;, 0);</span>
+<span class="fc" id="L67">            poEntity.updateDouble(&quot;nUnitPrce&quot;, 0.00);</span>
+<span class="fc" id="L68">            poEntity.updateDouble(&quot;nDiscount&quot;, 0.00);</span>
+<span class="fc" id="L69">            poEntity.updateDouble(&quot;nAddDiscx&quot;, 0.00);</span>
+<span class="fc" id="L70">            poEntity.updateDouble(&quot;nFreightx&quot;, 0.00);</span>
+<span class="fc" id="L71">            poEntity.updateDouble(&quot;nRegisAmt&quot;, 0.00);</span>
+<span class="fc" id="L72">            poEntity.updateDouble(&quot;nInsAmtxx&quot;, 0.00);</span>
+<span class="fc" id="L73">            poEntity.updateString(&quot;cWithVATx&quot;, &quot;0&quot;);</span>
+            // end - assign default values
+
+<span class="fc" id="L76">            poEntity.insertRow();</span>
+<span class="fc" id="L77">            poEntity.moveToCurrentRow();</span>
+
+<span class="fc" id="L79">            poEntity.absolute(1);</span>
+
+<span class="fc" id="L81">            ID = &quot;sTransNox&quot;;</span>
+<span class="fc" id="L82">            ID2 = &quot;nEntryNox&quot;;</span>
+
+<span class="nc" id="L84">        } catch (SQLException e) {</span>
+<span class="nc" id="L85">            logwrapr.severe(e.getMessage());</span>
+<span class="nc" id="L86">            System.exit(1);</span>
+<span class="fc" id="L87">        }</span>
+<span class="fc" id="L88">    }</span>
+
+    @Override
+    public String getNextCode() {
+<span class="fc" id="L92">        return &quot;&quot;;</span>
+    }
+
+    public JSONObject setTransactionNo(String transactionNo) {
+<span class="fc" id="L96">        return setValue(&quot;sTransNox&quot;, transactionNo);</span>
+    }
+
+    public String getTransactionNo() {
+<span class="nc" id="L100">        return (String) getValue(&quot;sTransNox&quot;);</span>
+    }
+
+    public JSONObject setEntryNo(int entryNo) {
+<span class="fc" id="L104">        return setValue(&quot;nEntryNox&quot;, entryNo);</span>
+    }
+
+    public Integer getEntryNo() {
+<span class="nc" id="L108">        return (Integer) getValue(&quot;nEntryNox&quot;);</span>
+    }
+
+    public JSONObject setPromoCode(String promoCode) {
+<span class="fc" id="L112">        return setValue(&quot;sPromCode&quot;, promoCode);</span>
+    }
+
+    public String getPromoCode() {
+<span class="fc" id="L116">        return (String) getValue(&quot;sPromCode&quot;);</span>
+    }
+
+    public JSONObject setStockId(String stockId) {
+<span class="fc" id="L120">        return setValue(&quot;sStockIDx&quot;, stockId);</span>
+    }
+
+    public String getStockId() {
+<span class="fc" id="L124">        return (String) getValue(&quot;sStockIDx&quot;);</span>
+    }
+
+    public JSONObject setQuantity(Integer quantity) {
+<span class="fc" id="L128">        return setValue(&quot;nQuantity&quot;, quantity);</span>
+    }
+
+    public Integer getQuantity() {
+<span class="fc" id="L132">        return (Integer) getValue(&quot;nQuantity&quot;);</span>
+    }
+
+    public JSONObject setUnitPrice(Double unitPrice) {
+<span class="fc" id="L136">        return setValue(&quot;nUnitPrce&quot;, unitPrice);</span>
+    }
+
+    public double getUnitPrice() {
+<span class="fc" id="L140">        return Double.parseDouble(String.valueOf(getValue(&quot;nUnitPrce&quot;)));</span>
+    }
+
+    public JSONObject setDiscount(Double discount) {
+<span class="fc" id="L144">        return setValue(&quot;nDiscount&quot;, discount);</span>
+    }
+
+    public double getDiscount() {
+<span class="fc" id="L148">        return Double.parseDouble(String.valueOf(getValue(&quot;nDiscount&quot;)));</span>
+    }
+
+    public JSONObject setAdditionalDiscount(Double additionalDiscount) {
+<span class="fc" id="L152">        return setValue(&quot;nAddDiscx&quot;, additionalDiscount);</span>
+    }
+
+    public double getAdditionalDiscount() {
+<span class="fc" id="L156">        return Double.parseDouble(String.valueOf(getValue(&quot;nAddDiscx&quot;)));</span>
+    }
+
+    public JSONObject setFreight(Double freight) {
+<span class="fc" id="L160">        return setValue(&quot;nFreightx&quot;, freight);</span>
+    }
+
+    public double getFreight() {
+<span class="fc" id="L164">        return Double.parseDouble(String.valueOf(getValue(&quot;nFreightx&quot;)));</span>
+    }
+
+    public JSONObject setRegistrationAmount(double registrationAmount) {
+<span class="fc" id="L168">        return setValue(&quot;nRegisAmt&quot;, registrationAmount);</span>
+    }
+
+    public double getRegistrationAmount() {
+<span class="fc" id="L172">        return Double.parseDouble(String.valueOf(getValue(&quot;nRegisAmt&quot;)));</span>
+    }
+
+    public JSONObject setInsuranceAmount(double insuranceAmount) {
+<span class="fc" id="L176">        return setValue(&quot;nInsAmtxx&quot;, insuranceAmount);</span>
+    }
+
+    public double getInsuranceAmount() {
+<span class="fc" id="L180">        return Double.parseDouble(String.valueOf(getValue(&quot;nInsAmtxx&quot;)));</span>
+    }
+
+    public JSONObject setWithVAT(String withVat) {
+<span class="nc" id="L184">        return setValue(&quot;cWithVATx&quot;, withVat);</span>
+    }
+
+    public String getWithVAT() {
+<span class="nc" id="L188">        return (String) getValue(&quot;cWithVATx&quot;);</span>
+    }
+
+    public JSONObject setRemarks(String remarks) {
+<span class="nc" id="L192">        return setValue(&quot;sRemarksx&quot;, remarks);</span>
+    }
+
+    public String getRemarks() {
+<span class="nc" id="L196">        return (String) getValue(&quot;sRemarksx&quot;);</span>
+    }
+
+    public JSONObject setModifiedDate(Date modifiedDate) {
+<span class="nc" id="L200">        return setValue(&quot;dModified&quot;, modifiedDate);</span>
+    }
+
+    public Date getModifiedDate() {
+<span class="nc" id="L204">        return (Date) getValue(&quot;dModified&quot;);</span>
+    }
+
+    public Timestamp getTimeStamp() {
+<span class="nc" id="L208">        return (Timestamp) getValue(&quot;dTimeStmp&quot;);</span>
+    }
+
+    public Model_Inventory Inventory() throws SQLException, GuanzonException {
+
+<span class="fc bfc" id="L213" title="All 2 branches covered.">        if (poInventory == null) {</span>
+<span class="fc" id="L214">            poInventory = new Model_Inventory();</span>
+<span class="fc" id="L215">            poInventory.setApplicationDriver(poGRider);</span>
+<span class="fc" id="L216">            poInventory.setXML(&quot;Model_Inventory&quot;);</span>
+<span class="fc" id="L217">            poInventory.setTableName(&quot;Inventory&quot;);</span>
+<span class="fc" id="L218">            poInventory.initialize();</span>
+        }
+
+<span class="fc" id="L221">        String stockId = (String) (</span>
+<span class="pc bpc" id="L222" title="1 of 2 branches missed.">                getValue(&quot;sStockIDx&quot;) == null</span>
+                        ? &quot;&quot;
+<span class="fc" id="L224">                        : getValue(&quot;sStockIDx&quot;)</span>
+        );
+
+<span class="pc bpc" id="L227" title="1 of 2 branches missed.">        if (!&quot;&quot;.equals(stockId)) {</span>
+
+<span class="fc bfc" id="L229" title="All 2 branches covered.">            if (poInventory.getEditMode() == EditMode.READY</span>
+<span class="pc bpc" id="L230" title="1 of 2 branches missed.">                    &amp;&amp; poInventory.getStockId().equals(stockId)) {</span>
+<span class="fc" id="L231">                return poInventory;</span>
+            }
+
+<span class="fc bfc" id="L234" title="All 2 branches covered.">            if (ReferenceCache.tryLoad(</span>
+                    &quot;Inventory&quot;,
+                    stockId,
+                    poInventory)) {
+<span class="fc" id="L238">                return poInventory;</span>
+            }
+
+<span class="fc" id="L241">            poJSON = poInventory.openRecord(stockId);</span>
+
+<span class="pc bpc" id="L243" title="1 of 2 branches missed.">            if (&quot;success&quot;.equals((String) poJSON.get(&quot;result&quot;))) {</span>
+<span class="fc" id="L244">                ReferenceCache.store(</span>
+                        &quot;Inventory&quot;,
+                        stockId,
+                        poInventory
+                );
+<span class="fc" id="L249">                return poInventory;</span>
+            } else {
+<span class="nc" id="L251">                poInventory.initialize();</span>
+<span class="nc" id="L252">                return poInventory;</span>
+            }
+
+        } else {
+<span class="nc" id="L256">            poInventory.initialize();</span>
+<span class="nc" id="L257">            return poInventory;</span>
+        }
+    }
+}
+
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

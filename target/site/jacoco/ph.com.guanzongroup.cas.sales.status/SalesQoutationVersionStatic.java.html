@@ -1,0 +1,280 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SalesQoutationVersionStatic.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">cas-sales</a> &gt; <a href="index.source.html" class="el_package">ph.com.guanzongroup.cas.sales.status</a> &gt; <span class="el_source">SalesQoutationVersionStatic.java</span></div><h1>SalesQoutationVersionStatic.java</h1><pre class="source lang-java linenums">/*
+ * -----------------------------------------------------------------------------
+ * Project       : CAS Sales
+ * Module        : Quotation Version
+ * Class Name    : SalesQoutationVersionStatic
+ *
+ * Description   :
+ * Contains static constants used by the Quotation Version module,
+ * including quotation version status identifiers.
+ *
+ * Author        : TEEJEI DE CELIS
+ * Date Created  : September 26, 2026
+ * -----------------------------------------------------------------------------
+ */
+package ph.com.guanzongroup.cas.sales.status;
+
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+
+/**
+ * Defines static constants used to represent the status of a Quotation Version
+ * transaction.
+ *
+ * &lt;p&gt;
+ * This class centralizes the status identifiers used throughout the Quotation
+ * Version module to prevent hard-coded values and ensure consistent status
+ * handling across the application.
+ * &lt;/p&gt;
+ *
+ * &lt;p&gt;
+ * The quotation version statuses are represented by the following values:
+ * &lt;/p&gt;
+ * &lt;ul&gt;
+ *     &lt;li&gt;{@link #OPEN} - The quotation version is open and available for processing.&lt;/li&gt;
+ *     &lt;li&gt;{@link #CONFIRMED} - The quotation version has been confirmed.&lt;/li&gt;
+ *     &lt;li&gt;{@link #SALES} - The quotation version has been converted to a sales transaction.&lt;/li&gt;
+ *     &lt;li&gt;{@link #REJECTED} - The quotation version has been rejected.&lt;/li&gt;
+ *     &lt;li&gt;{@link #VOID} - The quotation version has been voided.&lt;/li&gt;
+ *     &lt;li&gt;{@link #SUPERCEDED} - The quotation version has been superseded by another version.&lt;/li&gt;
+ *     &lt;li&gt;{@link #EXPIRED} - The quotation version has exceeded its validity period.&lt;/li&gt;
+ * &lt;/ul&gt;
+ *
+ * @author TEEJEI DE CELIS
+ * @date September 26, 2026
+ * @module Quotation
+ * @since 1.0
+ */
+public final class SalesQoutationVersionStatic {
+    public static final String SOURCE_CODE = &quot;SQVr&quot;;
+
+    public static final String BIG_BIKE = &quot;0000014&quot;;
+    public static final String MATRIX_REGULAR_BIKE_NAME = &quot;SALES QOUTATION MATRIX&quot;;
+    public static final String MATRIX_BIG_BIKE_NAME = &quot;SALES QOUTATION BIG BIKE MATRIX&quot;;
+    /**
+     * Prevents instantiation of this utility class.
+     */
+<span class="nc" id="L57">    private SalesQoutationVersionStatic() {</span>
+<span class="nc" id="L58">        throw new UnsupportedOperationException(&quot;Utility class cannot be instantiated.&quot;);</span>
+    }
+
+    // -------------------------------------------------------------------------
+    // Quotation Version Status
+    // -------------------------------------------------------------------------
+
+    /**
+     * Indicates that the quotation version is open and available for processing.
+     */
+    public static final String OPEN = &quot;0&quot;;
+
+    /**
+     * Indicates that the quotation version has been confirmed.
+     */
+    public static final String CONFIRMED = &quot;1&quot;;
+
+    /**
+     * Indicates that the quotation version has been converted to a sales transaction.
+     */
+    public static final String SALES = &quot;2&quot;;
+
+    /**
+     * Indicates that the quotation version has been rejected.
+     */
+    public static final String REJECTED = &quot;3&quot;;
+
+    /**
+     * Indicates that the quotation version has been voided.
+     */
+    public static final String VOID = &quot;4&quot;;
+
+    /**
+     * Indicates that the quotation version has been superseded by another version.
+     */
+    public static final String SUPERCEDED = &quot;5&quot;;
+
+    /**
+     * Indicates that the quotation version has exceeded its validity period.
+     */
+    public static final String EXPIRED = &quot;6&quot;;
+
+
+    public static final class STATUS_DESCRIPTION {
+
+        /**
+         * Prevents instantiation of this utility class.
+         */
+<span class="nc" id="L106">        private STATUS_DESCRIPTION() {</span>
+<span class="nc" id="L107">            throw new UnsupportedOperationException(&quot;Utility class cannot be instantiated.&quot;);</span>
+        }
+
+        public static final String OPEN = &quot;OPEN&quot;;
+
+        /**
+         * Indicates that the quotation version has been confirmed.
+         */
+        public static final String CONFIRMED = &quot;CONFIRMED&quot;;
+
+        /**
+         * Indicates that the quotation version has been converted to a sales transaction.
+         */
+        public static final String SALES = &quot;SALES&quot;;
+
+        /**
+         * Indicates that the quotation version has been rejected.
+         */
+        public static final String REJECTED = &quot;LOST&quot;;
+
+        /**
+         * Indicates that the quotation version has been voided.
+         */
+        public static final String VOID = &quot;VOID&quot;;
+
+        /**
+         * Indicates that the quotation version has been superseded by another version.
+         */
+        public static final String SUPERCEDED = &quot;SUPERCEDED&quot;;
+
+        /**
+         * Indicates that the quotation version has exceeded its validity period.
+         */
+        public static final String EXPIRED = &quot;EXPIRED&quot;;
+
+    }
+
+
+// -------------------------------------------------------------------------
+    // Vehicle Types
+    // -------------------------------------------------------------------------
+
+    /**
+     * Payment type identifiers used by the Sales Quotation Version module.
+     */
+    public static final class PaymentType {
+
+        /**
+         * Prevents instantiation of this utility class.
+         */
+<span class="nc" id="L157">        private PaymentType() {</span>
+<span class="nc" id="L158">            throw new UnsupportedOperationException(&quot;Utility class cannot be instantiated.&quot;);</span>
+        }
+
+        /**
+         * Cash.
+         */
+        public static final String CASH = &quot;0&quot;;
+
+        /**
+         * Cash Balance.
+         */
+        public static final String CASH_BALANCE = &quot;1&quot;;
+
+        /**
+         * Term.
+         */
+        public static final String TERM = &quot;2&quot;;
+    }
+
+    /**
+     * Payment type descriptions used in JavaFX ComboBox controls.
+     */
+<span class="nc" id="L180">    public static final ObservableList&lt;String&gt; UNIT_TYPE_DESCRIPTION =</span>
+<span class="nc" id="L181">            FXCollections.observableArrayList(</span>
+                    &quot;Cash&quot;,
+                    &quot;Cash Balance&quot;,
+                    &quot;Term&quot;,
+                    &quot;&quot;
+            );
+
+    /**
+     * Payment type codes corresponding to {@link PaymentType}.
+     */
+<span class="nc" id="L191">    public static final String[] PAYMENT_TYPE_CODE = {</span>
+            &quot;0&quot;,
+            &quot;1&quot;,
+            &quot;2&quot;,
+            null
+    };
+
+    public static final class DeliveryType {
+
+        /**
+         * Prevents instantiation of this utility class.
+         */
+<span class="nc" id="L203">        private DeliveryType() {</span>
+<span class="nc" id="L204">            throw new UnsupportedOperationException(&quot;Utility class cannot be instantiated.&quot;);</span>
+        }
+
+        /**
+         * DELIVERY.
+         */
+        public static final String DELIVERY = &quot;0&quot;;
+
+        /**
+         * PICK_UP.
+         */
+        public static final String PICK_UP = &quot;1&quot;;
+
+
+    }
+
+    /**
+     * Delivery type descriptions used in JavaFX ComboBox controls.
+     */
+<span class="nc" id="L223">    public static final ObservableList&lt;String&gt; DELIVERY_TYPE_DESCRIPTION =</span>
+<span class="nc" id="L224">            FXCollections.observableArrayList(</span>
+                    &quot;Delivery&quot;,
+                    &quot;Pick Up&quot;,
+                    &quot;&quot;
+            );
+
+    /**
+     * Delivery type codes corresponding to {@link DeliveryType}.
+     */
+<span class="nc" id="L233">    public static final String[] DELIVERY_TYPE_CODE = {</span>
+            &quot;0&quot;,
+            &quot;1&quot;,
+            null
+    };
+
+    public static final class VatType {
+
+        /**
+         * Prevents instantiation of this utility class.
+         */
+<span class="nc" id="L244">        private VatType() {</span>
+<span class="nc" id="L245">            throw new UnsupportedOperationException(&quot;Utility class cannot be instantiated.&quot;);</span>
+        }
+
+        /**
+         * VAT_INCLUSIVE.
+         */
+        public static final String VAT_INCLUSIVE = &quot;0&quot;;
+
+        /**
+         * VAT_EXCLUSIVE.
+         */
+        public static final String VAT_EXCLUSIVE = &quot;1&quot;;
+
+
+    }
+
+    /**
+     * VAT type descriptions used in JavaFX ComboBox controls.
+     */
+<span class="nc" id="L264">    public static final ObservableList&lt;String&gt; VAT_TYPE_DESCRIPTION =</span>
+<span class="nc" id="L265">            FXCollections.observableArrayList(</span>
+                    &quot;VAT Inclusive&quot;,
+                    &quot;VAT Exclusive&quot;,
+                    &quot;&quot;
+            );
+
+    /**
+     * VAT type codes corresponding to {@link VatType}.
+     */
+<span class="nc" id="L274">    public static final String[] VAT_TYPE_CODE = {</span>
+            &quot;0&quot;,
+            &quot;1&quot;,
+            null
+    };
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

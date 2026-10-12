@@ -9,7 +9,7 @@ import ph.com.guanzongroup.cas.sales.model.Model_Sales_Reservation_Master;
 
 import java.util.ArrayList;
 
-<span class="fc" id="L12">public class Sales_Reservation_Validator_MP implements GValidator{</span>
+<span class="nc" id="L12">public class Sales_Reservation_Validator_MP implements GValidator{</span>
     GRiderCAS poGrider;
     String psTranStat;
     JSONObject poJSON;
@@ -19,18 +19,18 @@ import java.util.ArrayList;
 
     @Override
     public void setApplicationDriver(Object applicationDriver) {
-<span class="fc" id="L22">        poGrider = (GRiderCAS) applicationDriver;</span>
-<span class="fc" id="L23">    }</span>
+<span class="nc" id="L22">        poGrider = (GRiderCAS) applicationDriver;</span>
+<span class="nc" id="L23">    }</span>
 
     @Override
     public void setTransactionStatus(String transactionStatus) {
-<span class="fc" id="L27">        psTranStat = transactionStatus;</span>
-<span class="fc" id="L28">    }</span>
+<span class="nc" id="L27">        psTranStat = transactionStatus;</span>
+<span class="nc" id="L28">    }</span>
 
     @Override
     public void setMaster(Object value) {
-<span class="fc" id="L32">        poMaster = (Model_Sales_Reservation_Master) value;</span>
-<span class="fc" id="L33">    }</span>
+<span class="nc" id="L32">        poMaster = (Model_Sales_Reservation_Master) value;</span>
+<span class="nc" id="L33">    }</span>
 
     @Override
     public void setDetail(ArrayList&lt;Object&gt; value) {
@@ -47,52 +47,52 @@ import java.util.ArrayList;
 
     @Override
     public JSONObject validate() {
-<span class="pc bpc" id="L50" title="2 of 5 branches missed.">        switch (psTranStat){</span>
+<span class="nc bnc" id="L50" title="All 5 branches missed.">        switch (psTranStat){</span>
             case Sales_Reservation_Static.OPEN:
-<span class="fc" id="L52">                return validateNew();</span>
+<span class="nc" id="L52">                return validateNew();</span>
             case Sales_Reservation_Static.CONFIRMED:
-<span class="fc" id="L54">                return validateConfirmed();</span>
+<span class="nc" id="L54">                return validateConfirmed();</span>
             case Sales_Reservation_Static.PAID:
 <span class="nc" id="L56">                return validatePaid();</span>
             case Sales_Reservation_Static.CANCELLED:
 <span class="nc" id="L58">                return validateCancelled();</span>
             default:
-<span class="fc" id="L60">                poJSON = new JSONObject();</span>
-<span class="fc" id="L61">                poJSON.put(&quot;result&quot;, &quot;success&quot;);</span>
+<span class="nc" id="L60">                poJSON = new JSONObject();</span>
+<span class="nc" id="L61">                poJSON.put(&quot;result&quot;, &quot;success&quot;);</span>
         }
         
-<span class="fc" id="L64">        return poJSON;</span>
+<span class="nc" id="L64">        return poJSON;</span>
     }
     
     private JSONObject validateNew(){
-<span class="fc" id="L68">        poJSON = new JSONObject();</span>
+<span class="nc" id="L68">        poJSON = new JSONObject();</span>
         
-<span class="pc bpc" id="L70" title="2 of 4 branches missed.">        if (poMaster.getIndustryID()== null || poMaster.getIndustryID().isEmpty()) {</span>
+<span class="nc bnc" id="L70" title="All 4 branches missed.">        if (poMaster.getIndustryID()== null || poMaster.getIndustryID().isEmpty()) {</span>
 <span class="nc" id="L71">            poJSON.put(&quot;message&quot;, &quot;Industry is missing or not set.&quot;);</span>
 <span class="nc" id="L72">            return poJSON;</span>
         }
         
-<span class="pc bpc" id="L75" title="2 of 4 branches missed.">        if (poMaster.getBranchCode()== null || poMaster.getBranchCode().isEmpty()) {</span>
+<span class="nc bnc" id="L75" title="All 4 branches missed.">        if (poMaster.getBranchCode()== null || poMaster.getBranchCode().isEmpty()) {</span>
 <span class="nc" id="L76">            poJSON.put(&quot;message&quot;, &quot;Invalid Branch&quot;);</span>
 <span class="nc" id="L77">            return poJSON;</span>
         }
 
-<span class="pc bpc" id="L80" title="2 of 4 branches missed.">        if (poMaster.getIndustryID()== null || poMaster.getIndustryID().isEmpty()) {</span>
+<span class="nc bnc" id="L80" title="All 4 branches missed.">        if (poMaster.getIndustryID()== null || poMaster.getIndustryID().isEmpty()) {</span>
 <span class="nc" id="L81">            poJSON.put(&quot;message&quot;, &quot;Industry is missing or not set.&quot;);</span>
 <span class="nc" id="L82">            return poJSON;</span>
         }
         
-<span class="pc bpc" id="L85" title="2 of 4 branches missed.">        if (poMaster.getCompanyID()== null || poMaster.getCompanyID().isEmpty()) {</span>
+<span class="nc bnc" id="L85" title="All 4 branches missed.">        if (poMaster.getCompanyID()== null || poMaster.getCompanyID().isEmpty()) {</span>
 <span class="nc" id="L86">            poJSON.put(&quot;message&quot;, &quot;Company is missing or not set.&quot;);</span>
 <span class="nc" id="L87">            return poJSON;</span>
         }
         
-<span class="pc bpc" id="L90" title="2 of 4 branches missed.">        if (poMaster.getClientID()== null || poMaster.getClientID().isEmpty()) {</span>
+<span class="nc bnc" id="L90" title="All 4 branches missed.">        if (poMaster.getClientID()== null || poMaster.getClientID().isEmpty()) {</span>
 <span class="nc" id="L91">            poJSON.put(&quot;message&quot;, &quot;Client ID is missing or not set.&quot;);</span>
 <span class="nc" id="L92">            return poJSON;</span>
         }        
         
-<span class="pc bpc" id="L95" title="2 of 4 branches missed.">        if (poMaster.getAddressID()== null || poMaster.getAddressID().isEmpty()) {</span>
+<span class="nc bnc" id="L95" title="All 4 branches missed.">        if (poMaster.getAddressID()== null || poMaster.getAddressID().isEmpty()) {</span>
 <span class="nc" id="L96">            poJSON.put(&quot;message&quot;, &quot;Adress is missing or not set.&quot;);</span>
 <span class="nc" id="L97">            return poJSON;</span>
         }
@@ -102,39 +102,39 @@ import java.util.ArrayList;
 //            return poJSON;
 //        }
         
-<span class="fc" id="L105">        poJSON.put(&quot;result&quot;, &quot;success&quot;);</span>
-<span class="fc" id="L106">        return poJSON;</span>
+<span class="nc" id="L105">        poJSON.put(&quot;result&quot;, &quot;success&quot;);</span>
+<span class="nc" id="L106">        return poJSON;</span>
     }
     
     private JSONObject validateConfirmed(){
-<span class="fc" id="L110">        poJSON = new JSONObject();</span>
+<span class="nc" id="L110">        poJSON = new JSONObject();</span>
         
-<span class="pc bpc" id="L112" title="2 of 4 branches missed.">        if (poMaster.getIndustryID()== null || poMaster.getIndustryID().isEmpty()) {</span>
+<span class="nc bnc" id="L112" title="All 4 branches missed.">        if (poMaster.getIndustryID()== null || poMaster.getIndustryID().isEmpty()) {</span>
 <span class="nc" id="L113">            poJSON.put(&quot;message&quot;, &quot;Industry is missing or not set.&quot;);</span>
 <span class="nc" id="L114">            return poJSON;</span>
         }
         
-<span class="pc bpc" id="L117" title="2 of 4 branches missed.">        if (poMaster.getBranchCode()== null || poMaster.getBranchCode().isEmpty()) {</span>
+<span class="nc bnc" id="L117" title="All 4 branches missed.">        if (poMaster.getBranchCode()== null || poMaster.getBranchCode().isEmpty()) {</span>
 <span class="nc" id="L118">            poJSON.put(&quot;message&quot;, &quot;Invalid Branch&quot;);</span>
 <span class="nc" id="L119">            return poJSON;</span>
         }
 
-<span class="pc bpc" id="L122" title="2 of 4 branches missed.">        if (poMaster.getIndustryID()== null || poMaster.getIndustryID().isEmpty()) {</span>
+<span class="nc bnc" id="L122" title="All 4 branches missed.">        if (poMaster.getIndustryID()== null || poMaster.getIndustryID().isEmpty()) {</span>
 <span class="nc" id="L123">            poJSON.put(&quot;message&quot;, &quot;Industry is missing or not set.&quot;);</span>
 <span class="nc" id="L124">            return poJSON;</span>
         }
         
-<span class="pc bpc" id="L127" title="2 of 4 branches missed.">        if (poMaster.getCompanyID()== null || poMaster.getCompanyID().isEmpty()) {</span>
+<span class="nc bnc" id="L127" title="All 4 branches missed.">        if (poMaster.getCompanyID()== null || poMaster.getCompanyID().isEmpty()) {</span>
 <span class="nc" id="L128">            poJSON.put(&quot;message&quot;, &quot;Company is missing or not set.&quot;);</span>
 <span class="nc" id="L129">            return poJSON;</span>
         }
         
-<span class="pc bpc" id="L132" title="2 of 4 branches missed.">        if (poMaster.getClientID()== null || poMaster.getClientID().isEmpty()) {</span>
+<span class="nc bnc" id="L132" title="All 4 branches missed.">        if (poMaster.getClientID()== null || poMaster.getClientID().isEmpty()) {</span>
 <span class="nc" id="L133">            poJSON.put(&quot;message&quot;, &quot;Client ID is missing or not set.&quot;);</span>
 <span class="nc" id="L134">            return poJSON;</span>
         }        
         
-<span class="pc bpc" id="L137" title="2 of 4 branches missed.">        if (poMaster.getAddressID()== null || poMaster.getAddressID().isEmpty()) {</span>
+<span class="nc bnc" id="L137" title="All 4 branches missed.">        if (poMaster.getAddressID()== null || poMaster.getAddressID().isEmpty()) {</span>
 <span class="nc" id="L138">            poJSON.put(&quot;message&quot;, &quot;Adress is missing or not set.&quot;);</span>
 <span class="nc" id="L139">            return poJSON;</span>
         }
@@ -143,8 +143,8 @@ import java.util.ArrayList;
 //            poJSON.put(&quot;message&quot;, &quot;Contact is missing or not set.&quot;);
 //            return poJSON;
 //        }
-<span class="fc" id="L146">        poJSON.put(&quot;result&quot;, &quot;success&quot;);</span>
-<span class="fc" id="L147">        return poJSON;</span>
+<span class="nc" id="L146">        poJSON.put(&quot;result&quot;, &quot;success&quot;);</span>
+<span class="nc" id="L147">        return poJSON;</span>
     }
     
     private JSONObject validatePaid(){

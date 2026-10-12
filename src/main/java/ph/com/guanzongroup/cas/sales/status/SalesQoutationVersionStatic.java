@@ -122,7 +122,7 @@ public final class SalesQoutationVersionStatic {
         /**
          * Indicates that the quotation version has been rejected.
          */
-        public static final String REJECTED = "REJECTED";
+        public static final String REJECTED = "LOST";
 
         /**
          * Indicates that the quotation version has been voided.

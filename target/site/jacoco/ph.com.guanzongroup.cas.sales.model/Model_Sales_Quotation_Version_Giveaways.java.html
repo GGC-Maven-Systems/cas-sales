@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Model_Sales_Quotation_Version_Giveaways.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">cas-sales</a> &gt; <a href="index.source.html" class="el_package">ph.com.guanzongroup.cas.sales.model</a> &gt; <span class="el_source">Model_Sales_Quotation_Version_Giveaways.java</span></div><h1>Model_Sales_Quotation_Version_Giveaways.java</h1><pre class="source lang-java linenums">/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package ph.com.guanzongroup.cas.sales.model;
+
+import org.guanzon.appdriver.agent.services.Model;
+import org.guanzon.appdriver.agent.services.ReferenceCache;
+import org.guanzon.appdriver.base.GuanzonException;
+import org.guanzon.appdriver.base.MiscUtil;
+import org.guanzon.appdriver.constant.EditMode;
+import org.guanzon.cas.inv.model.Model_Inventory;
+import org.json.simple.JSONObject;
+
+import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.util.Date;
+
+/**
+ * Model class for the Sales Quotation Version Giveaways transaction.
+ *
+ * &lt;p&gt;
+ * This class represents a giveaway item attached to a Sales Quotation
+ * Version. Each record is identified by the combination of
+ * {@code sTransNox} (the parent version's transaction number) and
+ * {@code nEntryNox} (the line entry number), and captures the stocked item
+ * and quantity given away.
+ * &lt;/p&gt;
+ *
+ * &lt;p&gt;
+ * Detail records do not generate their own transaction number; the
+ * {@code sTransNox} value is inherited from the parent
+ * {@code Sales_Quotation_Version_Master} record, and {@code nEntryNox} is
+ * expected to be assigned by the caller (e.g. the next available line
+ * number for the given transaction).
+ * &lt;/p&gt;
+ *
+ * @author TEEJEI DE CELIS
+ * @date September 2x, 2026
+ * @module Sales Quotation Version Giveaways
+ * @version 1.0
+ */
+<span class="fc" id="L44">public class Model_Sales_Quotation_Version_Giveaways extends Model {</span>
+    private Model_Inventory poInventory;
+    @Override
+    public void initialize() {
+        try {
+<span class="fc" id="L49">            poEntity = MiscUtil.xml2ResultSet(</span>
+<span class="fc" id="L50">                    System.getProperty(&quot;sys.default.path.metadata&quot;) + XML,</span>
+<span class="fc" id="L51">                    getTable()</span>
+            );
+
+<span class="fc" id="L54">            poEntity.last();</span>
+<span class="fc" id="L55">            poEntity.moveToInsertRow();</span>
+
+<span class="fc" id="L57">            MiscUtil.initRowSet(poEntity);</span>
+
+            // assign default values
+<span class="fc" id="L60">            poEntity.updateObject(&quot;nEntryNox&quot;, 0);</span>
+<span class="fc" id="L61">            poEntity.updateObject(&quot;nQuantity&quot;, 0);</span>
+<span class="fc" id="L62">            poEntity.updateNull(&quot;dModified&quot;);</span>
+
+            // end - assign default values
+
+<span class="fc" id="L66">            poEntity.insertRow();</span>
+<span class="fc" id="L67">            poEntity.moveToCurrentRow();</span>
+<span class="fc" id="L68">            poEntity.absolute(1);</span>
+<span class="fc" id="L69">            ID  = &quot;sTransNox&quot;;</span>
+<span class="fc" id="L70">            ID2 = &quot;nEntryNox&quot;;</span>
+
+<span class="nc" id="L72">        } catch (SQLException e) {</span>
+<span class="nc" id="L73">            e.printStackTrace();</span>
+<span class="nc" id="L74">            System.exit(1);</span>
+<span class="fc" id="L75">        }</span>
+<span class="fc" id="L76">    }</span>
+
+    public JSONObject setTransactionNo(String transactionNo) {
+<span class="fc" id="L79">        return setValue(&quot;sTransNox&quot;, transactionNo);</span>
+    }
+
+    public String getTransactionNo() {
+<span class="nc" id="L83">        return (String) getValue(&quot;sTransNox&quot;);</span>
+    }
+
+    public JSONObject setEntryNo(Integer entryNo) {
+<span class="fc" id="L87">        return setValue(&quot;nEntryNox&quot;, entryNo);</span>
+    }
+
+    public Integer getEntryNo() {
+<span class="nc" id="L91">        return (Integer) getValue(&quot;nEntryNox&quot;);</span>
+    }
+
+    public JSONObject setStockId(String stockId) {
+<span class="fc" id="L95">        return setValue(&quot;sStockIDx&quot;, stockId);</span>
+    }
+
+    public String getStockId() {
+<span class="fc" id="L99">        return (String) getValue(&quot;sStockIDx&quot;);</span>
+    }
+
+    public JSONObject setQuantity(Integer quantity) {
+<span class="fc" id="L103">        return setValue(&quot;nQuantity&quot;, quantity);</span>
+    }
+
+    public Integer getQuantity() {
+<span class="fc" id="L107">        return (Integer) getValue(&quot;nQuantity&quot;);</span>
+    }
+
+    public JSONObject setRemarks(String remarks) {
+<span class="fc" id="L111">        return setValue(&quot;sRemarksx&quot;, remarks);</span>
+    }
+
+    public String getRemarks() {
+<span class="fc" id="L115">        return (String) getValue(&quot;sRemarksx&quot;);</span>
+    }
+
+    public JSONObject setModifiedDate(Date modifiedDate) {
+<span class="fc" id="L119">        return setValue(&quot;dModified&quot;, modifiedDate);</span>
+    }
+
+    public Date getModifiedDate() {
+<span class="nc" id="L123">        return (Date) getValue(&quot;dModified&quot;);</span>
+    }
+
+    public Timestamp getTimeStamp() {
+<span class="nc" id="L127">        return (Timestamp) getValue(&quot;dTimeStmp&quot;);</span>
+    }
+
+    @Override
+    public String getNextCode() {
+<span class="fc" id="L132">        return &quot;&quot;;   // sTransNox is inherited from the parent version</span>
+    }
+    public Model_Inventory Inventory() throws SQLException, GuanzonException {
+
+<span class="nc bnc" id="L136" title="All 2 branches missed.">        if (poInventory == null) {</span>
+<span class="nc" id="L137">            poInventory = new Model_Inventory();</span>
+<span class="nc" id="L138">            poInventory.setApplicationDriver(poGRider);</span>
+<span class="nc" id="L139">            poInventory.setXML(&quot;Model_Inventory&quot;);</span>
+<span class="nc" id="L140">            poInventory.setTableName(&quot;Inventory&quot;);</span>
+<span class="nc" id="L141">            poInventory.initialize();</span>
+        }
+
+<span class="nc" id="L144">        String stockId = (String) (</span>
+<span class="nc bnc" id="L145" title="All 2 branches missed.">                getValue(&quot;sStockIDx&quot;) == null</span>
+                        ? &quot;&quot;
+<span class="nc" id="L147">                        : getValue(&quot;sStockIDx&quot;)</span>
+        );
+
+<span class="nc bnc" id="L150" title="All 2 branches missed.">        if (!&quot;&quot;.equals(stockId)) {</span>
+
+<span class="nc bnc" id="L152" title="All 2 branches missed.">            if (poInventory.getEditMode() == EditMode.READY</span>
+<span class="nc bnc" id="L153" title="All 2 branches missed.">                    &amp;&amp; poInventory.getStockId().equals(stockId)) {</span>
+<span class="nc" id="L154">                return poInventory;</span>
+            }
+
+<span class="nc bnc" id="L157" title="All 2 branches missed.">            if (ReferenceCache.tryLoad(</span>
+                    &quot;Inventory&quot;,
+                    stockId,
+                    poInventory)) {
+<span class="nc" id="L161">                return poInventory;</span>
+            }
+
+<span class="nc" id="L164">            poJSON = poInventory.openRecord(stockId);</span>
+
+<span class="nc bnc" id="L166" title="All 2 branches missed.">            if (&quot;success&quot;.equals((String) poJSON.get(&quot;result&quot;))) {</span>
+<span class="nc" id="L167">                ReferenceCache.store(</span>
+                        &quot;Inventory&quot;,
+                        stockId,
+                        poInventory
+                );
+<span class="nc" id="L172">                return poInventory;</span>
+            } else {
+<span class="nc" id="L174">                poInventory.initialize();</span>
+<span class="nc" id="L175">                return poInventory;</span>
+            }
+
+        } else {
+<span class="nc" id="L179">            poInventory.initialize();</span>
+<span class="nc" id="L180">            return poInventory;</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>
