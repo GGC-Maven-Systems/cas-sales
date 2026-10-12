@@ -356,7 +356,7 @@ public class VehicleDescription extends Parameter {
             return poJSON;
         }
 
-        if (poModelVariantInsurance.getAuthCapx() == 0){
+        if (poModelVariantInsurance.getAuthCapx() <= 0 || poModelVariantInsurance.getAuthCapx() > 20){
             poJSON.put("result", "error");
             poJSON.put("message", "Invalid authorize capacity.");
             return poJSON;

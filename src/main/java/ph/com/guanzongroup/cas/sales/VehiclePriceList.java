@@ -875,10 +875,10 @@ public class VehiclePriceList extends Transaction {
                 o -> getModelVariantDescription((Model_Vehicle_Price_Master) o),
                 Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)
             )
-//                    .thenComparing(
-//                o -> getSRPAmount((Model_Vehicle_Price_Master) o),
-//                    Comparator.nullsLast(Comparator.reverseOrder())
-//                )
+                    .thenComparing(
+                o -> getSRPAmount((Model_Vehicle_Price_Master) o),
+                    Comparator.nullsLast(Comparator.reverseOrder())
+                )
         );
     }
     
@@ -928,7 +928,8 @@ public class VehiclePriceList extends Transaction {
         int lnCtr = getDetailCount() - 1;
         while (lnCtr >= 0) {
             if ((Detail(lnCtr).getBrandId() == null || "".equals(Detail(lnCtr).getBrandId()))
-//                && (Detail(lnCtr).getModelId() == null || "".equals(Detail(lnCtr).getModelId()))
+                && (Detail(lnCtr).getModelId() == null || "".equals(Detail(lnCtr).getModelId()))
+                && (Detail(lnCtr).getVariantId() == null || "".equals(Detail(lnCtr).getVariantId()))
                 ) {
                 deleteDetail(lnCtr);
             } 
@@ -1049,6 +1050,7 @@ public class VehiclePriceList extends Transaction {
         poJSON = new JSONObject();
         
         VehiclePriceList loObj = new SalesControllers(poGRider, logwrapr).VehiclePriceList();
+        loObj.InitTransaction();
         poJSON = loObj.OpenTransaction(fsTransNo);
         if(!isJSONSuccess(poJSON)){
             return poJSON;
@@ -1074,10 +1076,12 @@ public class VehiclePriceList extends Transaction {
         
         ReloadDetail();
         for(int lnCtr = 0;lnCtr < loObj.getDetailCount(); lnCtr++){
-            Detail(getDetailCount()-1).setVariantId(loObj.Detail(lnCtr).getVariantId());
-            Detail(getDetailCount()-1).setSRPAmount(loObj.Detail(lnCtr).getSRPAmount());
-            Detail(getDetailCount()-1).setPriceYear(loObj.Detail(lnCtr).getPriceYear());
-            ReloadDetail();
+            if(loObj.Detail(lnCtr).getRecordStatus()){
+                Detail(getDetailCount()-1).setVariantId(loObj.Detail(lnCtr).getVariantId());
+                Detail(getDetailCount()-1).setSRPAmount(loObj.Detail(lnCtr).getSRPAmount());
+                Detail(getDetailCount()-1).setPriceYear(loObj.Detail(lnCtr).getPriceYear());
+                ReloadDetail();
+            }
         }
         
         return setJSON("success", "success");
