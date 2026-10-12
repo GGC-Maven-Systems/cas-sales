@@ -1204,11 +1204,6 @@ public class MCPromoSales extends Transaction {
             return poJSON;
         }
 
-        // program mechanic check (before publishing)
-        poJSON = validateConfirmed();
-        if ("error".equals((String) poJSON.get("result"))) {
-            return poJSON;
-        }
         // program conflict check (before publishing)
         poJSON = checkConflictOverlapping();
         if ("error".equals((String) poJSON.get("result"))) {
@@ -3217,6 +3212,11 @@ public class MCPromoSales extends Transaction {
     public JSONObject checkConflictOverlapping()
             throws SQLException, GuanzonException, CloneNotSupportedException {
 
+        // program mechanic check (before publishing)
+        poJSON = validateConfirmed();
+        if ("error".equals((String) poJSON.get("result"))) {
+            return poJSON;
+        }
         JSONObject loJSON = new JSONObject();
 
         if (getMaster().getFromDate() == null) {
