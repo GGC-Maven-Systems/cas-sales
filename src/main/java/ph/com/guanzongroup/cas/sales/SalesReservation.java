@@ -464,7 +464,7 @@ public class SalesReservation extends Transaction {
 
         loClient.setGRider(poGRider);
         loClient.setLogWrapper(null);
-        loClient.setClientType("1");
+        loClient.setClientType("0");
         loClient.setCategoryCode(Master().getCategoryCode());
         //searchRecord(fsValue,fbByCode) will run make sure to set client and bycode
         //bycode true client id
