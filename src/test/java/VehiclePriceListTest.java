@@ -254,6 +254,9 @@ public class VehiclePriceListTest {
                 System.out.println("Price Year : " + poController.Detail(lnCtr).getPriceYear());
             }
             
+            System.out.println("Total Variant : " + poController.getTotalVariant());
+            System.out.println("Total Color : " + poController.getTotalColor());
+            
             loJSON = poController.loadVariantPriceList(0);
             System.out.println("MESSAGE : " + String.valueOf(loJSON.get("message")));
 //            Assert.assertEquals("success", loJSON.get("result"));
