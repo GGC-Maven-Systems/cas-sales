@@ -16,7 +16,9 @@ import java.util.logging.Logger;
 import javax.sql.rowset.CachedRowSet;
 import net.sf.jasperreports.engine.JRException;
 import net.sf.jasperreports.engine.data.JRMapCollectionDataSource;
+import org.guanzon.appdriver.agent.ActionAuthManager;
 import org.guanzon.appdriver.agent.ShowDialogFX;
+import org.guanzon.appdriver.agent.ShowMessageFX;
 import org.guanzon.appdriver.agent.services.Model;
 import org.guanzon.appdriver.agent.services.Transaction;
 import org.guanzon.appdriver.base.GuanzonException;
@@ -74,6 +76,8 @@ public class MCPromoSales extends Transaction {
     private String poTranStatus = "";
     private String poPromoType = "";
     private String poPromoSource = "";
+    private String psApprovalUser = "";
+
     private AP_Client_Master poSourceClient = null;
     private String poSRPFrom = "";
     private String poSRPThru = "";
@@ -730,7 +734,7 @@ public class MCPromoSales extends Transaction {
     }
 
     @Override
-    protected JSONObject willSave() {
+    protected JSONObject willSave() throws SQLException, GuanzonException {
         poJSON = new JSONObject();
 
         poJSON = isEntryOkay(SalesPromotionStatus.OPEN);
@@ -1102,7 +1106,7 @@ public class MCPromoSales extends Transaction {
     }
 
     @Override
-    protected JSONObject isEntryOkay(String status) {
+    protected JSONObject isEntryOkay(String status) throws SQLException, GuanzonException {
         GValidator loValidator = MCPromoSalesValidatorFactory.make(getMaster().getIndustryCode());
 
         loValidator.setApplicationDriver(poGRider);
@@ -1116,11 +1120,18 @@ public class MCPromoSales extends Transaction {
                 if ("error".equals((String) poJSON.get("result"))) {
                     return poJSON;
                 } else {
+                    //check if approving officer is authorized
                     if (Integer.parseInt(poJSON.get("nUserLevl").toString()) <= UserRight.ENCODER) {
                         poJSON.put("result", "error");
                         poJSON.put("message", "User is not an authorized approving officer.");
                         return poJSON;
                     }
+
+                    String lsUserIDxx = poJSON.get("sUserIDxx").toString();
+                    int lnUserLevl = Integer.parseInt(poJSON.get("nUserLevl").toString());
+
+                    setApproving(lsUserIDxx);
+                    psApprovalUser = lsUserIDxx;
                 }
             }
         }
@@ -1175,9 +1186,27 @@ public class MCPromoSales extends Transaction {
             return poJSON;
         }
 
+        if (SalesPromotionStatus.VOID.equals((String) poMaster.getValue("cTranStat"))) {
+            poJSON.put("result", "error");
+            poJSON.put("message", "Transaction was already voided.");
+            return poJSON;
+        }
+
+        if (SalesPromotionStatus.REPLACED.equals((String) poMaster.getValue("cTranStat"))) {
+            poJSON.put("result", "error");
+            poJSON.put("message", "Transaction was already replaced.");
+            return poJSON;
+        }
+
         if (SalesPromotionStatus.CONFIRMED.equals((String) poMaster.getValue("cTranStat"))) {
             poJSON.put("result", "error");
             poJSON.put("message", "Transaction was already confirmed.");
+            return poJSON;
+        }
+
+        // program mechanic check (before publishing)
+        poJSON = validateConfirmed();
+        if ("error".equals((String) poJSON.get("result"))) {
             return poJSON;
         }
         // program conflict check (before publishing)
@@ -1185,6 +1214,7 @@ public class MCPromoSales extends Transaction {
         if ("error".equals((String) poJSON.get("result"))) {
             return poJSON;
         }
+
         //validator
         poJSON = isEntryOkay(SalesPromotionStatus.CONFIRMED);
         if ("error".equals((String) poJSON.get("result"))) {
@@ -3051,6 +3081,114 @@ public class MCPromoSales extends Transaction {
             poSourceClient = null;
 
         }
+        return poJSON;
+    }
+
+    // ===================================================================
+    // PROGRAM PUBLISHING  CHECK
+    // ===================================================================
+    private JSONObject validateConfirmed() throws SQLException {
+        poJSON = new JSONObject();
+
+        int lnDetailMechanicsCount = 0;
+        //check must have atleast 1 mechanics
+        for (int lnCtr = 0; lnCtr < paSalesPromotionBrand.size(); lnCtr++) {
+            Model_Sales_Promotion_Brand loBrand = (Model_Sales_Promotion_Brand) paSalesPromotionBrand.get(lnCtr);
+
+            if (loBrand.getBrandID() != null && !loBrand.getBrandID().isEmpty()) {
+                //only Active can be print so check only Active
+                if (loBrand.isWithActive()) {
+                    if (loBrand.isWithIncentive()) {
+                        if (loBrand.getAmount() > 0) {
+                            lnDetailMechanicsCount++;
+                            continue;
+                        }
+                    }
+                    if (loBrand.getDiscAmount() > 0) {
+                        lnDetailMechanicsCount++;
+                        continue;
+                    }
+                    if (loBrand.getDiscountRate() > 0) {
+                        lnDetailMechanicsCount++;
+                        continue;
+                    }
+                    if (loBrand.getFreight() > 0) {
+                        lnDetailMechanicsCount++;
+                        continue;
+                    }
+                    if (loBrand.isRegistrationFree()) {
+                        lnDetailMechanicsCount++;
+                        continue;
+                    }
+                    if (loBrand.isInsuranceFree()) {
+                        lnDetailMechanicsCount++;
+                        continue;
+                    }
+
+                }
+            }
+        }
+
+        for (int lnCtr = 0; lnCtr < paSalesPromotionModel.size(); lnCtr++) {
+            Model_Sales_Promotion_Model loModel = (Model_Sales_Promotion_Model) paSalesPromotionModel.get(lnCtr);
+
+            if (loModel.getModelID() != null && !loModel.getModelID().isEmpty()) {
+                //only Active can be print so check only Active
+                if (loModel.isWithActive()) {
+                    if (loModel.isWithIncentive()) {
+                        if (loModel.getAmount() > 0) {
+                            lnDetailMechanicsCount++;
+                            continue;
+                        }
+                    }
+                    if (loModel.getDiscAmount() > 0) {
+                        lnDetailMechanicsCount++;
+                        continue;
+                    }
+                    if (loModel.getDiscountRate() > 0) {
+                        lnDetailMechanicsCount++;
+                        continue;
+                    }
+                    if (loModel.getFreight() > 0) {
+                        lnDetailMechanicsCount++;
+                        continue;
+                    }
+                    if (loModel.isRegistrationFree()) {
+                        lnDetailMechanicsCount++;
+                        continue;
+                    }
+                    if (loModel.isInsuranceFree()) {
+                        lnDetailMechanicsCount++;
+                        continue;
+                    }
+
+                }
+            }
+        }
+
+        //check Give Away must have Qty
+        for (int lnCtr = 0; lnCtr < paSalesPromotionGiveAwayItem.size(); lnCtr++) {
+            Model_Sales_Promotion_GiveAway_Item loGiveAway = (Model_Sales_Promotion_GiveAway_Item) paSalesPromotionGiveAwayItem.get(lnCtr);
+            if (loGiveAway.getStockID() != null
+                    && !loGiveAway.getStockID().isEmpty()) {
+                if (loGiveAway.isWithActive()) {
+                    if (loGiveAway.getQuantity() <= 0) {
+                        poJSON.put("result", "error");
+                        poJSON.put("message", "Quantity is not set. Row = " + (lnCtr + 1));
+                        return poJSON;
+                    }
+                }
+            }
+        }
+
+        if (lnDetailMechanicsCount <= 0) {
+            poJSON.put("result", "error");
+            poJSON.put("message", "Mechanic's is not set.");
+            return poJSON;
+        }
+
+        poJSON.put("result", "success");
+
         return poJSON;
     }
 
