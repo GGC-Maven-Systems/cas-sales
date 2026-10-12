@@ -1314,6 +1314,7 @@ public class VehiclePriceList extends Transaction {
                 Detail(lnCtr).setPriceId(Detail(lnCtr).getNextCode());
             }
             Detail(lnCtr).setValidityId(Master().getValidityId());
+            Detail(lnCtr).setPriceYear(Integer.valueOf(SQLUtil.dateFormat(poGRider.getServerDate(), SQLUtil.FORMAT_SHORT_YEAR)));
             Detail(lnCtr).setModifiedBy(poGRider.Encrypt(poGRider.getUserID()));
             Detail(lnCtr).setModifiedDate(poGRider.getServerDate());
         }
