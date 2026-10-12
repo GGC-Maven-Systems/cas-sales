@@ -725,15 +725,68 @@ public class VehiclePriceList extends Transaction {
             poJSON = ShowDialogFX.Browse(poGRider,
                     lsSQL,
                     "",
-                    "Validity ID»Description»From Date»Thru Date",
-                    "sValidIDx»sValidDsc»dFromDate»dThruDate",
-                    "a.sValidIDx»a.sValidDsc»a.dFromDate»a.dThruDate",
+                    "Validity ID»Description»From Date»Thru Date»Status",
+                    "sValidIDx»sValidDsc»dFromDate»dThruDate»xRecdStat",
+                    "a.sValidIDx»a.sValidDsc»a.dFromDate»a.dThruDate»" + 
+                "     CASE  " +
+                "         WHEN a.cRecdStat = '0'  " +
+                "         THEN 'OPEN'  " +
+                "         WHEN a.cRecdStat = '1'  " +
+                "         THEN 'APPROVED'  " +
+                "         WHEN a.cRecdStat = '2'  " +
+                "         THEN 'CANCELLED'  " +
+                "         WHEN a.cRecdStat = '3'  " +
+                "         THEN 'VOIDED'  " +
+                "         ELSE 'UNKNOWN' " +
+                "     END AS xRecdStat",
                     fbByCode ? 0 : 1);
         } else {
             poJSON.put("sValidIDx", fsValue);
         }
         if (poJSON != null) {
 
+            return OpenTransaction((String) poJSON.get("sValidIDx"));
+        } else {
+            poJSON = new JSONObject();
+            poJSON.put("result", "error");
+            poJSON.put("message", "No record loaded.");
+            return poJSON;
+        }
+    }
+    
+    public JSONObject SearchTransaction(String fsYear, String fsStatus) throws CloneNotSupportedException, SQLException, GuanzonException, ScriptException{
+        poJSON = new JSONObject();
+
+        initSQL();
+        String lsSQL = MiscUtil.addCondition(SQL_BROWSE,
+                " a.sCompnyID = " + SQLUtil.toSQL(psCompanyId)
+                + " AND YEAR(a.dFromDate) = " + SQLUtil.toSQL(fsYear)
+                + " AND YEAR(a.cRecdStat) = " + SQLUtil.toSQL(fsStatus)
+            );
+        
+        lsSQL = lsSQL + " GROUP BY a.sValidIDx ";
+        System.out.println("Executing SQL: " + lsSQL);
+        if(pbWithUI){
+            poJSON = ShowDialogFX.Browse(poGRider,
+                    lsSQL,
+                    "",
+                    "Validity ID»Description»From Date»Thru Date»Status",
+                    "sValidIDx»sValidDsc»dFromDate»dThruDate»xRecdStat",
+                    "a.sValidIDx»a.sValidDsc»a.dFromDate»a.dThruDate»" + 
+                "     CASE  " +
+                "         WHEN a.cRecdStat = '0'  " +
+                "         THEN 'OPEN'  " +
+                "         WHEN a.cRecdStat = '1'  " +
+                "         THEN 'APPROVED'  " +
+                "         WHEN a.cRecdStat = '2'  " +
+                "         THEN 'CANCELLED'  " +
+                "         WHEN a.cRecdStat = '3'  " +
+                "         THEN 'VOIDED'  " +
+                "         ELSE 'UNKNOWN' " +
+                "     END AS xRecdStat",
+                   0);
+        }
+        if (poJSON != null) {
             return OpenTransaction((String) poJSON.get("sValidIDx"));
         } else {
             poJSON = new JSONObject();
@@ -1062,7 +1115,7 @@ public class VehiclePriceList extends Transaction {
             if(!isJSONSuccess(poJSON)){
                 return poJSON;
             }
-        } else {
+        } else if(ValidityPeriodStatus.OPEN.equals(Master().getRecordStatus())){
             poJSON = VoidTransaction();
             if(!isJSONSuccess(poJSON)){
                 return poJSON;
@@ -1291,7 +1344,17 @@ public class VehiclePriceList extends Transaction {
                 "  a.sValidDsc, " +
                 "  a.cRecdStat, " +
                 "  a.dModified, " +
-                "  a.sModified " +
+                "     CASE  " +
+                "         WHEN a.cRecdStat = '0'  " +
+                "         THEN 'OPEN'  " +
+                "         WHEN a.cRecdStat = '1'  " +
+                "         THEN 'APPROVED'  " +
+                "         WHEN a.cRecdStat = '2'  " +
+                "         THEN 'CANCELLED'  " +
+                "         WHEN a.cRecdStat = '3'  " +
+                "         THEN 'VOIDED'  " +
+                "         ELSE 'UNKNOWN' " +
+                "     END AS xRecdStat " +
                 "FROM Validity_Period_Master a " +
                 "INNER JOIN Vehicle_Price_Master b ON b.sValidIDx = a.sValidIDx";
         if(lsCondition != null && !"".equals(lsCondition)){
