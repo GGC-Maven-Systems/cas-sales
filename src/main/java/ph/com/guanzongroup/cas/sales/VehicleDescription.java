@@ -381,7 +381,7 @@ public class VehicleDescription extends Parameter {
     
     @Override
     public JSONObject searchRecord(String value, boolean byCode) throws SQLException, GuanzonException{
-        String lsSQL = getSQ_Browse();
+        String lsSQL = MiscUtil.addCondition(getSQ_Browse(), "d.sIndstCdx = " + SQLUtil.toSQL(psIndustryId));
         
         poJSON = ShowDialogFX.Search(poGRider,
                 lsSQL,
@@ -473,6 +473,10 @@ public class VehicleDescription extends Parameter {
             SQLException,
             GuanzonException {
         poJSON = new JSONObject();
+        
+        if(checkEmpty(psBrandId)){
+            return setJSON("error", "Brand cannot be empty.");
+        }
         
         Model object = new ParamControllers(poGRider, logwrapr).Model();
         object.setRecordStatus(RecordStatus.ACTIVE);
@@ -727,6 +731,7 @@ public class VehicleDescription extends Parameter {
                             ", IFNULL(c.sDescript, '') xColorNme" +
                             ", IFNULL(d.sDescript, '') xBrandNme" +
                             ", IFNULL(b.sBrandIDx, '') xBrandIDx" +
+                            ", d.sIndstCdx " +
                         " FROM Model_Variant a" +
                             " INNER JOIN Model_Variant_Insurance e ON e.sVrntIDxx = a.sVrntIDxx" +
                             " LEFT JOIN Model b ON a.sModelIDx = b.sModelIDx" +

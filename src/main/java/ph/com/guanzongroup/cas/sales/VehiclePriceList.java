@@ -761,7 +761,7 @@ public class VehiclePriceList extends Transaction {
         String lsSQL = MiscUtil.addCondition(SQL_BROWSE,
                 " a.sCompnyID = " + SQLUtil.toSQL(psCompanyId)
                 + " AND YEAR(a.dFromDate) = " + SQLUtil.toSQL(fsYear)
-                + " AND YEAR(a.cRecdStat) = " + SQLUtil.toSQL(fsStatus)
+                + " AND a.cRecdStat = " + SQLUtil.toSQL(fsStatus)
             );
         
         lsSQL = lsSQL + " GROUP BY a.sValidIDx ";
@@ -810,7 +810,7 @@ public class VehiclePriceList extends Transaction {
                                                     + " AND a.sCompnyID = " + SQLUtil.toSQL(Master().getCompanyId())
                                                     );
 
-            lsSQL = lsSQL + " ORDER BY dFromDate, nPriceYrx ASC ";
+            lsSQL = lsSQL + " ORDER BY a.dModified DESC ";
             System.out.println("Executing SQL: " + lsSQL);
             ResultSet loRS = poGRider.executeQuery(lsSQL);
             if (loRS == null) {
@@ -829,7 +829,11 @@ public class VehiclePriceList extends Transaction {
                 record.put("dThruDate", loRS.getDate("dThruDate"));
                 record.put("nSRPAmntx", loRS.getDouble("nSRPAmntx"));
                 record.put("nPriceYrx", loRS.getInt("nPriceYrx"));
-                record.put("sModified", getSysUser(loRS.getString("sModified"),false));
+                if (loRS.getString("sModified").length() > 10) {
+                    record.put("sModified", getSysUser(poGRider.Decrypt(loRS.getString("sModified")),false));
+                } else {
+                    record.put("sModified", getSysUser(loRS.getString("sModified"),false));
+                }
                 record.put("dModified", loRS.getDate("dModified"));
                 record.put("cRecdStat", getStatus(loRS.getString("cRecdStat")));
                 dataArray.add(record);
@@ -899,7 +903,9 @@ public class VehiclePriceList extends Transaction {
         poJSON = new JSONObject();
         
         if(checkEmpty(Detail(row).getModelId())){
-            return setJSON("error", "Model cannot be empty.");
+            poJSON =  setJSON("error", "Model cannot be empty.");
+            poJSON.put("row", row);
+            return poJSON;
         }
         
         VehicleDescription object = new SalesControllers(poGRider, logwrapr).VehicleDescription();
@@ -907,11 +913,57 @@ public class VehiclePriceList extends Transaction {
         object.setIndustryId(psIndustryId);
         poJSON = object.searchRecord(value, byCode, Detail(row).getModelId());
         if (isJSONSuccess(poJSON)) {
-            Detail(row).setVariantId(object.getModel().getVariantId());
+            //Check existing variant in detail
+            poJSON = checkExistingVariant(object.getModel().getVariantId(), row);
+            if (!isJSONSuccess(poJSON)) {
+                return poJSON;
+            }
         }
+        
+        row = (Integer) poJSON.get("row");
         
         sortDetail();
         
+        //find the current row
+        poJSON.put("row", findRow(row));
+        return poJSON;
+    }
+    
+    private int findRow(int row){
+        for(int lnCtr = 0;lnCtr < getDetailCount();lnCtr++){
+            if(checkNotEmpty(Detail(lnCtr).getVariantId())){
+                if(Detail(lnCtr).getVariantId().equals(Detail(row).getVariantId())){
+                    return lnCtr;
+                }
+            }
+        }
+        
+        return row;
+    }
+    
+    private JSONObject checkExistingVariant(String fsVariantId, int row){
+        poJSON.put("row", row);
+        for(int lnCtr = 0;lnCtr < getDetailCount(); lnCtr++){
+            if(fsVariantId.equals(Detail(lnCtr).getVariantId())
+                && row != lnCtr){
+                if(!Detail(lnCtr).getRecordStatus()){
+                    Detail(lnCtr).setRecordStatus(true);
+                    Detail(row).setBrandId("");
+                    Detail(row).setModelId("");
+                    Detail(row).setVariantId("");
+                    Detail(row).setSRPAmount(0.00);
+                    poJSON.put("row", lnCtr);
+                    return poJSON;
+                } else {
+                    poJSON = setJSON("error", "Selected Variant already exist.");
+                    poJSON.put("row", lnCtr);
+                    return poJSON;
+                }
+            }
+        }
+            
+        Detail(row).setVariantId(fsVariantId);
+        poJSON.put("row", row);
         return poJSON;
     }
     
@@ -1110,17 +1162,17 @@ public class VehiclePriceList extends Transaction {
         }
         
         //Cancel or Void the transaction to be remake
-        if(ValidityPeriodStatus.APPROVED.equals(Master().getRecordStatus())){
-            poJSON = CancelTransaction();
-            if(!isJSONSuccess(poJSON)){
-                return poJSON;
-            }
-        } else if(ValidityPeriodStatus.OPEN.equals(Master().getRecordStatus())){
-            poJSON = VoidTransaction();
-            if(!isJSONSuccess(poJSON)){
-                return poJSON;
-            }
-        }
+//        if(ValidityPeriodStatus.APPROVED.equals(Master().getRecordStatus())){
+//            poJSON = CancelTransaction();
+//            if(!isJSONSuccess(poJSON)){
+//                return poJSON;
+//            }
+//        } else if(ValidityPeriodStatus.OPEN.equals(Master().getRecordStatus())){
+//            poJSON = VoidTransaction();
+//            if(!isJSONSuccess(poJSON)){
+//                return poJSON;
+//            }
+//        }
         
         poJSON = NewTransaction();
         if(!isJSONSuccess(poJSON)){
@@ -1140,21 +1192,23 @@ public class VehiclePriceList extends Transaction {
         return setJSON("success", "success");
     }
     
-    public int getTotalVariant(){
-        int lnTotal = 0;
+    public int getTotalVariant() throws GuanzonException, SQLException{
+        ArrayList laVariant = new ArrayList<>();
         for(int lnCtr = 0;lnCtr < getDetailCount(); lnCtr++){
-            if(Detail(lnCtr).getRecordStatus()){
-                lnTotal++;
+            if(Detail(lnCtr).getRecordStatus() && checkNotEmpty(Detail(lnCtr).getVariantId())){
+                if(!laVariant.contains(Detail(lnCtr).ModelVariant().getDescription())){
+                    laVariant.add(Detail(lnCtr).ModelVariant().getDescription());
+                }
             }
         }
         
-        return lnTotal;
+        return laVariant.size();
     }
     
     public int getTotalColor() throws GuanzonException, SQLException{
         ArrayList laColor = new ArrayList<>();
         for(int lnCtr = 0;lnCtr < getDetailCount(); lnCtr++){
-            if(Detail(lnCtr).getRecordStatus()){
+            if(Detail(lnCtr).getRecordStatus() && checkNotEmpty(Detail(lnCtr).getVariantId())){
                 if(!laColor.contains(Detail(lnCtr).ModelVariant().getColorId())){
                     laColor.add(Detail(lnCtr).ModelVariant().getColorId());
                 }
@@ -1225,12 +1279,13 @@ public class VehiclePriceList extends Transaction {
                                                     " a.cRecdStat != " + SQLUtil.toSQL(ValidityPeriodStatus.VOID)
                                                     + " AND a.cRecdStat != " + SQLUtil.toSQL(ValidityPeriodStatus.CANCELLED)
                                                     + " AND a.sValidIDx != " + SQLUtil.toSQL(Master().getValidityId())
+                                                    + " AND a.sCompnyID = " + SQLUtil.toSQL(Master().getCompanyId())
                                                     );
           lsSQL = lsSQL 
                     + " AND ((a.dFromDate between "+ SQLUtil.toSQL(xsDateShort(Master().getFromDate()))+" AND "+  SQLUtil.toSQL(xsDateShort(Master().getThruDate())) +") OR a.dFromDate <= "+ SQLUtil.toSQL(xsDateShort(Master().getFromDate()))+")"
                     + " AND ((a.dThruDate between "+ SQLUtil.toSQL(xsDateShort(Master().getFromDate()))+" AND "+  SQLUtil.toSQL(xsDateShort(Master().getThruDate())) +") OR a.dThruDate IS NULL OR a.dThruDate >= "+ SQLUtil.toSQL(xsDateShort(Master().getFromDate()))+")";
       
-            System.out.println("checkExistingVehicleFinancing SQL: " + lsSQL);
+            System.out.println("checkExistingVehiclePriceList SQL: " + lsSQL);
             ResultSet loRS = poGRider.executeQuery(lsSQL);
             if (MiscUtil.RecordCount(loRS) > 0) {
                 if(loRS.next()){    
