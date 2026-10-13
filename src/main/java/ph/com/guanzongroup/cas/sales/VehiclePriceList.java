@@ -57,10 +57,13 @@ import org.guanzon.appdriver.constant.EditMode;
 import org.guanzon.appdriver.constant.RecordStatus;
 import org.guanzon.appdriver.constant.UserRight;
 import org.guanzon.appdriver.iface.GValidator;
+import org.guanzon.cas.inv.model.Model_Inventory;
+import org.guanzon.cas.inv.services.InvModels;
 import org.guanzon.cas.parameter.Brand;
 import org.guanzon.cas.parameter.Color;
 import org.guanzon.cas.parameter.model.Model_Branch;
 import org.guanzon.cas.parameter.model.Model_Brand;
+import org.guanzon.cas.parameter.model.Model_Model_Variant;
 import org.guanzon.cas.parameter.services.ParamControllers;
 import org.guanzon.cas.parameter.services.ParamModels;
 import org.json.simple.JSONArray;
@@ -82,6 +85,7 @@ import ph.com.guanzongroup.cas.sales.validator.ValidityMasterValidator;
 public class VehiclePriceList extends Transaction {
     public String psCompanyId = "";
     public String psIndustryId = "";
+    public String psCategoryId = "";
     public String psBrandId = "";
     public String psApprover = "";
 
@@ -123,6 +127,7 @@ public class VehiclePriceList extends Transaction {
      */
     public void setCompanyId(String companyId) { psCompanyId = companyId; }
     public void setIndustryId(String industryId) { psIndustryId = industryId; }
+    public void setCategoryId(String categoryId) { psCategoryId = categoryId; }
     
     /**
     * Creates a JSONObject with "result" and "message" fields.
@@ -464,15 +469,134 @@ public class VehiclePriceList extends Transaction {
         }
         
         //change status
-        poJSON = statusChange(Master().getTable(), (String) Master().getValue("sValidIDx"),"", lsStatus, false, false);
+        poGRider.beginTrans("UPDATE STATUS", "ApproveTransaction", SOURCE_CODE, Master().getValidityId());
+        
+        for(int lnCtr = 0;lnCtr < getDetailCount();lnCtr++){
+            if(Detail(lnCtr).getRecordStatus()){
+                poJSON = updateVariant(lsStatus, lnCtr);
+                if (!isJSONSuccess(poJSON)){
+                    return poJSON;
+                }
+                poJSON = updateInventory(lsStatus, lnCtr);
+                if (!isJSONSuccess(poJSON)){
+                    return poJSON;
+                }
+            }
+        }
+        
+        //change status
+        poJSON = statusChange(poMaster.getTable(), (String) poMaster.getValue("sValidIDx"), "", lsStatus, false, true);
         if (!isJSONSuccess(poJSON)) {
             return poJSON;
         }
+        
+        poGRider.commitTrans();
         
         poJSON = new JSONObject();
         poJSON = setJSON("success", "Transaction approved successfully.");
         return poJSON;
     }
+    
+    private JSONObject updateInventory(String fsRecordStatus, int row)
+            throws ExceptionInInitializerError,
+            SQLException,
+            GuanzonException,
+            CloneNotSupportedException {
+        poJSON = new JSONObject();
+       
+        Model_Inventory loObj = new InvModels(poGRider).Inventory();
+        loObj.initialize();
+        
+        //Find the inventory
+        String lsInvId = findInventory(loObj, row);
+        if(!checkEmpty(lsInvId)){
+            poJSON = loObj.openRecord(lsInvId);
+            if(!isJSONSuccess(poJSON)){
+                return poJSON;
+            }
+
+            poJSON = loObj.updateRecord();
+            if(!isJSONSuccess(poJSON)){
+                return poJSON;
+            }
+        }
+        
+        if(loObj.getEditMode() == EditMode.UPDATE){ 
+            if(ValidityPeriodStatus.APPROVED.equals(fsRecordStatus)){
+                loObj.setSellingPrice(Detail(row).getSRPAmount());
+            } else {
+//                loObj.setSellingPrice(0.00);
+                return poJSON; //Todo
+            }
+            poJSON = loObj.saveRecord();
+            if(!isJSONSuccess(poJSON)){
+                return poJSON;
+            }
+        }
+        
+        return poJSON;
+    }
+    
+    public String findInventory(Model_Inventory loObj, int row) throws SQLException, GuanzonException, CloneNotSupportedException {
+        poJSON = new JSONObject();
+       
+        String lsSQL = MiscUtil.makeSelect(loObj);
+        lsSQL = MiscUtil.addCondition(lsSQL," sIndstCdx =  " + SQLUtil.toSQL(psIndustryId)
+                       + " AND sVrntIDxx =  " + SQLUtil.toSQL(Detail(row).getVariantId())
+                       + " AND sCategCd1 =  " + SQLUtil.toSQL(psCategoryId)
+                    );
+        
+        System.out.println("findInventory SQL: " + lsSQL);
+        ResultSet loRS = poGRider.executeQuery(lsSQL);
+        if (MiscUtil.RecordCount(loRS) <= 0) {
+            return "";
+        }
+        String lsInvId = "";
+        if(loRS.next()) {
+            lsInvId = loRS.getString("sStockIDx");
+        }
+        MiscUtil.close(loRS);
+        
+        return lsInvId;
+    }
+    
+    private JSONObject updateVariant(String fsRecordStatus, int row)
+            throws ExceptionInInitializerError,
+            SQLException,
+            GuanzonException,
+            CloneNotSupportedException {
+        poJSON = new JSONObject();
+       
+        Model_Model_Variant loObj = new ParamModels(poGRider).ModelVariant();
+        loObj.initialize();
+        poJSON = loObj.openRecord(Detail(row).getVariantId());
+        if(!isJSONSuccess(poJSON)){
+            return poJSON;
+        }
+
+        poJSON = loObj.updateRecord();
+        if(!isJSONSuccess(poJSON)){
+            return poJSON;
+        }
+        
+        if(loObj.getEditMode() == EditMode.UPDATE){ 
+            if(ValidityPeriodStatus.APPROVED.equals(fsRecordStatus)){
+                loObj.setSellingPrice(Detail(row).getSRPAmount());
+            } else {
+//                loObj.setSellingPrice(0.00);
+                return poJSON; //Todo
+            }
+            loObj.setModifyingId(poGRider.Encrypt(poGRider.getUserID()));
+            loObj.setModifiedDate(poGRider.getServerDate());
+            poJSON = loObj.saveRecord();
+            if(!isJSONSuccess(poJSON)){
+                return poJSON;
+            }
+        }
+        
+        return poJSON;
+    }
+    
     
     /**
      * Voids the current transaction.
@@ -581,10 +705,28 @@ public class VehiclePriceList extends Transaction {
         }
         
         //change status
-        poJSON = statusChange(Master().getTable(), (String) Master().getValue("sValidIDx"),"", lsStatus, false, false);
+        poGRider.beginTrans("UPDATE STATUS", "CancelTransaction", SOURCE_CODE, Master().getValidityId());
+        
+        for(int lnCtr = 0;lnCtr < getDetailCount();lnCtr++){
+            if(Detail(lnCtr).getRecordStatus()){
+                poJSON = updateVariant(lsStatus, lnCtr);
+                if (!isJSONSuccess(poJSON)){
+                    return poJSON;
+                }
+                poJSON = updateInventory(lsStatus, lnCtr);
+                if (!isJSONSuccess(poJSON)){
+                    return poJSON;
+                }
+            }
+        }
+        
+        //change status
+        poJSON = statusChange(poMaster.getTable(), (String) poMaster.getValue("sValidIDx"), "", lsStatus, false, true);
         if (!isJSONSuccess(poJSON)) {
             return poJSON;
         }
+        
+        poGRider.commitTrans();
         
         poJSON = new JSONObject();
         poJSON = setJSON("success", "Transaction cancelled successfully.");
@@ -1369,7 +1511,7 @@ public class VehiclePriceList extends Transaction {
                 Detail(lnCtr).setPriceId(Detail(lnCtr).getNextCode());
             }
             Detail(lnCtr).setValidityId(Master().getValidityId());
-            Detail(lnCtr).setPriceYear(Integer.valueOf(SQLUtil.dateFormat(poGRider.getServerDate(), SQLUtil.FORMAT_SHORT_YEAR)));
+            Detail(lnCtr).setPriceYear(Integer.valueOf(SQLUtil.dateFormat(poGRider.getServerDate(), "YYYY")));
             Detail(lnCtr).setModifiedBy(poGRider.Encrypt(poGRider.getUserID()));
             Detail(lnCtr).setModifiedDate(poGRider.getServerDate());
         }
