@@ -1062,7 +1062,9 @@ public class VehiclePriceList extends Transaction {
             }
         }
         
-        row = (Integer) poJSON.get("row");
+        if(poJSON.get("row") != null){
+            row = (Integer) poJSON.get("row");
+        }
         
         sortDetail();
         
