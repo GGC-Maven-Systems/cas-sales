@@ -1498,7 +1498,7 @@ public class VehiclePriceList extends Transaction {
             String lsRecStat = (String) item.getValue("cRecdStat");
             double ldblSRP = Double.parseDouble(String.valueOf(item.getValue("nSRPAmntx")));
             
-            if ((ldblSRP == 0.0000 || (lsDetail == null || "".equals(lsDetail)))){
+            if ((lsDetail == null || "".equals(lsDetail))){
                 if(item.getEditMode() == EditMode.ADDNEW){
                     detail.remove(); // Correctly remove the item
                 } 
@@ -1513,6 +1513,11 @@ public class VehiclePriceList extends Transaction {
         }
 
         for (int lnCtr = 0; lnCtr <= getDetailCount() - 1; lnCtr++) {
+            if(Detail(lnCtr).getSRPAmount() == 0.0000){
+                String lsDescription = Detail(lnCtr).Brand().getDescription() + " " + Detail(lnCtr).Model().getDescription() + " " + Detail(lnCtr).ModelVariant().getDescription()  + " " + Detail(lnCtr).ModelVariant().Color().getDescription();
+                return setJSON("error", "Invalid SRP amount for vehicle description <"+lsDescription.toUpperCase()+">.");
+            }
+            
             System.out.println("Record Status : " + Detail(lnCtr).getRecordStatus());
             if(Detail(lnCtr).getEditMode() == EditMode.ADDNEW){
                 Detail(lnCtr).setPriceId(Detail(lnCtr).getNextCode());
