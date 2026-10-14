@@ -783,7 +783,7 @@ public class VehicleFinancingPrice extends Transaction {
                        + " LEFT JOIN Model b On b.sBrandIDx = a.sBrandIDx " 
                        + " LEFT JOIN Model_Variant c ON c.sModelIDx = b.sModelIDx " ;
         lsSQL = MiscUtil.addCondition(lsSQL," a.sIndstCdx =  " + SQLUtil.toSQL(poGRider.getIndustry())
-                       + " AND c.cEndOfLfe =  " + SQLUtil.toSQL(Logical.YES)
+                       + " AND c.cEndOfLfe =  " + SQLUtil.toSQL(Logical.NO)
                        + " AND c.nSelPrice > 0.00 "
                        + " AND c.cRecdStat =  " + SQLUtil.toSQL(RecordStatus.ACTIVE)
                     );

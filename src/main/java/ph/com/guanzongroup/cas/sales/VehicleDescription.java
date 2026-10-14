@@ -252,10 +252,10 @@ public class VehicleDescription extends Parameter {
         
         poGRider.beginTrans("UPDATE STATUS", "DeactivateRecord", SOURCE_CODE, poModel.getVariantId());
         
-        poJSON = generateInventory(lsStatus);
-        if (!isJSONSuccess(poJSON)){
-            return poJSON;
-        }
+//        poJSON = generateInventory(lsStatus); 
+//        if (!isJSONSuccess(poJSON)){
+//            return poJSON;
+//        }
         
         //change status
         poJSON = statusChange(poModel.getTable(), (String) poModel.getValue("sVrntIDxx"), remarks, lsStatus, false, true);
