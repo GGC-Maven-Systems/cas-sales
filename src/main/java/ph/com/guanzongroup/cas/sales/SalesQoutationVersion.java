@@ -251,37 +251,87 @@ public class SalesQoutationVersion extends Transaction {
         return true;
     }
 
+
     public void computeMasterTotals() {
-        double lnTotal = 0.00;
+        double lnGrossSales = 0.00;
         double lnDiscount = 0.00;
         double lnAddDiscount = 0.00;
         double lnFreight = 0.00;
+        double lnRegistration = 0.00;
+        double lnInsurance = 0.00;
 
-        for (int lnCtr = 0; lnCtr <= getDetailCount() - 1; lnCtr++) {
+        // ============================================
+        // COMPUTE SALES AND DISCOUNTS
+        // ============================================
+        for (int lnCtr = 0; lnCtr < getDetailCount(); lnCtr++) {
             Model_Sales_Quotation_Version_Detail loRow = Detail(lnCtr);
 
-            double lnQty     = nz(loRow.getQuantity());
-            double lnPrice   = nz(loRow.getUnitPrice());
-            double lnDiscAmt = lnPrice * nz(loRow.getDiscount()) / 100.0;   // discount is a percentage
+            double lnQty = nz(loRow.getQuantity());
+            double lnPrice = nz(loRow.getUnitPrice());
+            double lnDiscRate = nz(loRow.getDiscount());
             double lnAddDisc = nz(loRow.getAdditionalDiscount());
-            double lnFrght   = nz(loRow.getFreight());
-            double lnReg     = nz(loRow.getRegistrationAmount());
-            double lnIns     = nz(loRow.getInsuranceAmount());
 
-            lnDiscount    += lnDiscAmt * lnQty;
-            lnAddDiscount += lnAddDisc;
-            lnFreight     += lnFrght * lnQty;
-            lnTotal       += (lnPrice - lnDiscAmt - lnAddDisc + lnFrght + lnReg + lnIns) * lnQty;
+            double lnFrght = nz(loRow.getFreight());
+            double lnReg = nz(loRow.getRegistrationAmount());
+            double lnIns = nz(loRow.getInsuranceAmount());
+
+            // Gross sales
+            double lnSrpTotal = lnPrice * lnQty;
+
+            // Percentage discount
+            double lnDiscAmt = lnSrpTotal * (lnDiscRate / 100.0);
+
+            // Additional discount (per unit x quantity)
+            double lnAddDiscTotal = lnAddDisc * lnQty;
+
+            lnGrossSales += lnSrpTotal;
+            lnDiscount += lnDiscAmt;
+            lnAddDiscount += lnAddDiscTotal;
+
+            // Additional charges are accumulated separately
+            lnFreight += lnFrght * lnQty;
+            lnRegistration += lnReg * lnQty;
+            lnInsurance += lnIns * lnQty;
         }
 
-        double lnVatSales = 0.00, lnVatAmount = 0.00, lnNonVatSales = 0.00;
+        // ============================================
+        // NET SALES AFTER DISCOUNTS
+        // ============================================
+        double lnNetSales = lnGrossSales
+                - lnDiscount
+                - lnAddDiscount;
+
+        if (lnNetSales < 0.00) {
+            lnNetSales = 0.00;
+        }
+
+        // ============================================
+        // VAT COMPUTATION
+        // ============================================
+        double lnVatSales = 0.00;
+        double lnVatAmount = 0.00;
+        double lnNonVatSales = 0.00;
+
         if (isVatable()) {
-            lnVatSales  = lnTotal / (1.0 + VAT_RATE);
-            lnVatAmount = lnTotal - lnVatSales;
+            // Net sales already includes VAT
+            lnVatSales = lnNetSales / (1.0 + VAT_RATE);
+            lnVatAmount = lnNetSales - lnVatSales;
         } else {
-            lnNonVatSales = lnTotal;
+            lnNonVatSales = lnNetSales;
         }
 
+        // ============================================
+        // TOTAL AMOUNT
+        // ============================================
+        // Add freight, registration, and insurance after VAT computation
+        double lnTotal = lnNetSales
+                + lnFreight
+                + lnRegistration
+                + lnInsurance;
+
+        // ============================================
+        // UPDATE MASTER TOTALS
+        // ============================================
         Master().setTransactionTotal(round2(lnTotal));
         Master().setDiscountAmount(round2(lnDiscount));
         Master().setAdditionalDiscount(round2(lnAddDiscount));

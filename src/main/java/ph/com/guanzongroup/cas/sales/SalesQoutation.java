@@ -1142,11 +1142,12 @@ public class SalesQoutation extends Parameter {
         return loResult;
     }
 
+
     public double computeMCItemDetail(
             double srp,
             int qty,
             double discount,           // percentage
-            double additionaldiscount, // fixed amount
+            double additionaldiscount, // fixed amount per unit
             double freight,
             double registration,
             double insurance,
@@ -1156,67 +1157,68 @@ public class SalesQoutation extends Parameter {
         // TRANSACTION TOTAL
         // ============================================
         double grossUnitSRP = srp * qty;
+
+        double totalAdditionalDiscount = additionaldiscount * qty;
+
+        double totalFreight = freight * qty;
+        double totalRegistration = registration * qty;
+        double totalInsurance = insurance * qty;
+
         // ============================================
         // SALES COMPUTATION
         // ============================================
-        // Discount is percentage
-        double discountAmount =
-                grossUnitSRP * (discount / 100.0);
-        // Net sales after percentage discount
-        double netSales =
-                grossUnitSRP - (discountAmount + additionaldiscount);
+        // Percentage discount based on gross sales
+        double discountAmount = grossUnitSRP * (discount / 100.0);
+
+        // Net sales after both discounts
+        double netSales = grossUnitSRP
+                - discountAmount
+                - totalAdditionalDiscount;
+
         if (netSales < 0) {
             netSales = 0;
         }
-        double totalfreight = freight * qty;
-        double totalregistration = registration * qty;
-        double totalinsurance = insurance * qty;
+
         // ============================================
-        // TOTAL AMOUNT
+        // VAT COMPUTATION
         // ============================================
-        double totalAmount;
+        double vatableSales = netSales;
+        double vatAmount = 0.00;
+
         // No VAT
         if (vatType == null || vatType.trim().isEmpty()) {
 
-            totalAmount =
-                    netSales
-                            + totalfreight
-                            + totalregistration
-                            + totalinsurance;
-        }
-        // VAT Inclusive
-        else if (SalesQoutationVersionStatic.VatType.VAT_INCLUSIVE.equalsIgnoreCase(vatType.trim())) {
-            // Net sales already includes VAT
-            double vatableSales = netSales / 1.12;
-            double vatAmount = netSales - vatableSales;
+            vatableSales = netSales;
+            vatAmount = 0.00;
 
-            totalAmount =
-                    netSales
-                            + totalfreight
-                            + totalregistration
-                            + totalinsurance;
-        }
-        // VAT Exclusive
-        else if (SalesQoutationVersionStatic.VatType.VAT_EXCLUSIVE.equalsIgnoreCase(vatType.trim())) {
+            // VAT Inclusive
+        } else if (SalesQoutationVersionStatic.VatType
+                .VAT_INCLUSIVE.equalsIgnoreCase(vatType.trim())) {
 
-            double vatAmount = netSales * 0.12;
+            // Extract VAT from the discounted VAT-inclusive amount
+            vatableSales = netSales / 1.12;
+            vatAmount = netSales - vatableSales;
 
-            totalAmount =
-                    netSales
-                            + vatAmount
-                            + totalfreight
-                            + totalregistration
-                            + totalinsurance;
-        }
-        // Unknown VAT type
-        else {
+            // VAT Exclusive
+        } else if (SalesQoutationVersionStatic.VatType
+                .VAT_EXCLUSIVE.equalsIgnoreCase(vatType.trim())) {
 
-            totalAmount =
-                    netSales
-                            + totalfreight
-                            + totalregistration
-                            + totalinsurance;
+            // Compute VAT on discounted net sales
+            vatableSales = netSales;
+            vatAmount = vatableSales * 0.12;
         }
+
+        // ============================================
+        // TOTAL AMOUNT
+        // ============================================
+        // Add freight, registration, and insurance
+        // after VAT computation, as in the provided example.
+        double totalAmount = netSales
+                + vatAmount
+                + totalFreight
+                + totalRegistration
+                + totalInsurance;
+
         return totalAmount;
     }
 
