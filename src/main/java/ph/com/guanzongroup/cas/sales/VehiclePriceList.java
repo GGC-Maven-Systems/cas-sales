@@ -1050,33 +1050,38 @@ public class VehiclePriceList extends Transaction {
             return poJSON;
         }
         
+        String lsVariantId = "";
         VehicleDescription object = new SalesControllers(poGRider, logwrapr).VehicleDescription();
         object.setRecordStatus(RecordStatus.ACTIVE);
         object.setIndustryId(psIndustryId);
         poJSON = object.searchRecord(value, byCode, Detail(row).getModelId());
         if (isJSONSuccess(poJSON)) {
             //Check existing variant in detail
+            lsVariantId = object.getModel().getVariantId();
             poJSON = checkExistingVariant(object.getModel().getVariantId(), row);
             if (!isJSONSuccess(poJSON)) {
                 return poJSON;
             }
-        }
         
-        if(poJSON.get("row") != null){
-            row = (Integer) poJSON.get("row");
+            if(poJSON.get("row") != null){
+                row = (Integer) poJSON.get("row");
+            }
         }
         
         sortDetail();
         
         //find the current row
-        poJSON.put("row", findRow(row));
+        poJSON.put("row", findRow(lsVariantId,row));
         return poJSON;
     }
     
-    private int findRow(int row){
+    private int findRow(String fsVariantId, int row){
+        if(fsVariantId == null || "".equals(fsVariantId)){
+            return row;
+        } 
         for(int lnCtr = 0;lnCtr < getDetailCount();lnCtr++){
             if(checkNotEmpty(Detail(lnCtr).getVariantId())){
-                if(Detail(lnCtr).getVariantId().equals(Detail(row).getVariantId())){
+                if(Detail(lnCtr).getVariantId().equals(fsVariantId)){
                     return lnCtr;
                 }
             }
@@ -1113,7 +1118,7 @@ public class VehiclePriceList extends Transaction {
     
     public void sortDetail(){
         //Sort paDetail by brand, model, variant;
-        paDetail.sort(
+        Detail().sort(
             Comparator.comparing(
                 o -> getBrandDescription((Model_Vehicle_Price_Master) o),
                 Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)
