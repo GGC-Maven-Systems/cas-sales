@@ -1437,9 +1437,8 @@ public class VehicleAddOns extends Transaction {
                 "  b.sAddTypex, " +
                 "  c.sAddTypNm " +
                 "FROM Validity_Period_Master a " +
-                "INNER JOIN Vehicle_AddOn_Master b ON b.sValidIDx = a.sValidIDx" +
-                "LEFT JOIN Vehicle_AddOn_Type c ON c.sAddTypex = b.sAddTypex"
-                
+                "INNER JOIN Vehicle_AddOn_Master b ON b.sValidIDx = a.sValidIDx " +
+                "LEFT JOIN Vehicle_AddOn_Type c ON c.sAddTypex = b.sAddTypex "
                 ;
         if(lsCondition != null && !"".equals(lsCondition)){
             SQL_BROWSE = MiscUtil.addCondition(SQL_BROWSE, lsCondition);
