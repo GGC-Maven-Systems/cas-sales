@@ -921,6 +921,7 @@ public class VehicleAddOns extends Transaction {
         
         AddOnType object = new SalesControllers(poGRider, logwrapr).AddOnType();
         object.setRecordStatus(AddOnTypeStatus.ACTIVE);
+        object.setWithUI(pbWithUI);
         poJSON = object.searchRecord(value, byCode);
         if ("success".equals((String) poJSON.get("result"))) {
             Master().setValidityDescription(object.getModel().getAddTypeName());
@@ -1023,7 +1024,8 @@ public class VehicleAddOns extends Transaction {
         int lnCtr = getDetailCount() - 1;
         while (lnCtr >= 0) {
             if ((Detail(lnCtr).getVariantId() == null || "".equals(Detail(lnCtr).getVariantId()))
-                && (Detail(lnCtr).getAddOnType() == null || "".equals(Detail(lnCtr).getAddOnType()))) {
+//                && (Detail(lnCtr).getAddOnType() == null || "".equals(Detail(lnCtr).getAddOnType()))
+                ) {
                 deleteDetail(lnCtr);
             } 
             lnCtr--;
@@ -1032,7 +1034,7 @@ public class VehicleAddOns extends Transaction {
         if ((getDetailCount() - 1) >= 0) {
             if (
                 (Detail(getDetailCount() - 1).getVariantId() != null && !"".equals(Detail(getDetailCount() - 1).getVariantId()))
-                && (Detail(getDetailCount() - 1).getAddOnType() != null && !"".equals(Detail(getDetailCount() - 1).getAddOnType()))
+//                && (Detail(getDetailCount() - 1).getAddOnType() != null && !"".equals(Detail(getDetailCount() - 1).getAddOnType()))
                 ) {
                 AddDetail();
             }
@@ -1245,19 +1247,20 @@ public class VehicleAddOns extends Transaction {
         return poJSON;
     }
     
-    private JSONObject checkExistingVehicleFinancing(){
+    private JSONObject checkExistingVehicleAddOns(){
         try {
             initSQL();
             String lsSQL = MiscUtil.addCondition(SQL_BROWSE,
                                                     " a.cRecdStat != " + SQLUtil.toSQL(ValidityPeriodStatus.VOID)
                                                     + " AND a.cRecdStat != " + SQLUtil.toSQL(ValidityPeriodStatus.CANCELLED)
+                                                    + " AND a.sCompnyID != " + SQLUtil.toSQL(psCompanyId)
                                                     + " AND a.sValidIDx != " + SQLUtil.toSQL(Master().getValidityId())
                                                     );
           lsSQL = lsSQL 
                     + " AND ((a.dFromDate between "+ SQLUtil.toSQL(xsDateShort(Master().getFromDate()))+" AND "+  SQLUtil.toSQL(xsDateShort(Master().getThruDate())) +") OR a.dFromDate <= "+ SQLUtil.toSQL(xsDateShort(Master().getFromDate()))+")"
                     + " AND ((a.dThruDate between "+ SQLUtil.toSQL(xsDateShort(Master().getFromDate()))+" AND "+  SQLUtil.toSQL(xsDateShort(Master().getThruDate())) +") OR a.dThruDate IS NULL OR a.dThruDate >= "+ SQLUtil.toSQL(xsDateShort(Master().getFromDate()))+")";
       
-            System.out.println("checkExistingVehicleFinancing SQL: " + lsSQL);
+            System.out.println("checkExistingVehicleAddOns SQL: " + lsSQL);
             ResultSet loRS = poGRider.executeQuery(lsSQL);
             if (MiscUtil.RecordCount(loRS) > 0) {
                 if(loRS.next()){    
@@ -1306,7 +1309,7 @@ public class VehicleAddOns extends Transaction {
             return poJSON;
         }
         
-        poJSON = checkExistingVehicleFinancing();
+        poJSON = checkExistingVehicleAddOns();
         if (!isJSONSuccess(poJSON)) {
             return poJSON;
         }
