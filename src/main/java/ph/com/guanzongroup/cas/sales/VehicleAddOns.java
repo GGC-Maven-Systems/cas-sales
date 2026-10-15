@@ -745,7 +745,7 @@ public class VehicleAddOns extends Transaction {
         return (Model_Model_Variant) paVehicleList.get(row);
     }
     
-    public ArrayList loadUniqueAddOnTypeId(String fsAsOfDate) {
+    public ArrayList<String> loadUniqueAddOnTypeId(String fsAsOfDate) {
         ArrayList<String> laType = new ArrayList<>();
         
         try {
@@ -1006,7 +1006,6 @@ public class VehicleAddOns extends Transaction {
         MiscUtil.close(loRS);
         
         sortDetail();
-        
         
         poJSON.put("result", "success");
         poJSON.put("message", "success");
