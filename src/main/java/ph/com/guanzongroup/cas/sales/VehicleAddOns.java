@@ -64,6 +64,7 @@ import net.sf.jasperreports.swing.JRViewerToolbar;
 import net.sf.jasperreports.view.JasperViewer;
 import org.guanzon.appdriver.agent.ShowMessageFX;
 import org.guanzon.cas.parameter.model.Model_Branch;
+import org.guanzon.cas.parameter.model.Model_Model_Variant;
 import org.guanzon.cas.parameter.services.ParamModels;
 import ph.com.guanzongroup.cas.sales.model.Model_Vehicle_AddOn_Master;
 import ph.com.guanzongroup.cas.sales.services.SalesControllers;
@@ -82,7 +83,7 @@ public class VehicleAddOns extends Transaction {
     public String psApprover = "";
 
     /** List of master records for batch operations */
-    public List<Model> paMaster;
+    public List<Model_Model_Variant> paVehicleList;
     public List<Model> paVariantDetail;
     
     /**
@@ -99,7 +100,7 @@ public class VehicleAddOns extends Transaction {
         poMaster = new SalesModels(poGRider).ValidityPeriodMaster();
         poDetail = new SalesModels(poGRider).VehicleAddOnMaster();
 
-        paMaster = new ArrayList<Model>();
+        paVehicleList = new ArrayList<Model_Model_Variant>();
         paVariantDetail = new ArrayList<>();
         psApprover = "";
         setApproving("");
@@ -695,6 +696,74 @@ public class VehicleAddOns extends Transaction {
         } else {
             return this.poJSON;
         }
+    }
+    
+    /**
+     * Populates detail rows with available vehicle variants.
+     * for each vehicle variant with applicable rates.
+     *
+     * @return JSONObject with "result" and optional error "message"
+     * @throws SQLException if a database error occurs
+     * @throws GuanzonException if application-specific error occurs
+     * @throws CloneNotSupportedException if detail cloning fails
+     */
+    public JSONObject loadVehicleList() throws SQLException, GuanzonException, CloneNotSupportedException {
+        poJSON = new JSONObject();
+        
+        String lsSQL = " SELECT   " 
+                       + " c.sVrntIDxx " 
+                       + " , a.sIndstCdx " 
+                       + " , c.nSelPrice " 
+                       + " FROM Brand a " 
+                       + " LEFT JOIN Model b On b.sBrandIDx = a.sBrandIDx " 
+                       + " LEFT JOIN Model_Variant c ON c.sModelIDx = b.sModelIDx " ;
+        lsSQL = MiscUtil.addCondition(lsSQL," a.sIndstCdx =  " + SQLUtil.toSQL(poGRider.getIndustry())
+                       + " AND c.cEndOfLfe =  " + SQLUtil.toSQL(Logical.NO)
+                       + " AND c.nSelPrice > 0.00 "
+                    );
+        
+        lsSQL = lsSQL + " ORDER BY b.sDescript, c.sDescript ASC ";
+        System.out.println("populateVehicleList SQL: " + lsSQL);
+        ResultSet loRS = poGRider.executeQuery(lsSQL);
+        if (MiscUtil.RecordCount(loRS) <= 0) {
+            poJSON = setJSON("error", "No vehicle model variant available.");
+            return poJSON;
+        }
+        
+        ReloadDetail();
+        String lsVariantId = "";
+        while (loRS.next()) {
+            lsVariantId = loRS.getString("sVrntIDxx");
+            if(lsVariantId != null && !"".equals(lsVariantId)){
+                paVehicleList.add(ModelVariant());
+                poJSON = paVehicleList.get(paVehicleList.size()-1).openRecord(lsVariantId);
+                if(!isJSONSuccess(poJSON)){
+                    return poJSON;
+                }
+            }
+        }
+        MiscUtil.close(loRS);
+        
+        sortDetail();
+        
+        poJSON.put("result", "success");
+        poJSON.put("message", "success");
+        return poJSON;
+    }
+    
+    private Model_Model_Variant ModelVariant() {
+        return new ParamModels(poGRider).ModelVariant();
+    }
+    public int getVehicleListCount() {
+        if (paVehicleList == null) {
+            paVehicleList = new ArrayList<>();
+        }
+
+        return paVehicleList.size();
+    }
+    
+    public Model_Model_Variant VehicleList(int row) {
+        return (Model_Model_Variant) paVehicleList.get(row);
     }
     
     /**
@@ -1320,335 +1389,335 @@ public class VehicleAddOns extends Transaction {
         
         return lsDesc;
     }
-    public JSONObject printTransaction()
-        throws CloneNotSupportedException, SQLException, GuanzonException {
-
-    poJSON = new JSONObject();
-    pbIsPrinted = false;
-
-    try {
-
-        String jrxmlPath =
-                System.getProperty("sys.default.path.config")
-                + "/Reports/VehicleAddOn.jrxml";
-
-        JasperReport jasperReport =
-                JasperCompileManager.compileReport(jrxmlPath);
-        String lsWatermarkPath = System.getProperty("sys.default.path.config") + "/Reports/images/";
-        String lsBrand = BranchBrand();
-        
-        if(lsBrand == null || "".equals(lsBrand)){
-            lsWatermarkPath = lsWatermarkPath + "anyauto.png" ;
-        } else {
-            if(lsBrand.toLowerCase().contains("honda")){
-                lsWatermarkPath = lsWatermarkPath + "honda.png" ;
-            } else if(lsBrand.toLowerCase().contains("nissan")){
-                lsWatermarkPath = lsWatermarkPath + "nissan.png" ;
-            } else if(lsBrand.toLowerCase().contains("geely")){
-                lsWatermarkPath = lsWatermarkPath + "geely.png" ;
-            }  else if(lsBrand.toLowerCase().contains("gac")){
-                lsWatermarkPath = lsWatermarkPath + "gacmotor.png" ;
-            } else {
-                lsWatermarkPath = lsWatermarkPath + "anyauto.png" ;
-            }
-        }
-        
-        /*
-         * Create the final JasperPrint.
-         * The first rate will initialize it.
-         */
-        JasperPrint finalPrint = null;
-
-        // ---------------------------------------------
-        // Parameters
-        // ---------------------------------------------
-        Map<String, Object> parameters = new HashMap<>();
-
-
-        parameters.put("watermarkImagePath", lsWatermarkPath);
-        parameters.put("sValidity",Master().getValidityId()+ "-"+ poGRider.getServerDate());
-        parameters.put("sCompany",Master().Company().getCompanyName().toUpperCase());
-        String lsAddress = Master().Company().getCompanyAddress();
-        if (Master().Company().TownCity().getDescription() != null && !"".equals(Master().Company().TownCity().getDescription())) {
-            lsAddress = lsAddress + " " + Master().Company().TownCity().getDescription();
-        }
-
-        if (Master().Company().TownCity().Province().getDescription() != null
-                && !"".equals(Master().Company().TownCity().Province().getDescription())) {
-            lsAddress = lsAddress+ ", "+ Master().Company().TownCity().Province().getDescription();
-        }
-
-        parameters.put("sAddress",lsAddress.toUpperCase());
-        parameters.put("sValidityDesc",Master().getValidityDescription().toUpperCase());
-
-        Model_Branch loModel = Branch();
-        String lsBranchName = loModel.getBranchName();
-        String lsBranchDesc = loModel.getDescription();
-        String lsBranchAddress = loModel.getAddress();
-        String lsEmail = BranchEmail();
-        if (loModel.TownCity().getDescription() != null && !"".equals(loModel.TownCity().getDescription())) {
-            lsBranchAddress = lsBranchAddress + " " + loModel.TownCity().getDescription();
-        }
-
-        if (loModel.TownCity().Province().getDescription() != null && !"".equals(loModel.TownCity().Province().getDescription())) {
-            lsBranchAddress = lsBranchAddress+ ", "+ loModel.TownCity().Province().getDescription();
-        }
-        String lsContact = loModel.getMobile();
-        String lsLandLine = loModel.getLandLine();
-        if(lsBranchName == null) { lsBranchName = "";}
-        if(lsBranchDesc == null) { lsBranchDesc = "";}
-        if(lsBranchAddress == null) { lsBranchAddress = "";}
-        if(lsContact == null) { 
-            lsContact = "";
-        } else {
-            if(!lsContact.isEmpty()){
-                lsContact = "Mobile : " + lsContact;
-            }
-        }
-        if(lsLandLine == null) {
-            lsLandLine = "";
-        } else {
-            if(!lsContact.isEmpty()){
-                lsContact = lsContact 
-                            + "\nTel No : " + lsLandLine;
-            } else {
-                lsContact = "Tel No : " + lsLandLine;
-            }
-        }
-        if(lsEmail == null) {
-            lsEmail = "";
-        } else {
-            if(!lsEmail.isEmpty()){
-                lsContact = lsContact + "\nEmail Address : " + lsEmail;
-            } else {
-                lsContact = "Email Address : " + lsEmail;
-            }
-        }
-
-        parameters.put("sBranch",lsBranchName.toUpperCase());
-        parameters.put("sBranchAddress",lsBranchAddress.toUpperCase());
-        parameters.put("sBranchDesc",lsBranchDesc.toUpperCase());
-        parameters.put("sContact",lsContact);
-        // Current DP rate
-//        parameters.put("nDPRatePct",ldblDPRate);
-        // ---------------------------------------------
-        // Build data for current DP rate
-        // ---------------------------------------------
-        List<Map<String, Object>> rows = buildSampleData();
-        List<Map<String, ?>> data = new ArrayList<>(rows);
-        JRMapCollectionDataSource dataSource = new JRMapCollectionDataSource(data);
-
-        // ---------------------------------------------
-        // Generate JasperPrint
-        // ---------------------------------------------
-
-        JasperPrint currentPrint =
-                JasperFillManager.fillReport(
-                        jasperReport,
-                        parameters,
-                        dataSource
-                );
-
-        // ---------------------------------------------
-        // Display final report
-        // ---------------------------------------------
-
-        if (finalPrint != null) {
-
-            CustomJasperViewer viewer =
-                    new CustomJasperViewer(currentPrint);
-
-            viewer.setVisible(true);
-
-            viewer.addWindowListener(
-                    new WindowAdapter() {
-                        @Override
-                        public void windowClosed(WindowEvent e) {
-                            proceedAfterViewerClosed();
-                        }
-                    }
-            );
-        }
-
-    } catch (JRException | SQLException | GuanzonException ex) {
-
-        poJSON.put("result", "error");
-        poJSON.put(
-                "message",
-                "Transaction print aborted!"
-        );
-
-        Logger.getLogger(getClass().getName())
-                .log(Level.SEVERE, null, ex);
-    }
-
-    return poJSON;
-}
-    
-    private void proceedAfterViewerClosed() {
-        Platform.runLater(() -> {
-            System.out.println("SHOWED!!!!!!!!!!!");
-            if ("error".equals((String) poJSON.get("result"))) {
-                ShowMessageFX.Warning(null, "Computerized Accounting System",
-                        (String) poJSON.get("message"));
-            } else {
-                if (pbIsPrinted) {
-                    ShowMessageFX.Information(null, "Computerized Accounting System",
-                            "Vehicle Financing Promo Printed Successfully");
-                } else {
-                    ShowMessageFX.Warning(null, "Computerized Accounting System",
-                            "Printing was canceled by the user.");
-                }
-            }
-        });
-    }
-
-    private boolean pbIsPrinted = false;
-    public class CustomJasperViewer extends JasperViewer {
-
-        public CustomJasperViewer(final JasperPrint jasperPrint) {
-            super(jasperPrint, false);
-            customizePrintButton(jasperPrint);
-        }
-
-        /* ---- toolbar patch ------------------------------------------ */
-        private JSONObject customizePrintButton(final JasperPrint jasperPrint) {
-
-            try {
-                JRViewer viewer = findJRViewer(this);
-                if (viewer == null) {
-                    poJSON.put("result", "error");
-                    poJSON.put("message", "JRViewer not found!");
-                    return poJSON;
-                }
-                for (int i = 0; i < viewer.getComponentCount(); i++) {
-                    if (viewer.getComponent(i) instanceof JRViewerToolbar) {
-
-                        JRViewerToolbar toolbar = (JRViewerToolbar) viewer.getComponent(i);
-
-                        for (int j = 0; j < toolbar.getComponentCount(); j++) {
-                            if (toolbar.getComponent(j) instanceof JButton) {
-
-                                final JButton button = (JButton) toolbar.getComponent(j);
-
-                                if ("Print".equals(button.getToolTipText())) {
-                                    /* remove existing handlers */
-                                    ActionListener[] old = button.getActionListeners();
-                                    for (int k = 0; k < old.length; k++) {
-                                        button.removeActionListener(old[k]);
-                                    }
-
-                                    /* add our own (anonymous inner‑class, not lambda) */
-                                    button.addActionListener(new ActionListener() {
-                                        @Override
-                                        public void actionPerformed(ActionEvent e) {
-                                            try {
-                                                pbIsPrinted = JasperPrintManager.printReport(jasperPrint, true);
-                                                if (pbIsPrinted) {
-                                                    CustomJasperViewer.this.dispose();
-                                                } else {
-                                                    poJSON.put("result", "error");
-                                                    poJSON.put("message",  "Printing was canceled by the user.");
-                                                }
-                                            } catch (JRException ex) {
-                                                poJSON.put("result", "error");
-                                                poJSON.put("message",  "Print Failed: " + ex.getMessage());
-                                                Logger.getLogger(getClass().getName()).log(Level.SEVERE,  ex.getMessage(), ex);
-                                            }
-                                        }
-                                    });
-                                } else {
-                                    // Disable all other buttons
-//                                    button.setEnabled(false);
-//                                    poJSON.put("result", "error");
-//                                    poJSON.put("message",  "Transaction print aborted!");
-                                }
-                            }
-                        }
-                        toolbar.revalidate();
-                        toolbar.repaint();
-                    }
-                }
-            } catch (Exception e) {
-                System.out.println("Error customizing print button: " + e.getMessage());
-                poJSON.put("result", "error");
-                poJSON.put("message", "Error customizing print button: " + e.getMessage());
-            }
-
-            return poJSON;
-        }
-
-        private JRViewer findJRViewer(Component parent) {
-            if (parent instanceof JRViewer) {
-                return (JRViewer) parent;
-            }
-            if (parent instanceof Container) {
-                Component[] comps = ((Container) parent).getComponents();
-                for (int i = 0; i < comps.length; i++) {
-                    JRViewer v = findJRViewer(comps[i]);
-                    if (v != null) {
-                        return v;
-                    }
-                }
-            }
-            return null;
-        }
-    }
-    /**
-     * Sample data. Notice Civic RS has FOUR terms (36/48/60/72) while every
-     * other variant only has three - that's deliberate, to demonstrate that the
-     * crosstab prints exactly as many term columns as the data supports, with
-     * no template change required.
-     */
-    private List<Map<String, Object>> buildSampleData() {
-        List<Map<String, Object>> rows = new ArrayList<>();
-        sortDetail();
-        ArrayList<String> faArray = loadUniqueAddOnType();
-        try{
-            //Group by dp rate 
-            for(int lnCtr = 0;lnCtr < getVariantDetailCount();lnCtr++){
-                if(VariantDetail(lnCtr).getRecordStatus()){
-                    for(int lnRow = 0;lnRow < faArray.size();lnRow++){
-                        System.out.println("Add On Type : " + faArray.get(lnRow));
-                        System.out.println("Amount : " + getAmount(VariantDetail(lnRow).getVariantId(),faArray.get(lnRow)));
-                        String lsVariant = Detail(lnCtr).ModelVariant().getDescription();
-                        if(Detail(lnCtr).ModelVariant().Color().getDescription() != null && !"".equals(Detail(lnCtr).ModelVariant().Color().getDescription())){
-                            lsVariant = lsVariant + " " + Detail(lnCtr).ModelVariant().Color().getDescription(); 
-                        }
-                        addRow(rows
-                                , VariantDetail(lnCtr).ModelVariant().Model().Brand().getDescription()
-                                , VariantDetail(lnCtr).ModelVariant().Model().getDescription()
-                                , lsVariant
-                                , VariantDetail(lnCtr).getSRPAmount()
-                                , faArray.get(lnRow)
-                                , getAmount(VariantDetail(lnRow).getVariantId(),faArray.get(lnRow)));
-                    }
-                    
-                }
-            }
-        } catch (SQLException | GuanzonException ex) {
-            Logger.getLogger(VehicleFinancingPrice.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        return rows;
-    }
- 
-    // Keys here MUST match the <field name="..."> values in the .jrxml exactly.
-    private void addRow(List<Map<String, Object>> rows,
-                                String brand, String model, String variant,
-                                double srpAmt,
-                                String addonType,double amount) {
-        Map<String, Object> row = new LinkedHashMap<>();
-        if(brand == null){ brand = "";}
-        if(model == null){ model = "";}
-        if(variant == null){ variant = "";}
-        row.put("sBrand", brand.toUpperCase());
-        row.put("sModel", model.toUpperCase());
-        row.put("sVariant", variant.toUpperCase());
-        row.put("nSRP", srpAmt);
-        row.put("nTermMonths", addonType);
-        row.put("nMonthlyAmort", amount);
-        rows.add(row);
-    }
+//    public JSONObject printTransaction()
+//        throws CloneNotSupportedException, SQLException, GuanzonException {
+//
+//    poJSON = new JSONObject();
+//    pbIsPrinted = false;
+//
+//    try {
+//
+//        String jrxmlPath =
+//                System.getProperty("sys.default.path.config")
+//                + "/Reports/VehicleAddOn.jrxml";
+//
+//        JasperReport jasperReport =
+//                JasperCompileManager.compileReport(jrxmlPath);
+//        String lsWatermarkPath = System.getProperty("sys.default.path.config") + "/Reports/images/";
+//        String lsBrand = BranchBrand();
+//        
+//        if(lsBrand == null || "".equals(lsBrand)){
+//            lsWatermarkPath = lsWatermarkPath + "anyauto.png" ;
+//        } else {
+//            if(lsBrand.toLowerCase().contains("honda")){
+//                lsWatermarkPath = lsWatermarkPath + "honda.png" ;
+//            } else if(lsBrand.toLowerCase().contains("nissan")){
+//                lsWatermarkPath = lsWatermarkPath + "nissan.png" ;
+//            } else if(lsBrand.toLowerCase().contains("geely")){
+//                lsWatermarkPath = lsWatermarkPath + "geely.png" ;
+//            }  else if(lsBrand.toLowerCase().contains("gac")){
+//                lsWatermarkPath = lsWatermarkPath + "gacmotor.png" ;
+//            } else {
+//                lsWatermarkPath = lsWatermarkPath + "anyauto.png" ;
+//            }
+//        }
+//        
+//        /*
+//         * Create the final JasperPrint.
+//         * The first rate will initialize it.
+//         */
+//        JasperPrint finalPrint = null;
+//
+//        // ---------------------------------------------
+//        // Parameters
+//        // ---------------------------------------------
+//        Map<String, Object> parameters = new HashMap<>();
+//
+//
+//        parameters.put("watermarkImagePath", lsWatermarkPath);
+//        parameters.put("sValidity",Master().getValidityId()+ "-"+ poGRider.getServerDate());
+//        parameters.put("sCompany",Master().Company().getCompanyName().toUpperCase());
+//        String lsAddress = Master().Company().getCompanyAddress();
+//        if (Master().Company().TownCity().getDescription() != null && !"".equals(Master().Company().TownCity().getDescription())) {
+//            lsAddress = lsAddress + " " + Master().Company().TownCity().getDescription();
+//        }
+//
+//        if (Master().Company().TownCity().Province().getDescription() != null
+//                && !"".equals(Master().Company().TownCity().Province().getDescription())) {
+//            lsAddress = lsAddress+ ", "+ Master().Company().TownCity().Province().getDescription();
+//        }
+//
+//        parameters.put("sAddress",lsAddress.toUpperCase());
+//        parameters.put("sValidityDesc",Master().getValidityDescription().toUpperCase());
+//
+//        Model_Branch loModel = Branch();
+//        String lsBranchName = loModel.getBranchName();
+//        String lsBranchDesc = loModel.getDescription();
+//        String lsBranchAddress = loModel.getAddress();
+//        String lsEmail = BranchEmail();
+//        if (loModel.TownCity().getDescription() != null && !"".equals(loModel.TownCity().getDescription())) {
+//            lsBranchAddress = lsBranchAddress + " " + loModel.TownCity().getDescription();
+//        }
+//
+//        if (loModel.TownCity().Province().getDescription() != null && !"".equals(loModel.TownCity().Province().getDescription())) {
+//            lsBranchAddress = lsBranchAddress+ ", "+ loModel.TownCity().Province().getDescription();
+//        }
+//        String lsContact = loModel.getMobile();
+//        String lsLandLine = loModel.getLandLine();
+//        if(lsBranchName == null) { lsBranchName = "";}
+//        if(lsBranchDesc == null) { lsBranchDesc = "";}
+//        if(lsBranchAddress == null) { lsBranchAddress = "";}
+//        if(lsContact == null) { 
+//            lsContact = "";
+//        } else {
+//            if(!lsContact.isEmpty()){
+//                lsContact = "Mobile : " + lsContact;
+//            }
+//        }
+//        if(lsLandLine == null) {
+//            lsLandLine = "";
+//        } else {
+//            if(!lsContact.isEmpty()){
+//                lsContact = lsContact 
+//                            + "\nTel No : " + lsLandLine;
+//            } else {
+//                lsContact = "Tel No : " + lsLandLine;
+//            }
+//        }
+//        if(lsEmail == null) {
+//            lsEmail = "";
+//        } else {
+//            if(!lsEmail.isEmpty()){
+//                lsContact = lsContact + "\nEmail Address : " + lsEmail;
+//            } else {
+//                lsContact = "Email Address : " + lsEmail;
+//            }
+//        }
+//
+//        parameters.put("sBranch",lsBranchName.toUpperCase());
+//        parameters.put("sBranchAddress",lsBranchAddress.toUpperCase());
+//        parameters.put("sBranchDesc",lsBranchDesc.toUpperCase());
+//        parameters.put("sContact",lsContact);
+//        // Current DP rate
+////        parameters.put("nDPRatePct",ldblDPRate);
+//        // ---------------------------------------------
+//        // Build data for current DP rate
+//        // ---------------------------------------------
+//        List<Map<String, Object>> rows = buildSampleData();
+//        List<Map<String, ?>> data = new ArrayList<>(rows);
+//        JRMapCollectionDataSource dataSource = new JRMapCollectionDataSource(data);
+//
+//        // ---------------------------------------------
+//        // Generate JasperPrint
+//        // ---------------------------------------------
+//
+//        JasperPrint currentPrint =
+//                JasperFillManager.fillReport(
+//                        jasperReport,
+//                        parameters,
+//                        dataSource
+//                );
+//
+//        // ---------------------------------------------
+//        // Display final report
+//        // ---------------------------------------------
+//
+//        if (finalPrint != null) {
+//
+//            CustomJasperViewer viewer =
+//                    new CustomJasperViewer(currentPrint);
+//
+//            viewer.setVisible(true);
+//
+//            viewer.addWindowListener(
+//                    new WindowAdapter() {
+//                        @Override
+//                        public void windowClosed(WindowEvent e) {
+//                            proceedAfterViewerClosed();
+//                        }
+//                    }
+//            );
+//        }
+//
+//    } catch (JRException | SQLException | GuanzonException ex) {
+//
+//        poJSON.put("result", "error");
+//        poJSON.put(
+//                "message",
+//                "Transaction print aborted!"
+//        );
+//
+//        Logger.getLogger(getClass().getName())
+//                .log(Level.SEVERE, null, ex);
+//    }
+//
+//    return poJSON;
+//}
+//    
+//    private void proceedAfterViewerClosed() {
+//        Platform.runLater(() -> {
+//            System.out.println("SHOWED!!!!!!!!!!!");
+//            if ("error".equals((String) poJSON.get("result"))) {
+//                ShowMessageFX.Warning(null, "Computerized Accounting System",
+//                        (String) poJSON.get("message"));
+//            } else {
+//                if (pbIsPrinted) {
+//                    ShowMessageFX.Information(null, "Computerized Accounting System",
+//                            "Vehicle Financing Promo Printed Successfully");
+//                } else {
+//                    ShowMessageFX.Warning(null, "Computerized Accounting System",
+//                            "Printing was canceled by the user.");
+//                }
+//            }
+//        });
+//    }
+//
+//    private boolean pbIsPrinted = false;
+//    public class CustomJasperViewer extends JasperViewer {
+//
+//        public CustomJasperViewer(final JasperPrint jasperPrint) {
+//            super(jasperPrint, false);
+//            customizePrintButton(jasperPrint);
+//        }
+//
+//        /* ---- toolbar patch ------------------------------------------ */
+//        private JSONObject customizePrintButton(final JasperPrint jasperPrint) {
+//
+//            try {
+//                JRViewer viewer = findJRViewer(this);
+//                if (viewer == null) {
+//                    poJSON.put("result", "error");
+//                    poJSON.put("message", "JRViewer not found!");
+//                    return poJSON;
+//                }
+//                for (int i = 0; i < viewer.getComponentCount(); i++) {
+//                    if (viewer.getComponent(i) instanceof JRViewerToolbar) {
+//
+//                        JRViewerToolbar toolbar = (JRViewerToolbar) viewer.getComponent(i);
+//
+//                        for (int j = 0; j < toolbar.getComponentCount(); j++) {
+//                            if (toolbar.getComponent(j) instanceof JButton) {
+//
+//                                final JButton button = (JButton) toolbar.getComponent(j);
+//
+//                                if ("Print".equals(button.getToolTipText())) {
+//                                    /* remove existing handlers */
+//                                    ActionListener[] old = button.getActionListeners();
+//                                    for (int k = 0; k < old.length; k++) {
+//                                        button.removeActionListener(old[k]);
+//                                    }
+//
+//                                    /* add our own (anonymous inner‑class, not lambda) */
+//                                    button.addActionListener(new ActionListener() {
+//                                        @Override
+//                                        public void actionPerformed(ActionEvent e) {
+//                                            try {
+//                                                pbIsPrinted = JasperPrintManager.printReport(jasperPrint, true);
+//                                                if (pbIsPrinted) {
+//                                                    CustomJasperViewer.this.dispose();
+//                                                } else {
+//                                                    poJSON.put("result", "error");
+//                                                    poJSON.put("message",  "Printing was canceled by the user.");
+//                                                }
+//                                            } catch (JRException ex) {
+//                                                poJSON.put("result", "error");
+//                                                poJSON.put("message",  "Print Failed: " + ex.getMessage());
+//                                                Logger.getLogger(getClass().getName()).log(Level.SEVERE,  ex.getMessage(), ex);
+//                                            }
+//                                        }
+//                                    });
+//                                } else {
+//                                    // Disable all other buttons
+////                                    button.setEnabled(false);
+////                                    poJSON.put("result", "error");
+////                                    poJSON.put("message",  "Transaction print aborted!");
+//                                }
+//                            }
+//                        }
+//                        toolbar.revalidate();
+//                        toolbar.repaint();
+//                    }
+//                }
+//            } catch (Exception e) {
+//                System.out.println("Error customizing print button: " + e.getMessage());
+//                poJSON.put("result", "error");
+//                poJSON.put("message", "Error customizing print button: " + e.getMessage());
+//            }
+//
+//            return poJSON;
+//        }
+//
+//        private JRViewer findJRViewer(Component parent) {
+//            if (parent instanceof JRViewer) {
+//                return (JRViewer) parent;
+//            }
+//            if (parent instanceof Container) {
+//                Component[] comps = ((Container) parent).getComponents();
+//                for (int i = 0; i < comps.length; i++) {
+//                    JRViewer v = findJRViewer(comps[i]);
+//                    if (v != null) {
+//                        return v;
+//                    }
+//                }
+//            }
+//            return null;
+//        }
+//    }
+//    /**
+//     * Sample data. Notice Civic RS has FOUR terms (36/48/60/72) while every
+//     * other variant only has three - that's deliberate, to demonstrate that the
+//     * crosstab prints exactly as many term columns as the data supports, with
+//     * no template change required.
+//     */
+//    private List<Map<String, Object>> buildSampleData() {
+//        List<Map<String, Object>> rows = new ArrayList<>();
+//        sortDetail();
+//        ArrayList<String> faArray = loadUniqueAddOnType();
+//        try{
+//            //Group by dp rate 
+//            for(int lnCtr = 0;lnCtr < getVariantDetailCount();lnCtr++){
+//                if(VariantDetail(lnCtr).getRecordStatus()){
+//                    for(int lnRow = 0;lnRow < faArray.size();lnRow++){
+//                        System.out.println("Add On Type : " + faArray.get(lnRow));
+//                        System.out.println("Amount : " + getAmount(VariantDetail(lnRow).getVariantId(),faArray.get(lnRow)));
+//                        String lsVariant = Detail(lnCtr).ModelVariant().getDescription();
+//                        if(Detail(lnCtr).ModelVariant().Color().getDescription() != null && !"".equals(Detail(lnCtr).ModelVariant().Color().getDescription())){
+//                            lsVariant = lsVariant + " " + Detail(lnCtr).ModelVariant().Color().getDescription(); 
+//                        }
+//                        addRow(rows
+//                                , VariantDetail(lnCtr).ModelVariant().Model().Brand().getDescription()
+//                                , VariantDetail(lnCtr).ModelVariant().Model().getDescription()
+//                                , lsVariant
+//                                , VariantDetail(lnCtr).getSRPAmount()
+//                                , faArray.get(lnRow)
+//                                , getAmount(VariantDetail(lnRow).getVariantId(),faArray.get(lnRow)));
+//                    }
+//                    
+//                }
+//            }
+//        } catch (SQLException | GuanzonException ex) {
+//            Logger.getLogger(VehicleFinancingPrice.class.getName()).log(Level.SEVERE, null, ex);
+//        }
+//        return rows;
+//    }
+// 
+//    // Keys here MUST match the <field name="..."> values in the .jrxml exactly.
+//    private void addRow(List<Map<String, Object>> rows,
+//                                String brand, String model, String variant,
+//                                double srpAmt,
+//                                String addonType,double amount) {
+//        Map<String, Object> row = new LinkedHashMap<>();
+//        if(brand == null){ brand = "";}
+//        if(model == null){ model = "";}
+//        if(variant == null){ variant = "";}
+//        row.put("sBrand", brand.toUpperCase());
+//        row.put("sModel", model.toUpperCase());
+//        row.put("sVariant", variant.toUpperCase());
+//        row.put("nSRP", srpAmt);
+//        row.put("nTermMonths", addonType);
+//        row.put("nMonthlyAmort", amount);
+//        rows.add(row);
+//    }
     
     /**
      * Retrieves the user and timestamp of the last status update.
@@ -1697,7 +1766,7 @@ public class VehicleAddOns extends Transaction {
         poJSON.put("sUpdateDte", lsDate);
         return poJSON;
     }
-    
+//    
     /**
      * Retrieves transaction status history as a cached row set.
      * Used for testing; queries all status changes with user and approval information.
