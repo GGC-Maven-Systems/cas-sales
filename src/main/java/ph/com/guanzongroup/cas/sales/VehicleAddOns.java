@@ -258,6 +258,8 @@ public class VehicleAddOns extends Transaction {
             return poJSON;
         }
         
+        poJSON.put("result", "success");
+        poJSON.put("message", "success");
         return poJSON;
     }
     
@@ -705,7 +707,7 @@ public class VehicleAddOns extends Transaction {
      * @return JSONObject with "result" and optional error "message"
      * @throws SQLException if a database error occurs
      * @throws GuanzonException if application-specific error occurs
-     * @throws CloneNotSupportedException if detail cloning fails
+     * @throws CloneNotSupportedException if detail cfloning fails
      */
     public JSONObject loadVehicleList() throws SQLException, GuanzonException, CloneNotSupportedException {
         poJSON = new JSONObject();
