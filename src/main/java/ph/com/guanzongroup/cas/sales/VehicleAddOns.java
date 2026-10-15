@@ -817,22 +817,22 @@ public class VehicleAddOns extends Transaction {
     }
     
     
-    public String getAddOnTypeDescription(String fsAddOnTypeID){
-        poJSON = new JSONObject();
-        try {
-            Model_Vehicle_AddOn_Type loObj = new SalesModels(poGRider).VehicleAddOnType();
-            loObj.initialize();
-            poJSON = loObj.openRecord(fsAddOnTypeID);
-            if(isJSONSuccess(poJSON)){
-                return loObj.getAddTypeName();
-            }
-        } catch (SQLException | GuanzonException ex) {
-            Logger.getLogger(getClass().getName()).log(Level.SEVERE, MiscUtil.getException(ex), ex);
-            return "";
-        }
-        
-        return "";
-    }
+//    public String getAddOnTypeDescription(String fsAddOnTypeID){
+//        poJSON = new JSONObject();
+//        try {
+//            Model_Vehicle_AddOn_Type loObj = new SalesModels(poGRider).VehicleAddOnType();
+//            loObj.initialize();
+//            poJSON = loObj.openRecord(fsAddOnTypeID);
+//            if(isJSONSuccess(poJSON)){
+//                return loObj.getAddTypeName();
+//            }
+//        } catch (SQLException | GuanzonException ex) {
+//            Logger.getLogger(getClass().getName()).log(Level.SEVERE, MiscUtil.getException(ex), ex);
+//            return "";
+//        }
+//        
+//        return "";
+//    }
     
     public Double getAmount(String fsVariantId, String fsTypeId, String fsAsOfDate){
         try {
