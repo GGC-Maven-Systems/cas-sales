@@ -44,6 +44,7 @@ import java.util.logging.Logger;
 import org.guanzon.cas.parameter.model.Model_Branch;
 import org.guanzon.cas.parameter.model.Model_Model_Variant;
 import org.guanzon.cas.parameter.services.ParamModels;
+import org.json.simple.JSONArray;
 import ph.com.guanzongroup.cas.sales.model.Model_Vehicle_AddOn_Master;
 import ph.com.guanzongroup.cas.sales.model.Model_Vehicle_AddOn_Type;
 import ph.com.guanzongroup.cas.sales.services.SalesControllers;
@@ -745,9 +746,48 @@ public class VehicleAddOns extends Transaction {
         return (Model_Model_Variant) paVehicleList.get(row);
     }
     
-    public ArrayList<String> loadUniqueAddOnTypeId(String fsAsOfDate) {
-        ArrayList<String> laType = new ArrayList<>();
-        
+//    public ArrayList<String> loadUniqueAddOnTypeId(String fsAsOfDate) {
+//        ArrayList<String> laType = new ArrayList<>();
+//        
+//        try {
+//            initSQL();
+//            String lsSQL = MiscUtil.addCondition(SQL_BROWSE,
+//                    " a.cRecdStat != " + SQLUtil.toSQL(ValidityPeriodStatus.VOID)
+//                    + " AND a.cRecdStat != " + SQLUtil.toSQL(ValidityPeriodStatus.CANCELLED)
+//            );
+//    //          lsSQL = lsSQL
+//    //                    + " AND ((a.dFromDate between "+ SQLUtil.toSQL(xsDateShort(Master().getFromDate()))+" AND "+  SQLUtil.toSQL(xsDateShort(Master().getThruDate())) +") OR a.dFromDate <= "+ SQLUtil.toSQL(xsDateShort(Master().getFromDate()))+")"
+//    //                    + " AND ((a.dThruDate between "+ SQLUtil.toSQL(xsDateShort(Master().getFromDate()))+" AND "+  SQLUtil.toSQL(xsDateShort(Master().getThruDate())) +") OR a.dThruDate IS NULL OR a.dThruDate >= "+ SQLUtil.toSQL(xsDateShort(Master().getFromDate()))+")";
+//            lsSQL = lsSQL + " GROUP BY b.sAddTypex ORDER BY b.sAddTypex DESC";
+//            System.out.println("loadUniqueAddOnTypeId SQL: " + lsSQL);
+//            ResultSet loRS = poGRider.executeQuery(lsSQL);
+//            if (MiscUtil.RecordCount(loRS) <= 0) {
+//                return laType;
+//            }
+//            String lsAddOnType = "";
+//            while (loRS.next()) {
+//                lsAddOnType = loRS.getString("sAddTypex");
+//                if(lsAddOnType != null && !"".equals(lsAddOnType)){
+//                    if(laType.isEmpty()){
+//                        laType.add(lsAddOnType);
+//                    } else {
+//                        if(!laType.contains(lsAddOnType)){
+//                            laType.add(lsAddOnType);
+//                        }
+//                    }
+//                }
+//            }   
+//        } catch (SQLException ex) {
+//            Logger.getLogger(getClass().getName()).log(Level.SEVERE, MiscUtil.getException(ex), ex);
+//            return laType;
+//        }
+//        
+//        return laType;
+//    }
+    
+    public JSONArray loadUniqueAddOnTypeId(String fsAsOfDate) throws SQLException, GuanzonException {
+        JSONArray loJSONArray = new JSONArray();
+        JSONObject loJSON = new JSONObject();
         try {
             initSQL();
             String lsSQL = MiscUtil.addCondition(SQL_BROWSE,
@@ -760,29 +800,22 @@ public class VehicleAddOns extends Transaction {
             lsSQL = lsSQL + " GROUP BY b.sAddTypex ORDER BY b.sAddTypex DESC";
             System.out.println("loadUniqueAddOnTypeId SQL: " + lsSQL);
             ResultSet loRS = poGRider.executeQuery(lsSQL);
-            if (MiscUtil.RecordCount(loRS) <= 0) {
-                return laType;
-            }
-            String lsAddOnType = "";
-            while (loRS.next()) {
-                lsAddOnType = loRS.getString("sAddTypex");
-                if(lsAddOnType != null && !"".equals(lsAddOnType)){
-                    if(laType.isEmpty()){
-                        laType.add(lsAddOnType);
-                    } else {
-                        if(!laType.contains(lsAddOnType)){
-                            laType.add(lsAddOnType);
-                        }
-                    }
+            if (MiscUtil.RecordCount(loRS) >= 0) {
+                while(loRS.next()){
+                    loJSON = new JSONObject();
+                    loJSON.put("sAddTypex", loRS.getString("sAddTypex"));
+                    loJSON.put("sAddTypNm", loRS.getString("sAddTypNm"));
+                    loJSONArray.add(loJSON);
                 }
-            }   
-        } catch (SQLException ex) {
-            Logger.getLogger(getClass().getName()).log(Level.SEVERE, MiscUtil.getException(ex), ex);
-            return laType;
+            }
+            MiscUtil.close(loRS);
+        } catch (SQLException e) {
+            System.out.println("ERROR: " + e.getMessage());
         }
         
-        return laType;
+        return loJSONArray;
     }
+    
     
     public String getAddOnTypeDescription(String fsAddOnTypeID){
         poJSON = new JSONObject();
@@ -1400,9 +1433,14 @@ public class VehicleAddOns extends Transaction {
                 "  a.sValidDsc, " +
                 "  a.cRecdStat, " +
                 "  a.dModified, " +
-                "  a.sModified " +
+                "  a.sModified, " +
+                "  b.sAddTypex, " +
+                "  c.sAddTypNm " +
                 "FROM Validity_Period_Master a " +
-                "INNER JOIN Vehicle_AddOn_Master b ON b.sValidIDx = a.sValidIDx";
+                "INNER JOIN Vehicle_AddOn_Master b ON b.sValidIDx = a.sValidIDx" +
+                "LEFT JOIN Vehicle_AddOn_Type c ON c.sAddTypex = b.sAddTypex"
+                
+                ;
         if(lsCondition != null && !"".equals(lsCondition)){
             SQL_BROWSE = MiscUtil.addCondition(SQL_BROWSE, lsCondition);
         }
