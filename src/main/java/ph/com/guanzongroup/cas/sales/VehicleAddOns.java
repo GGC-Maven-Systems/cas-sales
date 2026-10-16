@@ -5,6 +5,7 @@
  */
 package ph.com.guanzongroup.cas.sales;
 
+import com.sun.jmx.remote.internal.ArrayQueue;
 import org.guanzon.appdriver.agent.ShowDialogFX;
 import org.guanzon.appdriver.agent.services.Model;
 import org.guanzon.appdriver.agent.services.Transaction;
@@ -31,6 +32,7 @@ import javax.sql.rowset.RowSetProvider;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -83,6 +85,7 @@ public class VehicleAddOns extends Transaction {
         paVehicleList = new ArrayList<Model_Model_Variant>();
         paVariantDetail = new ArrayList<>();
         psApprover = "";
+        pbIsDialog = false;
         setApproving("");
         return initialize();
     }
@@ -434,6 +437,13 @@ public class VehicleAddOns extends Transaction {
             return poJSON;
         }
         
+        if(pbIsDialog){
+            poJSON = isSingleEntry();
+            if (!isJSONSuccess(poJSON)) {
+                return poJSON;
+            }
+        }
+        
         if(!pbWthParent){
             psApprover = poGRider.getUserID();
             poJSON = callApproval();
@@ -497,6 +507,13 @@ public class VehicleAddOns extends Transaction {
             return poJSON;
         }
         
+        if(pbIsDialog){
+            poJSON = isSingleEntry();
+            if (!isJSONSuccess(poJSON)) {
+                return poJSON;
+            }
+        }
+        
         //change status
         poJSON = statusChange(Master().getTable(), (String) Master().getValue("sValidIDx"),"", lsStatus, false, false);
         if (!isJSONSuccess(poJSON)) {
@@ -549,6 +566,13 @@ public class VehicleAddOns extends Transaction {
         poJSON = isEntryOkay(lsStatus);
         if (!isJSONSuccess(poJSON)) {
             return poJSON;
+        }
+        
+        if(pbIsDialog){
+            poJSON = isSingleEntry();
+            if (!isJSONSuccess(poJSON)) {
+                return poJSON;
+            }
         }
 
         if(!pbWthParent){
@@ -689,6 +713,7 @@ public class VehicleAddOns extends Transaction {
      */
     public JSONObject loadVehicleList() throws SQLException, GuanzonException, CloneNotSupportedException {
         poJSON = new JSONObject();
+        paVehicleList = new ArrayList<>();
         
         String lsSQL = " SELECT   " 
                        + " c.sVrntIDxx " 
@@ -795,10 +820,11 @@ public class VehicleAddOns extends Transaction {
                     + " AND a.cRecdStat != " + SQLUtil.toSQL(ValidityPeriodStatus.CANCELLED)
                     + " AND a.sCompnyID = " + SQLUtil.toSQL(psCompanyId)
             );
-    //          lsSQL = lsSQL
-    //                    + " AND ((a.dFromDate between "+ SQLUtil.toSQL(xsDateShort(Master().getFromDate()))+" AND "+  SQLUtil.toSQL(xsDateShort(Master().getThruDate())) +") OR a.dFromDate <= "+ SQLUtil.toSQL(xsDateShort(Master().getFromDate()))+")"
-    //                    + " AND ((a.dThruDate between "+ SQLUtil.toSQL(xsDateShort(Master().getFromDate()))+" AND "+  SQLUtil.toSQL(xsDateShort(Master().getThruDate())) +") OR a.dThruDate IS NULL OR a.dThruDate >= "+ SQLUtil.toSQL(xsDateShort(Master().getFromDate()))+")";
-            lsSQL = lsSQL + " GROUP BY b.sAddTypex ORDER BY c.sAddTypNm DESC";
+            
+              lsSQL = lsSQL + " AND " + SQLUtil.toSQL(formatDate(fsAsOfDate))+ " BETWEEN a.dFromDate AND a.dThruDate " ;
+//                        + " AND ((a.dFromDate between "+ SQLUtil.toSQL(xsDateShort(Master().getFromDate()))+" AND "+  SQLUtil.toSQL(xsDateShort(Master().getThruDate())) +") OR a.dFromDate <= "+ SQLUtil.toSQL(xsDateShort(Master().getFromDate()))+")"
+//                        + " AND ((a.dThruDate between "+ SQLUtil.toSQL(xsDateShort(Master().getFromDate()))+" AND "+  SQLUtil.toSQL(xsDateShort(Master().getThruDate())) +") OR a.dThruDate IS NULL OR a.dThruDate >= "+ SQLUtil.toSQL(xsDateShort(Master().getFromDate()))+")";
+            lsSQL = lsSQL + " GROUP BY b.sAddTypex ORDER BY c.sAddTypNm ASC";
             System.out.println("loadUniqueAddOnTypeId SQL: " + lsSQL);
             ResultSet loRS = poGRider.executeQuery(lsSQL);
             if (MiscUtil.RecordCount(loRS) >= 0) {
@@ -863,7 +889,9 @@ public class VehicleAddOns extends Transaction {
         return 0.0000;
     }
     
+    boolean pbIsDialog = false;
     public JSONObject OpenAddOn(String fsVariantId, String fsTypeId){
+        pbIsDialog = true;
          try {
             initSQL();
             String lsSQL = MiscUtil.addCondition(SQL_BROWSE,
@@ -917,6 +945,22 @@ public class VehicleAddOns extends Transaction {
             }
         }
         return 0;
+    }
+    
+    private JSONObject isSingleEntry(){
+        poJSON = new JSONObject();
+        for(int lnCtr = 0;lnCtr < getDetailCount();lnCtr++){
+            if(lnCtr > 0){
+                if(Detail(lnCtr).getVariantId() != null && !"".equals(Detail(lnCtr).getVariantId())){
+                    return setJSON("error", "Multiple details were found for this transaction. Status updates are not allowed." +
+                                                    "\nPlease proceed to Vehicle Add-On Entry to review the other details.");
+                }
+            }
+        }
+        
+        poJSON.put("result", "success");
+        poJSON.put("message", "success");
+        return poJSON;
     }
     
     /**
@@ -1038,15 +1082,24 @@ public class VehicleAddOns extends Transaction {
                     }
                 }
                 
-                if(getEditMode() == EditMode.ADDNEW || getEditMode() == EditMode.UPDATE){
+                if(getEditMode() == EditMode.ADDNEW){
                     if(!lbExist){
                         Detail(getDetailCount() - 1).setVariantId(lsVariantId);
                         Detail(getDetailCount() - 1).setSRPAmount(ldblSelPrice);
                         Detail(getDetailCount() - 1).setAddOnType(lsAddOnType);
                     }
-                    
-                    ReloadDetail();
 
+                    ReloadDetail();
+                } else if(getEditMode() == EditMode.UPDATE) {
+                    if(isJSONSuccess(checkExistingVehicleAddOns(lsVariantId))){ //populate variant without add on yet
+                        if(!lbExist){
+                            Detail(getDetailCount() - 1).setVariantId(lsVariantId);
+                            Detail(getDetailCount() - 1).setSRPAmount(ldblSelPrice);
+                            Detail(getDetailCount() - 1).setAddOnType(lsAddOnType);
+                        }
+
+                        ReloadDetail();
+                    }
                 }
             }
         }
@@ -1171,6 +1224,12 @@ public class VehicleAddOns extends Transaction {
         return date;
     }
     
+    public static String formatDate(String fsValue) {
+        DateTimeFormatter inputFormat = DateTimeFormatter.ofPattern("MM/dd/yyyy");
+        DateTimeFormatter outputFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
+    return LocalDate.parse(fsValue, inputFormat).format(outputFormat);
+}
     /**
      * Gets the master record as Model_Validity_Period_Master.
      *
