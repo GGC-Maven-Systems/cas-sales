@@ -1186,6 +1186,7 @@ public class VehicleFinancingPrice extends Transaction {
                                                     " a.cRecdStat != " + SQLUtil.toSQL(ValidityPeriodStatus.VOID)
                                                     + " AND a.cRecdStat != " + SQLUtil.toSQL(ValidityPeriodStatus.CANCELLED)
                                                     + " AND a.sValidIDx != " + SQLUtil.toSQL(Master().getValidityId())
+                                                    + " AND a.sCompnyID = " + SQLUtil.toSQL(psCompanyId)
                                                     );
           lsSQL = lsSQL 
                     + " AND ((a.dFromDate between "+ SQLUtil.toSQL(xsDateShort(Master().getFromDate()))+" AND "+  SQLUtil.toSQL(xsDateShort(Master().getThruDate())) +") OR a.dFromDate <= "+ SQLUtil.toSQL(xsDateShort(Master().getFromDate()))+")"

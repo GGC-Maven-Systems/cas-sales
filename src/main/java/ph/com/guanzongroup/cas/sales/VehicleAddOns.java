@@ -1656,9 +1656,8 @@ public class VehicleAddOns extends Transaction {
         // ---------------------------------------------
         Map<String, Object> parameters = new HashMap<>();
 
-
         parameters.put("watermarkImagePath", lsWatermarkPath);
-        parameters.put("sValidity",Master().getValidityId()+ "-"+ poGRider.getServerDate());
+        parameters.put("sValidity",poGRider.getServerDate()); //Master().getValidityId()+ "-"+ 
         parameters.put("sCompany",Master().Company().getCompanyName().toUpperCase());
         String lsAddress = Master().Company().getCompanyAddress();
         if (Master().Company().TownCity().getDescription() != null && !"".equals(Master().Company().TownCity().getDescription())) {
@@ -1671,7 +1670,7 @@ public class VehicleAddOns extends Transaction {
         }
 
         parameters.put("sAddress",lsAddress.toUpperCase());
-        parameters.put("sValidityDesc",Master().getValidityDescription().toUpperCase());
+//        parameters.put("sValidityDesc",Master().getValidityDescription().toUpperCase());
 
         Model_Branch loModel = Branch();
         String lsBranchName = loModel.getBranchName();
@@ -1703,8 +1702,6 @@ public class VehicleAddOns extends Transaction {
             if(!lsContact.isEmpty()){
                 lsContact = lsContact 
                             + "\nTel No : " + lsLandLine;
-            } else {
-                lsContact = "Tel No : " + lsLandLine;
             }
         }
         if(lsEmail == null) {
@@ -1712,17 +1709,13 @@ public class VehicleAddOns extends Transaction {
         } else {
             if(!lsEmail.isEmpty()){
                 lsContact = lsContact + "\nEmail Address : " + lsEmail;
-            } else {
-                lsContact = "Email Address : " + lsEmail;
-            }
+            } 
         }
 
         parameters.put("sBranch",lsBranchName.toUpperCase());
         parameters.put("sBranchAddress",lsBranchAddress.toUpperCase());
         parameters.put("sBranchDesc",lsBranchDesc.toUpperCase());
         parameters.put("sContact",lsContact);
-        // Current DP rate
-//        parameters.put("nDPRatePct",ldblDPRate);
         // ---------------------------------------------
         // Build data for current DP rate
         // ---------------------------------------------
@@ -1745,7 +1738,7 @@ public class VehicleAddOns extends Transaction {
         // Display final report
         // ---------------------------------------------
 
-        if (finalPrint != null) {
+        if (currentPrint != null) {
 
             CustomJasperViewer viewer =
                     new CustomJasperViewer(currentPrint);
@@ -1902,7 +1895,7 @@ public class VehicleAddOns extends Transaction {
             //Load ALL detail 
             for(int lnCtr = 0;lnCtr < getVehicleListCount();lnCtr++ ){
                 System.out.println("Variant ID : " + VehicleList(lnCtr).getVariantId());
-                System.out.println("SRP Amount : " + Detail(lnCtr).getSRPAmount());
+                System.out.println("SRP Amount : " + VehicleList(lnCtr).getSellingPrice());
                String lsVariant = VehicleList(lnCtr).getDescription();
                 if(VehicleList(lnCtr).Color().getDescription() != null && !"".equals(VehicleList(lnCtr).Color().getDescription())){
                     lsVariant = lsVariant + " " + VehicleList(lnCtr).Color().getDescription(); 
