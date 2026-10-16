@@ -793,11 +793,12 @@ public class VehicleAddOns extends Transaction {
             String lsSQL = MiscUtil.addCondition(SQL_BROWSE,
                     " a.cRecdStat != " + SQLUtil.toSQL(ValidityPeriodStatus.VOID)
                     + " AND a.cRecdStat != " + SQLUtil.toSQL(ValidityPeriodStatus.CANCELLED)
+                    + " AND a.sCompnyID = " + SQLUtil.toSQL(psCompanyId)
             );
     //          lsSQL = lsSQL
     //                    + " AND ((a.dFromDate between "+ SQLUtil.toSQL(xsDateShort(Master().getFromDate()))+" AND "+  SQLUtil.toSQL(xsDateShort(Master().getThruDate())) +") OR a.dFromDate <= "+ SQLUtil.toSQL(xsDateShort(Master().getFromDate()))+")"
     //                    + " AND ((a.dThruDate between "+ SQLUtil.toSQL(xsDateShort(Master().getFromDate()))+" AND "+  SQLUtil.toSQL(xsDateShort(Master().getThruDate())) +") OR a.dThruDate IS NULL OR a.dThruDate >= "+ SQLUtil.toSQL(xsDateShort(Master().getFromDate()))+")";
-            lsSQL = lsSQL + " GROUP BY b.sAddTypex ORDER BY b.sAddTypex DESC";
+            lsSQL = lsSQL + " GROUP BY b.sAddTypex ORDER BY c.sAddTypNm DESC";
             System.out.println("loadUniqueAddOnTypeId SQL: " + lsSQL);
             ResultSet loRS = poGRider.executeQuery(lsSQL);
             if (MiscUtil.RecordCount(loRS) >= 0) {
@@ -896,6 +897,8 @@ public class VehicleAddOns extends Transaction {
             ReloadDetail();
             Detail(getDetailCount() -1).setVariantId(fsVariantId);
             Detail(getDetailCount() -1).setAddOnType(fsTypeId);
+            Detail(getDetailCount() -1).setSRPAmount(Detail(getDetailCount() -1).ModelVariant().getSellingPrice());
+            Master().setValidityDescription(Detail(getDetailCount() -1).AddOnType().getAddTypeName());
             
         } catch (SQLException | CloneNotSupportedException | GuanzonException | ScriptException  ex) {
             Logger.getLogger(getClass().getName()).log(Level.SEVERE, MiscUtil.getException(ex), ex);
@@ -903,6 +906,17 @@ public class VehicleAddOns extends Transaction {
         } 
     
         return poJSON;
+    }
+    
+    public int getRow(String fsVariantId, String fsAddOnTypeId){
+        for(int lnCtr = 0;lnCtr < getDetailCount();lnCtr++){
+            if(fsVariantId.equals(Detail(lnCtr).getVariantId())
+                && fsAddOnTypeId.equals(Detail(lnCtr).getAddOnType())
+                ){
+                return lnCtr;
+            }
+        }
+        return 0;
     }
     
     /**
@@ -1279,7 +1293,7 @@ public class VehicleAddOns extends Transaction {
         return poJSON;
     }
     
-    private JSONObject checkExistingVehicleAddOns(){
+    private JSONObject checkExistingVehicleAddOns(String fsVariantId){
         try {
             initSQL();
             String lsSQL = MiscUtil.addCondition(SQL_BROWSE,
@@ -1287,6 +1301,8 @@ public class VehicleAddOns extends Transaction {
                                                     + " AND a.cRecdStat != " + SQLUtil.toSQL(ValidityPeriodStatus.CANCELLED)
                                                     + " AND a.sCompnyID != " + SQLUtil.toSQL(psCompanyId)
                                                     + " AND a.sValidIDx != " + SQLUtil.toSQL(Master().getValidityId())
+                                                    + " AND b.sAddTypex = " + SQLUtil.toSQL(Detail(0).getAddOnType())
+                                                    + " AND b.sVrntIDxx = " + SQLUtil.toSQL(fsVariantId)
                                                     );
           lsSQL = lsSQL 
                     + " AND ((a.dFromDate between "+ SQLUtil.toSQL(xsDateShort(Master().getFromDate()))+" AND "+  SQLUtil.toSQL(xsDateShort(Master().getThruDate())) +") OR a.dFromDate <= "+ SQLUtil.toSQL(xsDateShort(Master().getFromDate()))+")"
@@ -1341,9 +1357,13 @@ public class VehicleAddOns extends Transaction {
             return poJSON;
         }
         
-        poJSON = checkExistingVehicleAddOns();
-        if (!isJSONSuccess(poJSON)) {
-            return poJSON;
+        for(int lnCtr = 0;lnCtr < getDetailCount();lnCtr++){
+            if(Detail(lnCtr).getVariantId() != null && !"".equals(Detail(lnCtr).getVariantId())){
+                poJSON = checkExistingVehicleAddOns(Detail(lnCtr).getVariantId());
+                if (!isJSONSuccess(poJSON)) {
+                    return poJSON;
+                }
+            }
         }
         
         Iterator<Model> detail = Detail().iterator();
@@ -1355,15 +1375,15 @@ public class VehicleAddOns extends Transaction {
             double ldblAmount = Double.parseDouble(String.valueOf(item.getValue("nAmountxx")));
             double ldblSRP = Double.parseDouble(String.valueOf(item.getValue("nSRPAmntx")));
             
-            if (ldblSRP <= 0.00 || (lsDetailType == null || "".equals(lsDetailType)) || (lsDetail == null || "".equals(lsDetail))){
+            if (ldblAmount <= 0.00 || ldblSRP <= 0.00 || (lsDetailType == null || "".equals(lsDetailType)) || (lsDetail == null || "".equals(lsDetail))){
                 if(item.getEditMode() == EditMode.ADDNEW){
                     detail.remove(); // Correctly remove the item
                 } 
             } else {
-                if(ldblAmount <= 0.00){
-                    poJSON = setJSON("error", "Amount cannot be zero at row "+lnDetailRow+".");
-                    return poJSON;
-                }
+//                if(ldblAmount <= 0.00){
+//                    poJSON = setJSON("error", "Amount cannot be zero at row "+lnDetailRow+".");
+//                    return poJSON;
+//                }
                 lnDetailRow++;
             }
         }
@@ -1435,6 +1455,7 @@ public class VehicleAddOns extends Transaction {
                 "  a.dModified, " +
                 "  a.sModified, " +
                 "  b.sAddTypex, " +
+                "  b.nAmountxx, " +
                 "  c.sAddTypNm " +
                 "FROM Validity_Period_Master a " +
                 "INNER JOIN Vehicle_AddOn_Master b ON b.sValidIDx = a.sValidIDx " +

@@ -16,6 +16,7 @@ import org.json.simple.JSONObject;
 
 import java.sql.SQLException;
 import java.util.Date;
+import ph.com.guanzongroup.cas.sales.services.SalesModels;
 
 /**
  *
@@ -24,6 +25,7 @@ import java.util.Date;
 public class Model_Vehicle_AddOn_Master extends Model {
 
     Model_Model_Variant poModelVariant;
+    Model_Vehicle_AddOn_Type poAddOnType;
 
     @Override
     public void initialize() {
@@ -48,10 +50,6 @@ public class Model_Vehicle_AddOn_Master extends Model {
 
             ID2 = "sValidIDx";
             ID = "sAddOnIDx";
-
-            //initialize reference objects
-            ParamModels model = new ParamModels(poGRider);
-            poModelVariant = model.ModelVariant();
 
             pnEditMode = EditMode.UNKNOWN;
         } catch (SQLException e) {
@@ -154,6 +152,11 @@ public class Model_Vehicle_AddOn_Master extends Model {
     public Model_Model_Variant ModelVariant()
             throws SQLException,
             GuanzonException {
+        
+            //initialize reference objects
+            ParamModels model = new ParamModels(poGRider);
+            poModelVariant = model.ModelVariant();
+        
         if (!"".equals((String) getValue("sVrntIDxx"))) {
             if (poModelVariant.getEditMode() == EditMode.READY
                     && poModelVariant.getVariantId().equals((String) getValue("sVrntIDxx"))) {
@@ -171,6 +174,34 @@ public class Model_Vehicle_AddOn_Master extends Model {
         } else {
             poModelVariant.initialize();
             return poModelVariant;
+        }
+    }
+    
+    public Model_Vehicle_AddOn_Type AddOnType()
+            throws SQLException,
+            GuanzonException {
+        
+            //initialize reference objects
+            SalesModels model = new SalesModels(poGRider);
+            poAddOnType = model.VehicleAddOnType();
+        
+        if (!"".equals((String) getValue("sAddTypex"))) {
+            if (poAddOnType.getEditMode() == EditMode.READY
+                    && poAddOnType.getAddTypeCode().equals((String) getValue("sAddTypex"))) {
+                return poAddOnType;
+            } else {
+                poJSON = poAddOnType.openRecord((String) getValue("sAddTypex"));
+
+                if ("success".equals((String) poJSON.get("result"))) {
+                    return poAddOnType;
+                } else {
+                    poAddOnType.initialize();
+                    return poAddOnType;
+                }
+            }
+        } else {
+            poAddOnType.initialize();
+            return poAddOnType;
         }
     }
 }
