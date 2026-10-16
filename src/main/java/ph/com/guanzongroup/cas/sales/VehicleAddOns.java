@@ -1299,7 +1299,7 @@ public class VehicleAddOns extends Transaction {
             String lsSQL = MiscUtil.addCondition(SQL_BROWSE,
                                                     " a.cRecdStat != " + SQLUtil.toSQL(ValidityPeriodStatus.VOID)
                                                     + " AND a.cRecdStat != " + SQLUtil.toSQL(ValidityPeriodStatus.CANCELLED)
-                                                    + " AND a.sCompnyID != " + SQLUtil.toSQL(psCompanyId)
+                                                    + " AND a.sCompnyID = " + SQLUtil.toSQL(psCompanyId)
                                                     + " AND a.sValidIDx != " + SQLUtil.toSQL(Master().getValidityId())
                                                     + " AND b.sAddTypex = " + SQLUtil.toSQL(Detail(0).getAddOnType())
                                                     + " AND b.sVrntIDxx = " + SQLUtil.toSQL(fsVariantId)
