@@ -1682,8 +1682,6 @@ public class VehicleFinancingPrice extends Transaction {
                 if(!lsContact.isEmpty()){
                     lsContact = lsContact 
                                 + "\nTel No : " + lsLandLine;
-                } else {
-                    lsContact = "Tel No : " + lsLandLine;
                 }
             }
             if(lsEmail == null) {
@@ -1691,10 +1689,9 @@ public class VehicleFinancingPrice extends Transaction {
             } else {
                 if(!lsEmail.isEmpty()){
                     lsContact = lsContact + "\nEmail Address : " + lsEmail;
-                } else {
-                    lsContact = "Email Address : " + lsEmail;
-                }
+                } 
             }
+
             
             parameters.put("sBranch",lsBranchName.toUpperCase());
             parameters.put("sBranchAddress",lsBranchAddress.toUpperCase());

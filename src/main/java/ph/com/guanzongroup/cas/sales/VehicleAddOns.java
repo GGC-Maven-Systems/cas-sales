@@ -843,10 +843,11 @@ public class VehicleAddOns extends Transaction {
                     + " AND a.cRecdStat != " + SQLUtil.toSQL(ValidityPeriodStatus.CANCELLED)
                     + " AND a.sCompnyID = " + SQLUtil.toSQL(psCompanyId)
             );
-            
-              lsSQL = lsSQL + " AND " + SQLUtil.toSQL(formatDate(fsAsOfDate))+ " BETWEEN a.dFromDate AND a.dThruDate " ;
-//                        + " AND ((a.dFromDate between "+ SQLUtil.toSQL(xsDateShort(Master().getFromDate()))+" AND "+  SQLUtil.toSQL(xsDateShort(Master().getThruDate())) +") OR a.dFromDate <= "+ SQLUtil.toSQL(xsDateShort(Master().getFromDate()))+")"
-//                        + " AND ((a.dThruDate between "+ SQLUtil.toSQL(xsDateShort(Master().getFromDate()))+" AND "+  SQLUtil.toSQL(xsDateShort(Master().getThruDate())) +") OR a.dThruDate IS NULL OR a.dThruDate >= "+ SQLUtil.toSQL(xsDateShort(Master().getFromDate()))+")";
+            if(pbWithUI){
+                lsSQL = lsSQL + " AND " + SQLUtil.toSQL(formatDate(fsAsOfDate))+ " BETWEEN a.dFromDate AND a.dThruDate " ;
+            } else {
+                lsSQL = lsSQL + " AND " + SQLUtil.toSQL(fsAsOfDate)+ " BETWEEN a.dFromDate AND a.dThruDate " ;
+            }
             lsSQL = lsSQL + " GROUP BY b.sAddTypex ORDER BY c.sAddTypNm ASC";
             System.out.println("loadUniqueAddOnTypeId SQL: " + lsSQL);
             ResultSet loRS = poGRider.executeQuery(lsSQL);
@@ -1246,13 +1247,12 @@ public class VehicleAddOns extends Transaction {
         String date = sdf.format(fdValue);
         return date;
     }
-    
     public static String formatDate(String fsValue) {
-        DateTimeFormatter inputFormat = DateTimeFormatter.ofPattern("MM/dd/yyyy");
-        DateTimeFormatter outputFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+            DateTimeFormatter inputFormat = DateTimeFormatter.ofPattern("MM/dd/yyyy");
+            DateTimeFormatter outputFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
-    return LocalDate.parse(fsValue, inputFormat).format(outputFormat);
-}
+        return LocalDate.parse(fsValue, inputFormat).format(outputFormat);
+    }   
     /**
      * Gets the master record as Model_Validity_Period_Master.
      *
@@ -1657,7 +1657,7 @@ public class VehicleAddOns extends Transaction {
         Map<String, Object> parameters = new HashMap<>();
 
         parameters.put("watermarkImagePath", lsWatermarkPath);
-        parameters.put("sValidity",poGRider.getServerDate()); //Master().getValidityId()+ "-"+ 
+        parameters.put("sValidity",""+poGRider.getServerDate()); //Master().getValidityId()+ "-"+ 
         parameters.put("sCompany",Master().Company().getCompanyName().toUpperCase());
         String lsAddress = Master().Company().getCompanyAddress();
         if (Master().Company().TownCity().getDescription() != null && !"".equals(Master().Company().TownCity().getDescription())) {
