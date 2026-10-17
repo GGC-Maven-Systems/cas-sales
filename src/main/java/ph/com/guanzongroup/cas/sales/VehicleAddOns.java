@@ -893,11 +893,13 @@ public class VehicleAddOns extends Transaction {
                     + " AND a.cRecdStat != " + SQLUtil.toSQL(ValidityPeriodStatus.CANCELLED)
                     + " AND b.sVrntIDxx = " + SQLUtil.toSQL(fsVariantId)
                     + " AND b.sAddTypex = " + SQLUtil.toSQL(fsTypeId)
+                    + " AND a.sCompnyID = " + SQLUtil.toSQL(psCompanyId)
             );
-    //          lsSQL = lsSQL
-    //                    + " AND ((a.dFromDate between "+ SQLUtil.toSQL(xsDateShort(Master().getFromDate()))+" AND "+  SQLUtil.toSQL(xsDateShort(Master().getThruDate())) +") OR a.dFromDate <= "+ SQLUtil.toSQL(xsDateShort(Master().getFromDate()))+")"
-    //                    + " AND ((a.dThruDate between "+ SQLUtil.toSQL(xsDateShort(Master().getFromDate()))+" AND "+  SQLUtil.toSQL(xsDateShort(Master().getThruDate())) +") OR a.dThruDate IS NULL OR a.dThruDate >= "+ SQLUtil.toSQL(xsDateShort(Master().getFromDate()))+")";
-
+            if(pbWithUI){
+                lsSQL = lsSQL + " AND " + SQLUtil.toSQL(formatDate(fsAsOfDate))+ " BETWEEN a.dFromDate AND a.dThruDate " ;
+            } else {
+                lsSQL = lsSQL + " AND " + SQLUtil.toSQL(fsAsOfDate)+ " BETWEEN a.dFromDate AND a.dThruDate " ;
+            }
             System.out.println("getAmount SQL: " + lsSQL);
             ResultSet loRS = poGRider.executeQuery(lsSQL);
             if (MiscUtil.RecordCount(loRS) <= 0) {
@@ -914,20 +916,22 @@ public class VehicleAddOns extends Transaction {
     }
     
     boolean pbIsDialog = false;
-    public JSONObject OpenAddOn(String fsVariantId, String fsTypeId){
+    public JSONObject OpenAddOn(String fsVariantId, String fsTypeId, String fsAsOfDate){
         pbIsDialog = true;
          try {
             initSQL();
             String lsSQL = MiscUtil.addCondition(SQL_BROWSE,
                     " a.cRecdStat != " + SQLUtil.toSQL(ValidityPeriodStatus.VOID)
                     + " AND a.cRecdStat != " + SQLUtil.toSQL(ValidityPeriodStatus.CANCELLED)
-                    + " AND b.sVrntIDxx = " + SQLUtil.toSQL(fsVariantId)
                     + " AND b.sAddTypex = " + SQLUtil.toSQL(fsTypeId)
+                    + " AND b.sVrntIDxx = " + SQLUtil.toSQL(fsVariantId)
+                    + " AND a.sCompnyID = " + SQLUtil.toSQL(psCompanyId)
             );
-    //          lsSQL = lsSQL
-    //                    + " AND ((a.dFromDate between "+ SQLUtil.toSQL(xsDateShort(Master().getFromDate()))+" AND "+  SQLUtil.toSQL(xsDateShort(Master().getThruDate())) +") OR a.dFromDate <= "+ SQLUtil.toSQL(xsDateShort(Master().getFromDate()))+")"
-    //                    + " AND ((a.dThruDate between "+ SQLUtil.toSQL(xsDateShort(Master().getFromDate()))+" AND "+  SQLUtil.toSQL(xsDateShort(Master().getThruDate())) +") OR a.dThruDate IS NULL OR a.dThruDate >= "+ SQLUtil.toSQL(xsDateShort(Master().getFromDate()))+")";
-
+            if(pbWithUI){
+                lsSQL = lsSQL + " AND " + SQLUtil.toSQL(formatDate(fsAsOfDate))+ " BETWEEN a.dFromDate AND a.dThruDate " ;
+            } else {
+                lsSQL = lsSQL + " AND " + SQLUtil.toSQL(fsAsOfDate)+ " BETWEEN a.dFromDate AND a.dThruDate " ;
+            }
             System.out.println("OpenAddOn SQL: " + lsSQL);
             ResultSet loRS = poGRider.executeQuery(lsSQL);
             if (MiscUtil.RecordCount(loRS) <= 0) {
@@ -1720,6 +1724,19 @@ public class VehicleAddOns extends Transaction {
         // Build data for current DP rate
         // ---------------------------------------------
         List<Map<String, Object>> rows = buildSampleData(fsAsOfDate);
+        if (rows == null){
+            ShowMessageFX.Warning(null, "Computerized Accounting System",
+            "No APPROVED vehicle add ons found on the selected date.");
+            return poJSON;
+        } else {
+            if  (rows.isEmpty()) {
+                ShowMessageFX.Warning(null, "Computerized Accounting System",
+                "No APPROVED vehicle add ons found on the selected date.");
+                return poJSON;
+            }
+        }
+        
+        
         List<Map<String, ?>> data = new ArrayList<>(rows);
         JRMapCollectionDataSource dataSource = new JRMapCollectionDataSource(data);
 
@@ -1910,15 +1927,41 @@ public class VehicleAddOns extends Transaction {
                     System.out.println("Type Id : " + lsAddTypeId);
                     System.out.println("Type Name : " + lsAddTypeName);
                     System.out.println("Variant ADD ON Amount " + getAmount(VehicleList(lnCtr).getVariantId(), lsAddTypeId, fsAsOfDate));
+                    initSQL();
+                    String lsSQL = MiscUtil.addCondition(SQL_BROWSE,
+                            " a.cRecdStat != " + SQLUtil.toSQL(ValidityPeriodStatus.VOID)
+                            + " AND a.cRecdStat != " + SQLUtil.toSQL(ValidityPeriodStatus.CANCELLED)
+                            + " AND b.sAddTypex = " + SQLUtil.toSQL(lsAddTypeId)
+                            + " AND b.sVrntIDxx = " + SQLUtil.toSQL(VehicleList(lnCtr).getVariantId())
+                            + " AND a.sCompnyID = " + SQLUtil.toSQL(psCompanyId)
+                    );
+                    if(pbWithUI){
+                        lsSQL = lsSQL + " AND " + SQLUtil.toSQL(formatDate(fsAsOfDate))+ " BETWEEN a.dFromDate AND a.dThruDate " ;
+                    } else {
+                        lsSQL = lsSQL + " AND " + SQLUtil.toSQL(fsAsOfDate)+ " BETWEEN a.dFromDate AND a.dThruDate " ;
+                    }
+                    System.out.println("buildSampleData SQL: " + lsSQL);
+                    String lsStatus = "";
+                    ResultSet loRS = poGRider.executeQuery(lsSQL);
+                    if (MiscUtil.RecordCount(loRS) <= 0) {
+                    } else {
+                        if (loRS.next()) {
+                            if(loRS.getString("sValidIDx") != null && !"".equals(loRS.getString("sValidIDx"))){
+                                lsStatus = loRS.getString("cRecdStat");
+                            }
+                        } 
+                    }
                     
-                    addRow(rows
-                            , VehicleList(lnCtr).Model().Brand().getDescription()
-                            , VehicleList(lnCtr).Model().getDescription()
-                            , lsVariant
-                            , VehicleList(lnCtr).getSellingPrice()
-                            , lsAddTypeName
-                            , getAmount(VehicleList(lnCtr).getVariantId(), lsAddTypeId, fsAsOfDate)
-                        );
+                    if(ValidityPeriodStatus.APPROVED.equals(lsStatus)){
+                        addRow(rows
+                                , VehicleList(lnCtr).Model().Brand().getDescription()
+                                , VehicleList(lnCtr).Model().getDescription()
+                                , lsVariant
+                                , VehicleList(lnCtr).getSellingPrice()
+                                , lsAddTypeName
+                                , getAmount(VehicleList(lnCtr).getVariantId(), lsAddTypeId, fsAsOfDate)
+                            );
+                    }
                 }  
 
             }
