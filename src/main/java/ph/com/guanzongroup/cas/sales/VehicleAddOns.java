@@ -854,8 +854,12 @@ public class VehicleAddOns extends Transaction {
             if (MiscUtil.RecordCount(loRS) >= 0) {
                 while(loRS.next()){
                     loJSON = new JSONObject();
+                    String lsAddOnType = loRS.getString("sAddTypNm");
+                    if(lsAddOnType != null){
+                        lsAddOnType = lsAddOnType.toUpperCase();
+                    }
                     loJSON.put("sAddTypex", loRS.getString("sAddTypex"));
-                    loJSON.put("sAddTypNm", loRS.getString("sAddTypNm").toUpperCase());
+                    loJSON.put("sAddTypNm", lsAddOnType);
                     loJSONArray.add(loJSON);
                 }
             }
