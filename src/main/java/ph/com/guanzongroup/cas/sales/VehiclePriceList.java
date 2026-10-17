@@ -925,7 +925,7 @@ public class VehiclePriceList extends Transaction {
                 "         WHEN a.cRecdStat = '3'  " +
                 "         THEN 'VOIDED'  " +
                 "         ELSE 'UNKNOWN' " +
-                "     END AS xRecdStat",
+                "     END",
                    0);
         }
         if (poJSON != null) {

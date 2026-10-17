@@ -517,8 +517,16 @@ public class StandardFinancingRates extends Parameter {
                     lsSQL,
                     value,
                     "Rate ID»Rate Type»Duration»Rate»From Date»To Date",
-                    "sStdRteID»sRateType»nDuration»nRateValx»dFromDate»dThruDate",
-                    "a.sStdRteID»a.sRateType»a.nDuration»a.nRateValx»a.dFromDate»a.dThruDate",
+                    "sStdRteID»xRateType»nDuration»nRateValx»dFromDate»dThruDate",
+                    "a.sStdRteID»"+
+                    "CASE  " +
+                    "         WHEN a.sRateType = '0'  " +
+                    "         THEN 'Interest rate'  " +
+                    "         WHEN a.sRateType = '1'  " +
+                    "         THEN 'Downpayment rate'  " +
+                    "         ELSE '' " +
+                    "     END" +
+                    "»a.nDuration»a.nRateValx»a.dFromDate»a.dThruDate",
                     byCode ? 0 : 1);
         } else {
             try {
@@ -601,6 +609,13 @@ public class StandardFinancingRates extends Parameter {
             ", a.cRecdStat " +
             ", a.sModified " +
             ", a.dModified " +
+            ",     CASE  " +
+            "         WHEN a.sRateType = '0'  " +
+            "         THEN 'Interest rate'  " +
+            "         WHEN a.sRateType = '1'  " +
+            "         THEN 'Downpayment rate'  " +
+            "         ELSE '' " +
+            "     END AS xRateType " +
             "FROM Vehicle_Financing_Rates a " ;
         
     }
