@@ -855,7 +855,7 @@ public class VehicleAddOns extends Transaction {
                 while(loRS.next()){
                     loJSON = new JSONObject();
                     loJSON.put("sAddTypex", loRS.getString("sAddTypex"));
-                    loJSON.put("sAddTypNm", loRS.getString("sAddTypNm"));
+                    loJSON.put("sAddTypNm", loRS.getString("sAddTypNm").toUpperCase());
                     loJSONArray.add(loJSON);
                 }
             }
@@ -2055,6 +2055,24 @@ public class VehicleAddOns extends Transaction {
                     " WHERE a.sSourceNo = " + SQLUtil.toSQL(Master().getValidityId()) +
                     " AND a.sTableNme = " + SQLUtil.toSQL(Master().getTable()) + " ORDER BY a.dModified";
         System.out.println("STATUS HISTORY : " + lsSQL);
+        ResultSet loRS = this.poGRider.executeQuery(lsSQL);
+        RowSetFactory factory = RowSetProvider.newFactory();
+        CachedRowSet rowset = factory.createCachedRowSet();
+        rowset.populate(loRS);
+        MiscUtil.close(loRS);
+        return rowset;
+    }
+    
+    @Override
+    protected CachedRowSet getStatusHistory() throws SQLException {
+        this.poGRider.ensureConnected();
+        String lsSQL = "SELECT  a.sTableNme, a.sSourceNo, a.sRemarksx, a.cRefrStat cTranStat, IFNULL(c.sCompnyNm, '-') xModified, IFNULL(e.sCompnyNm, '-') xApproved, a.dModified, a.dApproved, a.sModified, a.sApproved "
+                + " FROM GCASys_DBF.Transaction_Status_History a "
+                + " LEFT JOIN GCASys_DBF.xxxSysUser b ON b.sUserIDxx = AES_DECRYPT(UNHEX(a.sModified), '08220326') "
+                + " LEFT JOIN GGC_ISysDBF.Client_Master c ON b.sEmployNo = c.sClientID "
+                + " LEFT JOIN GCASys_DBF.xxxSysUser d ON d.sUserIDxx = AES_DECRYPT(UNHEX(a.sApproved), '08220326') "
+                + " LEFT JOIN GGC_ISysDBF.Client_Master e ON d.sEmployNo = e.sClientID "
+                + " WHERE a.sSourceNo = " + SQLUtil.toSQL(Master().getValidityId()) + " AND a.sTableNme = " + SQLUtil.toSQL(Master().getTable()) + " ORDER BY a.dModified, a.sTransNox";
         ResultSet loRS = this.poGRider.executeQuery(lsSQL);
         RowSetFactory factory = RowSetProvider.newFactory();
         CachedRowSet rowset = factory.createCachedRowSet();
