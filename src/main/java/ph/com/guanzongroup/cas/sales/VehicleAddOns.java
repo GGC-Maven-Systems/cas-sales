@@ -5,14 +5,12 @@
  */
 package ph.com.guanzongroup.cas.sales;
 
-import com.sun.jmx.remote.internal.ArrayQueue;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import org.guanzon.appdriver.agent.ShowDialogFX;
 import org.guanzon.appdriver.agent.services.Model;
 import org.guanzon.appdriver.agent.services.Transaction;
 import org.guanzon.appdriver.agent.systables.SysTableContollers;
@@ -71,7 +69,6 @@ import org.guanzon.cas.parameter.model.Model_Model_Variant;
 import org.guanzon.cas.parameter.services.ParamModels;
 import org.json.simple.JSONArray;
 import ph.com.guanzongroup.cas.sales.model.Model_Vehicle_AddOn_Master;
-import ph.com.guanzongroup.cas.sales.model.Model_Vehicle_AddOn_Type;
 import ph.com.guanzongroup.cas.sales.services.SalesControllers;
 import ph.com.guanzongroup.cas.sales.status.AddOnTypeStatus;
 
@@ -794,45 +791,6 @@ public class VehicleAddOns extends Transaction {
         return (Model_Model_Variant) paVehicleList.get(row);
     }
     
-//    public ArrayList<String> loadUniqueAddOnTypeId(String fsAsOfDate) {
-//        ArrayList<String> laType = new ArrayList<>();
-//        
-//        try {
-//            initSQL();
-//            String lsSQL = MiscUtil.addCondition(SQL_BROWSE,
-//                    " a.cRecdStat != " + SQLUtil.toSQL(ValidityPeriodStatus.VOID)
-//                    + " AND a.cRecdStat != " + SQLUtil.toSQL(ValidityPeriodStatus.CANCELLED)
-//            );
-//    //          lsSQL = lsSQL
-//    //                    + " AND ((a.dFromDate between "+ SQLUtil.toSQL(xsDateShort(Master().getFromDate()))+" AND "+  SQLUtil.toSQL(xsDateShort(Master().getThruDate())) +") OR a.dFromDate <= "+ SQLUtil.toSQL(xsDateShort(Master().getFromDate()))+")"
-//    //                    + " AND ((a.dThruDate between "+ SQLUtil.toSQL(xsDateShort(Master().getFromDate()))+" AND "+  SQLUtil.toSQL(xsDateShort(Master().getThruDate())) +") OR a.dThruDate IS NULL OR a.dThruDate >= "+ SQLUtil.toSQL(xsDateShort(Master().getFromDate()))+")";
-//            lsSQL = lsSQL + " GROUP BY b.sAddTypex ORDER BY b.sAddTypex DESC";
-//            System.out.println("loadUniqueAddOnTypeId SQL: " + lsSQL);
-//            ResultSet loRS = poGRider.executeQuery(lsSQL);
-//            if (MiscUtil.RecordCount(loRS) <= 0) {
-//                return laType;
-//            }
-//            String lsAddOnType = "";
-//            while (loRS.next()) {
-//                lsAddOnType = loRS.getString("sAddTypex");
-//                if(lsAddOnType != null && !"".equals(lsAddOnType)){
-//                    if(laType.isEmpty()){
-//                        laType.add(lsAddOnType);
-//                    } else {
-//                        if(!laType.contains(lsAddOnType)){
-//                            laType.add(lsAddOnType);
-//                        }
-//                    }
-//                }
-//            }   
-//        } catch (SQLException ex) {
-//            Logger.getLogger(getClass().getName()).log(Level.SEVERE, MiscUtil.getException(ex), ex);
-//            return laType;
-//        }
-//        
-//        return laType;
-//    }
-    
     public JSONArray loadUniqueAddOnTypeId(String fsAsOfDate) throws SQLException, GuanzonException {
         JSONArray loJSONArray = new JSONArray();
         JSONObject loJSON = new JSONObject();
@@ -870,24 +828,6 @@ public class VehicleAddOns extends Transaction {
         
         return loJSONArray;
     }
-    
-    
-//    public String getAddOnTypeDescription(String fsAddOnTypeID){
-//        poJSON = new JSONObject();
-//        try {
-//            Model_Vehicle_AddOn_Type loObj = new SalesModels(poGRider).VehicleAddOnType();
-//            loObj.initialize();
-//            poJSON = loObj.openRecord(fsAddOnTypeID);
-//            if(isJSONSuccess(poJSON)){
-//                return loObj.getAddTypeName();
-//            }
-//        } catch (SQLException | GuanzonException ex) {
-//            Logger.getLogger(getClass().getName()).log(Level.SEVERE, MiscUtil.getException(ex), ex);
-//            return "";
-//        }
-//        
-//        return "";
-//    }
     
     public Double getAmount(String fsVariantId, String fsTypeId, String fsAsOfDate){
         try {
@@ -1470,10 +1410,6 @@ public class VehicleAddOns extends Transaction {
                     detail.remove(); // Correctly remove the item
                 } 
             } else {
-//                if(ldblAmount <= 0.00){
-//                    poJSON = setJSON("error", "Amount cannot be zero at row "+lnDetailRow+".");
-//                    return poJSON;
-//                }
                 lnDetailRow++;
             }
         }
