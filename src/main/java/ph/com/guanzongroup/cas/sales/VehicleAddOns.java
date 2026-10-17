@@ -975,7 +975,7 @@ public class VehicleAddOns extends Transaction {
         return 0;
     }
     
-    private JSONObject isSingleEntry(){
+    public JSONObject isSingleEntry(){
         poJSON = new JSONObject();
         for(int lnCtr = 0;lnCtr < getDetailCount();lnCtr++){
             if(lnCtr > 0){
@@ -1015,7 +1015,7 @@ public class VehicleAddOns extends Transaction {
         if(pbWithUI){
             poJSON = ShowDialogFX.Browse(poGRider,
                     lsSQL,
-                    "",
+                    fsValue,
                     "Validity ID»Description»From Date»Thru Date",
                     "sValidIDx»sValidDsc»dFromDate»dThruDate",
                     "a.sValidIDx»a.sValidDsc»a.dFromDate»a.dThruDate",
