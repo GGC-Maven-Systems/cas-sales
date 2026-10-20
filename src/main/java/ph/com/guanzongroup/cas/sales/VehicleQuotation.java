@@ -540,6 +540,48 @@ public class VehicleQuotation extends Transaction {
         }
     }
     
+    public JSONObject loadTransactionList(String fsClient, String fsTransactionNo) throws SQLException, GuanzonException {
+        poJSON = new JSONObject();
+        paMaster = new ArrayList<>();
+        
+        initSQL();
+        String lsSQL = MiscUtil.addCondition(SQL_BROWSE,
+                " b.sIndstCdx = " + SQLUtil.toSQL(psIndustryId)
+                + " AND b.sCompnyID = " + SQLUtil.toSQL(psCompanyId)
+                + " AND b.sCategrCd = " + SQLUtil.toSQL(psCategoryId)
+                + " AND b.sBranchCd = " + SQLUtil.toSQL(poGRider.getBranchCode())
+                + " AND c.sCompnyNm LIKE " + SQLUtil.toSQL("%" + fsClient + "%")
+                + " AND a.sTransNox LIKE " + SQLUtil.toSQL("%" + fsTransactionNo + "%")
+            );
+        
+       
+        //If current user is an ordinary user load only its inquiries
+        if (poGRider.getUserLevel() <= UserRight.ENCODER) {
+            lsSQL = MiscUtil.addCondition(lsSQL,
+                    " b.sSalesman = " + SQLUtil.toSQL(getSysUser(poGRider.getUserID(), true)));
+        }
+        
+        lsSQL = lsSQL + " ORDER BY a.dTransact, c.sCompnyNm  ASC ";
+        System.out.println("Executing SQL: " + lsSQL);
+        ResultSet loRS = poGRider.executeQuery(lsSQL);
+        if (MiscUtil.RecordCount(loRS) <= 0) {
+            poJSON = setJSON("error", "No record found.");
+            return poJSON;
+        }
+
+        while (loRS.next()) {
+            Model_Sales_Quotation_Vehicle loObject = new SalesModels(poGRider).SalesQuotationVehicle();
+            poJSON = loObject.openRecord(loRS.getString("sTransNox"));
+            if (isJSONSuccess(poJSON)) {
+                paMaster.add((Model) loObject);
+            } else {
+                return poJSON;
+            }
+        }
+        MiscUtil.close(loRS);
+        return poJSON;
+    }
+    
     public JSONObject SearchTransaction(String fsValue, boolean fbByCode) throws CloneNotSupportedException, SQLException, GuanzonException, ScriptException{
         poJSON = new JSONObject();
 
