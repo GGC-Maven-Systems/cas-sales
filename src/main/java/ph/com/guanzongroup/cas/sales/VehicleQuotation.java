@@ -56,6 +56,7 @@ import java.util.*;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import ph.com.guanzongroup.cas.sales.status.FinancingRateStatus;
 import ph.com.guanzongroup.cas.sales.status.SalesInquiryStatic;
 
 /**
@@ -1004,38 +1005,28 @@ public class VehicleQuotation extends Transaction {
         return poJSON;
     }
     
-    private JSONObject checkExistingVehiclePriceList(){
-//        try {
-//            initSQL();
-//            String lsSQL = MiscUtil.addCondition(SQL_BROWSE,
-//                                                    " a.cRecdStat != " + SQLUtil.toSQL(VehicleQuotationStatus.VOID)
-//                                                    + " AND a.cRecdStat != " + SQLUtil.toSQL(VehicleQuotationStatus.CANCELLED)
-//                                                    + " AND a.sTransNox != " + SQLUtil.toSQL(Master().getTransactionNo())
-//                                                    + " AND a.sCompnyID = " + SQLUtil.toSQL(Master().getCompanyId())
-//                                                    );
-//          lsSQL = lsSQL
-//                    + " AND ((a.dFromDate between "+ SQLUtil.toSQL(xsDateShort(Master().getFromDate()))+" AND "+  SQLUtil.toSQL(xsDateShort(Master().getThruDate())) +") OR a.dFromDate <= "+ SQLUtil.toSQL(xsDateShort(Master().getFromDate()))+")"
-//                    + " AND ((a.dThruDate between "+ SQLUtil.toSQL(xsDateShort(Master().getFromDate()))+" AND "+  SQLUtil.toSQL(xsDateShort(Master().getThruDate())) +") OR a.dThruDate IS NULL OR a.dThruDate >= "+ SQLUtil.toSQL(xsDateShort(Master().getFromDate()))+")";
-//
-//            System.out.println("checkExistingVehiclePriceList SQL: " + lsSQL);
-//            ResultSet loRS = poGRider.executeQuery(lsSQL);
-//            if (MiscUtil.RecordCount(loRS) > 0) {
-//                if(loRS.next()){
-//                    poJSON.put("result", "error");
-//                    poJSON.put("message", "A Vehicle Price Update already exists for the selected validity period.");
-//                    return poJSON;
-//                }
-//            }
-//        } catch (SQLException ex) {
-//            Logger.getLogger(getClass().getName()).log(Level.SEVERE, MiscUtil.getException(ex), ex);
-//            poJSON.put("result", "error");
-//            poJSON.put("message", MiscUtil.getException(ex));
-//            return poJSON;
-//        }
+    private boolean validateStandardDetails(int row){
+        try {
+            Model_Financing_Rate_Master lObj = new SalesModels(poGRider).FinancingRateMaster();
+            String lsSQL = MiscUtil.addCondition(MiscUtil.makeSelect(lObj),
+                                                    " cRecdStat = " + SQLUtil.toSQL(FinancingRateStatus.ACTIVE)
+                                                    + " AND sBankIDxx = " + SQLUtil.toSQL("")
+                                                    + " AND nDuration = " + SQLUtil.toSQL(Detail(row).getDuration())
+                                                    + " AND nRateValx = " + SQLUtil.toSQL(Detail(row).getRateValue())
+                                                    + " AND sCompnyID = " + SQLUtil.toSQL(Master().getCompanyId())
+                                                    );
+            System.out.println("validateStandardDetails SQL: " + lsSQL);
+            ResultSet loRS = poGRider.executeQuery(lsSQL);
+            if (MiscUtil.RecordCount(loRS) > 0) {
+                if(loRS.next()){
+                    return false;
+                }
+            }
+        } catch (SQLException ex) {
+            Logger.getLogger(getClass().getName()).log(Level.SEVERE, MiscUtil.getException(ex), ex);
+        }
             
-        poJSON.put("result", "success");
-        poJSON.put("message", "success");
-        return poJSON;
+        return true;
     }
     
     @Override
@@ -1055,18 +1046,21 @@ public class VehicleQuotation extends Transaction {
         if (!isJSONSuccess(poJSON)) {
             return poJSON;
         }
-
-        poJSON = checkExistingVehiclePriceList();
-        if (!isJSONSuccess(poJSON)) {
-            return poJSON;
+        
+        if(validateStandardDetails(0)){ //if true require approve upon saving
+            if(pbWithUI){
+                poJSON = callApproval();
+                if(!isJSONSuccess(poJSON)){
+                    return poJSON;
+                }
+            }
         }
-
+        
         Iterator<Model> detail = Detail().iterator();
         int lnDetailRow = 1;
         while (detail.hasNext()) {
             Model item = detail.next(); // Store the item before checking conditions
             String lsDetail = (String) item.getValue("sVrntIDxx");
-            String lsRecStat = (String) item.getValue("cRecdStat");
             double ldblSRP = Double.parseDouble(String.valueOf(item.getValue("nSRPAmntx")));
             
             if ((lsDetail == null || "".equals(lsDetail))){
@@ -1082,7 +1076,7 @@ public class VehicleQuotation extends Transaction {
             poJSON = setJSON("error", "No record detail to be save.");
             return poJSON;
         }
-
+        
         for (int lnCtr = 0; lnCtr <= getDetailCount() - 1; lnCtr++) {
             if(Detail(lnCtr).getSRPAmount() == 0.0000){
                 return setJSON("error", "Invalid SRP amount.");
@@ -1097,11 +1091,63 @@ public class VehicleQuotation extends Transaction {
             Detail(lnCtr).setModifiedDate(poGRider.getServerDate());
         }
         
+        //Vehicle Quotation Add ON
+        Iterator<Model_Quotation_AddOn> addon = paAddOn.iterator();
+        while (detail.hasNext()) {
+            Model item = detail.next(); // Store the item before checking conditions
+            String lsDetail = (String) item.getValue("sAddOnIDx");
+            double ldblSRP = Double.parseDouble(String.valueOf(item.getValue("nSRPAmntx")));
+            
+            if ((lsDetail == null || "".equals(lsDetail))){
+                if(item.getEditMode() == EditMode.ADDNEW){
+                    detail.remove(); // Correctly remove the item
+                } 
+            } else {
+                lnDetailRow++;
+            }
+        }
+
+        for (int lnCtr = 0; lnCtr <= getAddOnListCount() - 1; lnCtr++) {
+            if(AddOnList(lnCtr).getAmount() == 0.0000){
+                return setJSON("error", "Invalid amount at row "+(lnCtr+1)+".");
+            }
+            
+            AddOnList(lnCtr).setTransactionNo(Master().getTransactionNo());
+            AddOnList(lnCtr).setModifiedBy(poGRider.Encrypt(poGRider.getUserID()));
+            AddOnList(lnCtr).setModifiedDate(poGRider.getServerDate());
+        }
+        
         Master().setModifyingId(poGRider.Encrypt(poGRider.getUserID()));
         Master().setModifiedDate(poGRider.getServerDate());
         poJSON = setJSON("success", "success");
         return poJSON;
     }
+    
+    @Override
+    protected JSONObject saveOthers() {
+        try {
+            poJSON = new JSONObject();
+            for (int lnCtr = 0; lnCtr <= getAddOnListCount() - 1; lnCtr++) {
+                if(AddOnList(lnCtr).getEditMode() == EditMode.ADDNEW || AddOnList(lnCtr).getEditMode() == EditMode.UPDATE){
+                    if(AddOnList(lnCtr).getEditMode() == EditMode.ADDNEW){
+                        AddOnList(lnCtr).setQuotationAddOnId(AddOnList(lnCtr).getNextCode());
+                    }
+                    poJSON = AddOnList(lnCtr).saveRecord();
+                    if(!isJSONSuccess(poJSON)){
+                        return poJSON;
+                    }
+                }
+            }
+            
+        } catch (ExceptionInInitializerError | SQLException | GuanzonException ex) {
+            Logger.getLogger(getClass().getName()).log(Level.SEVERE, MiscUtil.getException(ex), ex);
+            poJSON = setJSON("error", MiscUtil.getException(ex));
+            return poJSON;
+        } 
+        
+        return poJSON;
+    }
+    
     
     @Override
     public JSONObject save() throws CloneNotSupportedException, SQLException, GuanzonException {
