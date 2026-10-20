@@ -1121,13 +1121,17 @@ public class VehicleQuotation extends Transaction {
         }
 
         SQL_BROWSE ="SELECT " +
-                "  a.sTransNox, " +
-                "  a.sCompnyID, " +
-                "  a.dFromDate, " +
-                "  a.dThruDate, " +
-                "  a.sValidDsc, " +
-                "  a.cRecdStat, " +
-                "  a.dModified, " +
+                " a.sTransNox, " +
+                " a.sIndstCdx, " +
+                " a.sCategrCd, " +
+                " a.dTransact, " +
+                " a.sClientID, " +
+                " a.sAddrssID, " +
+                " a.sContctID, " +
+                " a.nVersionx, " +
+                " a.cTranStat, " +
+                " a.sModified, " +
+                " a.dModified, " +
                 "     CASE  " +
                 "         WHEN a.cTranStat = '0'  " +
                 "         THEN 'OPEN'  " +
@@ -1138,14 +1142,14 @@ public class VehicleQuotation extends Transaction {
                 "         WHEN a.cTranStat = '3'  " +
                 "         THEN 'VOIDED'  " +
                 "         ELSE 'UNKNOWN' " +
-                "     END AS xRecdStat, " +
+                "     END AS xTranStat, " +
                 "  b.sVrntIDxx, " +
-                "  b.nPriceYrx, " +
                 "  b.nSRPAmntx, " +
                 "  b.sModified," +
                 "  b.dModified " +
                 "FROM Sales_Quotation_Master a " +
-                "INNER JOIN Quotation_Payment b ON b.sTransNox = a.sTransNox";
+                "INNER JOIN Sales_Quotation_Vehicle b ON b.sTransNox = a.sTransNox " +
+                "LEFT JOIN Client_Master c ON c.sClientID = a.sClientID "; 
         if(lsCondition != null && !"".equals(lsCondition)){
             SQL_BROWSE = MiscUtil.addCondition(SQL_BROWSE, lsCondition);
         }
