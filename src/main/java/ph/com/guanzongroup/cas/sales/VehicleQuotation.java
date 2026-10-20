@@ -56,6 +56,7 @@ import java.util.*;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import ph.com.guanzongroup.cas.sales.status.SalesInquiryStatic;
 
 /**
  * @author Arsiela
@@ -67,6 +68,7 @@ public class VehicleQuotation extends Transaction {
     public String psApprover = "";
 
     public List<Model_Quotation_AddOn> paAddOn;
+    public List<Model> paMaster;
     
     public JSONObject InitTransaction() throws SQLException, GuanzonException {
         SOURCE_CODE = "VQOT";
@@ -75,6 +77,7 @@ public class VehicleQuotation extends Transaction {
         poDetail = new SalesModels(poGRider).QuotationPayment();
 
         paAddOn = new ArrayList<Model_Quotation_AddOn>();
+        paMaster = new ArrayList<>();
         psApprover = "";
         setApproving("");
         return initialize();
@@ -621,7 +624,27 @@ public class VehicleQuotation extends Transaction {
             return poJSON;
         }
     }
-
+    
+    public JSONObject SearchClient(String value, boolean byCode)
+            throws ExceptionInInitializerError,
+            SQLException,
+            GuanzonException,
+            CloneNotSupportedException {
+        poJSON = new JSONObject();
+        
+        SalesInquiry object = new SalesControllers(poGRider, logwrapr).SalesInquiry();
+        object.setTransactionStatus(SalesInquiryStatic.OPEN);
+        
+        poJSON = object.searchTransaction(psIndustryId, psCompanyId, psCategoryId, value, "");
+        if (isJSONSuccess(poJSON)) {
+            Master().setClientId(object.Master().getClientId());
+            Master().setSourceCode(object.getSourceCode());
+            Master().setClientId(object.Master().getTransactionNo());
+//            Master().setPaymentMode(object.Master().getPurchaseType());
+        }
+        return poJSON;
+    }
+    
     public JSONObject SearchBrand(String value, boolean byCode, int row)
             throws ExceptionInInitializerError,
             SQLException,
@@ -670,15 +693,102 @@ public class VehicleQuotation extends Transaction {
             return poJSON;
         }
         
-        String lsVariantId = "";
-        VehicleDescription object = new SalesControllers(poGRider, logwrapr).VehicleDescription();
-        object.setRecordStatus(RecordStatus.ACTIVE);
-        object.setIndustryId(psIndustryId);
-        poJSON = object.searchRecord(value, byCode, Detail(row).getModelId());
-        if (isJSONSuccess(poJSON)) {
-            Detail(row).setVariantId(object.getModel().getVariantId());
+        if("0".equals(Master().SalesInquiry().getPurchaseType())){ //Cash
+            VehicleDescription object = new SalesControllers(poGRider, logwrapr).VehicleDescription();
+            object.setRecordStatus(RecordStatus.ACTIVE);
+            object.setIndustryId(psIndustryId);
+            poJSON = object.searchRecord(value, byCode, Detail(row).getModelId());
+            if (isJSONSuccess(poJSON)) {
+                Detail(row).setVariantId(object.getModel().getVariantId());
+            }
+        } else {
+            String lsSQL = VehicleFinancing_SQL();
+            lsSQL = MiscUtil.addCondition(lsSQL, SQLUtil.toSQL(Master().getTransactionDate()) + " BETWEEN a.dThruDate AND a.dThruDate "
+                                            + " AND e.sModelIDx = " + Detail(row).getModelId()
+                                        );
+            System.out.println("Executing SQL: " + lsSQL);
+            poJSON = ShowDialogFX.Browse(poGRider,
+            lsSQL,
+            value,
+            "Financing ID»Description»Downpayment Rate",
+            "sVhclFIDx»xDescription»nDPRatexx",
+            "a.sVhclFIDx»CONCAT(f.sDescript,' ', e.sDescript, ' ', c.sDescript, ' ', g.sDescript, ' ', c.nYearMdlx, ' ',d.sTransmss )»a.nDPRatexx",
+            byCode ? 0 : 1);
+            if (poJSON != null) {
+                Detail(row).setVariantId((String) poJSON.get("sVrntIDxx"));
+                Detail(row).setDownPaymentPercent((Double) poJSON.get("nDPRatexx"));
+            } else {
+                poJSON = new JSONObject();
+                poJSON.put("result", "error");
+                poJSON.put("message", "No record loaded.");
+                return poJSON;
+            }
         }
-
+        return poJSON;
+    }
+    
+    public JSONObject SearchVehicleFinancing(String value, boolean byCode, int row)
+            throws ExceptionInInitializerError,
+            SQLException,
+            GuanzonException {
+        poJSON = new JSONObject();
+        
+        String lsSQL = VehicleFinancing_SQL();
+        lsSQL = MiscUtil.addCondition(lsSQL, SQLUtil.toSQL(Master().getTransactionDate()) + " BETWEEN a.dThruDate AND a.dThruDate ");
+        System.out.println("Executing SQL: " + lsSQL);
+        
+        poJSON = ShowDialogFX.Browse(poGRider,
+        lsSQL,
+        value,
+        "Financing ID»Description»Downpayment Rate",
+        "sVhclFIDx»xDescription»nDPRatexx",
+        "a.sVhclFIDx»CONCAT(f.sDescript,' ', e.sDescript, ' ', c.sDescript, ' ', g.sDescript, ' ', c.nYearMdlx, ' ',d.sTransmss )»a.nDPRatexx",
+        byCode ? 0 : 1);
+        if (poJSON != null) {
+            Detail(row).setVariantId((String) poJSON.get("sVrntIDxx"));
+            Detail(row).setDownPaymentPercent((Double) poJSON.get("nDPRatexx"));
+        } else {
+            poJSON = new JSONObject();
+            poJSON.put("result", "error");
+            poJSON.put("message", "No record loaded.");
+            return poJSON;
+        }
+        return poJSON;
+    }
+    
+    public JSONObject SearchVehicleAddOn(String value, boolean byCode, int row)
+            throws ExceptionInInitializerError,
+            SQLException,
+            GuanzonException {
+        poJSON = new JSONObject();
+        
+        String lsSQL = VehicleAddOn_SQL();
+        lsSQL = MiscUtil.addCondition(lsSQL, SQLUtil.toSQL(Master().getTransactionDate()) + " BETWEEN a.dThruDate AND a.dThruDate ");
+        System.out.println("Executing SQL: " + lsSQL);
+        
+        poJSON = ShowDialogFX.Browse(poGRider,
+        lsSQL,
+        value,
+        "AddOn ID»Description»Amount",
+        "sAddOnIDx»sAddTypNm»nAmountxx",
+        "a.sAddOnIDx»c.sAddTypNm»a.nAmountxx",
+        byCode ? 0 : 1);
+        if (poJSON != null) {
+            String lsAddOnId = (String) poJSON.get("sAddOnIDx");
+            Double lsAmount = (Double) poJSON.get("nAmountxx");
+            poJSON = checkExistingAddOn(lsAddOnId, row);
+            if(!isJSONSuccess(poJSON)){
+                return poJSON;
+            }
+            row = (int) poJSON.get("row");
+            AddOnList(row).setAddOnId(lsAddOnId);
+            AddOnList(row).setAmount(lsAmount);
+        } else {
+            poJSON = new JSONObject();
+            poJSON.put("result", "error");
+            poJSON.put("message", "No record loaded.");
+            return poJSON;
+        }
         return poJSON;
     }
 
@@ -769,7 +879,10 @@ public class VehicleQuotation extends Transaction {
             }
         }
         
-        paAddOn.add(new SalesModels(poGRider).QuotationAddOn());
+        Model_Quotation_AddOn loModel = new SalesModels(poGRider).QuotationAddOn();
+        loModel.newRecord();
+        paAddOn.add(loModel);
+        poJSON.put("result", "success");
         return poJSON;
     }
 
@@ -778,7 +891,10 @@ public class VehicleQuotation extends Transaction {
     }
 
     public int getAddOnListCount() {
-        return this.paAddOn.size();
+        if(paAddOn == null){
+            return 0;
+        }
+        return paAddOn.size();
     }
     
     public JSONObject remake(String fsTransNo) throws CloneNotSupportedException, SQLException, GuanzonException, ScriptException, ScriptException, ParseException{
@@ -996,6 +1112,54 @@ public class VehicleQuotation extends Transaction {
         if(lsCondition != null && !"".equals(lsCondition)){
             SQL_BROWSE = MiscUtil.addCondition(SQL_BROWSE, lsCondition);
         }
+    }
+    
+    private String VehicleFinancing_SQL(){
+        return  " SELECT                   "
+            + " a.sValidIDx              "
+            + " , a.sCompnyID            "
+            + " , a.dFromDate            "
+            + " , a.dThruDate            "
+            + " , a.sValidDsc            "
+            + " , a.cRecdStat            "
+            + " , b.sVhclFIDx            "
+            + " , b.nDPRatexx            "
+            + " , b.nSRPAmntx            "
+            + " , b.sVrntIDxx            "
+            + " , c.sDescript AS xVariant"
+            + " , e.sDescript AS xModel  "
+            + " , f.sDescript AS xBrand  "
+            + " , g.sDescript AS xColor  "
+            + " , c.nYearMdlx            "
+            + " , d.sTransmss            "
+            + " , d.sBodyType            "
+            + " , d.sVhclType            "
+            + " , d.nAuthCapx            "
+            + " ,  CONCAT(f.sDescript,' ', e.sDescript, ' ', c.sDescript, ' ', g.sDescript, ' ', c.nYearMdlx, ' ',d.sTransmss ) AS xDescription "
+            + " FROM Validity_Period_Master a  "
+            + " INNER JOIN Vehicle_Financing_Price b ON b.sValidIDx = a.sValidIDx "
+            + " LEFT JOIN Model_Variant c ON c.sVrntIDxx = b.sVrntIDxx            "
+            + " LEFT JOIN Model_Variant_Insurance d ON d.sVrntIDxx = b.sVrntIDxx  "
+            + " LEFT JOIN Model e ON e.sModelIDx = c.sModelIDx                    "
+            + " LEFT JOIN Brand f ON f.sBrandIDx = e.sBrandIDx                    "
+            + " LEFT JOIN Color g ON g.sColorIDx = c.sColorIDx                    ";
+    }
+    
+    private String VehicleAddOn_SQL(){
+        return "   SELECT      " 
+                + "   a.sValidIDx " 
+                + " , a.sCompnyID " 
+                + " , a.dFromDate " 
+                + " , a.dThruDate " 
+                + " , a.sValidDsc " 
+                + " , a.cRecdStat " 
+                + " , b.sAddOnIDx "
+                + " , b.sAddTypex "
+                + " , b.nAmountxx "
+                + " , c.sAddTypNm "
+                + " FROM Validity_Period_Master a " 
+                + " INNER JOIN Vehicle_AddOn_Master b ON b.sValidIDx = a.sValidIDx "  
+                + " LEFT JOIN Vehicle_AddOn_Type c ON c.sAddTypex = b.sAddTypex    ";
     }
     
      public Model_Branch Branch() throws SQLException, GuanzonException {

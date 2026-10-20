@@ -23,6 +23,7 @@ import ph.com.guanzongroup.cas.sales.status.VehicleQuotationStatus;
 
 import java.sql.SQLException;
 import java.util.Date;
+import org.guanzon.cas.client.model.Model_Client_Mail;
 
 /**
  *
@@ -36,6 +37,7 @@ public class Model_Sales_Quotation_Vehicle extends Model {
     Model_Client_Master poClient;
     Model_Client_Address poClientAddress;
     Model_Client_Mobile poClientMobile;
+    Model_Client_Mail poClientEmail;
     Model_Sales_Inquiry_Master poSalesInquiry;
     Model_Company poCompany;
 
@@ -496,7 +498,6 @@ public class Model_Sales_Quotation_Vehicle extends Model {
         }
     }
 
-
     public Model_Client_Master Client() throws SQLException, GuanzonException {
         if (poClient == null) {
             poClient = new ClientModels(poGRider).ClientMaster();
@@ -575,6 +576,33 @@ public class Model_Sales_Quotation_Vehicle extends Model {
         } else {
             poClientMobile.initialize();
             return poClientMobile;
+        }
+    }
+    
+    public Model_Client_Mail ClientEmail() throws SQLException, GuanzonException {
+        if (poClientEmail == null) {
+            poClientEmail = new ClientModels(poGRider).ClientMail();
+        }
+
+        String id = (String) (getValue("sClientID") == null ? "" : getValue("sClientID"));
+
+        if (!"".equals(id)) {
+            if (poClientEmail.getEditMode() == EditMode.READY
+                    && poClientEmail.getClientId().equals(id)) {
+                return poClientEmail;
+            } else {
+                poJSON = poClientEmail.openRecord(id);
+
+                if ("success".equals(poJSON.get("result"))) {
+                    return poClientEmail;
+                } else {
+                    poClientEmail.initialize();
+                    return poClientEmail;
+                }
+            }
+        } else {
+            poClientEmail.initialize();
+            return poClientEmail;
         }
     }
     
