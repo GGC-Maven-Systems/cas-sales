@@ -15,8 +15,6 @@ import org.guanzon.appdriver.agent.ShowDialogFX;
 import org.guanzon.appdriver.agent.ShowMessageFX;
 import org.guanzon.appdriver.agent.services.Model;
 import org.guanzon.appdriver.agent.services.Transaction;
-import org.guanzon.appdriver.agent.systables.SysTableContollers;
-import org.guanzon.appdriver.agent.systables.TransactionStatusHistory;
 import org.guanzon.appdriver.base.GuanzonException;
 import org.guanzon.appdriver.base.MiscUtil;
 import org.guanzon.appdriver.base.SQLUtil;
@@ -74,10 +72,10 @@ public class VehicleQuotation extends Transaction {
     public JSONObject InitTransaction() throws SQLException, GuanzonException {
         SOURCE_CODE = "VQOT";
 
-        poMaster = new SalesModels(poGRider).SalesQuotationVehicle();
-        poDetail = new SalesModels(poGRider).QuotationPayment();
+        poMaster = new SalesModels(poGRider).SalesQuotationMaster();
+        poDetail = new SalesModels(poGRider).SalesQuotationVehicle();
 
-        paAddOn = new ArrayList<Model_Quotation_AddOn>();
+        paAddOn = new ArrayList<>();
         paMaster = new ArrayList<>();
         psApprover = "";
         setApproving("");
@@ -334,9 +332,11 @@ public class VehicleQuotation extends Transaction {
         
         if(!pbWthParent){
             psApprover = poGRider.getUserID();
-            poJSON = callApproval();
-            if (!isJSONSuccess(poJSON)) {
-                return poJSON;
+            if(validateStandardDetails(0)){ //require approval when result is true
+                poJSON = callApproval();
+                if (!isJSONSuccess(poJSON)) {
+                    return poJSON;
+                }
             }
         }
         
@@ -456,91 +456,6 @@ public class VehicleQuotation extends Transaction {
         return poJSON;
     }
     
-    @Override
-     protected JSONObject statusChange(String tableName, String sourceNo, String remarks, String statusRequest, boolean needConfirmation, boolean withParent) throws SQLException, GuanzonException, CloneNotSupportedException {
-        this.poGRider.ensureConnected();
-        if (remarks.isEmpty() && this.pbWithUI) {
-            try {
-                remarks = ShowDialogFX.getStatusChangeNotes();
-            } catch (Exception e) {
-                this.poJSON = new JSONObject();
-                this.poJSON.put("result", "error");
-                this.poJSON.put("message", e.getMessage());
-                return this.poJSON;
-            }
-        }
-
-        if (!withParent) {
-            this.poGRider.beginTrans("UPDATE STATUS", remarks, "TSHx", sourceNo);
-        }
-
-        TransactionStatusHistory loStatus = (new SysTableContollers(this.poGRider, this.logwrapr)).TransactionStatusHistory();
-        loStatus.setWithParentClass(true);
-        this.poJSON = loStatus.newRecord();
-        if (!"success".equals((String)this.poJSON.get("result"))) {
-            if (!withParent) {
-                this.poGRider.rollbackTrans();
-            }
-
-            return this.poJSON;
-        } else {
-            String lsApproved;
-            if (this.psApproved != null && !this.psApproved.isEmpty()) {
-                lsApproved = this.poGRider.Encrypt(this.psApproved);
-                this.psApproved = "";
-            } else {
-                lsApproved = this.poGRider.Encrypt(this.poGRider.getUserID());
-            }
-
-            loStatus.getModel().setTransactionTable(tableName);
-            loStatus.getModel().setSourceNo(sourceNo);
-            loStatus.getModel().setRemarks(remarks);
-            loStatus.getModel().setStatusRequest(statusRequest);
-            loStatus.getModel().setTransactionStatus(needConfirmation ? "0" : "1");
-            loStatus.getModel().setModifyingId(lsApproved);
-            this.poJSON = loStatus.saveRecord();
-            if (!"success".equals((String)this.poJSON.get("result"))) {
-                if (!withParent) {
-                    this.poGRider.rollbackTrans();
-                }
-
-                return this.poJSON;
-            } else {
-                if (!needConfirmation) {
-                    this.poJSON = this.updateMasterStatus(statusRequest);
-                    if (!"success".equals((String)this.poJSON.get("result"))) {
-                        if (!withParent) {
-                            this.poGRider.rollbackTrans();
-                        }
-
-                        return this.poJSON;
-                    }
-                }
-
-                if (!withParent) {
-                    this.poGRider.commitTrans();
-                }
-
-                this.poJSON = new JSONObject();
-                this.poJSON.put("result", "success");
-                this.poJSON.put("notes", remarks);
-                return this.poJSON;
-            }
-        }
-    }
-    
-    private JSONObject updateMasterStatus(String statusRequest) throws SQLException, GuanzonException {
-        String lsSQL = "UPDATE " + this.poMaster.getTable() + " SET cRecdStat = " + SQLUtil.toSQL(statusRequest) + " WHERE sTransNox = " + SQLUtil.toSQL((String)this.poMaster.getValue("sTransNox"));
-        if (this.poGRider.executeQuery(lsSQL, this.poMaster.getTable(), this.psBranchCode, this.psDestination, "") <= 0L) {
-            this.poJSON = new JSONObject();
-            this.poJSON.put("result", "error");
-            this.poJSON.put("message", "Error updating the transaction status.");
-            return this.poJSON;
-        } else {
-            return this.poJSON;
-        }
-    }
-    
     public JSONObject loadTransactionList(String fsClient, String fsTransactionNo) throws SQLException, GuanzonException {
         poJSON = new JSONObject();
         paMaster = new ArrayList<>();
@@ -548,7 +463,6 @@ public class VehicleQuotation extends Transaction {
         initSQL();
         String lsSQL = MiscUtil.addCondition(SQL_BROWSE,
                 " b.sIndstCdx = " + SQLUtil.toSQL(psIndustryId)
-                + " AND b.sCompnyID = " + SQLUtil.toSQL(psCompanyId)
                 + " AND b.sCategrCd = " + SQLUtil.toSQL(psCategoryId)
                 + " AND b.sBranchCd = " + SQLUtil.toSQL(poGRider.getBranchCode())
                 + " AND c.sCompnyNm LIKE " + SQLUtil.toSQL("%" + fsClient + "%")
@@ -588,7 +502,7 @@ public class VehicleQuotation extends Transaction {
 
         initSQL();
         String lsSQL = MiscUtil.addCondition(SQL_BROWSE,
-                " a.sCompnyID = " + SQLUtil.toSQL(psCompanyId));
+                " a.sBranchCd = " + SQLUtil.toSQL(poGRider.getBranchCode()));
         
         lsSQL = lsSQL + " GROUP BY a.sTransNox ";
         System.out.println("Executing SQL: " + lsSQL);
@@ -631,7 +545,7 @@ public class VehicleQuotation extends Transaction {
 
         initSQL();
         String lsSQL = MiscUtil.addCondition(SQL_BROWSE,
-                " a.sCompnyID = " + SQLUtil.toSQL(psCompanyId)
+                " a.sBranchCd = " + SQLUtil.toSQL(poGRider.getBranchCode())
                 + " AND YEAR(a.dFromDate) = " + SQLUtil.toSQL(fsYear)
                 + " AND a.cRecdStat = " + SQLUtil.toSQL(fsStatus)
             );
@@ -681,9 +595,29 @@ public class VehicleQuotation extends Transaction {
         poJSON = object.searchTransaction(psIndustryId, psCompanyId, psCategoryId, value, "");
         if (isJSONSuccess(poJSON)) {
             Master().setClientId(object.Master().getClientId());
-            Master().setSourceCode(object.getSourceCode());
             Master().setClientId(object.Master().getTransactionNo());
+            Master().setAddressId(object.Master().getAddressId());
+            Master().setContactId(object.Master().getContactId());
+            Detail(0).setSourceCode(object.getSourceCode());
+            Detail(0).setSourceNo(object.Master().getTransactionNo());
 //            Master().setPaymentMode(object.Master().getPurchaseType());
+        }
+        return poJSON;
+    }
+    
+    public JSONObject SearchSalesGiveAways(String value, boolean byCode, int row)
+            throws ExceptionInInitializerError,
+            SQLException,
+            GuanzonException,
+            CloneNotSupportedException {
+        poJSON = new JSONObject();
+        
+        SalesGiveaways object = new SalesControllers(poGRider, logwrapr).SalesGiveaways();
+        object.setTransactionStatus(SalesInquiryStatic.OPEN);
+        
+        poJSON = object.searchRecord(value, byCode);
+        if (isJSONSuccess(poJSON)) {
+//            Master().setSalesGiveAwaysCode(object.Master().getGiveawayCode());
         }
         return poJSON;
     }
@@ -736,7 +670,7 @@ public class VehicleQuotation extends Transaction {
             return poJSON;
         }
         
-        if("0".equals(Master().SalesInquiry().getPurchaseType())){ //Cash
+        if("0".equals(Detail(row).SalesInquiry().getPurchaseType())){ //Cash
             VehicleDescription object = new SalesControllers(poGRider, logwrapr).VehicleDescription();
             object.setRecordStatus(RecordStatus.ACTIVE);
             object.setIndustryId(psIndustryId);
@@ -790,6 +724,7 @@ public class VehicleQuotation extends Transaction {
         if (poJSON != null) {
             Detail(row).setVariantId((String) poJSON.get("sVrntIDxx"));
             Detail(row).setDownPaymentPercent((Double) poJSON.get("nDPRatexx"));
+            Detail(row).setReservationAmount((Double) poJSON.get("nRsrvAmtx"));
         } else {
             poJSON = new JSONObject();
             poJSON.put("result", "error");
@@ -799,7 +734,7 @@ public class VehicleQuotation extends Transaction {
         return poJSON;
     }
     
-    public JSONObject SearchVehicleAddOn(String value, boolean byCode, int row)
+    public JSONObject SearchVehicleAddOn(String value, boolean byCode, int row, boolean isAddOn)
             throws ExceptionInInitializerError,
             SQLException,
             GuanzonException {
@@ -807,6 +742,10 @@ public class VehicleQuotation extends Transaction {
         
         String lsSQL = VehicleAddOn_SQL();
         lsSQL = MiscUtil.addCondition(lsSQL, SQLUtil.toSQL(Master().getTransactionDate()) + " BETWEEN a.dThruDate AND a.dThruDate ");
+        if(isAddOn){
+            lsSQL = lsSQL + " AND c.cSourceTx != '0'"; //not accessories
+        }
+        
         System.out.println("Executing SQL: " + lsSQL);
         
         poJSON = ShowDialogFX.Browse(poGRider,
@@ -893,13 +832,13 @@ public class VehicleQuotation extends Transaction {
     }
     
     @Override
-    public Model_Sales_Quotation_Vehicle Master() {
-        return (Model_Sales_Quotation_Vehicle) poMaster;
+    public Model_Sales_Quotation_Master Master() {
+        return (Model_Sales_Quotation_Master) poMaster;
     }
     
     @Override
-    public Model_Quotation_Payment Detail(int row) {
-        return (Model_Quotation_Payment) paDetail.get(row);
+    public Model_Sales_Quotation_Vehicle Detail(int row) {
+        return (Model_Sales_Quotation_Vehicle) paDetail.get(row);
     }
     public JSONObject AddDetail() throws CloneNotSupportedException {
         if (getDetailCount() > 0) {
@@ -965,6 +904,16 @@ public class VehicleQuotation extends Transaction {
         
         return setJSON("success", "success");
     }
+    
+    public void computeFields(){
+    
+    
+    }
+    
+    public Double getGrossMonthlyInstallment(){
+        Double ldblAmount = Detail(0).getMonthlyAmount(); //- discount
+        return ldblAmount;
+    } 
 
     @Override
     public JSONObject initFields() {
@@ -985,7 +934,7 @@ public class VehicleQuotation extends Transaction {
             loToDate.set(Calendar.DAY_OF_MONTH,loToDate.getActualMaximum(Calendar.DAY_OF_MONTH));
 
             Master().setTransactionDate(SQLUtil.toDate(xsDateShort(loFromDate.getTime()),SQLUtil.FORMAT_SHORT_DATE));
-            Master().setExpectedDate(SQLUtil.toDate(xsDateShort(loToDate.getTime()),SQLUtil.FORMAT_SHORT_DATE));
+            Detail(0).setExpectedDate(SQLUtil.toDate(xsDateShort(loToDate.getTime()),SQLUtil.FORMAT_SHORT_DATE));
             
         } catch (SQLException ex) {
             Logger.getLogger(VehicleQuotation.class.getName()).log(Level.SEVERE, null, ex);
@@ -1013,7 +962,7 @@ public class VehicleQuotation extends Transaction {
                                                     + " AND sBankIDxx = " + SQLUtil.toSQL("")
                                                     + " AND nDuration = " + SQLUtil.toSQL(Detail(row).getDuration())
                                                     + " AND nRateValx = " + SQLUtil.toSQL(Detail(row).getRateValue())
-                                                    + " AND sCompnyID = " + SQLUtil.toSQL(Master().getCompanyId())
+                                                    + " AND sCompnyID = " + SQLUtil.toSQL(Detail(row).Branch().getCompanyId())
                                                     );
             System.out.println("validateStandardDetails SQL: " + lsSQL);
             ResultSet loRS = poGRider.executeQuery(lsSQL);
@@ -1022,9 +971,9 @@ public class VehicleQuotation extends Transaction {
                     return false;
                 }
             }
-        } catch (SQLException ex) {
+        } catch (SQLException | GuanzonException ex) {
             Logger.getLogger(getClass().getName()).log(Level.SEVERE, MiscUtil.getException(ex), ex);
-        }
+        } 
             
         return true;
     }
@@ -1117,7 +1066,7 @@ public class VehicleQuotation extends Transaction {
             AddOnList(lnCtr).setModifiedDate(poGRider.getServerDate());
         }
         
-        Master().setModifyingId(poGRider.Encrypt(poGRider.getUserID()));
+        Master().setModifiedBy(poGRider.Encrypt(poGRider.getUserID()));
         Master().setModifiedDate(poGRider.getServerDate());
         poJSON = setJSON("success", "success");
         return poJSON;
@@ -1213,6 +1162,7 @@ public class VehicleQuotation extends Transaction {
             + " , b.sVhclFIDx            "
             + " , b.nDPRatexx            "
             + " , b.nSRPAmntx            "
+            + " , b.nRsrvAmtx            "
             + " , b.sVrntIDxx            "
             + " , c.sDescript AS xVariant"
             + " , e.sDescript AS xModel  "
@@ -1420,10 +1370,10 @@ public class VehicleQuotation extends Transaction {
         parameters.put("sContact",lsContact);
         parameters.put("validFrom",SQLUtil.dateFormat(Master().getTransactionDate(),SQLUtil.FORMAT_LONG_DATE));
         String lsToDate = "";
-        if(Master().getValidThruDate() == null){
+        if(Detail(0).getValidThruDate() == null){
             lsToDate = "Present";
         } else {
-            lsToDate = SQLUtil.dateFormat(Master().getValidThruDate(),SQLUtil.FORMAT_LONG_DATE);
+            lsToDate = SQLUtil.dateFormat(Detail(0).getValidThruDate(),SQLUtil.FORMAT_LONG_DATE);
         }
         parameters.put("validTo",lsToDate);
         // ---------------------------------------------

@@ -5,6 +5,7 @@
  */
 package ph.com.guanzongroup.cas.sales.model;
 
+import java.sql.ResultSet;
 import org.guanzon.appdriver.agent.services.Model;
 import org.guanzon.appdriver.base.GuanzonException;
 import org.guanzon.appdriver.base.MiscUtil;
@@ -13,9 +14,7 @@ import org.guanzon.cas.client.model.Model_Client_Address;
 import org.guanzon.cas.client.model.Model_Client_Master;
 import org.guanzon.cas.client.model.Model_Client_Mobile;
 import org.guanzon.cas.client.services.ClientModels;
-import org.guanzon.cas.parameter.model.Model_Branch;
-import org.guanzon.cas.parameter.model.Model_Company;
-import org.guanzon.cas.parameter.model.Model_Industry;
+import org.guanzon.cas.parameter.model.*;
 import org.guanzon.cas.parameter.services.ParamModels;
 import org.json.simple.JSONObject;
 import ph.com.guanzongroup.cas.sales.services.SalesModels;
@@ -23,6 +22,11 @@ import ph.com.guanzongroup.cas.sales.status.VehicleQuotationStatus;
 
 import java.sql.SQLException;
 import java.util.Date;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import org.guanzon.appdriver.base.SQLUtil;
+import org.guanzon.appdriver.constant.Logical;
+import org.guanzon.appdriver.constant.RecordStatus;
 import org.guanzon.cas.client.model.Model_Client_Mail;
 
 /**
@@ -33,13 +37,12 @@ public class Model_Sales_Quotation_Vehicle extends Model {
     
     //reference objects
     Model_Branch poBranch;
-    Model_Industry poIndustry;
-    Model_Client_Master poClient;
-    Model_Client_Address poClientAddress;
-    Model_Client_Mobile poClientMobile;
-    Model_Client_Mail poClientEmail;
     Model_Sales_Inquiry_Master poSalesInquiry;
-    Model_Company poCompany;
+    Model_Model_Variant poModelVariant;
+    Model_Brand poBrand;
+    Model_Model poModel;
+
+    private String psBrand, psModel;
 
 
     @Override
@@ -75,29 +78,20 @@ public class Model_Sales_Quotation_Vehicle extends Model {
             poEntity.moveToCurrentRow();
             poEntity.absolute(1);
 
-            ID = "sTransNox";
-
-//            //initialize reference objects
-//            ParamModels model = new ParamModels(poGRider);
-//            poBranch = model.Branch();
-//            poIndustry = model.Industry();
-//            poCompany = model.Company();
-//
-//            ClientModels clientModel = new ClientModels(poGRider);
-//            poClient = clientModel.ClientMaster();
-//            poClientAddress = clientModel.ClientAddress();
-//            poClientMobile = clientModel.ClientMobile();
-//
-//            SalesModels salesModel = new SalesModels(poGRider);
-//            poSalesInquiry = salesModel.SalesInquiryMaster();
-            
-//            end - initialize reference objects
+            ID = "sQotPayID";
 
             pnEditMode = EditMode.UNKNOWN;
         } catch (SQLException e) {
             logwrapr.severe(e.getMessage());
             System.exit(1);
         }
+    }
+    public JSONObject setQuotationPaymentId(String quotationPaymentId) {
+        return setValue("sQotPayID", quotationPaymentId);
+    }
+
+    public String getQuotationPaymentId() {
+        return (String) getValue("sQotPayID");
     }
 
     public JSONObject setTransactionNo(String transactionNo) {
@@ -204,141 +198,91 @@ public class Model_Sales_Quotation_Vehicle extends Model {
         return (String) getValue("sRemarksx");
     }
 
-//    public JSONObject setPayForm(String payForm) {
-//        return setValue("cPaymForm", payForm);
-//    }
-//
-//    public String getPayForm() {
-//        return (String) getValue("cPaymForm");
-//    }
-//
-//    public JSONObject setTermId(String termId) {
-//        return setValue("sTermIDxx", termId);
-//    }
-//
-//    public String getTermId() {
-//        return (String) getValue("sTermIDxx");
-//    }
-
-    public JSONObject setTransactionTotal(Double transactionTotal) {
-        return setValue("nTranTotl", transactionTotal);
+    public JSONObject setQuotePaymentId(String quotePaymentId) {
+        return setValue("sQotPayID", quotePaymentId);
     }
 
-    public Double getTransactionTotal() {
-        if (getValue("nTranTotl") == null || "".equals(getValue("nTranTotl"))) {
+    public String getQuotePaymentId() {
+        return (String) getValue("sQotPayID");
+    }
+
+    public JSONObject setPaymentForm(String paymentForm) {
+        return setValue("cPaymForm", paymentForm);
+    }
+
+    public String getPaymentForm() {
+        return (String) getValue("cPaymForm");
+    }
+
+    public JSONObject setDuration(int duration) {
+        return setValue("nDuration", duration);
+    }
+
+    public int getDuration() {
+        if (getValue("nDuration") == null || "".equals(getValue("nDuration"))) {
+            return 0;
+        }
+        return (int) getValue("nDuration");
+    }
+
+    public JSONObject setVariantId(String variantId) {
+        return setValue("sVrntIDxx", variantId);
+    }
+
+    public String getVariantId() {
+        return (String) getValue("sVrntIDxx");
+    }
+
+    public JSONObject setPrimaryPayment(Double primaryPayment) {
+        return setValue("nPrmPayDx", primaryPayment);
+    }
+
+    public Double getPrimaryPayment() {
+        if (getValue("nPrmPayDx") == null || "".equals(getValue("nPrmPayDx"))) {
             return 0.0000;
         }
-        return (Double) getValue("nTranTotl");
+        return (Double) getValue("nPrmPayDx");
     }
 
-    public JSONObject setDiscountRate(Double discountRate) {
-        return setValue("nDiscount", discountRate);
+    public JSONObject setQuotationRate(String quotationRate) {
+        return setValue("sQuotRate", quotationRate);
     }
 
-    public Double getDiscountRate() {
-        if (getValue("nDiscount") == null || "".equals(getValue("nDiscount"))) {
+    public String getQuotationRate() {
+        return (String) getValue("sQuotRate");
+    }
+
+    public JSONObject setSRPAmount(Double srpAmount) {
+        return setValue("nSRPAmntx", srpAmount);
+    }
+
+    public Double getSRPAmount() {
+        if (getValue("nSRPAmntx") == null || "".equals(getValue("nSRPAmntx"))) {
+            return 0.0000;
+        }
+        return (Double) getValue("nSRPAmntx");
+    }
+
+    public JSONObject setDownPayment(Double downPayment) {
+        return setValue("nDownPayx", downPayment);
+    }
+
+    public Double getDownPayment() {
+        if (getValue("nDownPayx") == null || "".equals(getValue("nDownPayx"))) {
+            return 0.0000;
+        }
+        return (Double) getValue("nDownPayx");
+    }
+
+    public JSONObject setDownPaymentPercent(Double downPaymentPercent) {
+        return setValue("nDownPctx", downPaymentPercent);
+    }
+
+    public Double getDownPaymentPercent() {
+        if (getValue("nDownPctx") == null || "".equals(getValue("nDownPctx"))) {
             return 0.00;
         }
-        return (Double) getValue("nDiscount");
-    }
-
-    public JSONObject setDiscount(Double discount) {
-        return setValue("nAddDiscx", discount);
-    }
-
-    public Double getDiscount() {
-        if (getValue("nAddDiscx") == null || "".equals(getValue("nAddDiscx"))) {
-            return 0.0000;
-        }
-        return (Double) getValue("nAddDiscx");
-    }
-
-    public JSONObject setFreight(Double freight) {
-        return setValue("nFreightx", freight);
-    }
-
-    public Double getFreight() {
-        if (getValue("nFreightx") == null || "".equals(getValue("nFreightx"))) {
-            return 0.00;
-        }
-        return (Double) getValue("nFreightx");
-    }
-
-    public JSONObject setVatSales(Double vatSales) {
-        return setValue("nVATSales", vatSales);
-    }
-
-    public Double getVatSales() {
-        if (getValue("nVATSales") == null || "".equals(getValue("nVATSales"))) {
-            return 0.0000;
-        }
-        return (Double) getValue("nVATSales");
-    }
-
-    public JSONObject setVatAmount(Double vatAmount) {
-        return setValue("nVATAmtxx", vatAmount);
-    }
-
-    public Double getVatAmount() {
-        if (getValue("nVATAmtxx") == null || "".equals(getValue("nVATAmtxx"))) {
-            return 0.0000;
-        }
-        return (Double) getValue("nVATAmtxx");
-    }
-
-    public JSONObject setNonVatSales(Double nonVatSales) {
-        return setValue("nNonVATSl", nonVatSales);
-    }
-
-    public Double getNonVatSales() {
-        if (getValue("nNonVATSl") == null || "".equals(getValue("nNonVATSl"))) {
-            return 0.0000;
-        }
-        return (Double) getValue("nNonVATSl");
-    }
-
-    public JSONObject setTPLAmount(Double tplAmount) {
-        return setValue("nTPLAmntx", tplAmount);
-    }
-
-    public Double getTPLAmount() {
-        if (getValue("nTPLAmntx") == null || "".equals(getValue("nTPLAmntx"))) {
-            return 0.0000;
-        }
-        return (Double) getValue("nTPLAmntx");
-    }
-
-    public JSONObject setComprehensiveInsurance(Double comprehensiveInsurance) {
-        return setValue("nCompInsx", comprehensiveInsurance);
-    }
-
-    public Double getComprehensiveInsurance() {
-        if (getValue("nCompInsx") == null || "".equals(getValue("nCompInsx"))) {
-            return 0.0000;
-        }
-        return (Double) getValue("nCompInsx");
-    }
-
-    public JSONObject setLTOAmount(Double ltoAmount) {
-        return setValue("nLTOAmntx", ltoAmount);
-    }
-
-    public Double getLTOAmount() {
-        if (getValue("nLTOAmntx") == null || "".equals(getValue("nLTOAmntx"))) {
-            return 0.0000;
-        }
-        return (Double) getValue("nLTOAmntx");
-    }
-
-    public JSONObject setDocStampAmount(Double docStampAmount) {
-        return setValue("nDocStmpx", docStampAmount);
-    }
-
-    public Double getDocStampAmount() {
-        if (getValue("nDocStmpx") == null || "".equals(getValue("nDocStmpx"))) {
-            return 0.0000;
-        }
-        return (Double) getValue("nDocStmpx");
+        return (Double) getValue("nDownPctx");
     }
 
     public JSONObject setReservationAmount(Double reservationAmount) {
@@ -349,7 +293,52 @@ public class Model_Sales_Quotation_Vehicle extends Model {
         if (getValue("nRsrvAmtx") == null || "".equals(getValue("nRsrvAmtx"))) {
             return 0.0000;
         }
-        return (Double) getValue("nRsrvAmtx");
+        return Double.valueOf(getValue("nRsrvAmtx").toString());
+    }
+
+
+    public JSONObject setFinancingAmount(Double financingAmount) {
+        return setValue("nFinAmntx", financingAmount);
+    }
+
+    public Double getFinancingAmount() {
+        if (getValue("nFinAmntx") == null || "".equals(getValue("nFinAmntx"))) {
+            return 0.0000;
+        }
+        return (Double) getValue("nFinAmntx");
+    }
+
+    public JSONObject setRateValue(Double rateValue) {
+        return setValue("nRateValx", rateValue);
+    }
+
+    public Double getRateValue() {
+        if (getValue("nRateValx") == null || "".equals(getValue("nRateValx"))) {
+            return 0.0000;
+        }
+        return (Double) getValue("nRateValx");
+    }
+
+    public JSONObject setMonthlyAmount(Double monthlyAmount) {
+        return setValue("nMonthlyx", monthlyAmount);
+    }
+
+    public Double getMonthlyAmount() {
+        if (getValue("nMonthlyx") == null || "".equals(getValue("nMonthlyx"))) {
+            return 0.0000;
+        }
+        return (Double) getValue("nMonthlyx");
+    }
+
+    public JSONObject setTotalAmount(Double totalAmount) {
+        return setValue("nTotAmntx", totalAmount);
+    }
+
+    public Double getTotalAmount() {
+        if (getValue("nTotAmntx") == null || "".equals(getValue("nTotAmntx"))) {
+            return 0.0000;
+        }
+        return (Double) getValue("nTotAmntx");
     }
 
     public JSONObject setSourceCode(String sourceCode) {
@@ -376,30 +365,19 @@ public class Model_Sales_Quotation_Vehicle extends Model {
         return (String) getValue("sGAWayCde");
     }
 
-//    public JSONObject setEntryNo(int entryNo) {
-//        return setValue("nEntryNox", entryNo);
-//    }
-//
-//    public int getEntryNo() {
-//        if (getValue("nEntryNox") == null || "".equals(getValue("nEntryNox"))) {
-//            return 0;
-//        }
-//        return (int) getValue("nEntryNox");
-//    }
-
-    public JSONObject setTransactionStatus(String transactionStatus) {
-        return setValue("cTranStat", transactionStatus);
+    public JSONObject setRecordStatus(boolean recordStatus) {
+        return setValue("cRecdStat", recordStatus ? "1" : "0");
     }
 
-    public String getTransactionStatus() {
-        return (String) getValue("cTranStat");
+    public boolean getRecordStatus() {
+        return ((String) getValue("cRecdStat")).equals("1");
     }
 
-    public JSONObject setModifyingId(String modifiedBy) {
+    public JSONObject setModifiedBy(String modifiedBy) {
         return setValue("sModified", modifiedBy);
     }
 
-    public String getModifyingId() {
+    public String getModifiedBy() {
         return (String) getValue("sModified");
     }
 
@@ -415,6 +393,47 @@ public class Model_Sales_Quotation_Vehicle extends Model {
     public String getNextCode() {
         return MiscUtil.getNextCode(this.getTable(), ID, true, poGRider.getGConnection().getConnection(), poGRider.getBranchCode());
     }
+
+    public void setBrandId(String brand) {
+        psBrand = brand;
+    }
+
+    public String getBrandId() {
+        String id = (String) (getValue("sVrntIDxx") == null ? "" : getValue("sVrntIDxx"));
+
+        if (!"".equals(id)) {
+            try {
+                psBrand = ModelVariant().Model().getBrandId();
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            } catch (GuanzonException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        return psBrand == null ? "" : psBrand;
+    }
+
+    public void setModelId(String model) {
+        psModel = model;
+    }
+
+    public String getModelId() {
+        String id = (String) (getValue("sVrntIDxx") == null ? "" : getValue("sVrntIDxx"));
+
+        if (!"".equals(id)) {
+            try {
+                psModel = ModelVariant().getModelId();
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            } catch (GuanzonException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        return psModel == null ? "" : psModel;
+    }
+
 
     //reference object models
     public Model_Branch Branch() throws SQLException, GuanzonException {
@@ -444,168 +463,6 @@ public class Model_Sales_Quotation_Vehicle extends Model {
         }
     }
 
-    public Model_Industry Industry() throws SQLException, GuanzonException {
-        if (poIndustry == null) {
-            poIndustry = new ParamModels(poGRider).Industry();
-        }
-
-        String id = (String) (getValue("sIndstCdx") == null ? "" : getValue("sIndstCdx"));
-
-        if (!"".equals(id)) {
-            if (poIndustry.getEditMode() == EditMode.READY
-                    && poIndustry.getIndustryId().equals(id)) {
-                return poIndustry;
-            } else {
-                poJSON = poIndustry.openRecord(id);
-
-                if ("success".equals(poJSON.get("result"))) {
-                    return poIndustry;
-                } else {
-                    poIndustry.initialize();
-                    return poIndustry;
-                }
-            }
-        } else {
-            poIndustry.initialize();
-            return poIndustry;
-        }
-    }
-
-    public Model_Company Company() throws SQLException, GuanzonException {
-        if (poCompany == null) {
-            poCompany = new ParamModels(poGRider).Company();
-        }
-
-        String id = (String) (getValue("sCompnyID") == null ? "" : getValue("sCompnyID"));
-
-        if (!"".equals(id)) {
-            if (poCompany.getEditMode() == EditMode.READY
-                    && poCompany.getCompanyId().equals(id)) {
-                return poCompany;
-            } else {
-                poJSON = poCompany.openRecord(id);
-
-                if ("success".equals(poJSON.get("result"))) {
-                    return poCompany;
-                } else {
-                    poCompany.initialize();
-                    return poCompany;
-                }
-            }
-        } else {
-            poCompany.initialize();
-            return poCompany;
-        }
-    }
-
-    public Model_Client_Master Client() throws SQLException, GuanzonException {
-        if (poClient == null) {
-            poClient = new ClientModels(poGRider).ClientMaster();
-        }
-
-        String id = (String) (getValue("sClientID") == null ? "" : getValue("sClientID"));
-
-        if (!"".equals(id)) {
-            if (poClient.getEditMode() == EditMode.READY
-                    && poClient.getClientId().equals(id)) {
-                return poClient;
-            } else {
-                poJSON = poClient.openRecord(id);
-
-                if ("success".equals(poJSON.get("result"))) {
-                    return poClient;
-                } else {
-                    poClient.initialize();
-                    return poClient;
-                }
-            }
-        } else {
-            poClient.initialize();
-            return poClient;
-        }
-    }
-    
-    public Model_Client_Address ClientAddress() throws SQLException, GuanzonException {
-        if (poClientAddress == null) {
-            poClientAddress = new ClientModels(poGRider).ClientAddress();
-        }
-
-        String id = (String) (getValue("sAddrssID") == null ? "" : getValue("sAddrssID"));
-
-        if (!"".equals(id)) {
-            if (poClientAddress.getEditMode() == EditMode.READY
-                    && poClientAddress.getAddressId().equals(id)) {
-                return poClientAddress;
-            } else {
-                poJSON = poClientAddress.openRecord(id);
-
-                if ("success".equals(poJSON.get("result"))) {
-                    return poClientAddress;
-                } else {
-                    poClientAddress.initialize();
-                    return poClientAddress;
-                }
-            }
-        } else {
-            poClientAddress.initialize();
-            return poClientAddress;
-        }
-    }
-    
-    public Model_Client_Mobile ClientMobile() throws SQLException, GuanzonException {
-        if (poClientMobile == null) {
-            poClientMobile = new ClientModels(poGRider).ClientMobile();
-        }
-
-        String id = (String) (getValue("sContctID") == null ? "" : getValue("sContctID"));
-
-        if (!"".equals(id)) {
-            if (poClientMobile.getEditMode() == EditMode.READY
-                    && poClientMobile.getClientId().equals(id)) {
-                return poClientMobile;
-            } else {
-                poJSON = poClientMobile.openRecord(id);
-
-                if ("success".equals(poJSON.get("result"))) {
-                    return poClientMobile;
-                } else {
-                    poClientMobile.initialize();
-                    return poClientMobile;
-                }
-            }
-        } else {
-            poClientMobile.initialize();
-            return poClientMobile;
-        }
-    }
-    
-    public Model_Client_Mail ClientEmail() throws SQLException, GuanzonException {
-        if (poClientEmail == null) {
-            poClientEmail = new ClientModels(poGRider).ClientMail();
-        }
-
-        String id = (String) (getValue("sClientID") == null ? "" : getValue("sClientID"));
-
-        if (!"".equals(id)) {
-            if (poClientEmail.getEditMode() == EditMode.READY
-                    && poClientEmail.getClientId().equals(id)) {
-                return poClientEmail;
-            } else {
-                poJSON = poClientEmail.openRecord(id);
-
-                if ("success".equals(poJSON.get("result"))) {
-                    return poClientEmail;
-                } else {
-                    poClientEmail.initialize();
-                    return poClientEmail;
-                }
-            }
-        } else {
-            poClientEmail.initialize();
-            return poClientEmail;
-        }
-    }
-    
     public Model_Sales_Inquiry_Master SalesInquiry() throws SQLException, GuanzonException {
         if (poSalesInquiry == null) {
             poSalesInquiry = new SalesModels(poGRider).SalesInquiryMaster();
@@ -632,6 +489,90 @@ public class Model_Sales_Quotation_Vehicle extends Model {
             return poSalesInquiry;
         }
     }
+
+
+    public Model_Model_Variant ModelVariant() throws SQLException, GuanzonException {
+        if (poModelVariant == null) {
+            poModelVariant = new ParamModels(poGRider).ModelVariant();
+        }
+
+        String id = (String) (getValue("sVrntIDxx") == null ? "" : getValue("sVrntIDxx"));
+
+        if (!"".equals(id)) {
+            if (poModelVariant.getEditMode() == EditMode.READY
+                    && poModelVariant.getVariantId().equals(id)) {
+                return poModelVariant;
+            } else {
+                poJSON = poModelVariant.openRecord(id);
+
+                if ("success".equals(poJSON.get("result"))) {
+                    return poModelVariant;
+                } else {
+                    poModelVariant.initialize();
+                    return poModelVariant;
+                }
+            }
+        } else {
+            poModelVariant.initialize();
+            return poModelVariant;
+        }
+    }
+
+    public Model_Brand Brand() throws SQLException, GuanzonException {
+        if (poBrand == null) {
+            poBrand = new ParamModels(poGRider).Brand();
+        }
+
+        String id = getBrandId();
+
+        if (!"".equals(id)) {
+            if (poBrand.getEditMode() == EditMode.READY
+                    && poBrand.getBrandId().equals(id)) {
+                return poBrand;
+            } else {
+                poJSON = poBrand.openRecord(id);
+
+                if ("success".equals(poJSON.get("result"))) {
+                    return poBrand;
+                } else {
+                    poBrand.initialize();
+                    return poBrand;
+                }
+            }
+        } else {
+            poBrand.initialize();
+            return poBrand;
+        }
+    }
+
+
+    public Model_Model Model() throws SQLException, GuanzonException {
+        if (poModel == null) {
+            poModel = new ParamModels(poGRider).Model();
+        }
+
+        String id = getModelId();
+
+        if (!"".equals(id)) {
+            if (poModel.getEditMode() == EditMode.READY
+                    && poModel.getModelId().equals(id)) {
+                return poModel;
+            } else {
+                poJSON = poModel.openRecord(id);
+
+                if ("success".equals(poJSON.get("result"))) {
+                    return poModel;
+                } else {
+                    poModel.initialize();
+                    return poModel;
+                }
+            }
+        } else {
+            poModel.initialize();
+            return poModel;
+        }
+    }
     //end - reference object models
 
 }
+
