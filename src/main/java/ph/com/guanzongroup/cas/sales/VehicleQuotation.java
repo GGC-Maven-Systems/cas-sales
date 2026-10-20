@@ -24,20 +24,15 @@ import org.guanzon.appdriver.constant.EditMode;
 import org.guanzon.appdriver.constant.RecordStatus;
 import org.guanzon.appdriver.constant.UserRight;
 import org.guanzon.appdriver.iface.GValidator;
-import org.guanzon.cas.inv.model.Model_Inventory;
-import org.guanzon.cas.inv.services.InvModels;
 import org.guanzon.cas.parameter.Brand;
 import org.guanzon.cas.parameter.model.Model_Branch;
-import org.guanzon.cas.parameter.model.Model_Model_Variant;
 import org.guanzon.cas.parameter.services.ParamControllers;
 import org.guanzon.cas.parameter.services.ParamModels;
-import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.ParseException;
 import ph.com.guanzongroup.cas.sales.model.*;
 import ph.com.guanzongroup.cas.sales.services.SalesControllers;
 import ph.com.guanzongroup.cas.sales.services.SalesModels;
-import ph.com.guanzongroup.cas.sales.status.VehicleQuotationStatus;
 import ph.com.guanzongroup.cas.sales.status.VehicleQuotationStatus;
 import ph.com.guanzongroup.cas.sales.validator.ValidityMasterValidator;
 
@@ -714,23 +709,18 @@ public class VehicleQuotation extends Transaction {
         while (lnCtr >= 0) {
             if ((AddOnList(lnCtr).getStockId() == null || "".equals(AddOnList(lnCtr).getStockId()))
                 ) {
-                deleteAddOnList(lnCtr);
+                paAddOn.remove(lnCtr);
             } 
             lnCtr--;
         }
 
-        ArrayList<String> laVariant = groupUniqueVariant();
-        boolean lbHasSRPAmt = false;
-        Double ldblBaseAmt = 0.0000;
         if ((getAddOnListCount() - 1) >= 0) {
             if (
-                (Detail(getDetailCount() - 1).getVariantId() != null && !"".equals(Detail(getDetailCount() - 1).getVariantId()))
-                && Detail(getDetailCount() - 1).getSRPAmount() > 0.0000
+                (AddOnList(getAddOnListCount() - 1).getStockId() != null && !"".equals(AddOnList(getAddOnListCount() - 1).getStockId()))
+                && AddOnList(getAddOnListCount() - 1).getAmount() > 0.0000
                 ) {
                 AddDetail();
             }
-            
-//            sortDetail();
         }
 
         if ((getDetailCount() - 1) < 0) {
@@ -769,6 +759,19 @@ public class VehicleQuotation extends Transaction {
 
         return addDetail();
     }
+    
+    public JSONObject AddAddOn() throws CloneNotSupportedException {
+        if (getAddOnListCount() > 0) {
+            if ((AddOnList(getAddOnListCount() - 1).getStockId() == null || "".equals(AddOnList(getAddOnListCount() - 1).getStockId()))){
+                poJSON = new JSONObject();
+                poJSON = setJSON("error", "Last row has empty item.");
+                return poJSON;
+            }
+        }
+        
+        paAddOn.add(new SalesModels(poGRider).QuotationAddOn());
+        return poJSON;
+    }
 
     public Model_Quotation_AddOn AddOnList(int row) {
         return (Model_Quotation_AddOn) paAddOn.get(row);
@@ -788,30 +791,16 @@ public class VehicleQuotation extends Transaction {
             return poJSON;
         }
         
-        //Cancel or Void the transaction to be remake
-//        if(VehicleQuotationStatus.APPROVED.equals(Master().getRecordStatus())){
-//            poJSON = CancelTransaction();
-//            if(!isJSONSuccess(poJSON)){
-//                return poJSON;
-//            }
-//        } else if(VehicleQuotationStatus.OPEN.equals(Master().getRecordStatus())){
-//            poJSON = VoidTransaction();
-//            if(!isJSONSuccess(poJSON)){
-//                return poJSON;
-//            }
-//        }
-        
         poJSON = NewTransaction();
         if(!isJSONSuccess(poJSON)){
             return poJSON;
         }
         
-        ReloadDetail();
         for(int lnCtr = 0;lnCtr < loObj.getDetailCount(); lnCtr++){
             if(loObj.Detail(lnCtr).getRecordStatus()){
                 Detail(getDetailCount()-1).setVariantId(loObj.Detail(lnCtr).getVariantId());
                 Detail(getDetailCount()-1).setSRPAmount(loObj.Detail(lnCtr).getSRPAmount());
-                ReloadDetail();
+                //
             }
         }
         
