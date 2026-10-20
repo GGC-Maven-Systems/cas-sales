@@ -334,7 +334,7 @@ public class VehiclePriceList extends Transaction {
                                     ((Model)this.paDetail.get(lnCtr)).setValue("sPriceIDx", Detail(lnCtr).getNextCode());
                                 }
                                 this.poJSON = ((Model)this.paDetail.get(lnCtr)).saveRecord();
-                                if ("error".equals((String)this.poJSON.get("rsearesult"))) {
+                                if ("error".equals((String)this.poJSON.get("result"))) {
                                     if (!this.pbWthParent) {
                                         this.poGRider.rollbackTrans();
                                     }
