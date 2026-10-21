@@ -46,6 +46,7 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -1060,14 +1061,58 @@ public class VehicleQuotation extends Transaction {
         return setJSON("success", "success");
     }
     
-    public void computeFields(){
-    
+    public void computeFields() throws SQLException, GuanzonException{
+        Double ldblDownpaymentAmount = 0.00;
+        Double ldblBalance = 0.00;
+        Double ldblMontlyAmortizationAmt = 0.00;
+        Double ldblInterestRate = Detail(0).getRateValue();
+        int lnDuration = Detail(0).getDuration();
+        /**
+         * SRP x Downpayment Rate = Downpayment Amount
+         * SRP - Downpayment Amount = Balance
+         * Balance x Interest Rate / Duration = Monthly Amortization Amount
+         */
+        ldblDownpaymentAmount = Detail(0).getSRPAmount() * (Detail(0).getDownPaymentPercent()/100);
+        ldblBalance = Detail(0).getSRPAmount() - ldblDownpaymentAmount;
+        ldblInterestRate = ((ldblInterestRate/100)+1);
+        ldblMontlyAmortizationAmt = ((ldblBalance * ldblInterestRate) / lnDuration)+2;
+        
+        String lsDecimalFormat = "###0.00";
+        DecimalFormat format = new DecimalFormat(lsDecimalFormat);
+        ldblMontlyAmortizationAmt = Double.parseDouble(format.format(ldblMontlyAmortizationAmt));
+        ldblMontlyAmortizationAmt = Double.parseDouble(String.valueOf(Math.round(ldblMontlyAmortizationAmt)));
+        
+        Double ldblDPAmt = Detail(0).getDownPayment();
+        Double ldblRSVAmt = Detail(0).getReservationAmount();
+        Double ldblTPLAmt = Detail(0).getTPLAmount();
+        Double ldblCompAmt = Detail(0).getComprehensiveAmount();
+        Double ldblLTOAmt = Detail(0).getLTOAmount();
+        Double ldblCHMOAmt = Detail(0).getCHMOAmount();
+        Double ldblTotalAddOn = 0.0000;
+        Double ldblTotalAmt = 0.0000;
+        
+        for(int lnCtr = 0;lnCtr < getAddOnListCount();lnCtr++){
+            if(checkNotEmpty(AddOnList(lnCtr).AddOnMaster().AddOnType().getAddTypeName())){
+                if(AddOnList(lnCtr).AddOnMaster().AddOnType().getAddTypeName().contains("LTO")
+                    || AddOnList(lnCtr).AddOnMaster().AddOnType().getAddTypeName().contains("TPL")
+                    || AddOnList(lnCtr).AddOnMaster().AddOnType().getAddTypeName().contains("Comprehensive")
+                ){
+                    continue;
+                }
+                
+                ldblTotalAddOn = ldblTotalAddOn + AddOnList(lnCtr).getAmount();
+            }
+        }
+        
+        ldblTotalAmt = ldblDPAmt + ldblRSVAmt + ldblTPLAmt + ldblCompAmt + ldblLTOAmt + ldblCHMOAmt + ldblTotalAddOn;
+        Detail(0).setTotalAmount(ldblTotalAmt);
+        Detail(0).setMonthlyAmount(ldblMontlyAmortizationAmt);
+        //Finance Amount = (SRP Amount - (Downpayment-Reservation Amount)) 
     
     }
     
     public Double getGrossMonthlyInstallment(){
-        Double ldblAmount = Detail(0).getMonthlyAmount(); //- discount
-        return ldblAmount;
+        return Detail(0).getMonthlyAmount() - Detail(0).getPromptPaymentDiscount();
     } 
     
     public Double getPromissoryNoteAmount(){
@@ -1228,6 +1273,9 @@ public class VehicleQuotation extends Transaction {
             AddOnList(lnCtr).setModifiedBy(poGRider.Encrypt(poGRider.getUserID()));
             AddOnList(lnCtr).setModifiedDate(poGRider.getServerDate());
         }
+        
+        //Recompute
+        computeFields();
         
         Master().setModifiedBy(poGRider.Encrypt(poGRider.getUserID()));
         Master().setModifiedDate(poGRider.getServerDate());
