@@ -41,6 +41,7 @@ public class Model_Sales_Quotation_Vehicle extends Model {
     Model_Model_Variant poModelVariant;
     Model_Brand poBrand;
     Model_Model poModel;
+    Model_Financing_Rate_Master poFinancingRate;
 
     private String psBrand, psModel;
 
@@ -599,8 +600,7 @@ public class Model_Sales_Quotation_Vehicle extends Model {
             return poBrand;
         }
     }
-
-
+    
     public Model_Model Model() throws SQLException, GuanzonException {
         if (poModel == null) {
             poModel = new ParamModels(poGRider).Model();
@@ -627,6 +627,34 @@ public class Model_Sales_Quotation_Vehicle extends Model {
             return poModel;
         }
     }
+    
+    public Model_Financing_Rate_Master FinancingRate() throws SQLException, GuanzonException {
+        if (poFinancingRate == null) {
+            poFinancingRate = new SalesModels(poGRider).FinancingRateMaster();
+        }
+
+        String id = (String) (getValue("sQuotRate") == null ? "" : getValue("sQuotRate"));
+        
+        if (!"".equals(id)) {
+            if (poFinancingRate.getEditMode() == EditMode.READY
+                    && poFinancingRate.getRateId().equals(id)) {
+                return poFinancingRate;
+            } else {
+                poJSON = poFinancingRate.openRecord(id);
+
+                if ("success".equals(poJSON.get("result"))) {
+                    return poFinancingRate;
+                } else {
+                    poFinancingRate.initialize();
+                    return poFinancingRate;
+                }
+            }
+        } else {
+            poFinancingRate.initialize();
+            return poFinancingRate;
+        }
+    }
+    
     //end - reference object models
 
 }
