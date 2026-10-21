@@ -109,7 +109,16 @@ public class VehicleQuotation extends Transaction {
 
     public JSONObject NewTransaction()
             throws CloneNotSupportedException, SQLException, GuanzonException {
-        return newTransaction();
+         poJSON = new JSONObject();
+        
+        poJSON = newTransaction();
+        if(!isJSONSuccess(poJSON)){
+            return poJSON;
+        }
+        
+        ReloadDetail();
+        
+        return poJSON;
     }
     
     public JSONObject OpenTransaction(String transactionNo) throws CloneNotSupportedException, SQLException, GuanzonException, ScriptException {
@@ -312,14 +321,14 @@ public class VehicleQuotation extends Transaction {
             return poJSON;
         }
         
-        Model_Validity_Period_Master loObject = new SalesModels(poGRider).ValidityPeriodMaster();
+        Model_Sales_Quotation_Master loObject = new SalesModels(poGRider).SalesQuotationMaster();
         poJSON = loObject.openRecord(Master().getTransactionNo());
         if (!isJSONSuccess(poJSON)) {
             poJSON = setJSON((String) poJSON.get("result"), "Unable to load transaction. " + (String) poJSON.get("message"));
             return poJSON;
         }
         
-        if (lsStatus.equals(loObject.getRecordStatus())) {
+        if (lsStatus.equals(loObject.getTransactionStatus())) {
             poJSON = setJSON("error", "Transaction was already approved.");
             return poJSON;
         }
@@ -371,14 +380,14 @@ public class VehicleQuotation extends Transaction {
             return poJSON;
         }
         
-        Model_Validity_Period_Master loObject = new SalesModels(poGRider).ValidityPeriodMaster();
+        Model_Sales_Quotation_Master loObject = new SalesModels(poGRider).SalesQuotationMaster();
         poJSON = loObject.openRecord(Master().getTransactionNo());
         if (!isJSONSuccess(poJSON)) {
             poJSON = setJSON((String) poJSON.get("result"), "Unable to load transaction. " + (String) poJSON.get("message"));
             return poJSON;
         }
         
-        if (lsStatus.equals(loObject.getRecordStatus())) {
+        if (lsStatus.equals(loObject.getTransactionStatus())) {
             poJSON = setJSON("error", "Transaction was already voided.");
             return poJSON;
         }
@@ -414,14 +423,14 @@ public class VehicleQuotation extends Transaction {
             return poJSON;
         }
         
-        Model_Validity_Period_Master loObject = new SalesModels(poGRider).ValidityPeriodMaster();
+        Model_Sales_Quotation_Master loObject = new SalesModels(poGRider).SalesQuotationMaster();
         poJSON = loObject.openRecord(Master().getTransactionNo());
         if (!isJSONSuccess(poJSON)) {
             poJSON = setJSON((String) poJSON.get("result"), "Unable to load transaction. " + (String) poJSON.get("message"));
             return poJSON;
         }
         
-        if (lsStatus.equals(loObject.getRecordStatus())) {
+        if (lsStatus.equals(loObject.getTransactionStatus())) {
             poJSON = setJSON("error", "Transaction was already cancelled.");
             return poJSON;
         }
@@ -590,18 +599,23 @@ public class VehicleQuotation extends Transaction {
         poJSON = new JSONObject();
         
         SalesInquiry object = new SalesControllers(poGRider, logwrapr).SalesInquiry();
+        object.InitTransaction();
         object.setTransactionStatus(SalesInquiryStatic.OPEN);
-        
-        poJSON = object.searchTransaction(psIndustryId, psCompanyId, psCategoryId, value, "");
+        object.setWithUI(pbWithUI);
+        if(pbWithUI){
+            poJSON = object.searchTransaction(psIndustryId, psCompanyId, psCategoryId, value, "");
+        } else {
+            poJSON = object.OpenTransaction(value);
+        }
         if (isJSONSuccess(poJSON)) {
             Master().setClientId(object.Master().getClientId());
-            Master().setClientId(object.Master().getTransactionNo());
             Master().setAddressId(object.Master().getAddressId());
             Master().setContactId(object.Master().getContactId());
             Detail(0).setSourceCode(object.getSourceCode());
             Detail(0).setSourceNo(object.Master().getTransactionNo());
-//            Master().setPaymentMode(object.Master().getPurchaseType());
+            Detail(0).setPaymentForm(object.Master().getPurchaseType());
         }
+        
         return poJSON;
     }
     
@@ -630,8 +644,11 @@ public class VehicleQuotation extends Transaction {
         
         Brand object = new ParamControllers(poGRider, logwrapr).Brand();
         object.setRecordStatus(RecordStatus.ACTIVE);
-
-        poJSON = object.searchRecord(value, byCode, psIndustryId);
+        if(pbWithUI){
+            poJSON = object.searchRecord(value, byCode, psIndustryId);
+        } else {
+            poJSON = object.openRecord(value);
+        }
         if (isJSONSuccess(poJSON)) {
             Detail(row).setBrandId(object.getModel().getBrandId());
         }
@@ -650,8 +667,11 @@ public class VehicleQuotation extends Transaction {
         
         org.guanzon.cas.parameter.Model object = new ParamControllers(poGRider, logwrapr).Model();
         object.setRecordStatus(RecordStatus.ACTIVE);
-
-        poJSON = object.searchRecord(value, byCode, Detail(row).getBrandId());
+        if(pbWithUI){
+            poJSON = object.searchRecord(value, byCode, Detail(row).getBrandId());
+        } else {
+            poJSON = object.openRecord(value);
+        }
         if (isJSONSuccess(poJSON)) {
             Detail(row).setModelId(object.getModel().getModelId());
         }
@@ -661,7 +681,8 @@ public class VehicleQuotation extends Transaction {
     public JSONObject SearchModelVariant(String value, boolean byCode, int row)
             throws ExceptionInInitializerError,
             SQLException,
-            GuanzonException {
+            GuanzonException,
+            CloneNotSupportedException {
         poJSON = new JSONObject();
         
         if(checkEmpty(Detail(row).getModelId())){
@@ -670,13 +691,24 @@ public class VehicleQuotation extends Transaction {
             return poJSON;
         }
         
-        if("0".equals(Detail(row).SalesInquiry().getPurchaseType())){ //Cash
+        if("0".equals(Detail(row).getPaymentForm())){ //Cash
             VehicleDescription object = new SalesControllers(poGRider, logwrapr).VehicleDescription();
+            object.initialize();
             object.setRecordStatus(RecordStatus.ACTIVE);
             object.setIndustryId(psIndustryId);
-            poJSON = object.searchRecord(value, byCode, Detail(row).getModelId());
+            if(pbWithUI){
+                poJSON = object.searchRecord(value, byCode, Detail(row).getModelId());
+            } else {
+                poJSON = object.openRecord(value);
+            }
             if (isJSONSuccess(poJSON)) {
-                Detail(row).setVariantId(object.getModel().getVariantId());
+                Detail(row).setVariantId(object.getModel().getVariantId()); 
+                Detail(row).setSRPAmount(object.getModel().getSellingPrice()); 
+                
+                poJSON = AutoPopulateVehicleAddOn(object.getModel().getVariantId());
+                if(!isJSONSuccess(poJSON)){
+                    return poJSON;
+                }
             }
         } else {
             String lsSQL = VehicleFinancing_SQL();
@@ -684,16 +716,37 @@ public class VehicleQuotation extends Transaction {
                                             + " AND e.sModelIDx = " + Detail(row).getModelId()
                                         );
             System.out.println("Executing SQL: " + lsSQL);
-            poJSON = ShowDialogFX.Browse(poGRider,
-            lsSQL,
-            value,
-            "Financing ID»Description»Downpayment Rate",
-            "sVhclFIDx»xDescription»nDPRatexx",
-            "a.sVhclFIDx»CONCAT(f.sDescript,' ', e.sDescript, ' ', c.sDescript, ' ', g.sDescript, ' ', c.nYearMdlx, ' ',d.sTransmss )»a.nDPRatexx",
-            byCode ? 0 : 1);
+            if(pbWithUI){
+                poJSON = ShowDialogFX.Browse(poGRider,
+                lsSQL,
+                value,
+                "Financing ID»Description»Downpayment Rate",
+                "sVhclFIDx»xDescription»nDPRatexx",
+                "a.sVhclFIDx»CONCAT(f.sDescript,' ', e.sDescript, ' ', c.sDescript, ' ', g.sDescript, ' ', c.nYearMdlx, ' ',d.sTransmss )»a.nDPRatexx",
+                byCode ? 0 : 1);
+            } else {
+                poJSON = new JSONObject();
+                poJSON.put("result", "success");
+                poJSON.put("sVrntIDxx", value);
+                poJSON.put("nDPRatexx", 15.00); //for testing only
+                poJSON.put("nRsrvAmtx", 10000.00); //for testing only
+            }
             if (poJSON != null) {
-                Detail(row).setVariantId((String) poJSON.get("sVrntIDxx"));
-                Detail(row).setDownPaymentPercent((Double) poJSON.get("nDPRatexx"));
+                String lsVariantId = (String) poJSON.get("sVrntIDxx");
+                Double ldblDPRate = (Double) poJSON.get("nDPRatexx");
+                Double ldblRSVAmt = (Double) poJSON.get("nRsrvAmtx");
+                Double ldblSRPAmt = (Double) poJSON.get("nSRPAmntx");
+                
+                Detail(row).setVariantId(lsVariantId);
+                Detail(row).setDownPaymentPercent(ldblDPRate);
+                Detail(row).setReservationAmount(ldblRSVAmt);
+                Detail(row).setSRPAmount(ldblSRPAmt); 
+                
+                poJSON = AutoPopulateVehicleAddOn(lsVariantId);
+                if(!isJSONSuccess(poJSON)){
+                    return poJSON;
+                }
+                
             } else {
                 poJSON = new JSONObject();
                 poJSON.put("result", "error");
@@ -704,33 +757,74 @@ public class VehicleQuotation extends Transaction {
         return poJSON;
     }
     
-    public JSONObject SearchVehicleFinancing(String value, boolean byCode, int row)
-            throws ExceptionInInitializerError,
-            SQLException,
-            GuanzonException {
+//    public JSONObject SearchVehicleFinancing(String value, boolean byCode, int row)
+//            throws ExceptionInInitializerError,
+//            SQLException,
+//            GuanzonException,
+//            CloneNotSupportedException {
+//        poJSON = new JSONObject();
+//        
+//        String lsSQL = VehicleFinancing_SQL();
+//        lsSQL = MiscUtil.addCondition(lsSQL, SQLUtil.toSQL(Master().getTransactionDate()) + " BETWEEN a.dThruDate AND a.dThruDate ");
+//        System.out.println("Executing SQL: " + lsSQL);
+//        if(pbWithUI){
+//            poJSON = ShowDialogFX.Browse(poGRider,
+//            lsSQL,
+//            value,
+//            "Financing ID»Description»Downpayment Rate",
+//            "sVhclFIDx»xDescription»nDPRatexx",
+//            "a.sVhclFIDx»CONCAT(f.sDescript,' ', e.sDescript, ' ', c.sDescript, ' ', g.sDescript, ' ', c.nYearMdlx, ' ',d.sTransmss )»a.nDPRatexx",
+//            byCode ? 0 : 1);
+//        } else {
+//            poJSON = new JSONObject();
+//            poJSON.put("result", "success");
+//            poJSON.put("sVrntIDxx", value);
+//            poJSON.put("nDPRatexx", 15.00); //for testing only
+//            poJSON.put("nRsrvAmtx", 10000.00); //for testing only
+//        }
+//        if (poJSON != null) {
+//            String lsVariantId = (String) poJSON.get("sVrntIDxx");
+//            Double ldblDPRate = (Double) poJSON.get("nDPRatexx");
+//            Double ldblRSVAmt = (Double) poJSON.get("nRsrvAmtx");
+//            Detail(row).setVariantId(lsVariantId);
+//            Detail(row).setDownPaymentPercent(ldblDPRate);
+//            Detail(row).setReservationAmount(ldblRSVAmt);
+//            
+//            poJSON = AutoPopulateVehicleAddOn(lsVariantId);
+//            if(!isJSONSuccess(poJSON)){
+//                return poJSON;
+//            }
+//            
+//        } else {
+//            poJSON = new JSONObject();
+//            poJSON.put("result", "error");
+//            poJSON.put("message", "No record loaded.");
+//            return poJSON;
+//        }
+//        return poJSON;
+//    }
+    
+    public JSONObject AutoPopulateVehicleAddOn(String fsVariantId) throws SQLException, GuanzonException, CloneNotSupportedException{
         poJSON = new JSONObject();
-        
-        String lsSQL = VehicleFinancing_SQL();
-        lsSQL = MiscUtil.addCondition(lsSQL, SQLUtil.toSQL(Master().getTransactionDate()) + " BETWEEN a.dThruDate AND a.dThruDate ");
-        System.out.println("Executing SQL: " + lsSQL);
-        
-        poJSON = ShowDialogFX.Browse(poGRider,
-        lsSQL,
-        value,
-        "Financing ID»Description»Downpayment Rate",
-        "sVhclFIDx»xDescription»nDPRatexx",
-        "a.sVhclFIDx»CONCAT(f.sDescript,' ', e.sDescript, ' ', c.sDescript, ' ', g.sDescript, ' ', c.nYearMdlx, ' ',d.sTransmss )»a.nDPRatexx",
-        byCode ? 0 : 1);
-        if (poJSON != null) {
-            Detail(row).setVariantId((String) poJSON.get("sVrntIDxx"));
-            Detail(row).setDownPaymentPercent((Double) poJSON.get("nDPRatexx"));
-            Detail(row).setReservationAmount((Double) poJSON.get("nRsrvAmtx"));
-        } else {
-            poJSON = new JSONObject();
-            poJSON.put("result", "error");
-            poJSON.put("message", "No record loaded.");
-            return poJSON;
+        String lsSQL = VehicleAddOn_SQL();
+        lsSQL = MiscUtil.addCondition(lsSQL, SQLUtil.toSQL(xsDateShort(Master().getTransactionDate())) + " BETWEEN a.dThruDate AND a.dThruDate "
+                                    + " AND b.sVrntIDxx = " + SQLUtil.toSQL(fsVariantId)
+                                    );
+        System.out.println("AutoLoadVehicleAddOn SQL: " + lsSQL);
+        ResultSet loRS = poGRider.executeQuery(lsSQL);
+        ReloadAddOnList();
+        if (MiscUtil.RecordCount(loRS) > 0) {
+            while(loRS.next()){
+                String lsAddOnId = loRS.getString("sAddOnIDx");
+                Double ldblAmount = loRS.getDouble("nAmountxx");
+                AddOnList(getAddOnListCount() - 1).setAddOnId(lsAddOnId);
+                AddOnList(getAddOnListCount() - 1).setAmount(ldblAmount);
+                AddOnList(getAddOnListCount() - 1).setQuantity(1);
+                ReloadAddOnList();
+            }
         }
+        poJSON.put("result", "success");
+        poJSON.put("message", "success");
         return poJSON;
     }
     
@@ -777,21 +871,20 @@ public class VehicleQuotation extends Transaction {
     private JSONObject checkExistingAddOn(String fsStockId, int row){
         poJSON.put("row", row);
         for(int lnCtr = 0;lnCtr < getAddOnListCount(); lnCtr++){
-            if(fsStockId.equals(AddOnList(lnCtr).getStockId())
+            if(fsStockId.equals(AddOnList(lnCtr).getAddOnId())
                 && row != lnCtr){
                 if(!AddOnList(lnCtr).getRecordStatus()){
                     AddOnList(lnCtr).setRecordStatus(true);
                     poJSON.put("row", lnCtr);
                     return poJSON;
                 } else {
-                    poJSON = setJSON("error", "Selected Stock already exist.");
+                    poJSON = setJSON("error", "Selected Add-On already exist.");
                     poJSON.put("row", lnCtr);
                     return poJSON;
                 }
             }
         }
             
-        AddOnList(row).setStockId(fsStockId);
         poJSON.put("row", row);
         return poJSON;
     }
@@ -799,7 +892,7 @@ public class VehicleQuotation extends Transaction {
     public void ReloadAddOnList() throws CloneNotSupportedException, SQLException, GuanzonException{
         int lnCtr = getAddOnListCount() - 1;
         while (lnCtr >= 0) {
-            if ((AddOnList(lnCtr).getStockId() == null || "".equals(AddOnList(lnCtr).getStockId()))
+            if ((AddOnList(lnCtr).getAddOnId() == null || "".equals(AddOnList(lnCtr).getAddOnId()))
                 ) {
                 paAddOn.remove(lnCtr);
             } 
@@ -808,15 +901,15 @@ public class VehicleQuotation extends Transaction {
 
         if ((getAddOnListCount() - 1) >= 0) {
             if (
-                (AddOnList(getAddOnListCount() - 1).getStockId() != null && !"".equals(AddOnList(getAddOnListCount() - 1).getStockId()))
+                (AddOnList(getAddOnListCount() - 1).getAddOnId() != null && !"".equals(AddOnList(getAddOnListCount() - 1).getAddOnId()))
                 && AddOnList(getAddOnListCount() - 1).getAmount() > 0.0000
                 ) {
-                AddDetail();
+                AddAddOn();
             }
         }
 
-        if ((getDetailCount() - 1) < 0) {
-            AddDetail();
+        if ((getAddOnListCount() - 1) < 0) {
+            AddAddOn();
         }
     }
 
@@ -879,6 +972,30 @@ public class VehicleQuotation extends Transaction {
         return paAddOn.size();
     }
     
+    public void ReloadDetail() throws CloneNotSupportedException, SQLException, GuanzonException{
+//        int lnCtr = getDetailCount() - 1;
+//        while (lnCtr >= 0) {
+//            if ((Detail(lnCtr).getAddOnId() == null || "".equals(Detail(lnCtr).getAddOnId()))
+//                ) {
+//                paAddOn.remove(lnCtr);
+//            } 
+//            lnCtr--;
+//        }
+//
+//        if ((getDetailCount() - 1) >= 0) {
+//            if (
+//                (Detail(getDetailCount() - 1).getAddOnId() != null && !"".equals(Detail(getDetailCount() - 1).getAddOnId()))
+//                && Detail(getDetailCount() - 1).getAmount() > 0.0000
+//                ) {
+//                AddDetail();
+//            }
+//        }
+
+        if ((getDetailCount() - 1) < 0) {
+            AddDetail();
+        }
+    }
+    
     public JSONObject remake(String fsTransNo) throws CloneNotSupportedException, SQLException, GuanzonException, ScriptException, ScriptException, ParseException{
         poJSON = new JSONObject();
         
@@ -934,8 +1051,8 @@ public class VehicleQuotation extends Transaction {
             loToDate.set(Calendar.DAY_OF_MONTH,loToDate.getActualMaximum(Calendar.DAY_OF_MONTH));
 
             Master().setTransactionDate(SQLUtil.toDate(xsDateShort(loFromDate.getTime()),SQLUtil.FORMAT_SHORT_DATE));
-            Detail(0).setExpectedDate(SQLUtil.toDate(xsDateShort(loToDate.getTime()),SQLUtil.FORMAT_SHORT_DATE));
-            
+            Detail(getDetailCount() - 1).setExpectedDate(SQLUtil.toDate(xsDateShort(loToDate.getTime()),SQLUtil.FORMAT_SHORT_DATE));
+            Detail(getDetailCount() - 1).setBranchCode(poGRider.getBranchCode());
         } catch (SQLException ex) {
             Logger.getLogger(VehicleQuotation.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -946,11 +1063,11 @@ public class VehicleQuotation extends Transaction {
 
     @Override
     protected JSONObject isEntryOkay(String status) {
-        GValidator loValidator = new ValidityMasterValidator();
-        loValidator.setApplicationDriver(poGRider);
-        loValidator.setTransactionStatus(status);
-        loValidator.setMaster(Master());
-        poJSON = loValidator.validate();
+//        GValidator loValidator = new ValidityMasterValidator();
+//        loValidator.setApplicationDriver(poGRider);
+//        loValidator.setTransactionStatus(status);
+//        loValidator.setMaster(Master());
+//        poJSON = loValidator.validate();
         return poJSON;
     }
     
@@ -959,10 +1076,10 @@ public class VehicleQuotation extends Transaction {
             Model_Financing_Rate_Master lObj = new SalesModels(poGRider).FinancingRateMaster();
             String lsSQL = MiscUtil.addCondition(MiscUtil.makeSelect(lObj),
                                                     " cRecdStat = " + SQLUtil.toSQL(FinancingRateStatus.ACTIVE)
-                                                    + " AND sBankIDxx = " + SQLUtil.toSQL("")
+//                                                    + " AND sBankIDxx = " + SQLUtil.toSQL("")
                                                     + " AND nDuration = " + SQLUtil.toSQL(Detail(row).getDuration())
                                                     + " AND nRateValx = " + SQLUtil.toSQL(Detail(row).getRateValue())
-                                                    + " AND sCompnyID = " + SQLUtil.toSQL(Detail(row).Branch().getCompanyId())
+//                                                    + " AND sCompnyID = " + SQLUtil.toSQL(Detail(row).Branch().getCompanyId())
                                                     );
             System.out.println("validateStandardDetails SQL: " + lsSQL);
             ResultSet loRS = poGRider.executeQuery(lsSQL);
@@ -971,7 +1088,7 @@ public class VehicleQuotation extends Transaction {
                     return false;
                 }
             }
-        } catch (SQLException | GuanzonException ex) {
+        } catch (SQLException ex) {
             Logger.getLogger(getClass().getName()).log(Level.SEVERE, MiscUtil.getException(ex), ex);
         } 
             
@@ -1010,7 +1127,7 @@ public class VehicleQuotation extends Transaction {
         while (detail.hasNext()) {
             Model item = detail.next(); // Store the item before checking conditions
             String lsDetail = (String) item.getValue("sVrntIDxx");
-            double ldblSRP = Double.parseDouble(String.valueOf(item.getValue("nSRPAmntx")));
+//            double ldblSRP = Double.parseDouble(String.valueOf(item.getValue("nSRPAmntx")));
             
             if ((lsDetail == null || "".equals(lsDetail))){
                 if(item.getEditMode() == EditMode.ADDNEW){
@@ -1057,6 +1174,9 @@ public class VehicleQuotation extends Transaction {
         }
 
         for (int lnCtr = 0; lnCtr <= getAddOnListCount() - 1; lnCtr++) {
+            if(checkEmpty(AddOnList(lnCtr).getAddOnId())){
+                continue;
+            }
             if(AddOnList(lnCtr).getAmount() == 0.0000){
                 return setJSON("error", "Invalid amount at row "+(lnCtr+1)+".");
             }
@@ -1077,6 +1197,9 @@ public class VehicleQuotation extends Transaction {
         try {
             poJSON = new JSONObject();
             for (int lnCtr = 0; lnCtr <= getAddOnListCount() - 1; lnCtr++) {
+                if(checkEmpty(AddOnList(lnCtr).getAddOnId())){
+                    continue;
+                }
                 if(AddOnList(lnCtr).getEditMode() == EditMode.ADDNEW || AddOnList(lnCtr).getEditMode() == EditMode.UPDATE){
                     if(AddOnList(lnCtr).getEditMode() == EditMode.ADDNEW){
                         AddOnList(lnCtr).setQuotationAddOnId(AddOnList(lnCtr).getNextCode());
@@ -1198,6 +1321,7 @@ public class VehicleQuotation extends Transaction {
                 + " , b.sAddOnIDx "
                 + " , b.sAddTypex "
                 + " , b.nAmountxx "
+                + " , b.sVrntIDxx "
                 + " , c.sAddTypNm "
                 + " FROM Validity_Period_Master a " 
                 + " INNER JOIN Vehicle_AddOn_Master b ON b.sValidIDx = a.sValidIDx "  
@@ -1268,331 +1392,331 @@ public class VehicleQuotation extends Transaction {
         
         return lsDesc;
     }
-    public JSONObject printTransaction()
-        throws CloneNotSupportedException, SQLException, GuanzonException {
-
-    poJSON = new JSONObject();
-    pbIsPrinted = false;
-    
-    try {
-
-        String jrxmlPath =
-                System.getProperty("sys.default.path.config")
-                + "/Reports/VehicleSalesQuotation.jrxml";
-
-        JasperReport jasperReport =
-                JasperCompileManager.compileReport(jrxmlPath);
-        String lsWatermarkPath = System.getProperty("sys.default.path.config") + "/Reports/images/";
-        String lsBrand = BranchBrand();
-        
-        if(lsBrand == null || "".equals(lsBrand)){
-            lsWatermarkPath = lsWatermarkPath + "anyauto.png" ;
-        } else {
-            if(lsBrand.toLowerCase().contains("honda")){
-                lsWatermarkPath = lsWatermarkPath + "honda.png" ;
-            } else if(lsBrand.toLowerCase().contains("nissan")){
-                lsWatermarkPath = lsWatermarkPath + "nissan.png" ;
-            } else if(lsBrand.toLowerCase().contains("geely")){
-                lsWatermarkPath = lsWatermarkPath + "geely.png" ;
-            }  else if(lsBrand.toLowerCase().contains("gac")){
-                lsWatermarkPath = lsWatermarkPath + "gacmotor.png" ;
-            } else {
-                lsWatermarkPath = lsWatermarkPath + "anyauto.png" ;
-            }
-        }
-        
-        /*
-         * Create the final JasperPrint.
-         * The first rate will initialize it.
-         */
-        JasperPrint finalPrint = null;
-
-        // ---------------------------------------------
-        // Parameters
-        // ---------------------------------------------
-        Map<String, Object> parameters = new HashMap<>();
-
-
-        parameters.put("watermarkImagePath", lsWatermarkPath);
-        parameters.put("sValidity",Master().getTransactionNo()+ "-"+ poGRider.getServerDate());
-        parameters.put("sCompany",Master().Company().getCompanyName().toUpperCase());
-        String lsAddress = Master().Company().getCompanyAddress();
-        if (Master().Company().TownCity().getDescription() != null && !"".equals(Master().Company().TownCity().getDescription())) {
-            lsAddress = lsAddress + " " + Master().Company().TownCity().getDescription();
-        }
-
-        if (Master().Company().TownCity().Province().getDescription() != null
-                && !"".equals(Master().Company().TownCity().Province().getDescription())) {
-            lsAddress = lsAddress+ ", "+ Master().Company().TownCity().Province().getDescription();
-        }
-
-        parameters.put("sAddress",lsAddress.toUpperCase());
-
-        Model_Branch loModel = Branch();
-        String lsBranchName = loModel.getBranchName();
-        String lsBranchDesc = loModel.getDescription();
-        String lsBranchAddress = loModel.getAddress();
-        String lsEmail = BranchEmail();
-        if (loModel.TownCity().getDescription() != null && !"".equals(loModel.TownCity().getDescription())) {
-            lsBranchAddress = lsBranchAddress + " " + loModel.TownCity().getDescription();
-        }
-
-        if (loModel.TownCity().Province().getDescription() != null && !"".equals(loModel.TownCity().Province().getDescription())) {
-            lsBranchAddress = lsBranchAddress+ ", "+ loModel.TownCity().Province().getDescription();
-        }
-        String lsContact = loModel.getMobile();
-        String lsLandLine = loModel.getLandLine();
-        if(lsBranchName == null) { lsBranchName = "";}
-        if(lsBranchDesc == null) { lsBranchDesc = "";}
-        if(lsBranchAddress == null) { lsBranchAddress = "";}
-        if(lsContact == null) { 
-            lsContact = "";
-        } else {
-            if(!lsContact.isEmpty()){
-                lsContact = "Mobile : " + lsContact;
-            }
-        }
-        if(lsLandLine == null) {
-            lsLandLine = "";
-        } else {
-            if(!lsContact.isEmpty()){
-                lsContact = lsContact 
-                            + "\nTel No : " + lsLandLine;
-            }
-        }
-        if(lsEmail == null) {
-            lsEmail = "";
-        } else {
-            if(!lsEmail.isEmpty()){
-                lsContact = lsContact + "\nEmail Address : " + lsEmail;
-            } 
-        }
-
-        parameters.put("sBranch",lsBranchName.toUpperCase());
-        parameters.put("sBranchAddress",lsBranchAddress.toUpperCase());
-        parameters.put("sBranchDesc",lsBranchDesc.toUpperCase());
-        parameters.put("sContact",lsContact);
-        parameters.put("validFrom",SQLUtil.dateFormat(Master().getTransactionDate(),SQLUtil.FORMAT_LONG_DATE));
-        String lsToDate = "";
-        if(Detail(0).getValidThruDate() == null){
-            lsToDate = "Present";
-        } else {
-            lsToDate = SQLUtil.dateFormat(Detail(0).getValidThruDate(),SQLUtil.FORMAT_LONG_DATE);
-        }
-        parameters.put("validTo",lsToDate);
-        // ---------------------------------------------
-        // Build data for current DP rate
-        // ---------------------------------------------
-        List<Map<String, Object>> rows = buildSampleData();
-        List<Map<String, ?>> data = new ArrayList<>(rows);
-        JRMapCollectionDataSource dataSource = new JRMapCollectionDataSource(data);
-
-        // ---------------------------------------------
-        // Generate JasperPrint
-        // ---------------------------------------------
-
-        JasperPrint currentPrint =
-                JasperFillManager.fillReport(
-                        jasperReport,
-                        parameters,
-                        dataSource
-                );
-
-        // ---------------------------------------------
-        // Combine reports
-        // ---------------------------------------------
-
-        if (finalPrint == null) {
-            finalPrint = currentPrint;
-        } else {
-
-            finalPrint.getPages().addAll(
-                    currentPrint.getPages()
-            );
-        }
-
-        // ---------------------------------------------
-        // Display final report
-        // ---------------------------------------------
-
-        if (finalPrint != null) {
-            CustomJasperViewer viewer = new CustomJasperViewer(finalPrint);
-            viewer.setVisible(true);
-            viewer.addWindowListener(
-                    new WindowAdapter() {
-                        @Override
-                        public void windowClosed(WindowEvent e) {
-                            proceedAfterViewerClosed();
-                        }
-                    }
-            );
-        }
-
-    } catch (JRException | SQLException | GuanzonException ex) {
-        poJSON.put("result", "error");
-        poJSON.put("message","Transaction print aborted!");
-        Logger.getLogger(getClass().getName())
-                .log(Level.SEVERE, null, ex);
-    }
-
-    return poJSON;
-}
-    
-    private void proceedAfterViewerClosed() {
-        Platform.runLater(() -> {
-            System.out.println("SHOWED!!!!!!!!!!!");
-            if ("error".equals((String) poJSON.get("result"))) {
-                ShowMessageFX.Warning(null, "Computerized Accounting System",
-                        (String) poJSON.get("message"));
-            } else {
-                if (pbIsPrinted) {
-                    ShowMessageFX.Information(null, "Computerized Accounting System",
-                            "Vehicle Price List Printed Successfully");
-                } else {
-                    ShowMessageFX.Warning(null, "Computerized Accounting System",
-                            "Printing was canceled by the user.");
-                }
-            }
-        });
-    }
-
-    private boolean pbIsPrinted = false;
-    public class CustomJasperViewer extends JasperViewer {
-
-        public CustomJasperViewer(final JasperPrint jasperPrint) {
-            super(jasperPrint, false);
-            customizePrintButton(jasperPrint);
-        }
-
-        /* ---- toolbar patch ------------------------------------------ */
-        private JSONObject customizePrintButton(final JasperPrint jasperPrint) {
-
-            try {
-                JRViewer viewer = findJRViewer(this);
-                if (viewer == null) {
-                    poJSON.put("result", "error");
-                    poJSON.put("message", "JRViewer not found!");
-                    return poJSON;
-                }
-                for (int i = 0; i < viewer.getComponentCount(); i++) {
-                    if (viewer.getComponent(i) instanceof JRViewerToolbar) {
-
-                        JRViewerToolbar toolbar = (JRViewerToolbar) viewer.getComponent(i);
-
-                        for (int j = 0; j < toolbar.getComponentCount(); j++) {
-                            if (toolbar.getComponent(j) instanceof JButton) {
-
-                                final JButton button = (JButton) toolbar.getComponent(j);
-
-                                if ("Print".equals(button.getToolTipText())) {
-                                    /* remove existing handlers */
-                                    ActionListener[] old = button.getActionListeners();
-                                    for (int k = 0; k < old.length; k++) {
-                                        button.removeActionListener(old[k]);
-                                    }
-
-                                    /* add our own (anonymous inner‑class, not lambda) */
-                                    button.addActionListener(new ActionListener() {
-                                        @Override
-                                        public void actionPerformed(ActionEvent e) {
-                                            try {
-                                                pbIsPrinted = JasperPrintManager.printReport(jasperPrint, true);
-                                                if (pbIsPrinted) {
-                                                    CustomJasperViewer.this.dispose();
-                                                } else {
-                                                    poJSON.put("result", "error");
-                                                    poJSON.put("message",  "Printing was canceled by the user.");
-                                                }
-                                            } catch (JRException ex) {
-                                                poJSON.put("result", "error");
-                                                poJSON.put("message",  "Print Failed: " + ex.getMessage());
-                                                Logger.getLogger(getClass().getName()).log(Level.SEVERE,  ex.getMessage(), ex);
-                                            }
-                                        }
-                                    });
-                                } else {
-                                    // Disable all other buttons
-//                                    button.setEnabled(false);
-//                                    poJSON.put("result", "error");
-//                                    poJSON.put("message",  "Transaction print aborted!");
-                                }
-                            }
-                        }
-                        toolbar.revalidate();
-                        toolbar.repaint();
-                    }
-                }
-            } catch (Exception e) {
-                System.out.println("Error customizing print button: " + e.getMessage());
-                poJSON.put("result", "error");
-                poJSON.put("message", "Error customizing print button: " + e.getMessage());
-            }
-
-            return poJSON;
-        }
-
-        private JRViewer findJRViewer(Component parent) {
-            if (parent instanceof JRViewer) {
-                return (JRViewer) parent;
-            }
-            if (parent instanceof Container) {
-                Component[] comps = ((Container) parent).getComponents();
-                for (int i = 0; i < comps.length; i++) {
-                    JRViewer v = findJRViewer(comps[i]);
-                    if (v != null) {
-                        return v;
-                    }
-                }
-            }
-            return null;
-        }
-    }
-    private List<Map<String, Object>> buildSampleData() {
-        List<Map<String, Object>> rows = new ArrayList<>();
-
-        try{
-            //Group by dp rate 
-            int lnRow = 0;
-            for(int lnCtr = 0;lnCtr < getDetailCount();lnCtr++){
-                if(Detail(lnCtr).getRecordStatus()){
-                    lnRow++;
-                    String lsVariant = Detail(lnCtr).ModelVariant().getDescription();
-                        if(Detail(lnCtr).ModelVariant().Color().getDescription() != null && !"".equals(Detail(lnCtr).ModelVariant().Color().getDescription())){
-                            lsVariant = ""; //lsVariant + " " +  Detail(lnCtr).ModelVariantInsurance().getTransmission() + " " + Detail(lnCtr).ModelVariant().Color().getDescription() ;
-                        }
-                        addRow(rows
-                                , Detail(lnCtr).ModelVariant().Model().Brand().getDescription()
-                                , Detail(lnCtr).ModelVariant().Model().getDescription()
-                                , lsVariant
-                                , Detail(lnCtr).getSRPAmount()
-                                ,lnRow
-                                , 0
-                        );
-                }
-            }
-        } catch (SQLException | GuanzonException ex) {
-            Logger.getLogger(VehicleQuotation.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        return rows;
-    }
- 
-    // Keys here MUST match the <field name="..."> values in the .jrxml exactly.
-    private void addRow(List<Map<String, Object>> rows,
-                                String brand, String model, String variant,
-                                double srpAmt,int nRow,int priceYr) {
-        Map<String, Object> row = new LinkedHashMap<>();
-        if(brand == null){ brand = "";}
-        if(model == null){ model = "";}
-        if(variant == null){ variant = "";}
-        row.put("sBrand", brand.toUpperCase());
-        row.put("sModel", model.toUpperCase());
-        row.put("sVariant", variant.toUpperCase());
-        row.put("nSRPAmount", srpAmt);
-        row.put("nRow", nRow);
-        row.put("npriceYr", priceYr);
-        rows.add(row);
-    }
-    
+//    public JSONObject printTransaction()
+//        throws CloneNotSupportedException, SQLException, GuanzonException {
+//
+//    poJSON = new JSONObject();
+//    pbIsPrinted = false;
+//    
+//    try {
+//
+//        String jrxmlPath =
+//                System.getProperty("sys.default.path.config")
+//                + "/Reports/VehicleSalesQuotation.jrxml";
+//
+//        JasperReport jasperReport =
+//                JasperCompileManager.compileReport(jrxmlPath);
+//        String lsWatermarkPath = System.getProperty("sys.default.path.config") + "/Reports/images/";
+//        String lsBrand = BranchBrand();
+//        
+//        if(lsBrand == null || "".equals(lsBrand)){
+//            lsWatermarkPath = lsWatermarkPath + "anyauto.png" ;
+//        } else {
+//            if(lsBrand.toLowerCase().contains("honda")){
+//                lsWatermarkPath = lsWatermarkPath + "honda.png" ;
+//            } else if(lsBrand.toLowerCase().contains("nissan")){
+//                lsWatermarkPath = lsWatermarkPath + "nissan.png" ;
+//            } else if(lsBrand.toLowerCase().contains("geely")){
+//                lsWatermarkPath = lsWatermarkPath + "geely.png" ;
+//            }  else if(lsBrand.toLowerCase().contains("gac")){
+//                lsWatermarkPath = lsWatermarkPath + "gacmotor.png" ;
+//            } else {
+//                lsWatermarkPath = lsWatermarkPath + "anyauto.png" ;
+//            }
+//        }
+//        
+//        /*
+//         * Create the final JasperPrint.
+//         * The first rate will initialize it.
+//         */
+//        JasperPrint finalPrint = null;
+//
+//        // ---------------------------------------------
+//        // Parameters
+//        // ---------------------------------------------
+//        Map<String, Object> parameters = new HashMap<>();
+//
+//
+//        parameters.put("watermarkImagePath", lsWatermarkPath);
+//        parameters.put("sValidity",Master().getTransactionNo()+ "-"+ poGRider.getServerDate());
+//        parameters.put("sCompany",Master().Company().getCompanyName().toUpperCase());
+//        String lsAddress = Master().Company().getCompanyAddress();
+//        if (Master().Company().TownCity().getDescription() != null && !"".equals(Master().Company().TownCity().getDescription())) {
+//            lsAddress = lsAddress + " " + Master().Company().TownCity().getDescription();
+//        }
+//
+//        if (Master().Company().TownCity().Province().getDescription() != null
+//                && !"".equals(Master().Company().TownCity().Province().getDescription())) {
+//            lsAddress = lsAddress+ ", "+ Master().Company().TownCity().Province().getDescription();
+//        }
+//
+//        parameters.put("sAddress",lsAddress.toUpperCase());
+//
+//        Model_Branch loModel = Branch();
+//        String lsBranchName = loModel.getBranchName();
+//        String lsBranchDesc = loModel.getDescription();
+//        String lsBranchAddress = loModel.getAddress();
+//        String lsEmail = BranchEmail();
+//        if (loModel.TownCity().getDescription() != null && !"".equals(loModel.TownCity().getDescription())) {
+//            lsBranchAddress = lsBranchAddress + " " + loModel.TownCity().getDescription();
+//        }
+//
+//        if (loModel.TownCity().Province().getDescription() != null && !"".equals(loModel.TownCity().Province().getDescription())) {
+//            lsBranchAddress = lsBranchAddress+ ", "+ loModel.TownCity().Province().getDescription();
+//        }
+//        String lsContact = loModel.getMobile();
+//        String lsLandLine = loModel.getLandLine();
+//        if(lsBranchName == null) { lsBranchName = "";}
+//        if(lsBranchDesc == null) { lsBranchDesc = "";}
+//        if(lsBranchAddress == null) { lsBranchAddress = "";}
+//        if(lsContact == null) { 
+//            lsContact = "";
+//        } else {
+//            if(!lsContact.isEmpty()){
+//                lsContact = "Mobile : " + lsContact;
+//            }
+//        }
+//        if(lsLandLine == null) {
+//            lsLandLine = "";
+//        } else {
+//            if(!lsContact.isEmpty()){
+//                lsContact = lsContact 
+//                            + "\nTel No : " + lsLandLine;
+//            }
+//        }
+//        if(lsEmail == null) {
+//            lsEmail = "";
+//        } else {
+//            if(!lsEmail.isEmpty()){
+//                lsContact = lsContact + "\nEmail Address : " + lsEmail;
+//            } 
+//        }
+//
+//        parameters.put("sBranch",lsBranchName.toUpperCase());
+//        parameters.put("sBranchAddress",lsBranchAddress.toUpperCase());
+//        parameters.put("sBranchDesc",lsBranchDesc.toUpperCase());
+//        parameters.put("sContact",lsContact);
+//        parameters.put("validFrom",SQLUtil.dateFormat(Master().getTransactionDate(),SQLUtil.FORMAT_LONG_DATE));
+//        String lsToDate = "";
+//        if(Detail(0).getValidThruDate() == null){
+//            lsToDate = "Present";
+//        } else {
+//            lsToDate = SQLUtil.dateFormat(Detail(0).getValidThruDate(),SQLUtil.FORMAT_LONG_DATE);
+//        }
+//        parameters.put("validTo",lsToDate);
+//        // ---------------------------------------------
+//        // Build data for current DP rate
+//        // ---------------------------------------------
+//        List<Map<String, Object>> rows = buildSampleData();
+//        List<Map<String, ?>> data = new ArrayList<>(rows);
+//        JRMapCollectionDataSource dataSource = new JRMapCollectionDataSource(data);
+//
+//        // ---------------------------------------------
+//        // Generate JasperPrint
+//        // ---------------------------------------------
+//
+//        JasperPrint currentPrint =
+//                JasperFillManager.fillReport(
+//                        jasperReport,
+//                        parameters,
+//                        dataSource
+//                );
+//
+//        // ---------------------------------------------
+//        // Combine reports
+//        // ---------------------------------------------
+//
+//        if (finalPrint == null) {
+//            finalPrint = currentPrint;
+//        } else {
+//
+//            finalPrint.getPages().addAll(
+//                    currentPrint.getPages()
+//            );
+//        }
+//
+//        // ---------------------------------------------
+//        // Display final report
+//        // ---------------------------------------------
+//
+//        if (finalPrint != null) {
+//            CustomJasperViewer viewer = new CustomJasperViewer(finalPrint);
+//            viewer.setVisible(true);
+//            viewer.addWindowListener(
+//                    new WindowAdapter() {
+//                        @Override
+//                        public void windowClosed(WindowEvent e) {
+//                            proceedAfterViewerClosed();
+//                        }
+//                    }
+//            );
+//        }
+//
+//    } catch (JRException | SQLException | GuanzonException ex) {
+//        poJSON.put("result", "error");
+//        poJSON.put("message","Transaction print aborted!");
+//        Logger.getLogger(getClass().getName())
+//                .log(Level.SEVERE, null, ex);
+//    }
+//
+//    return poJSON;
+//}
+//    
+//    private void proceedAfterViewerClosed() {
+//        Platform.runLater(() -> {
+//            System.out.println("SHOWED!!!!!!!!!!!");
+//            if ("error".equals((String) poJSON.get("result"))) {
+//                ShowMessageFX.Warning(null, "Computerized Accounting System",
+//                        (String) poJSON.get("message"));
+//            } else {
+//                if (pbIsPrinted) {
+//                    ShowMessageFX.Information(null, "Computerized Accounting System",
+//                            "Vehicle Price List Printed Successfully");
+//                } else {
+//                    ShowMessageFX.Warning(null, "Computerized Accounting System",
+//                            "Printing was canceled by the user.");
+//                }
+//            }
+//        });
+//    }
+//
+//    private boolean pbIsPrinted = false;
+//    public class CustomJasperViewer extends JasperViewer {
+//
+//        public CustomJasperViewer(final JasperPrint jasperPrint) {
+//            super(jasperPrint, false);
+//            customizePrintButton(jasperPrint);
+//        }
+//
+//        /* ---- toolbar patch ------------------------------------------ */
+//        private JSONObject customizePrintButton(final JasperPrint jasperPrint) {
+//
+//            try {
+//                JRViewer viewer = findJRViewer(this);
+//                if (viewer == null) {
+//                    poJSON.put("result", "error");
+//                    poJSON.put("message", "JRViewer not found!");
+//                    return poJSON;
+//                }
+//                for (int i = 0; i < viewer.getComponentCount(); i++) {
+//                    if (viewer.getComponent(i) instanceof JRViewerToolbar) {
+//
+//                        JRViewerToolbar toolbar = (JRViewerToolbar) viewer.getComponent(i);
+//
+//                        for (int j = 0; j < toolbar.getComponentCount(); j++) {
+//                            if (toolbar.getComponent(j) instanceof JButton) {
+//
+//                                final JButton button = (JButton) toolbar.getComponent(j);
+//
+//                                if ("Print".equals(button.getToolTipText())) {
+//                                    /* remove existing handlers */
+//                                    ActionListener[] old = button.getActionListeners();
+//                                    for (int k = 0; k < old.length; k++) {
+//                                        button.removeActionListener(old[k]);
+//                                    }
+//
+//                                    /* add our own (anonymous inner‑class, not lambda) */
+//                                    button.addActionListener(new ActionListener() {
+//                                        @Override
+//                                        public void actionPerformed(ActionEvent e) {
+//                                            try {
+//                                                pbIsPrinted = JasperPrintManager.printReport(jasperPrint, true);
+//                                                if (pbIsPrinted) {
+//                                                    CustomJasperViewer.this.dispose();
+//                                                } else {
+//                                                    poJSON.put("result", "error");
+//                                                    poJSON.put("message",  "Printing was canceled by the user.");
+//                                                }
+//                                            } catch (JRException ex) {
+//                                                poJSON.put("result", "error");
+//                                                poJSON.put("message",  "Print Failed: " + ex.getMessage());
+//                                                Logger.getLogger(getClass().getName()).log(Level.SEVERE,  ex.getMessage(), ex);
+//                                            }
+//                                        }
+//                                    });
+//                                } else {
+//                                    // Disable all other buttons
+////                                    button.setEnabled(false);
+////                                    poJSON.put("result", "error");
+////                                    poJSON.put("message",  "Transaction print aborted!");
+//                                }
+//                            }
+//                        }
+//                        toolbar.revalidate();
+//                        toolbar.repaint();
+//                    }
+//                }
+//            } catch (Exception e) {
+//                System.out.println("Error customizing print button: " + e.getMessage());
+//                poJSON.put("result", "error");
+//                poJSON.put("message", "Error customizing print button: " + e.getMessage());
+//            }
+//
+//            return poJSON;
+//        }
+//
+//        private JRViewer findJRViewer(Component parent) {
+//            if (parent instanceof JRViewer) {
+//                return (JRViewer) parent;
+//            }
+//            if (parent instanceof Container) {
+//                Component[] comps = ((Container) parent).getComponents();
+//                for (int i = 0; i < comps.length; i++) {
+//                    JRViewer v = findJRViewer(comps[i]);
+//                    if (v != null) {
+//                        return v;
+//                    }
+//                }
+//            }
+//            return null;
+//        }
+//    }
+//    private List<Map<String, Object>> buildSampleData() {
+//        List<Map<String, Object>> rows = new ArrayList<>();
+//
+//        try{
+//            //Group by dp rate 
+//            int lnRow = 0;
+//            for(int lnCtr = 0;lnCtr < getDetailCount();lnCtr++){
+//                if(Detail(lnCtr).getRecordStatus()){
+//                    lnRow++;
+//                    String lsVariant = Detail(lnCtr).ModelVariant().getDescription();
+//                        if(Detail(lnCtr).ModelVariant().Color().getDescription() != null && !"".equals(Detail(lnCtr).ModelVariant().Color().getDescription())){
+//                            lsVariant = ""; //lsVariant + " " +  Detail(lnCtr).ModelVariantInsurance().getTransmission() + " " + Detail(lnCtr).ModelVariant().Color().getDescription() ;
+//                        }
+//                        addRow(rows
+//                                , Detail(lnCtr).ModelVariant().Model().Brand().getDescription()
+//                                , Detail(lnCtr).ModelVariant().Model().getDescription()
+//                                , lsVariant
+//                                , Detail(lnCtr).getSRPAmount()
+//                                ,lnRow
+//                                , 0
+//                        );
+//                }
+//            }
+//        } catch (SQLException | GuanzonException ex) {
+//            Logger.getLogger(VehicleQuotation.class.getName()).log(Level.SEVERE, null, ex);
+//        }
+//        return rows;
+//    }
+// 
+//    // Keys here MUST match the <field name="..."> values in the .jrxml exactly.
+//    private void addRow(List<Map<String, Object>> rows,
+//                                String brand, String model, String variant,
+//                                double srpAmt,int nRow,int priceYr) {
+//        Map<String, Object> row = new LinkedHashMap<>();
+//        if(brand == null){ brand = "";}
+//        if(model == null){ model = "";}
+//        if(variant == null){ variant = "";}
+//        row.put("sBrand", brand.toUpperCase());
+//        row.put("sModel", model.toUpperCase());
+//        row.put("sVariant", variant.toUpperCase());
+//        row.put("nSRPAmount", srpAmt);
+//        row.put("nRow", nRow);
+//        row.put("npriceYr", priceYr);
+//        rows.add(row);
+//    }
+//    
     public JSONObject getUpdateStatusBy(String fsStatus) throws SQLException, GuanzonException {
         String lsUpdateBy = "";
         String lsDate = "";
