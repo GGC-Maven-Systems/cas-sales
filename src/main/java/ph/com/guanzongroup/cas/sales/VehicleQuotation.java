@@ -689,6 +689,31 @@ public class VehicleQuotation extends Transaction {
         return poJSON;
     }
     
+    public JSONObject Searchbank(String value, boolean byCode, int row)
+            throws ExceptionInInitializerError,
+            SQLException,
+            GuanzonException {
+        poJSON = new JSONObject();
+        
+        if(checkEmpty(Detail(row).getSourceNo())){
+            return setJSON("error", "Inquiry cannot be empty.");
+        }
+        
+        FinancingRates object = new SalesControllers(poGRider, logwrapr).FinancingRates();
+        object.setRecordStatus(RecordStatus.ACTIVE);
+        if(pbWithUI){
+            poJSON = object.searchRecord(value, byCode);
+        } else {
+            poJSON = object.openRecord(value);
+        }
+        if (isJSONSuccess(poJSON)) {
+            Detail(row).setQuotationRate(object.getModel().getRateId());
+            Detail(row).setDuration(object.getModel().getDuration());
+            Detail(row).setRateValue(object.getModel().getRate());
+        }
+        return poJSON;
+    }
+    
     public JSONObject SearchModelVariant(String value, boolean byCode, int row)
             throws ExceptionInInitializerError,
             SQLException,
