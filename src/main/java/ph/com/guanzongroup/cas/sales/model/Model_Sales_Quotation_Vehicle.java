@@ -233,11 +233,11 @@ public class Model_Sales_Quotation_Vehicle extends Model {
         return (String) getValue("sVrntIDxx");
     }
 
-    public JSONObject setPrimaryPayment(Double primaryPayment) {
+    public JSONObject setPromptPaymentDiscount(Double primaryPayment) {
         return setValue("nPrmPayDx", primaryPayment);
     }
 
-    public Double getPrimaryPayment() {
+    public Double getPromptPaymentDiscount() {
         if (getValue("nPrmPayDx") == null || "".equals(getValue("nPrmPayDx"))) {
             return 0.0000;
         }
@@ -339,6 +339,61 @@ public class Model_Sales_Quotation_Vehicle extends Model {
             return 0.0000;
         }
         return Double.valueOf(getValue("nTotAmntx").toString());
+    }
+    
+    public JSONObject setTransactionTotal(Double totalAmount) {
+        return setValue("nTranTotl", totalAmount);
+    }
+
+    public Double getTransactionTotal() {
+        if (getValue("nTranTotl") == null || "".equals(getValue("nTranTotl"))) {
+            return 0.0000;
+        }
+        return Double.valueOf(getValue("nTranTotl").toString());
+    }
+
+    public JSONObject setTPLAmount(Double totalAmount) {
+        return setValue("nTPLAmntx", totalAmount);
+    }
+
+    public Double getTPLAmount() {
+        if (getValue("nTPLAmntx") == null || "".equals(getValue("nTPLAmntx"))) {
+            return 0.0000;
+        }
+        return Double.valueOf(getValue("nTPLAmntx").toString());
+    }
+
+    public JSONObject setComprehensiveAmount(Double totalAmount) {
+        return setValue("nCompInsx", totalAmount);
+    }
+
+    public Double getComprehensiveAmount() {
+        if (getValue("nCompInsx") == null || "".equals(getValue("nCompInsx"))) {
+            return 0.0000;
+        }
+        return Double.valueOf(getValue("nCompInsx").toString());
+    }
+
+    public JSONObject setLTOAmount(Double totalAmount) {
+        return setValue("nLTOAmntx", totalAmount);
+    }
+
+    public Double getLTOAmount() {
+        if (getValue("nLTOAmntx") == null || "".equals(getValue("nLTOAmntx"))) {
+            return 0.0000;
+        }
+        return Double.valueOf(getValue("nLTOAmntx").toString());
+    }
+
+    public JSONObject setCHMOAmount(Double totalAmount) {
+        return setValue("nDocStmpx", totalAmount);
+    }
+
+    public Double getCHMOAmount() {
+        if (getValue("nDocStmpx") == null || "".equals(getValue("nDocStmpx"))) {
+            return 0.0000;
+        }
+        return Double.valueOf(getValue("nDocStmpx").toString());
     }
 
     public JSONObject setSourceCode(String sourceCode) {

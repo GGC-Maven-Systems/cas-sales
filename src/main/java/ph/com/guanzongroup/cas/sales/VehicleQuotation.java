@@ -757,52 +757,54 @@ public class VehicleQuotation extends Transaction {
         return poJSON;
     }
     
-//    public JSONObject SearchVehicleFinancing(String value, boolean byCode, int row)
-//            throws ExceptionInInitializerError,
-//            SQLException,
-//            GuanzonException,
-//            CloneNotSupportedException {
-//        poJSON = new JSONObject();
-//        
-//        String lsSQL = VehicleFinancing_SQL();
-//        lsSQL = MiscUtil.addCondition(lsSQL, SQLUtil.toSQL(Master().getTransactionDate()) + " BETWEEN a.dThruDate AND a.dThruDate ");
-//        System.out.println("Executing SQL: " + lsSQL);
-//        if(pbWithUI){
-//            poJSON = ShowDialogFX.Browse(poGRider,
-//            lsSQL,
-//            value,
-//            "Financing ID»Description»Downpayment Rate",
-//            "sVhclFIDx»xDescription»nDPRatexx",
-//            "a.sVhclFIDx»CONCAT(f.sDescript,' ', e.sDescript, ' ', c.sDescript, ' ', g.sDescript, ' ', c.nYearMdlx, ' ',d.sTransmss )»a.nDPRatexx",
-//            byCode ? 0 : 1);
-//        } else {
-//            poJSON = new JSONObject();
-//            poJSON.put("result", "success");
-//            poJSON.put("sVrntIDxx", value);
-//            poJSON.put("nDPRatexx", 15.00); //for testing only
-//            poJSON.put("nRsrvAmtx", 10000.00); //for testing only
-//        }
-//        if (poJSON != null) {
-//            String lsVariantId = (String) poJSON.get("sVrntIDxx");
-//            Double ldblDPRate = (Double) poJSON.get("nDPRatexx");
-//            Double ldblRSVAmt = (Double) poJSON.get("nRsrvAmtx");
-//            Detail(row).setVariantId(lsVariantId);
-//            Detail(row).setDownPaymentPercent(ldblDPRate);
-//            Detail(row).setReservationAmount(ldblRSVAmt);
-//            
-//            poJSON = AutoPopulateVehicleAddOn(lsVariantId);
-//            if(!isJSONSuccess(poJSON)){
-//                return poJSON;
-//            }
-//            
-//        } else {
-//            poJSON = new JSONObject();
-//            poJSON.put("result", "error");
-//            poJSON.put("message", "No record loaded.");
-//            return poJSON;
-//        }
-//        return poJSON;
-//    }
+    public JSONObject SearchVehicleFinancing(String value, boolean byCode, int row)
+            throws ExceptionInInitializerError,
+            SQLException,
+            GuanzonException,
+            CloneNotSupportedException {
+        poJSON = new JSONObject();
+        
+        String lsSQL = VehicleFinancing_SQL();
+        lsSQL = MiscUtil.addCondition(lsSQL, SQLUtil.toSQL(Master().getTransactionDate()) + " BETWEEN a.dThruDate AND a.dThruDate ");
+        System.out.println("Executing SQL: " + lsSQL);
+        if(pbWithUI){
+            poJSON = ShowDialogFX.Browse(poGRider,
+            lsSQL,
+            value,
+            "Financing ID»Description»Downpayment Rate",
+            "sVhclFIDx»xDescription»nDPRatexx",
+            "a.sVhclFIDx»CONCAT(f.sDescript,' ', e.sDescript, ' ', c.sDescript, ' ', g.sDescript, ' ', c.nYearMdlx, ' ',d.sTransmss )»a.nDPRatexx",
+            byCode ? 0 : 1);
+        } else {
+            poJSON = new JSONObject();
+            poJSON.put("result", "success");
+            poJSON.put("sVrntIDxx", value);
+            poJSON.put("nDPRatexx", 15.00); //for testing only
+            poJSON.put("nRsrvAmtx", 10000.00); //for testing only
+        }
+        if (poJSON != null) {
+            String lsVariantId = (String) poJSON.get("sVrntIDxx");
+            Double ldblDPRate = (Double) poJSON.get("nDPRatexx");
+            Double ldblRSVAmt = (Double) poJSON.get("nRsrvAmtx");
+            Double ldblSRPAmt = (Double) poJSON.get("nSRPAmntx");
+            Detail(row).setVariantId(lsVariantId);
+            Detail(row).setDownPaymentPercent(ldblDPRate);
+            Detail(row).setReservationAmount(ldblRSVAmt);
+            Detail(row).setSRPAmount(ldblSRPAmt); 
+            
+            poJSON = AutoPopulateVehicleAddOn(lsVariantId);
+            if(!isJSONSuccess(poJSON)){
+                return poJSON;
+            }
+            
+        } else {
+            poJSON = new JSONObject();
+            poJSON.put("result", "error");
+            poJSON.put("message", "No record loaded.");
+            return poJSON;
+        }
+        return poJSON;
+    }
     
     public JSONObject AutoPopulateVehicleAddOn(String fsVariantId) throws SQLException, GuanzonException, CloneNotSupportedException{
         poJSON = new JSONObject();
@@ -1031,7 +1033,12 @@ public class VehicleQuotation extends Transaction {
         Double ldblAmount = Detail(0).getMonthlyAmount(); //- discount
         return ldblAmount;
     } 
-
+    
+    public Double getPromissoryNoteAmount(){
+        Double ldblAmount = Detail(0).getMonthlyAmount(); //- discount
+        return ldblAmount;
+    } 
+    
     @Override
     public JSONObject initFields() {
         poJSON = new JSONObject();
