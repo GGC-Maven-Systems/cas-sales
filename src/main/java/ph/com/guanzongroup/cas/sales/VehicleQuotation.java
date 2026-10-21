@@ -1064,9 +1064,39 @@ public class VehicleQuotation extends Transaction {
     public void computeFields() throws SQLException, GuanzonException{
         Double ldblDownpaymentAmount = 0.00;
         Double ldblBalance = 0.00;
+        int lnDuration = Detail(0).getDuration();
         Double ldblMontlyAmortizationAmt = 0.00;
         Double ldblInterestRate = Detail(0).getRateValue();
-        int lnDuration = Detail(0).getDuration();
+        Double ldblSRPAmt = Detail(0).getSRPAmount();
+        Double ldblDPAmt = Detail(0).getDownPayment();
+        Double ldblRSVAmt = Detail(0).getReservationAmount();
+        Double ldblTPLAmt = Detail(0).getTPLAmount();
+        Double ldblCompAmt = Detail(0).getComprehensiveAmount();
+        Double ldblLTOAmt = Detail(0).getLTOAmount();
+        Double ldblCHMOAmt = Detail(0).getCHMOAmount();
+        Double ldblTotalAddOn = 0.0000;
+        Double ldblTranTotal = 0.0000;
+        Double ldblTotalDisc = 0.0000;
+        
+        for(int lnCtr = 0;lnCtr < getAddOnListCount();lnCtr++){
+            if(checkNotEmpty(AddOnList(lnCtr).AddOnMaster().AddOnType().getAddTypeName())){
+                if(AddOnList(lnCtr).AddOnMaster().AddOnType().getAddTypeName().contains("LTO")
+                    || AddOnList(lnCtr).AddOnMaster().AddOnType().getAddTypeName().contains("TPL")
+                    || AddOnList(lnCtr).AddOnMaster().AddOnType().getAddTypeName().contains("Comprehensive")
+                ){
+                    continue;
+                }
+                
+                ldblTotalAddOn = ldblTotalAddOn + AddOnList(lnCtr).getAmount();
+            }
+        }
+        
+        ldblTranTotal = ldblDPAmt + ldblRSVAmt + ldblTPLAmt + ldblCompAmt + ldblLTOAmt + ldblCHMOAmt + ldblTotalAddOn;
+        Detail(0).setTransactionTotal(ldblTranTotal);
+        ldblTotalDisc = Detail(0).getDiscountAmount() + Detail(0).getAdditionalDiscountAmount();
+        Detail(0).setTotalAmount(ldblTranTotal - ldblTotalDisc);
+        
+        //Financing Computation
         /**
          * SRP x Downpayment Rate = Downpayment Amount
          * SRP - Downpayment Amount = Balance
@@ -1082,43 +1112,12 @@ public class VehicleQuotation extends Transaction {
         ldblMontlyAmortizationAmt = Double.parseDouble(format.format(ldblMontlyAmortizationAmt));
         ldblMontlyAmortizationAmt = Double.parseDouble(String.valueOf(Math.round(ldblMontlyAmortizationAmt)));
         
-        Double ldblDPAmt = Detail(0).getDownPayment();
-        Double ldblRSVAmt = Detail(0).getReservationAmount();
-        Double ldblTPLAmt = Detail(0).getTPLAmount();
-        Double ldblCompAmt = Detail(0).getComprehensiveAmount();
-        Double ldblLTOAmt = Detail(0).getLTOAmount();
-        Double ldblCHMOAmt = Detail(0).getCHMOAmount();
-        Double ldblTotalAddOn = 0.0000;
-        Double ldblTotalAmt = 0.0000;
-        
-        for(int lnCtr = 0;lnCtr < getAddOnListCount();lnCtr++){
-            if(checkNotEmpty(AddOnList(lnCtr).AddOnMaster().AddOnType().getAddTypeName())){
-                if(AddOnList(lnCtr).AddOnMaster().AddOnType().getAddTypeName().contains("LTO")
-                    || AddOnList(lnCtr).AddOnMaster().AddOnType().getAddTypeName().contains("TPL")
-                    || AddOnList(lnCtr).AddOnMaster().AddOnType().getAddTypeName().contains("Comprehensive")
-                ){
-                    continue;
-                }
-                
-                ldblTotalAddOn = ldblTotalAddOn + AddOnList(lnCtr).getAmount();
-            }
-        }
-        
-        ldblTotalAmt = ldblDPAmt + ldblRSVAmt + ldblTPLAmt + ldblCompAmt + ldblLTOAmt + ldblCHMOAmt + ldblTotalAddOn;
-        Detail(0).setTotalAmount(ldblTotalAmt);
+        Detail(0).setFinancingAmount(ldblSRPAmt-ldblDPAmt);
         Detail(0).setMonthlyAmount(ldblMontlyAmortizationAmt);
-        //Finance Amount = (SRP Amount - (Downpayment-Reservation Amount)) 
+        Detail(0).setGrossMonthlyInstallment(ldblMontlyAmortizationAmt-Detail(0).getPromptPaymentDiscount());
+        Detail(0).setPromissoryNoteAmt(Detail(0).getDuration() * ldblMontlyAmortizationAmt);
     
     }
-    
-    public Double getGrossMonthlyInstallment(){
-        return Detail(0).getMonthlyAmount() - Detail(0).getPromptPaymentDiscount();
-    } 
-    
-    public Double getPromissoryNoteAmount(){
-        Double ldblAmount = Detail(0).getMonthlyAmount(); //- discount
-        return ldblAmount;
-    } 
     
     @Override
     public JSONObject initFields() {

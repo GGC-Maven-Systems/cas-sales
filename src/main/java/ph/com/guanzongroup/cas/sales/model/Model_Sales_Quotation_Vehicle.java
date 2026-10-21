@@ -296,6 +296,28 @@ public class Model_Sales_Quotation_Vehicle extends Model {
         }
         return Double.valueOf(getValue("nRsrvAmtx").toString());
     }
+    
+    public JSONObject setDiscountAmount(Double discountAmount) {
+        return setValue("nDiscount", discountAmount);
+    }
+
+    public Double getDiscountAmount() {
+        if (getValue("nDiscount") == null || "".equals(getValue("nDiscount"))) {
+            return 0.00;
+        }
+        return Double.valueOf(getValue("nDiscount").toString());
+    }
+
+    public JSONObject setAdditionalDiscountAmount(Double additionalDiscount) {
+        return setValue("nAddDiscx", additionalDiscount);
+    }
+
+    public Double getAdditionalDiscountAmount() {
+        if (getValue("nAddDiscx") == null || "".equals(getValue("nAddDiscx"))) {
+            return 0.00;
+        }
+        return Double.valueOf(getValue("nAddDiscx").toString());
+    }
 
 
     public JSONObject setFinancingAmount(Double financingAmount) {
@@ -342,8 +364,8 @@ public class Model_Sales_Quotation_Vehicle extends Model {
         return Double.valueOf(getValue("nTotAmntx").toString());
     }
     
-    public JSONObject setTransactionTotal(Double totalAmount) {
-        return setValue("nTranTotl", totalAmount);
+    public JSONObject setTransactionTotal(Double transactionTotal) {
+        return setValue("nTranTotl", transactionTotal);
     }
 
     public Double getTransactionTotal() {
@@ -353,8 +375,8 @@ public class Model_Sales_Quotation_Vehicle extends Model {
         return Double.valueOf(getValue("nTranTotl").toString());
     }
 
-    public JSONObject setTPLAmount(Double totalAmount) {
-        return setValue("nTPLAmntx", totalAmount);
+    public JSONObject setTPLAmount(Double tplAmt) {
+        return setValue("nTPLAmntx", tplAmt);
     }
 
     public Double getTPLAmount() {
@@ -364,8 +386,8 @@ public class Model_Sales_Quotation_Vehicle extends Model {
         return Double.valueOf(getValue("nTPLAmntx").toString());
     }
 
-    public JSONObject setComprehensiveAmount(Double totalAmount) {
-        return setValue("nCompInsx", totalAmount);
+    public JSONObject setComprehensiveAmount(Double comprehensiveAmt) {
+        return setValue("nCompInsx", comprehensiveAmt);
     }
 
     public Double getComprehensiveAmount() {
@@ -375,8 +397,8 @@ public class Model_Sales_Quotation_Vehicle extends Model {
         return Double.valueOf(getValue("nCompInsx").toString());
     }
 
-    public JSONObject setLTOAmount(Double totalAmount) {
-        return setValue("nLTOAmntx", totalAmount);
+    public JSONObject setLTOAmount(Double ltoAmt) {
+        return setValue("nLTOAmntx", ltoAmt);
     }
 
     public Double getLTOAmount() {
@@ -386,8 +408,8 @@ public class Model_Sales_Quotation_Vehicle extends Model {
         return Double.valueOf(getValue("nLTOAmntx").toString());
     }
 
-    public JSONObject setCHMOAmount(Double totalAmount) {
-        return setValue("nDocStmpx", totalAmount);
+    public JSONObject setCHMOAmount(Double chmoAmt) {
+        return setValue("nDocStmpx", chmoAmt);
     }
 
     public Double getCHMOAmount() {
@@ -395,6 +417,28 @@ public class Model_Sales_Quotation_Vehicle extends Model {
             return 0.0000;
         }
         return Double.valueOf(getValue("nDocStmpx").toString());
+    }
+
+    public JSONObject setGrossMonthlyInstallment(Double grossMonthlyIns) {
+        return setValue("nGrsMnthI", grossMonthlyIns);
+    }
+
+    public Double getGrossMonthlyInstallment() {
+        if (getValue("nGrsMnthI") == null || "".equals(getValue("nGrsMnthI"))) {
+            return 0.0000;
+        }
+        return Double.valueOf(getValue("nGrsMnthI").toString());
+    }
+
+    public JSONObject setPromissoryNoteAmt(Double promissoryNoteAmt) {
+        return setValue("nPromNote", promissoryNoteAmt);
+    }
+
+    public Double getPromissoryNoteAmt() {
+        if (getValue("nPromNote") == null || "".equals(getValue("nPromNote"))) {
+            return 0.0000;
+        }
+        return Double.valueOf(getValue("nPromNote").toString());
     }
 
     public JSONObject setSourceCode(String sourceCode) {
