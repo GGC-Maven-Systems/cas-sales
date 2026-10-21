@@ -1138,8 +1138,8 @@ public class VehicleQuotation extends Transaction {
             loToDate.set(Calendar.DAY_OF_MONTH,loToDate.getActualMaximum(Calendar.DAY_OF_MONTH));
 
             Master().setTransactionDate(SQLUtil.toDate(xsDateShort(loFromDate.getTime()),SQLUtil.FORMAT_SHORT_DATE));
-            Detail(getDetailCount() - 1).setExpectedDate(SQLUtil.toDate(xsDateShort(loToDate.getTime()),SQLUtil.FORMAT_SHORT_DATE));
-            Detail(getDetailCount() - 1).setBranchCode(poGRider.getBranchCode());
+            Detail(0).setExpectedDate(SQLUtil.toDate(xsDateShort(loToDate.getTime()),SQLUtil.FORMAT_SHORT_DATE));
+            Detail(0).setBranchCode(poGRider.getBranchCode());
         } catch (SQLException ex) {
             Logger.getLogger(VehicleQuotation.class.getName()).log(Level.SEVERE, null, ex);
         }
