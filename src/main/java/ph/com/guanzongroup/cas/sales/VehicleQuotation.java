@@ -471,8 +471,8 @@ public class VehicleQuotation extends Transaction {
         
         initSQL();
         String lsSQL = MiscUtil.addCondition(SQL_BROWSE,
-                " b.sIndstCdx = " + SQLUtil.toSQL(psIndustryId)
-                + " AND b.sCategrCd = " + SQLUtil.toSQL(psCategoryId)
+                " a.sIndstCdx = " + SQLUtil.toSQL(psIndustryId)
+                + " AND a.sCategrCd = " + SQLUtil.toSQL(psCategoryId)
                 + " AND b.sBranchCd = " + SQLUtil.toSQL(poGRider.getBranchCode())
                 + " AND c.sCompnyNm LIKE " + SQLUtil.toSQL("%" + fsClient + "%")
                 + " AND a.sTransNox LIKE " + SQLUtil.toSQL("%" + fsTransactionNo + "%")
@@ -480,10 +480,10 @@ public class VehicleQuotation extends Transaction {
         
        
         //If current user is an ordinary user load only its inquiries
-        if (poGRider.getUserLevel() <= UserRight.ENCODER) {
-            lsSQL = MiscUtil.addCondition(lsSQL,
-                    " b.sSalesman = " + SQLUtil.toSQL(getSysUser(poGRider.getUserID(), true)));
-        }
+//        if (poGRider.getUserLevel() <= UserRight.ENCODER) {
+//            lsSQL = MiscUtil.addCondition(lsSQL,
+//                    " b.sSalesman = " + SQLUtil.toSQL(getSysUser(poGRider.getUserID(), true)));
+//        }
         
         lsSQL = lsSQL + " ORDER BY a.dTransact, c.sCompnyNm  ASC ";
         System.out.println("Executing SQL: " + lsSQL);
@@ -494,7 +494,7 @@ public class VehicleQuotation extends Transaction {
         }
 
         while (loRS.next()) {
-            Model_Sales_Quotation_Vehicle loObject = new SalesModels(poGRider).SalesQuotationVehicle();
+            Model_Sales_Quotation_Master loObject = new SalesModels(poGRider).SalesQuotationMaster();
             poJSON = loObject.openRecord(loRS.getString("sTransNox"));
             if (isJSONSuccess(poJSON)) {
                 paMaster.add((Model) loObject);
@@ -504,6 +504,17 @@ public class VehicleQuotation extends Transaction {
         }
         MiscUtil.close(loRS);
         return poJSON;
+    }
+    
+    public Model_Sales_Quotation_Master TransactionList(int row) {
+        return (Model_Sales_Quotation_Master) paMaster.get(row);
+    }
+
+    public int getTransactionListCount() {
+        if(paMaster == null){
+            return 0;
+        }
+        return paMaster.size();
     }
     
     public JSONObject SearchTransaction(String fsValue, boolean fbByCode) throws CloneNotSupportedException, SQLException, GuanzonException, ScriptException{
