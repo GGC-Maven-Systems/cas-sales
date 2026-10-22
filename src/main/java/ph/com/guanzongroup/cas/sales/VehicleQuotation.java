@@ -869,12 +869,12 @@ public class VehicleQuotation extends Transaction {
                     Detail(0).setTPLAmount(ldblAmount);
                 }else if(lsAddOnName.contains("Comprehensive")){
                     Detail(0).setComprehensiveAmount(ldblAmount);
-                } else {
-                    AddOnList(getAddOnListCount() - 1).setAddOnId(lsAddOnId);
-                    AddOnList(getAddOnListCount() - 1).setAmount(ldblAmount);
-                    AddOnList(getAddOnListCount() - 1).setQuantity(1);
-                    ReloadAddOnList();
                 }
+                
+                AddOnList(getAddOnListCount() - 1).setAddOnId(lsAddOnId);
+                AddOnList(getAddOnListCount() - 1).setAmount(ldblAmount);
+                AddOnList(getAddOnListCount() - 1).setQuantity(1);
+                ReloadAddOnList();
             }
         }
         poJSON.put("result", "success");
