@@ -37,6 +37,7 @@ public class Model_Sales_Quotation_Vehicle extends Model {
     
     //reference objects
     Model_Branch poBranch;
+    Model_Branch_Others poBranchOthers;
     Model_Sales_Inquiry_Master poSalesInquiry;
     Model_Model_Variant poModelVariant;
     Model_Brand poBrand;
@@ -560,6 +561,33 @@ public class Model_Sales_Quotation_Vehicle extends Model {
         } else {
             poBranch.initialize();
             return poBranch;
+        }
+    }
+    
+    public Model_Branch_Others BranchOthers() throws SQLException, GuanzonException {
+        if (poBranchOthers == null) {
+            poBranchOthers = new ParamModels(poGRider).BranchOthers();
+        }
+
+        String id = (String) (getValue("sBranchCd") == null ? "" : getValue("sBranchCd"));
+
+        if (!"".equals(id)) {
+            if (poBranchOthers.getEditMode() == EditMode.READY
+                    && poBranchOthers.getBranchCode().equals(id)) {
+                return poBranchOthers;
+            } else {
+                poJSON = poBranchOthers.openRecord(id);
+
+                if ("success".equals(poJSON.get("result"))) {
+                    return poBranchOthers;
+                } else {
+                    poBranchOthers.initialize();
+                    return poBranchOthers;
+                }
+            }
+        } else {
+            poBranchOthers.initialize();
+            return poBranchOthers;
         }
     }
 

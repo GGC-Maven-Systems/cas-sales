@@ -732,23 +732,6 @@ public class VehicleQuotation extends Transaction {
         return poJSON;
     }
     
-    public JSONObject SearchAccessories(String value, boolean byCode, int row)
-            throws ExceptionInInitializerError,
-            SQLException,
-            GuanzonException,
-            CloneNotSupportedException {
-        poJSON = new JSONObject();
-        
-        Inventory object = new InvControllers(poGRider, logwrapr).Inventory();
-        object.setRecordStatus(RecordStatus.ACTIVE);
-        object.setIndustryID(psIndustryId);
-        poJSON = object.searchRecord(value, byCode);
-        if (isJSONSuccess(poJSON)) {
-            AddOnList(row).setStockId(object.getModel().getStockId());
-        }
-        return poJSON;
-    }
-    
     public JSONObject SearchBrand(String value, boolean byCode, int row)
             throws ExceptionInInitializerError,
             SQLException,
@@ -969,7 +952,8 @@ public class VehicleQuotation extends Transaction {
     public JSONObject SearchVehicleAddOn(String value, boolean byCode, int row, boolean isAddOn)
             throws ExceptionInInitializerError,
             SQLException,
-            GuanzonException {
+            GuanzonException,
+            CloneNotSupportedException {
         poJSON = new JSONObject();
         
         String lsSQL = VehicleAddOn_SQL();
@@ -978,37 +962,61 @@ public class VehicleQuotation extends Transaction {
                                     + " AND a.cRecdStat = " + SQLUtil.toSQL(ValidityPeriodStatus.APPROVED)
                                     );
         if(isAddOn){
-            lsSQL = lsSQL + " AND c.cSourceTx != '0'"; //not accessories
-        }
-        lsSQL = lsSQL + " GROUP BY c.sAddTypNm ";
-        System.out.println("Executing SQL: " + lsSQL);
-        
-        poJSON = ShowDialogFX.Browse(poGRider,
-        lsSQL,
-        value,
-        "AddOn ID»Description»Amount",
-        "sAddOnIDx»sAddTypNm»nAmountxx",
-        "a.sAddOnIDx»c.sAddTypNm»a.nAmountxx",
-        byCode ? 0 : 1);
-        if (poJSON != null) {
-            String lsAddOnId = (String) poJSON.get("sAddOnIDx");
-            Double lsAmount = (Double) poJSON.get("nAmountxx");
-            poJSON = checkExistingAddOn(lsAddOnId, row, false);
-            if(!isJSONSuccess(poJSON)){
+//            lsSQL = lsSQL + " AND c.cSourceTx != '0'"; //not accessories
+//        }
+            lsSQL = lsSQL + " GROUP BY c.sAddTypNm ";
+            System.out.println("Executing SQL: " + lsSQL);
+
+            poJSON = ShowDialogFX.Browse(poGRider,
+            lsSQL,
+            value,
+            "AddOn ID»Description»Amount",
+            "sAddOnIDx»sAddTypNm»nAmountxx",
+            "a.sAddOnIDx»c.sAddTypNm»a.nAmountxx",
+            byCode ? 0 : 1);
+            if (poJSON != null) {
+                String lsAddOnId = (String) poJSON.get("sAddOnIDx");
+                Double lsAmount = (Double) poJSON.get("nAmountxx");
+                poJSON = checkExistingAddOn(lsAddOnId, row, false);
+                if(!isJSONSuccess(poJSON)){
+                    return poJSON;
+                }
+                row = (int) poJSON.get("row");
+                AddOnList(row).setAddOnId(lsAddOnId);
+                AddOnList(row).setAmount(lsAmount);
+            } else {
+                poJSON = new JSONObject();
+                poJSON.put("result", "error");
+                poJSON.put("message", "No record loaded.");
                 return poJSON;
             }
-            row = (int) poJSON.get("row");
-            AddOnList(row).setAddOnId(lsAddOnId);
-            AddOnList(row).setAmount(lsAmount);
         } else {
-            poJSON = new JSONObject();
-            poJSON.put("result", "error");
-            poJSON.put("message", "No record loaded.");
-            return poJSON;
+            poJSON = SearchAccessories(value, byCode, row);
         }
         return poJSON;
     }
-
+    
+    public JSONObject SearchAccessories(String value, boolean byCode, int row)
+            throws ExceptionInInitializerError,
+            SQLException,
+            GuanzonException,
+            CloneNotSupportedException {
+        poJSON = new JSONObject();
+        
+        Inventory object = new InvControllers(poGRider, logwrapr).Inventory();
+        object.setRecordStatus(RecordStatus.ACTIVE);
+        object.setIndustryID(psIndustryId);
+        poJSON = object.searchRecord(value, byCode);
+        if (isJSONSuccess(poJSON)) {
+            poJSON = checkExistingAccessories(object.getModel().getStockId(), row);
+            if(isJSONSuccess(poJSON)){
+                row = (int) poJSON.get("row");
+                AddOnList(row).setStockId(object.getModel().getStockId());
+            }
+        }
+        return poJSON;
+    }
+    
     private JSONObject checkExistingAddOn(String fsId, int row, boolean isAutoLoad){
         poJSON.put("row", row);
         for(int lnCtr = 0;lnCtr < getAddOnListCount(); lnCtr++){
@@ -1031,11 +1039,33 @@ public class VehicleQuotation extends Transaction {
         poJSON.put("row", row);
         return poJSON;
     }
+    
+    private JSONObject checkExistingAccessories(String fsId, int row){
+        poJSON.put("row", row);
+        for(int lnCtr = 0;lnCtr < getAddOnListCount(); lnCtr++){
+            if(fsId.equals(AddOnList(lnCtr).getStockId())
+                && row != lnCtr){
+                if(!AddOnList(lnCtr).getRecordStatus()){
+                    AddOnList(lnCtr).setRecordStatus(true);
+                    poJSON.put("row", lnCtr);
+                    return poJSON;
+                } else {
+                    poJSON = setJSON("error", "Selected accessory already exist.");
+                    poJSON.put("row", lnCtr);
+                    return poJSON;
+                }
+            }
+        }
+            
+        poJSON.put("row", row);
+        return poJSON;
+    }
 
     public void ReloadAddOnList() throws CloneNotSupportedException, SQLException, GuanzonException{
         int lnCtr = getAddOnListCount() - 1;
         while (lnCtr >= 0) {
             if ((AddOnList(lnCtr).getAddOnId() == null || "".equals(AddOnList(lnCtr).getAddOnId()))
+                && (AddOnList(lnCtr).getStockId() == null || "".equals(AddOnList(lnCtr).getStockId()))
                 ) {
                 paAddOn.remove(lnCtr);
             } 
@@ -1044,8 +1074,8 @@ public class VehicleQuotation extends Transaction {
 
         if ((getAddOnListCount() - 1) >= 0) {
             if (
-                (AddOnList(getAddOnListCount() - 1).getAddOnId() != null && !"".equals(AddOnList(getAddOnListCount() - 1).getAddOnId()))
-                && AddOnList(getAddOnListCount() - 1).getAmount() > 0.0000
+                ((AddOnList(getAddOnListCount() - 1).getAddOnId() != null && !"".equals(AddOnList(getAddOnListCount() - 1).getAddOnId()))
+                    || (AddOnList(getAddOnListCount() - 1).getStockId() != null && !"".equals(AddOnList(getAddOnListCount() - 1).getStockId())))
                 ) {
                 AddAddOn();
             }
@@ -1247,7 +1277,10 @@ public class VehicleQuotation extends Transaction {
             Master().setTransactionDate(SQLUtil.toDate(xsDateShort(ldServerDate),SQLUtil.FORMAT_SHORT_DATE));
             Detail(0).setExpectedDate(SQLUtil.toDate(xsDateShort(loToDate.getTime()),SQLUtil.FORMAT_SHORT_DATE));
             Detail(0).setBranchCode(poGRider.getBranchCode());
-        } catch (SQLException ex) {
+            if(checkNotEmpty(Detail(0).BranchOthers().getBrandID())){
+                Detail(0).setBrandId(Detail(0).BranchOthers().getBrandID());
+            }
+        } catch (SQLException | GuanzonException ex) {
             Logger.getLogger(VehicleQuotation.class.getName()).log(Level.SEVERE, null, ex);
         }
         
