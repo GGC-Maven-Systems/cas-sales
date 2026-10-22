@@ -643,7 +643,9 @@ public class VehicleQuotation extends Transaction {
         }
         
         FinancingRates object = new SalesControllers(poGRider, logwrapr).FinancingRates();
+        object.initialize();
         object.setRecordStatus(RecordStatus.ACTIVE);
+        object.setWithUI(pbWithUI);
         if(pbWithUI){
             poJSON = object.searchRecord(value, byCode);
         } else {
@@ -769,15 +771,17 @@ public class VehicleQuotation extends Transaction {
                 poJSON.put("sVrntIDxx", value);
                 poJSON.put("nDPRatexx", 15.00); //for testing only
                 poJSON.put("nRsrvAmtx", 10000.00); //for testing only
+                poJSON.put("nSelPrice", 10000.00); //for testing only
             }
             if (poJSON != null) {
                 String lsVariantId = (String) poJSON.get("sVrntIDxx");
                 Double ldblDPRate = (Double) poJSON.get("nDPRatexx");
                 Double ldblRSVAmt = (Double) poJSON.get("nRsrvAmtx");
-                Double ldblSRPAmt = (Double) poJSON.get("nSRPAmntx");
+                Double ldblSRPAmt = (Double) poJSON.get("nSelPrice");
                 
                 Detail(row).setVariantId(lsVariantId);
                 Detail(row).setDownPaymentPercent(ldblDPRate);
+                Detail(row).setDownPayment(ldblSRPAmt*(ldblDPRate/100));
                 Detail(row).setReservationAmount(ldblRSVAmt);
                 Detail(row).setSRPAmount(ldblSRPAmt); 
                 
@@ -814,7 +818,7 @@ public class VehicleQuotation extends Transaction {
             value,
             "Financing ID»Description»Downpayment Rate",
             "sVhclFIDx»xDescription»nDPRatexx",
-            "a.sVhclFIDx»CONCAT(f.sDescript,' ', e.sDescript, ' ', c.sDescript, ' ', g.sDescript, ' ', c.nYearMdlx, ' ',d.sTransmss )»a.nDPRatexx",
+            "b.sVhclFIDx»CONCAT(f.sDescript,' ', e.sDescript, ' ', c.sDescript, ' ', g.sDescript, ' ', c.nYearMdlx, ' ',d.sTransmss )»a.nDPRatexx",
             byCode ? 0 : 1);
         } else {
             poJSON = new JSONObject();
@@ -822,15 +826,17 @@ public class VehicleQuotation extends Transaction {
             poJSON.put("sVrntIDxx", value);
             poJSON.put("nDPRatexx", 15.00); //for testing only
             poJSON.put("nRsrvAmtx", 10000.00); //for testing only
+            poJSON.put("nSelPrice", 10000.00); //for testing only
         }
         if (poJSON != null) {
             String lsVariantId = (String) poJSON.get("sVrntIDxx");
             Double ldblDPRate = Double.valueOf((String) poJSON.get("nDPRatexx"));
             Double ldblRSVAmt =  Double.valueOf((String) poJSON.get("nRsrvAmtx"));
-            Double ldblSRPAmt =  Double.valueOf((String) poJSON.get("nSRPAmntx"));
+            Double ldblSRPAmt =  Double.valueOf((String) poJSON.get("nSelPrice"));
             Detail(row).setVariantId(lsVariantId);
             Detail(row).setDownPaymentPercent(ldblDPRate);
             Detail(row).setReservationAmount(ldblRSVAmt);
+            Detail(row).setDownPayment(ldblSRPAmt*(ldblDPRate/100));
             Detail(row).setSRPAmount(ldblSRPAmt); 
             
             poJSON = AutoPopulateVehicleAddOn(lsVariantId);
@@ -1121,12 +1127,11 @@ public class VehicleQuotation extends Transaction {
             ldblDownpaymentAmount = Detail(0).getSRPAmount() * (Detail(0).getDownPaymentPercent()/100);
             ldblBalance = Detail(0).getSRPAmount() - ldblDownpaymentAmount;
             ldblInterestRate = ((ldblInterestRate/100)+1);
-            ldblMontlyAmortizationAmt = ((ldblBalance * ldblInterestRate) / lnDuration)+2;//((ldblBalance * ldblInterestRate) / lnDuration)+2 = (double) NaN
+            ldblMontlyAmortizationAmt = ((ldblBalance * ldblInterestRate) / lnDuration);//((ldblBalance * ldblInterestRate) / lnDuration)+2 = (double) NaN
 
             String lsDecimalFormat = "###0.00";
             DecimalFormat format = new DecimalFormat(lsDecimalFormat);
             ldblMontlyAmortizationAmt = Double.parseDouble(format.format(ldblMontlyAmortizationAmt));
-            ldblMontlyAmortizationAmt = Double.parseDouble(String.valueOf(Math.round(ldblMontlyAmortizationAmt)));
 
             Detail(0).setFinancingAmount(ldblSRPAmt-ldblDPAmt);
             Detail(0).setMonthlyAmount(ldblMontlyAmortizationAmt);
@@ -1408,6 +1413,7 @@ public class VehicleQuotation extends Transaction {
             + " , d.sVhclType            "
             + " , d.nAuthCapx            "
             + " ,  CONCAT(f.sDescript,' ', e.sDescript, ' ', c.sDescript, ' ', g.sDescript, ' ', c.nYearMdlx, ' ',d.sTransmss ) AS xDescription "
+            + " , c.nSelPrice            "
             + " FROM Validity_Period_Master a  "
             + " INNER JOIN Vehicle_Financing_Price b ON b.sValidIDx = a.sValidIDx "
             + " LEFT JOIN Model_Variant c ON c.sVrntIDxx = b.sVrntIDxx            "
