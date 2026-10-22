@@ -54,6 +54,8 @@ public class Model_Quotation_AddOn extends Model {
             poEntity.absolute(1);
 
             ID = "sQotAddID";
+            ID2 = "sTransNox";
+            
             pnEditMode = EditMode.UNKNOWN;
         } catch (SQLException e) {
             logwrapr.severe(e.getMessage());

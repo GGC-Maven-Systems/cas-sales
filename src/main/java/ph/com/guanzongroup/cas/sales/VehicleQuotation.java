@@ -541,7 +541,7 @@ public class VehicleQuotation extends Transaction {
 
         initSQL();
         String lsSQL = MiscUtil.addCondition(SQL_BROWSE,
-                " a.sBranchCd = " + SQLUtil.toSQL(poGRider.getBranchCode()));
+                " b.sBranchCd = " + SQLUtil.toSQL(poGRider.getBranchCode()));
         
         lsSQL = lsSQL + " GROUP BY a.sTransNox ";
         System.out.println("Executing SQL: " + lsSQL);
@@ -550,20 +550,9 @@ public class VehicleQuotation extends Transaction {
             poJSON = ShowDialogFX.Browse(poGRider,
                     lsSQL,
                     "",
-                    "Validity ID»Description»From Date»Thru Date»Status",
-                    "sTransNox»sValidDsc»dFromDate»dThruDate»xRecdStat",
-                    "a.sTransNox»a.sValidDsc»a.dFromDate»a.dThruDate»" + 
-                "     CASE  " +
-                "         WHEN a.cTranStat = '0'  " +
-                "         THEN 'OPEN'  " +
-                "         WHEN a.cTranStat = '1'  " +
-                "         THEN 'APPROVED'  " +
-                "         WHEN a.cTranStat = '2'  " +
-                "         THEN 'CANCELLED'  " +
-                "         WHEN a.cTranStat = '3'  " +
-                "         THEN 'VOIDED'  " +
-                "         ELSE 'UNKNOWN' " +
-                "     END AS xRecdStat",
+                    "Transaction No»Client»Transaction Date",
+                    "sTransNox»sCompnyNm»dTransact",
+                    "a.sTransNox»c.sCompnyNm»a.dTransact" ,
                     fbByCode ? 0 : 1);
         } else {
             poJSON.put("sTransNox", fsValue);
@@ -579,14 +568,14 @@ public class VehicleQuotation extends Transaction {
         }
     }
     
-    public JSONObject SearchTransaction(String fsYear, String fsStatus) throws CloneNotSupportedException, SQLException, GuanzonException, ScriptException{
+    public JSONObject SearchTransaction(String fsClient, String fsTransactionNo) throws CloneNotSupportedException, SQLException, GuanzonException, ScriptException{
         poJSON = new JSONObject();
 
         initSQL();
         String lsSQL = MiscUtil.addCondition(SQL_BROWSE,
-                " a.sBranchCd = " + SQLUtil.toSQL(poGRider.getBranchCode())
-                + " AND YEAR(a.dFromDate) = " + SQLUtil.toSQL(fsYear)
-                + " AND a.cRecdStat = " + SQLUtil.toSQL(fsStatus)
+                " b.sBranchCd = " + SQLUtil.toSQL(poGRider.getBranchCode())
+                + " AND c.sCompnyNm LIKE " + SQLUtil.toSQL("%" + fsClient + "%")
+                + " AND a.sTransNox LIKE " + SQLUtil.toSQL("%" + fsTransactionNo + "%")
             );
         
         lsSQL = lsSQL + " GROUP BY a.sTransNox ";
@@ -595,20 +584,9 @@ public class VehicleQuotation extends Transaction {
             poJSON = ShowDialogFX.Browse(poGRider,
                     lsSQL,
                     "",
-                    "Validity ID»Description»From Date»Thru Date»Status",
-                    "sTransNox»sValidDsc»dFromDate»dThruDate»xRecdStat",
-                    "a.sTransNox»a.sValidDsc»a.dFromDate»a.dThruDate»" + 
-                "     CASE  " +
-                "         WHEN a.cTranStat = '0'  " +
-                "         THEN 'OPEN'  " +
-                "         WHEN a.cTranStat = '1'  " +
-                "         THEN 'APPROVED'  " +
-                "         WHEN a.cTranStat = '2'  " +
-                "         THEN 'CANCELLED'  " +
-                "         WHEN a.cTranStat = '3'  " +
-                "         THEN 'VOIDED'  " +
-                "         ELSE 'UNKNOWN' " +
-                "     END",
+                    "Transaction No»Client»Transaction Date",
+                    "sTransNox»sCompnyNm»dTransact",
+                    "a.sTransNox»c.sCompnyNm»a.dTransact" ,
                    0);
         }
         if (poJSON != null) {
@@ -968,7 +946,7 @@ public class VehicleQuotation extends Transaction {
         paAddOn.clear();
         ReloadAddOnList();
             
-        String sql = "SELECT sQotAddID FROM " + this.poDetail.getTable() + " WHERE sTransNox = " + SQLUtil.toSQL(Master().getTransactionNo()) + " ORDER BY sQotAddID";
+        String sql = "SELECT sQotAddID FROM Quotation_AddOn WHERE sTransNox = " + SQLUtil.toSQL(Master().getTransactionNo()) + " ORDER BY sQotAddID";
         ResultSet rs = this.poGRider.executeQuery(sql);
         while(rs.next()) {
             Model_Quotation_AddOn loDetail = (Model_Quotation_AddOn) AddOnList(getAddOnListCount()-1);
@@ -1442,15 +1420,18 @@ public class VehicleQuotation extends Transaction {
         }
 
         for (int lnCtr = 0; lnCtr <= getAddOnListCount() - 1; lnCtr++) {
-            if(AddOnList(lnCtr).getRecordStatus() && AddOnList(lnCtr).getEditMode() == EditMode.ADDNEW){
-                if(AddOnList(lnCtr).getAmount() == 0.0000 ){
-                    return setJSON("error", "Invalid amount at row "+(lnCtr+1)+".");
+            if(checkNotEmpty(AddOnList(lnCtr).getStockId())
+                || checkNotEmpty(AddOnList(lnCtr).getAddOnId())){
+                if(AddOnList(lnCtr).getRecordStatus() && AddOnList(lnCtr).getEditMode() == EditMode.ADDNEW){
+                    if(AddOnList(lnCtr).getAmount() == 0.0000 ){
+                        return setJSON("error", "Invalid amount at row "+(lnCtr+1)+".");
+                    }
                 }
+
+                AddOnList(lnCtr).setTransactionNo(Master().getTransactionNo());
+                AddOnList(lnCtr).setModifiedBy(poGRider.Encrypt(poGRider.getUserID()));
+                AddOnList(lnCtr).setModifiedDate(poGRider.getServerDate());
             }
-            
-            AddOnList(lnCtr).setTransactionNo(Master().getTransactionNo());
-            AddOnList(lnCtr).setModifiedBy(poGRider.Encrypt(poGRider.getUserID()));
-            AddOnList(lnCtr).setModifiedDate(poGRider.getServerDate());
         }
         
         //Recompute
@@ -1467,17 +1448,20 @@ public class VehicleQuotation extends Transaction {
         try {
             poJSON = new JSONObject();
             for (int lnCtr = 0; lnCtr <= getAddOnListCount() - 1; lnCtr++) {
-                if(AddOnList(lnCtr).getEditMode() == EditMode.ADDNEW
-                    && !AddOnList(lnCtr).getRecordStatus()){
-                    continue;
-                }
-                if(AddOnList(lnCtr).getEditMode() == EditMode.ADDNEW || AddOnList(lnCtr).getEditMode() == EditMode.UPDATE){
-                    if(AddOnList(lnCtr).getEditMode() == EditMode.ADDNEW){
-                        AddOnList(lnCtr).setQuotationAddOnId(AddOnList(lnCtr).getNextCode());
+                if(checkNotEmpty(AddOnList(lnCtr).getStockId())
+                    || checkNotEmpty(AddOnList(lnCtr).getAddOnId())){
+                    if(AddOnList(lnCtr).getEditMode() == EditMode.ADDNEW
+                        && !AddOnList(lnCtr).getRecordStatus()){
+                        continue;
                     }
-                    poJSON = AddOnList(lnCtr).saveRecord();
-                    if(!isJSONSuccess(poJSON)){
-                        return poJSON;
+                    if(AddOnList(lnCtr).getEditMode() == EditMode.ADDNEW || AddOnList(lnCtr).getEditMode() == EditMode.UPDATE){
+                        if(AddOnList(lnCtr).getEditMode() == EditMode.ADDNEW){
+                            AddOnList(lnCtr).setQuotationAddOnId(AddOnList(lnCtr).getNextCode());
+                        }
+                        poJSON = AddOnList(lnCtr).saveRecord();
+                        if(!isJSONSuccess(poJSON)){
+                            return poJSON;
+                        }
                     }
                 }
             }
@@ -1526,6 +1510,7 @@ public class VehicleQuotation extends Transaction {
                 " a.cTranStat, " +
                 " a.sModified, " +
                 " a.dModified, " +
+                " c.sCompnyNm, " +
                 "     CASE  " +
                 "         WHEN a.cTranStat = '0'  " +
                 "         THEN 'OPEN'  " +

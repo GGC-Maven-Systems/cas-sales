@@ -72,6 +72,7 @@ public class Model_Sales_Quotation_Vehicle extends Model {
             poEntity.updateObject("nLTOAmntx", 0.00);
             poEntity.updateObject("nDocStmpx", 0.00);
             poEntity.updateObject("nRsrvAmtx", 0.00);
+            poEntity.updateObject("nPrmPayDx", 0.00);
             poEntity.updateString("cRecdStat", RecordStatus.ACTIVE);
             //end - assign default values
 
