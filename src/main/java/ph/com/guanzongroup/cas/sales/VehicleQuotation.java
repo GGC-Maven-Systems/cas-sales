@@ -55,6 +55,12 @@ import java.util.*;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.guanzon.appdriver.constant.Logical;
+import org.guanzon.cas.client.model.Model_Client_Address;
+import org.guanzon.cas.client.model.Model_Client_Mobile;
+import org.guanzon.cas.client.services.ClientModels;
+import org.guanzon.cas.inv.Inventory;
+import org.guanzon.cas.inv.services.InvControllers;
 import ph.com.guanzongroup.cas.sales.status.FinancingRateStatus;
 import ph.com.guanzongroup.cas.sales.status.SalesInquiryStatic;
 import ph.com.guanzongroup.cas.sales.status.ValidityPeriodStatus;
@@ -622,14 +628,64 @@ public class VehicleQuotation extends Transaction {
         }
         if (isJSONSuccess(poJSON)) {
             Master().setClientId(object.Master().getClientId());
-            Master().setAddressId(object.Master().getAddressId());
-            Master().setContactId(object.Master().getContactId());
+            
+            ClientModels clientModel = new ClientModels(poGRider);
+            Model_Client_Address loClientAddress = clientModel.ClientAddress();
+            Model_Client_Mobile loClientMobile = clientModel.ClientMobile();
+            
+            String lsSQL = MiscUtil.addCondition(MiscUtil.makeSelect(loClientAddress), 
+                                        " sClientID = " + SQLUtil.toSQL(object.Master().getClientId())
+                                        + " AND cPrimaryx = " + SQLUtil.toSQL(Logical.YES)
+                                        );
+            System.out.println("loClientAddress SQL: " + lsSQL);
+            ResultSet loRS = poGRider.executeQuery(lsSQL);
+            String lsAddressId = "";
+            ReloadAddOnList();
+            if (MiscUtil.RecordCount(loRS) > 0) {
+                if(loRS.next()){
+                    lsAddressId = loRS.getString("sAddrssID");
+                }
+            }
+            lsSQL = MiscUtil.addCondition(MiscUtil.makeSelect(loClientMobile), 
+                                        " sClientID = " + SQLUtil.toSQL(object.Master().getClientId())
+                                        + " AND cPrimaryx = " + SQLUtil.toSQL(Logical.YES)
+                                        );
+            System.out.println("loClientMobile SQL: " + lsSQL);
+            loRS = poGRider.executeQuery(lsSQL);
+            String lsMobileId = "";
+            ReloadAddOnList();
+            if (MiscUtil.RecordCount(loRS) > 0) {
+                if(loRS.next()){
+                    lsMobileId = loRS.getString("sMobileID");
+                }
+            }
+            Master().setAddressId(lsAddressId);
+            Master().setContactId(lsMobileId);
             Detail(0).setSourceCode(object.getSourceCode());
             Detail(0).setSourceNo(object.Master().getTransactionNo());
             Detail(0).setPaymentForm(object.Master().getPurchaseType());
         }
         
         return poJSON;
+    }
+    
+    public String getFullAddress() throws GuanzonException, SQLException{
+        String lsAddress = Master().ClientAddress().getAddress();
+        if(checkNotEmpty(lsAddress)){
+            if(checkNotEmpty(Master().ClientAddress().Barangay().getBarangayName())){
+                lsAddress = lsAddress + " " + Master().ClientAddress().Barangay().getBarangayName() ;
+            }
+            if(checkNotEmpty(Master().ClientAddress().Town().getDescription() )){
+                lsAddress = lsAddress + " " + Master().ClientAddress().Town().getDescription()  ;
+            }
+            if(checkNotEmpty(Master().ClientAddress().Town().Province().getDescription())){
+                lsAddress = lsAddress + ", " + Master().ClientAddress().Town().Province().getDescription();
+            }
+        }
+        if(lsAddress == null){
+            lsAddress = "";
+        }
+        return lsAddress;
     }
     
     public JSONObject Searchbank(String value, boolean byCode, int row)
@@ -672,6 +728,23 @@ public class VehicleQuotation extends Transaction {
         poJSON = object.searchRecord(value, byCode);
         if (isJSONSuccess(poJSON)) {
 //            Master().setSalesGiveAwaysCode(object.Master().getGiveawayCode());
+        }
+        return poJSON;
+    }
+    
+    public JSONObject SearchAccessories(String value, boolean byCode, int row)
+            throws ExceptionInInitializerError,
+            SQLException,
+            GuanzonException,
+            CloneNotSupportedException {
+        poJSON = new JSONObject();
+        
+        Inventory object = new InvControllers(poGRider, logwrapr).Inventory();
+        object.setRecordStatus(RecordStatus.ACTIVE);
+        object.setIndustryID(psIndustryId);
+        poJSON = object.searchRecord(value, byCode);
+        if (isJSONSuccess(poJSON)) {
+            AddOnList(row).setStockId(object.getModel().getStockId());
         }
         return poJSON;
     }
@@ -755,6 +828,7 @@ public class VehicleQuotation extends Transaction {
             lsSQL = MiscUtil.addCondition(lsSQL, SQLUtil.toSQL(xsDateShort(Master().getTransactionDate())) + " BETWEEN a.dFromDate AND a.dThruDate "
                                             + " AND e.sModelIDx = " + SQLUtil.toSQL(Detail(row).getModelId())
                                             + " AND a.cRecdStat = " + SQLUtil.toSQL(ValidityPeriodStatus.APPROVED)
+                                            + " AND a.sCompnyID = " + SQLUtil.toSQL(psCompanyId)
                                         );
             System.out.println("Executing SQL: " + lsSQL);
             if(pbWithUI){
@@ -810,6 +884,7 @@ public class VehicleQuotation extends Transaction {
         String lsSQL = VehicleFinancing_SQL();
         lsSQL = MiscUtil.addCondition(lsSQL, SQLUtil.toSQL(xsDateShort(Master().getTransactionDate())) + " BETWEEN a.dFromDate AND a.dThruDate "
                                                 + " AND a.cRecdStat = " + SQLUtil.toSQL(ValidityPeriodStatus.APPROVED)
+                                                + " AND a.sCompnyID = " + SQLUtil.toSQL(psCompanyId)
                                                 );
         System.out.println("Executing SQL: " + lsSQL);
         if(pbWithUI){
@@ -876,13 +951,16 @@ public class VehicleQuotation extends Transaction {
                 }else if(lsAddOnName.contains("Comprehensive")){
                     Detail(0).setComprehensiveAmount(ldblAmount);
                 }
-                
-                AddOnList(getAddOnListCount() - 1).setAddOnId(lsAddOnId);
-                AddOnList(getAddOnListCount() - 1).setAmount(ldblAmount);
-                AddOnList(getAddOnListCount() - 1).setQuantity(1);
-                ReloadAddOnList();
+                poJSON = checkExistingAddOn(lsAddOnId, getAddOnListCount() - 1, true);
+                if(isJSONSuccess(poJSON)){
+                    AddOnList(getAddOnListCount() - 1).setAddOnId(lsAddOnId);
+                    AddOnList(getAddOnListCount() - 1).setAmount(ldblAmount);
+                    AddOnList(getAddOnListCount() - 1).setQuantity(1);
+                    ReloadAddOnList();
+                }
             }
         }
+        
         poJSON.put("result", "success");
         poJSON.put("message", "success");
         return poJSON;
@@ -895,11 +973,14 @@ public class VehicleQuotation extends Transaction {
         poJSON = new JSONObject();
         
         String lsSQL = VehicleAddOn_SQL();
-        lsSQL = MiscUtil.addCondition(lsSQL, SQLUtil.toSQL(Master().getTransactionDate()) + " BETWEEN a.dThruDate AND a.dThruDate ");
+        lsSQL = MiscUtil.addCondition(lsSQL, SQLUtil.toSQL(xsDateShort(Master().getTransactionDate())) + " BETWEEN a.dFromDate AND a.dThruDate "
+                                    + " AND b.sVrntIDxx = " + SQLUtil.toSQL(Detail(0).getVariantId())
+                                    + " AND a.cRecdStat = " + SQLUtil.toSQL(ValidityPeriodStatus.APPROVED)
+                                    );
         if(isAddOn){
             lsSQL = lsSQL + " AND c.cSourceTx != '0'"; //not accessories
         }
-        
+        lsSQL = lsSQL + " GROUP BY c.sAddTypNm ";
         System.out.println("Executing SQL: " + lsSQL);
         
         poJSON = ShowDialogFX.Browse(poGRider,
@@ -912,7 +993,7 @@ public class VehicleQuotation extends Transaction {
         if (poJSON != null) {
             String lsAddOnId = (String) poJSON.get("sAddOnIDx");
             Double lsAmount = (Double) poJSON.get("nAmountxx");
-            poJSON = checkExistingAddOn(lsAddOnId, row);
+            poJSON = checkExistingAddOn(lsAddOnId, row, false);
             if(!isJSONSuccess(poJSON)){
                 return poJSON;
             }
@@ -928,15 +1009,17 @@ public class VehicleQuotation extends Transaction {
         return poJSON;
     }
 
-    private JSONObject checkExistingAddOn(String fsStockId, int row){
+    private JSONObject checkExistingAddOn(String fsId, int row, boolean isAutoLoad){
         poJSON.put("row", row);
         for(int lnCtr = 0;lnCtr < getAddOnListCount(); lnCtr++){
-            if(fsStockId.equals(AddOnList(lnCtr).getAddOnId())
+            if(fsId.equals(AddOnList(lnCtr).getAddOnId())
                 && row != lnCtr){
                 if(!AddOnList(lnCtr).getRecordStatus()){
-                    AddOnList(lnCtr).setRecordStatus(true);
-                    poJSON.put("row", lnCtr);
-                    return poJSON;
+                    if(!isAutoLoad){
+                        AddOnList(lnCtr).setRecordStatus(true);
+                        poJSON.put("row", lnCtr);
+                        return poJSON;
+                    }
                 } else {
                     poJSON = setJSON("error", "Selected Add-On already exist.");
                     poJSON.put("row", lnCtr);
@@ -1101,6 +1184,8 @@ public class VehicleQuotation extends Transaction {
         
         for(int lnCtr = 0;lnCtr < getAddOnListCount();lnCtr++){
             if(checkNotEmpty(AddOnList(lnCtr).AddOnMaster().AddOnType().getAddTypeName())){
+                AddOnList(lnCtr).setTotalAmount(AddOnList(lnCtr).getAmount() * AddOnList(lnCtr).getQuantity());
+                
                 if(AddOnList(lnCtr).AddOnMaster().AddOnType().getAddTypeName().contains("LTO")
                     || AddOnList(lnCtr).AddOnMaster().AddOnType().getAddTypeName().contains("TPL")
                     || AddOnList(lnCtr).AddOnMaster().AddOnType().getAddTypeName().contains("Comprehensive")
@@ -1108,7 +1193,7 @@ public class VehicleQuotation extends Transaction {
                     continue;
                 }
                 
-                ldblTotalAddOn = ldblTotalAddOn + AddOnList(lnCtr).getAmount();
+                ldblTotalAddOn = ldblTotalAddOn + AddOnList(lnCtr).getTotalAmount();
             }
         }
         
@@ -1136,7 +1221,7 @@ public class VehicleQuotation extends Transaction {
             Detail(0).setFinancingAmount(ldblSRPAmt-ldblDPAmt);
             Detail(0).setMonthlyAmount(ldblMontlyAmortizationAmt);
             Detail(0).setGrossMonthlyInstallment(ldblMontlyAmortizationAmt-Detail(0).getPromptPaymentDiscount());
-            Detail(0).setPromissoryNoteAmt(Detail(0).getDuration() * ldblMontlyAmortizationAmt);
+            Detail(0).setPromissoryNoteAmt(Detail(0).getDuration() * Detail(0).getGrossMonthlyInstallment());
         }
     
     }

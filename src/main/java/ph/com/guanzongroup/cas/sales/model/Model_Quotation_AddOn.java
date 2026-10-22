@@ -92,13 +92,13 @@ public class Model_Quotation_AddOn extends Model {
         return (String) getValue("sAddOnIDx");
     }
 
-//    public JSONObject setStockId(String stockId) {
-//        return setValue("sStockIDx", stockId);
-//    }
-//
-//    public String getStockId() {
-//        return (String) getValue("sStockIDx");
-//    }
+    public JSONObject setStockId(String stockId) {
+        return setValue("sStockIDx", stockId);
+    }
+
+    public String getStockId() {
+        return (String) getValue("sStockIDx");
+    }
 
     public JSONObject setAmount(Double amount) {
         return setValue("nAmountxx", amount);
