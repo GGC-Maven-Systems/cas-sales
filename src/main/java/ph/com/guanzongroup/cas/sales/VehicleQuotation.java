@@ -751,7 +751,7 @@ public class VehicleQuotation extends Transaction {
         } else {
             String lsSQL = VehicleFinancing_SQL();
             lsSQL = MiscUtil.addCondition(lsSQL, SQLUtil.toSQL(xsDateShort(Master().getTransactionDate())) + " BETWEEN a.dFromDate AND a.dThruDate "
-                                            + " AND e.sModelIDx = " + Detail(row).getModelId()
+                                            + " AND e.sModelIDx = " + SQLUtil.toSQL(Detail(row).getModelId())
                                             + " AND a.cRecdStat = " + SQLUtil.toSQL(ValidityPeriodStatus.APPROVED)
                                         );
             System.out.println("Executing SQL: " + lsSQL);
