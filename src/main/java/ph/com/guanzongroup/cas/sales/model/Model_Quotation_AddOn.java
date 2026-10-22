@@ -40,7 +40,7 @@ public class Model_Quotation_AddOn extends Model {
 
             // assign default values
             poEntity.updateObject("nAmountxx", 0.00);
-            poEntity.updateObject("nQtyxxxxx", 1);
+            poEntity.updateObject("nQtyxxxxx", 0);
             poEntity.updateObject("nTotAmntx", 0.00);
             poEntity.updateObject("nDiscAmnt", 0.00);
             poEntity.updateObject("nDiscPctx", 0.00);
@@ -92,13 +92,13 @@ public class Model_Quotation_AddOn extends Model {
         return (String) getValue("sAddOnIDx");
     }
 
-    public JSONObject setStockId(String stockId) {
-        return setValue("sStockIDx", stockId);
-    }
-
-    public String getStockId() {
-        return (String) getValue("sStockIDx");
-    }
+//    public JSONObject setStockId(String stockId) {
+//        return setValue("sStockIDx", stockId);
+//    }
+//
+//    public String getStockId() {
+//        return (String) getValue("sStockIDx");
+//    }
 
     public JSONObject setAmount(Double amount) {
         return setValue("nAmountxx", amount);

@@ -57,6 +57,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import ph.com.guanzongroup.cas.sales.status.FinancingRateStatus;
 import ph.com.guanzongroup.cas.sales.status.SalesInquiryStatic;
+import ph.com.guanzongroup.cas.sales.status.ValidityPeriodStatus;
 
 /**
  * @author Arsiela
@@ -631,6 +632,31 @@ public class VehicleQuotation extends Transaction {
         return poJSON;
     }
     
+    public JSONObject Searchbank(String value, boolean byCode, int row)
+            throws ExceptionInInitializerError,
+            SQLException,
+            GuanzonException {
+        poJSON = new JSONObject();
+        
+        if(checkEmpty(Detail(row).getSourceNo())){
+            return setJSON("error", "Inquiry cannot be empty.");
+        }
+        
+        FinancingRates object = new SalesControllers(poGRider, logwrapr).FinancingRates();
+        object.setRecordStatus(RecordStatus.ACTIVE);
+        if(pbWithUI){
+            poJSON = object.searchRecord(value, byCode);
+        } else {
+            poJSON = object.openRecord(value);
+        }
+        if (isJSONSuccess(poJSON)) {
+            Detail(row).setQuotationRate(object.getModel().getRateId());
+            Detail(row).setDuration(object.getModel().getDuration());
+            Detail(row).setRateValue(object.getModel().getRate());
+        }
+        return poJSON;
+    }
+    
     public JSONObject SearchSalesGiveAways(String value, boolean byCode, int row)
             throws ExceptionInInitializerError,
             SQLException,
@@ -690,31 +716,6 @@ public class VehicleQuotation extends Transaction {
         return poJSON;
     }
     
-    public JSONObject Searchbank(String value, boolean byCode, int row)
-            throws ExceptionInInitializerError,
-            SQLException,
-            GuanzonException {
-        poJSON = new JSONObject();
-        
-        if(checkEmpty(Detail(row).getSourceNo())){
-            return setJSON("error", "Inquiry cannot be empty.");
-        }
-        
-        FinancingRates object = new SalesControllers(poGRider, logwrapr).FinancingRates();
-        object.setRecordStatus(RecordStatus.ACTIVE);
-        if(pbWithUI){
-            poJSON = object.searchRecord(value, byCode);
-        } else {
-            poJSON = object.openRecord(value);
-        }
-        if (isJSONSuccess(poJSON)) {
-            Detail(row).setQuotationRate(object.getModel().getRateId());
-            Detail(row).setDuration(object.getModel().getDuration());
-            Detail(row).setRateValue(object.getModel().getRate());
-        }
-        return poJSON;
-    }
-    
     public JSONObject SearchModelVariant(String value, boolean byCode, int row)
             throws ExceptionInInitializerError,
             SQLException,
@@ -749,8 +750,9 @@ public class VehicleQuotation extends Transaction {
             }
         } else {
             String lsSQL = VehicleFinancing_SQL();
-            lsSQL = MiscUtil.addCondition(lsSQL, SQLUtil.toSQL(Master().getTransactionDate()) + " BETWEEN a.dThruDate AND a.dThruDate "
+            lsSQL = MiscUtil.addCondition(lsSQL, SQLUtil.toSQL(xsDateShort(Master().getTransactionDate())) + " BETWEEN a.dFromDate AND a.dThruDate "
                                             + " AND e.sModelIDx = " + Detail(row).getModelId()
+                                            + " AND a.cRecdStat = " + SQLUtil.toSQL(ValidityPeriodStatus.APPROVED)
                                         );
             System.out.println("Executing SQL: " + lsSQL);
             if(pbWithUI){
@@ -802,7 +804,9 @@ public class VehicleQuotation extends Transaction {
         poJSON = new JSONObject();
         
         String lsSQL = VehicleFinancing_SQL();
-        lsSQL = MiscUtil.addCondition(lsSQL, SQLUtil.toSQL(Master().getTransactionDate()) + " BETWEEN a.dThruDate AND a.dThruDate ");
+        lsSQL = MiscUtil.addCondition(lsSQL, SQLUtil.toSQL(xsDateShort(Master().getTransactionDate())) + " BETWEEN a.dFromDate AND a.dThruDate "
+                                                + " AND a.cRecdStat = " + SQLUtil.toSQL(ValidityPeriodStatus.APPROVED)
+                                                );
         System.out.println("Executing SQL: " + lsSQL);
         if(pbWithUI){
             poJSON = ShowDialogFX.Browse(poGRider,
@@ -821,9 +825,9 @@ public class VehicleQuotation extends Transaction {
         }
         if (poJSON != null) {
             String lsVariantId = (String) poJSON.get("sVrntIDxx");
-            Double ldblDPRate = (Double) poJSON.get("nDPRatexx");
-            Double ldblRSVAmt = (Double) poJSON.get("nRsrvAmtx");
-            Double ldblSRPAmt = (Double) poJSON.get("nSRPAmntx");
+            Double ldblDPRate = Double.valueOf((String) poJSON.get("nDPRatexx"));
+            Double ldblRSVAmt =  Double.valueOf((String) poJSON.get("nRsrvAmtx"));
+            Double ldblSRPAmt =  Double.valueOf((String) poJSON.get("nSRPAmntx"));
             Detail(row).setVariantId(lsVariantId);
             Detail(row).setDownPaymentPercent(ldblDPRate);
             Detail(row).setReservationAmount(ldblRSVAmt);
@@ -846,8 +850,9 @@ public class VehicleQuotation extends Transaction {
     public JSONObject AutoPopulateVehicleAddOn(String fsVariantId) throws SQLException, GuanzonException, CloneNotSupportedException{
         poJSON = new JSONObject();
         String lsSQL = VehicleAddOn_SQL();
-        lsSQL = MiscUtil.addCondition(lsSQL, SQLUtil.toSQL(xsDateShort(Master().getTransactionDate())) + " BETWEEN a.dThruDate AND a.dThruDate "
+        lsSQL = MiscUtil.addCondition(lsSQL, SQLUtil.toSQL(xsDateShort(Master().getTransactionDate())) + " BETWEEN a.dFromDate AND a.dThruDate "
                                     + " AND b.sVrntIDxx = " + SQLUtil.toSQL(fsVariantId)
+                                    + " AND a.cRecdStat = " + SQLUtil.toSQL(ValidityPeriodStatus.APPROVED)
                                     );
         System.out.println("AutoLoadVehicleAddOn SQL: " + lsSQL);
         ResultSet loRS = poGRider.executeQuery(lsSQL);
@@ -855,11 +860,21 @@ public class VehicleQuotation extends Transaction {
         if (MiscUtil.RecordCount(loRS) > 0) {
             while(loRS.next()){
                 String lsAddOnId = loRS.getString("sAddOnIDx");
+                String lsAddOnName = loRS.getString("sAddTypNm");
                 Double ldblAmount = loRS.getDouble("nAmountxx");
-                AddOnList(getAddOnListCount() - 1).setAddOnId(lsAddOnId);
-                AddOnList(getAddOnListCount() - 1).setAmount(ldblAmount);
-                AddOnList(getAddOnListCount() - 1).setQuantity(1);
-                ReloadAddOnList();
+                
+                if(lsAddOnName.contains("LTO")) {
+                    Detail(0).setLTOAmount(ldblAmount);
+                } else if(lsAddOnName.contains("TPL")){
+                    Detail(0).setTPLAmount(ldblAmount);
+                }else if(lsAddOnName.contains("Comprehensive")){
+                    Detail(0).setComprehensiveAmount(ldblAmount);
+                } else {
+                    AddOnList(getAddOnListCount() - 1).setAddOnId(lsAddOnId);
+                    AddOnList(getAddOnListCount() - 1).setAmount(ldblAmount);
+                    AddOnList(getAddOnListCount() - 1).setQuantity(1);
+                    ReloadAddOnList();
+                }
             }
         }
         poJSON.put("result", "success");
@@ -986,7 +1001,7 @@ public class VehicleQuotation extends Transaction {
     
     public JSONObject AddAddOn() throws CloneNotSupportedException {
         if (getAddOnListCount() > 0) {
-            if ((AddOnList(getAddOnListCount() - 1).getStockId() == null || "".equals(AddOnList(getAddOnListCount() - 1).getStockId()))){
+            if ((AddOnList(getAddOnListCount() - 1).getAddOnId() == null || "".equals(AddOnList(getAddOnListCount() - 1).getAddOnId()))){
                 poJSON = new JSONObject();
                 poJSON = setJSON("error", "Last row has empty item.");
                 return poJSON;
@@ -1102,20 +1117,22 @@ public class VehicleQuotation extends Transaction {
          * SRP - Downpayment Amount = Balance
          * Balance x Interest Rate / Duration = Monthly Amortization Amount
          */
-        ldblDownpaymentAmount = Detail(0).getSRPAmount() * (Detail(0).getDownPaymentPercent()/100);
-        ldblBalance = Detail(0).getSRPAmount() - ldblDownpaymentAmount;
-        ldblInterestRate = ((ldblInterestRate/100)+1);
-        ldblMontlyAmortizationAmt = ((ldblBalance * ldblInterestRate) / lnDuration)+2;
-        
-        String lsDecimalFormat = "###0.00";
-        DecimalFormat format = new DecimalFormat(lsDecimalFormat);
-        ldblMontlyAmortizationAmt = Double.parseDouble(format.format(ldblMontlyAmortizationAmt));
-        ldblMontlyAmortizationAmt = Double.parseDouble(String.valueOf(Math.round(ldblMontlyAmortizationAmt)));
-        
-        Detail(0).setFinancingAmount(ldblSRPAmt-ldblDPAmt);
-        Detail(0).setMonthlyAmount(ldblMontlyAmortizationAmt);
-        Detail(0).setGrossMonthlyInstallment(ldblMontlyAmortizationAmt-Detail(0).getPromptPaymentDiscount());
-        Detail(0).setPromissoryNoteAmt(Detail(0).getDuration() * ldblMontlyAmortizationAmt);
+        if(ldblInterestRate > 0 && lnDuration > 0){
+            ldblDownpaymentAmount = Detail(0).getSRPAmount() * (Detail(0).getDownPaymentPercent()/100);
+            ldblBalance = Detail(0).getSRPAmount() - ldblDownpaymentAmount;
+            ldblInterestRate = ((ldblInterestRate/100)+1);
+            ldblMontlyAmortizationAmt = ((ldblBalance * ldblInterestRate) / lnDuration)+2;//((ldblBalance * ldblInterestRate) / lnDuration)+2 = (double) NaN
+
+            String lsDecimalFormat = "###0.00";
+            DecimalFormat format = new DecimalFormat(lsDecimalFormat);
+            ldblMontlyAmortizationAmt = Double.parseDouble(format.format(ldblMontlyAmortizationAmt));
+            ldblMontlyAmortizationAmt = Double.parseDouble(String.valueOf(Math.round(ldblMontlyAmortizationAmt)));
+
+            Detail(0).setFinancingAmount(ldblSRPAmt-ldblDPAmt);
+            Detail(0).setMonthlyAmount(ldblMontlyAmortizationAmt);
+            Detail(0).setGrossMonthlyInstallment(ldblMontlyAmortizationAmt-Detail(0).getPromptPaymentDiscount());
+            Detail(0).setPromissoryNoteAmt(Detail(0).getDuration() * ldblMontlyAmortizationAmt);
+        }
     
     }
     
@@ -1137,7 +1154,7 @@ public class VehicleQuotation extends Transaction {
             loFromDate.set(Calendar.DAY_OF_MONTH,loFromDate.getActualMinimum(Calendar.DAY_OF_MONTH));
             loToDate.set(Calendar.DAY_OF_MONTH,loToDate.getActualMaximum(Calendar.DAY_OF_MONTH));
 
-            Master().setTransactionDate(SQLUtil.toDate(xsDateShort(loFromDate.getTime()),SQLUtil.FORMAT_SHORT_DATE));
+            Master().setTransactionDate(SQLUtil.toDate(xsDateShort(ldServerDate),SQLUtil.FORMAT_SHORT_DATE));
             Detail(0).setExpectedDate(SQLUtil.toDate(xsDateShort(loToDate.getTime()),SQLUtil.FORMAT_SHORT_DATE));
             Detail(0).setBranchCode(poGRider.getBranchCode());
         } catch (SQLException ex) {
