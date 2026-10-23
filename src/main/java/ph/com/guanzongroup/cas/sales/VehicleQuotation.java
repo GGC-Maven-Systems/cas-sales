@@ -731,6 +731,10 @@ public class VehicleQuotation extends Transaction {
             return setJSON("error", "Inquiry cannot be empty.");
         }
         
+        if("0".equals(Detail(row).getPaymentForm())){
+            return setJSON("error", "Mode of payment must be Financing or PO.");
+        }
+        
         FinancingRates object = new SalesControllers(poGRider, logwrapr).FinancingRates();
         object.initialize();
         object.setRecordStatus(RecordStatus.ACTIVE);
@@ -1474,7 +1478,7 @@ public class VehicleQuotation extends Transaction {
          * SRP - Downpayment Amount = Balance
          * Balance x Interest Rate / Duration = Monthly Amortization Amount
          */
-        if(ldblInterestRate > 0 && lnDuration > 0){
+        if(ldblInterestRate > 0 && lnDuration > 0 && checkNotEmpty(Detail(0).getQuotationRate())){
             ldblDownpaymentAmount = Detail(0).getSRPAmount() * (Detail(0).getDownPaymentPercent()/100);
             ldblBalance = Detail(0).getSRPAmount() - ldblDownpaymentAmount;
             ldblInterestRate = ((ldblInterestRate/100)+1);
@@ -1486,6 +1490,10 @@ public class VehicleQuotation extends Transaction {
             ldblFinancingAmount = ldblSRPAmt-ldblDPAmt;
             ldblGrossMonthlyInstallment = ldblMontlyAmortizationAmt-Detail(0).getPromptPaymentDiscount();
             ldblPromissoryNoteAmt = Detail(0).getDuration() * ldblGrossMonthlyInstallment;
+        } else {
+            Detail(0).setDuration(0);
+            Detail(0).setRateValue(0.00);
+            Detail(0).setPromptPaymentDiscount(0.0000);
         }
         
         Detail(0).setFinancingAmount(ldblFinancingAmount);
