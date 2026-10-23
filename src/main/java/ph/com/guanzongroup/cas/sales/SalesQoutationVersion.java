@@ -48,7 +48,7 @@ import static ph.com.guanzongroup.cas.cashflow.status.PaymentRequestStaticData.r
  * @date September 2x, 2026
  */
 public class SalesQoutationVersion extends Transaction {
-
+    protected  String approvingOfficer = "";
     public JSONObject InitTransaction() {
         // TODO: replace with the 4-character source code registered for Sales Quotation Version
         SOURCE_CODE = "SQVr";
@@ -825,6 +825,7 @@ public class SalesQoutationVersion extends Transaction {
                 poJSON.put("message", "User is not an authorized approving officer..");
                 return poJSON;
             }
+
         }
 
         poJSON.put("result", "success");

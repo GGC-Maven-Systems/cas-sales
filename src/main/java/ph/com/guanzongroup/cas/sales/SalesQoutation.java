@@ -8,6 +8,7 @@
 package ph.com.guanzongroup.cas.sales;
 
 import org.guanzon.appdriver.agent.ShowDialogFX;
+import org.guanzon.appdriver.agent.ShowMessageFX;
 import org.guanzon.appdriver.agent.services.Parameter;
 import org.guanzon.appdriver.base.CommonUtils;
 import org.guanzon.appdriver.base.GuanzonException;
@@ -46,9 +47,11 @@ import net.sf.jasperreports.engine.JasperCompileManager;
 import net.sf.jasperreports.engine.JasperExportManager;
 import net.sf.jasperreports.engine.JasperFillManager;
 import net.sf.jasperreports.engine.JasperPrint;
+import net.sf.jasperreports.engine.JasperPrintManager;
 import net.sf.jasperreports.engine.JasperReport;
 import net.sf.jasperreports.engine.JREmptyDataSource;
 import net.sf.jasperreports.engine.data.JRMapCollectionDataSource;
+import net.sf.jasperreports.swing.JRViewer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -1360,9 +1363,16 @@ public class SalesQoutation extends Parameter {
      *
      * <p>The report prints one version: header (date, customer, quotation no.,
      * version), the motorcycle unit list ({@code ModelDataSource}), the giveaway /
-     * service list ({@code GiveAwayDataSource}), remarks and the signatories.
-     * On Windows the Jasper viewer is shown; on other systems a PDF is written
-     * to {@code sys.default.path.config/temp/}.</p>
+     * service list ({@code GiveAwayDataSource}), remarks and the signatories.</p>
+     *
+     * <p>On Windows the report opens in a Jasper preview window whose Print
+     * button is wired to report the real outcome: "Quotation printed
+     * successfully." is shown only after the user confirms the print dialog
+     * and the job is sent. The result returned here only means the preview was
+     * opened ("Print preview opened."); nothing has been printed yet.</p>
+     *
+     * <p>On other systems a PDF is written to
+     * {@code sys.default.path.config/temp/} and the result has {@code path}.</p>
      */
     public JSONObject printTransaction() {
         try {
@@ -1373,17 +1383,91 @@ public class SalesQoutation extends Parameter {
             JasperPrint loPrint = buildJasperPrint();
 
             if (System.getProperty("os.name").toLowerCase().contains("win")) {
-                javax.swing.SwingUtilities.invokeLater(() -> net.sf.jasperreports.view.JasperViewer.viewReport(loPrint, false));
-            } else {
-                JasperExportManager.exportReportToPdfFile(loPrint, System.getProperty("sys.default.path.config")
-                        + "/temp/" + poModel.getTransactionNo() + ".pdf");
+                showPrintViewer(loPrint);
+                // the report is only previewed at this point, nothing is printed yet
+                return setResult("success", "Print preview opened.");
             }
 
-            return setResult("success", "Quotation printed successfully.");
+            // non-Windows: no viewer, so write a PDF instead (not reported as "printed")
+            java.io.File loFolder = new java.io.File(System.getProperty("sys.default.path.config") + "/temp/");
+            if (!loFolder.exists() && !loFolder.mkdirs()) {
+                return setError("Unable to create the folder " + loFolder.getAbsolutePath() + ".");
+            }
+            java.io.File loFile = new java.io.File(loFolder, poModel.getTransactionNo() + ".pdf");
+            JasperExportManager.exportReportToPdfFile(loPrint, loFile.getAbsolutePath());
+
+            JSONObject loResult = setResult("success", "Quotation exported to PDF:\n" + loFile.getAbsolutePath());
+            loResult.put("path", loFile.getAbsolutePath());
+            return loResult;
         } catch (JRException | SQLException | GuanzonException e) {
             e.printStackTrace();
             return setError("Quotation print aborted! " + e.getMessage());
         }
+    }
+
+    /**
+     * Shows the report in a Jasper preview window whose Print button reports
+     * the real print result: the success message appears only when the user
+     * confirms the print dialog; cancelling shows nothing and a printer
+     * failure shows the error.
+     */
+    private void showPrintViewer(JasperPrint loPrint) {
+        javax.swing.SwingUtilities.invokeLater(() -> {
+            JRViewer loViewer = new JRViewer(loPrint);
+
+            javax.swing.JFrame loFrame = new javax.swing.JFrame("Sales Quotation");
+            loFrame.setDefaultCloseOperation(javax.swing.JFrame.DISPOSE_ON_CLOSE);
+            loFrame.getContentPane().add(loViewer);
+            loFrame.setSize(1000, 700);
+            loFrame.setLocationRelativeTo(null);
+
+            javax.swing.JButton loPrintButton = findPrintButton(loViewer);
+            if (loPrintButton != null) {
+                // replace the default action with one that knows the outcome
+                for (java.awt.event.ActionListener loListener : loPrintButton.getActionListeners()) {
+                    loPrintButton.removeActionListener(loListener);
+                }
+                loPrintButton.addActionListener(e -> new Thread(() -> {
+                    try {
+                        // true = show the print dialog; returns false if the user cancels
+                        boolean lbPrinted = JasperPrintManager.printReport(loPrint, true);
+                        if (lbPrinted) {
+                            javax.swing.SwingUtilities.invokeLater(() ->
+                                    ShowMessageFX.Information("Quotation printed successfully.", "Print", null));
+//                                    javax.swing.JOptionPane.showMessageDialog(loFrame,
+//                                            "Quotation printed successfully.", "Print",
+//                                            javax.swing.JOptionPane.INFORMATION_MESSAGE));
+                        }
+                    } catch (JRException ex) {
+                        ex.printStackTrace();
+                        javax.swing.SwingUtilities.invokeLater(() ->
+                                ShowMessageFX.Error("Quotation print aborted! " + ex.getMessage(), "Print", null));
+//                                javax.swing.JOptionPane.showMessageDialog(loFrame,
+//                                        "Quotation print aborted! " + ex.getMessage(), "Print",
+//                                        javax.swing.JOptionPane.ERROR_MESSAGE));
+                    }
+                }).start());
+            }
+
+            loFrame.setVisible(true);
+        });
+    }
+
+    /** Finds the viewer's Print button by its tooltip. */
+    private javax.swing.JButton findPrintButton(java.awt.Container container) {
+        for (java.awt.Component loComp : container.getComponents()) {
+            if (loComp instanceof javax.swing.JButton) {
+                String lsTip = ((javax.swing.JButton) loComp).getToolTipText();
+                if (lsTip != null && lsTip.toLowerCase().contains("print")) {
+                    return (javax.swing.JButton) loComp;
+                }
+            }
+            if (loComp instanceof java.awt.Container) {
+                javax.swing.JButton loFound = findPrintButton((java.awt.Container) loComp);
+                if (loFound != null) return loFound;
+            }
+        }
+        return null;
     }
 
     /**
