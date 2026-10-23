@@ -946,11 +946,6 @@ public class VehicleQuotation extends Transaction {
         paAddOn.clear();
         ReloadAddOnList();
         
-        for(int lnCtr = 0;lnCtr < getAddOnListCount();lnCtr++){
-            System.out.println("ROW : " + lnCtr );
-            System.out.println("ADD ON : " + AddOnList(lnCtr).AddOnMaster().AddOnType().getAddTypeName());
-        }
-        
         String sql = "SELECT sQotAddID FROM Quotation_AddOn WHERE sTransNox = " + SQLUtil.toSQL(Master().getTransactionNo()) + " ORDER BY sQotAddID";
         ResultSet rs = this.poGRider.executeQuery(sql);
         while(rs.next()) {
@@ -964,11 +959,6 @@ public class VehicleQuotation extends Transaction {
 
             paAddOn.add(loDetail);
             ReloadAddOnList();
-        }
-            
-        for(int lnCtr = 0;lnCtr < getAddOnListCount();lnCtr++){
-           System.out.println("ROW : " + lnCtr );
-           System.out.println("ADD ON : " + AddOnList(lnCtr).AddOnMaster().AddOnType().getAddTypeName());
         }
         
         poJSON.put("result", "success");
@@ -1039,6 +1029,8 @@ public class VehicleQuotation extends Transaction {
             if(isJSONSuccess(poJSON)){
                 row = (int) poJSON.get("row");
                 AddOnList(row).setStockId(object.getModel().getStockId());
+                AddOnList(row).setQuantity(1);
+                AddOnList(row).setAmount(object.getModel().getCost().doubleValue());
             }
         }
         return poJSON;
