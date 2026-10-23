@@ -869,9 +869,9 @@ public class VehicleQuotation extends Transaction {
             }
             if (poJSON != null) {
                 String lsVariantId = (String) poJSON.get("sVrntIDxx");
-                Double ldblDPRate = (Double) poJSON.get("nDPRatexx");
-                Double ldblRSVAmt = (Double) poJSON.get("nRsrvAmtx");
-                Double ldblSRPAmt = (Double) poJSON.get("nSelPrice");
+                Double ldblDPRate = Double.valueOf((String) poJSON.get("nDPRatexx"));
+                Double ldblRSVAmt =  Double.valueOf((String) poJSON.get("nRsrvAmtx"));
+                Double ldblSRPAmt =  Double.valueOf((String) poJSON.get("nSelPrice"));
                 
                 Detail(row).setVariantId(lsVariantId);
                 Detail(row).setDownPaymentPercent(ldblDPRate);
@@ -1320,6 +1320,10 @@ public class VehicleQuotation extends Transaction {
         return paAddOn.size();
     }
     
+    public List<Model_Quotation_AddOn> AddOnList() {
+        return paAddOn;
+    }
+    
     public void ReloadAddOnList() throws CloneNotSupportedException, SQLException, GuanzonException{
         int lnCtr = getAddOnListCount() - 1;
         while (lnCtr >= 0) {
@@ -1370,6 +1374,10 @@ public class VehicleQuotation extends Transaction {
             return 0;
         }
         return paFreebies.size();
+    }
+    
+    public List<Model_Quotation_AddOn> FreebiesList() {
+        return paFreebies;
     }
     
     public void ReloadFreebiesList() throws CloneNotSupportedException, SQLException, GuanzonException{
