@@ -118,10 +118,19 @@ public class VehicleQuotation extends Transaction {
         return ("success".equals((String) foJSON.get("result")) || !"error".equals((String) foJSON.get("result")));
     }
     
+    public void ResetTransaction() throws SQLException, GuanzonException {
+        paDetail = new ArrayList<>();
+        paAddOn = new ArrayList<>();
+        paFreebies = new ArrayList<>();
+        paMaster = new ArrayList<>();
+        psApprover = "";
+        setApproving("");
+    }
+    
     public JSONObject NewTransaction()
             throws CloneNotSupportedException, SQLException, GuanzonException {
-         poJSON = new JSONObject();
-        
+        poJSON = new JSONObject();
+        ResetTransaction();
         poJSON = newTransaction();
         if(!isJSONSuccess(poJSON)){
             return poJSON;
@@ -554,6 +563,9 @@ public class VehicleQuotation extends Transaction {
             }
         }
         MiscUtil.close(loRS);
+        
+        poJSON.put("result", "success");
+        poJSON.put("message", "success");
         return poJSON;
     }
     
@@ -876,6 +888,8 @@ public class VehicleQuotation extends Transaction {
             }
         }
         computeFields();
+        poJSON.put("result", "success");
+        poJSON.put("message", "success");
         return poJSON;
     }
     
@@ -932,6 +946,8 @@ public class VehicleQuotation extends Transaction {
         }
         
         computeFields();
+        poJSON.put("result", "success");
+        poJSON.put("message", "success");
         return poJSON;
     }
     
@@ -1080,6 +1096,9 @@ public class VehicleQuotation extends Transaction {
         }
         
         computeFields();
+        
+        poJSON.put("result", "success");
+        poJSON.put("message", "success");
         return poJSON;
     }
     

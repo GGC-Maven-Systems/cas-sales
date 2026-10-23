@@ -1389,9 +1389,11 @@ public class VehicleAddOns extends Transaction {
         
         for(int lnCtr = 0;lnCtr < getDetailCount();lnCtr++){
             if(Detail(lnCtr).getVariantId() != null && !"".equals(Detail(lnCtr).getVariantId())){
-                poJSON = checkExistingVehicleAddOns(Detail(lnCtr).getVariantId());
-                if (!isJSONSuccess(poJSON)) {
-                    return poJSON;
+                if(Detail(lnCtr).getAmount() > 0.0000){
+                    poJSON = checkExistingVehicleAddOns(Detail(lnCtr).getVariantId());
+                    if (!isJSONSuccess(poJSON)) {
+                        return poJSON;
+                    }
                 }
             }
         }
