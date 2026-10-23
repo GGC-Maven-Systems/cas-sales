@@ -158,7 +158,7 @@ public class VehicleQuotationValidator implements GValidator{
         
         LocalDate lldFromDate = strToDate(xsDateShort(loExpectedDate));
         LocalDate lldToDate = strToDate(xsDateShort(loValidThruDate));
-        if (lldToDate.isAfter(lldFromDate)) {
+        if (lldFromDate.isAfter(lldToDate)) {
             poJSON.put("result", "error");
             poJSON.put("message", "Expected date cannot be after the valid thru date.");
             return poJSON;

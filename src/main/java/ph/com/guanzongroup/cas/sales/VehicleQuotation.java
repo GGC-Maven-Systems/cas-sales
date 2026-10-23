@@ -1290,7 +1290,7 @@ public class VehicleQuotation extends Transaction {
         
         Model_Quotation_AddOn loModel = new SalesModels(poGRider).QuotationAddOn();
         loModel.newRecord();
-        paAddOn.add(loModel);
+        paFreebies.add(loModel);
         poJSON.put("result", "success");
         return poJSON;
     }
@@ -1360,11 +1360,11 @@ public class VehicleQuotation extends Transaction {
     public void computeFields() throws SQLException, GuanzonException{
         Double ldblDownpaymentAmount = 0.00;
         Double ldblBalance = 0.00;
-        int lnDuration = Detail(0).getDuration();
         Double ldblMontlyAmortizationAmt = 0.00;
         Double ldblGrossMonthlyInstallment = 0.00;
         Double ldblFinancingAmount = 0.00;
         Double ldblPromissoryNoteAmt = 0.00;
+        int lnDuration = Detail(0).getDuration();
         Double ldblInterestRate = Detail(0).getRateValue();
         Double ldblSRPAmt = Detail(0).getSRPAmount();
         Double ldblDPAmt = Detail(0).getDownPayment();
@@ -1520,19 +1520,14 @@ public class VehicleQuotation extends Transaction {
         }
         
         Iterator<Model> detail = Detail().iterator();
-        int lnDetailRow = 1;
         while (detail.hasNext()) {
             Model item = detail.next(); // Store the item before checking conditions
             String lsDetail = (String) item.getValue("sVrntIDxx");
-//            double ldblSRP = Double.parseDouble(String.valueOf(item.getValue("nSRPAmntx")));
-            
             if ((lsDetail == null || "".equals(lsDetail))){
                 if(item.getEditMode() == EditMode.ADDNEW){
                     detail.remove(); // Correctly remove the item
                 } 
-            } else {
-                lnDetailRow++;
-            }
+            } 
         }
 
         if (getDetailCount() <= 0) {
@@ -1563,7 +1558,7 @@ public class VehicleQuotation extends Transaction {
             if ((lsDetail == null || "".equals(lsDetail))
                 && (lsStock == null || "".equals(lsStock))){
                 if(item.getEditMode() == EditMode.ADDNEW){
-                    detail.remove(); // Correctly remove the item
+                    addon.remove(); // Correctly remove the item
                 } 
             }
         }
@@ -1592,7 +1587,7 @@ public class VehicleQuotation extends Transaction {
             if ((lsDetail == null || "".equals(lsDetail))
                 && (lsStock == null || "".equals(lsStock))){
                 if(item.getEditMode() == EditMode.ADDNEW){
-                    detail.remove(); // Correctly remove the item
+                    freebies.remove(); // Correctly remove the item
                 } 
             }
         }
@@ -1641,8 +1636,7 @@ public class VehicleQuotation extends Transaction {
             
             //Save Freebies
              for (int lnCtr = 0; lnCtr <= getFreebiesListCount() - 1; lnCtr++) {
-                if(checkNotEmpty(FreebiesList(lnCtr).getStockId())
-                    || checkNotEmpty(FreebiesList(lnCtr).getAddOnId())){
+                if(checkNotEmpty(FreebiesList(lnCtr).getStockId())){
                     if(FreebiesList(lnCtr).getEditMode() == EditMode.ADDNEW
                         && !FreebiesList(lnCtr).getRecordStatus()){
                         continue;
