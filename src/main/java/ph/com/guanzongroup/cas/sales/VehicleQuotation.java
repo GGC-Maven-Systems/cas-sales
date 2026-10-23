@@ -945,20 +945,30 @@ public class VehicleQuotation extends Transaction {
         poJSON = new JSONObject();
         paAddOn.clear();
         ReloadAddOnList();
-            
+        
+        for(int lnCtr = 0;lnCtr < getAddOnListCount();lnCtr++){
+            System.out.println("ROW : " + lnCtr );
+            System.out.println("ADD ON : " + AddOnList(lnCtr).AddOnMaster().AddOnType().getAddTypeName());
+        }
+        
         String sql = "SELECT sQotAddID FROM Quotation_AddOn WHERE sTransNox = " + SQLUtil.toSQL(Master().getTransactionNo()) + " ORDER BY sQotAddID";
         ResultSet rs = this.poGRider.executeQuery(sql);
         while(rs.next()) {
-            Model_Quotation_AddOn loDetail = (Model_Quotation_AddOn) AddOnList(getAddOnListCount()-1);
-            loDetail.newRecord();
+            Model_Quotation_AddOn loDetail = new SalesModels(poGRider).QuotationAddOn();
+            loDetail.initialize();
             poJSON = loDetail.openRecord( rs.getString("sQotAddID"),Master().getTransactionNo());
             if (!"success".equals((String)this.poJSON.get("result"))) {
                 poJSON.put("message", "Unable to open quotation add on record.");
-                clear();
                 return poJSON;
             }
 
             paAddOn.add(loDetail);
+            ReloadAddOnList();
+        }
+            
+        for(int lnCtr = 0;lnCtr < getAddOnListCount();lnCtr++){
+           System.out.println("ROW : " + lnCtr );
+           System.out.println("ADD ON : " + AddOnList(lnCtr).AddOnMaster().AddOnType().getAddTypeName());
         }
         
         poJSON.put("result", "success");
