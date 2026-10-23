@@ -117,7 +117,7 @@ public class VehicleQuotation extends Transaction {
     public boolean isJSONSuccess(JSONObject foJSON) {
         return ("success".equals((String) foJSON.get("result")) || !"error".equals((String) foJSON.get("result")));
     }
-
+    
     public JSONObject NewTransaction()
             throws CloneNotSupportedException, SQLException, GuanzonException {
          poJSON = new JSONObject();
@@ -128,6 +128,8 @@ public class VehicleQuotation extends Transaction {
         }
         
         ReloadDetail();
+        ReloadAddOnList();
+        ReloadFreebiesList();
         
         return poJSON;
     }
@@ -196,11 +198,15 @@ public class VehicleQuotation extends Transaction {
             return poJSON;
         }
         
+        ReloadAddOnList();
+        ReloadFreebiesList();
+        
 //        poJSON = AutoPopulateVehicleAddOn(Detail(0).getVariantId());
 //        if(!isJSONSuccess(poJSON)){
 //            return poJSON;
 //        }
         
+        poJSON.put("result", "success");
         return poJSON;
     }
     
@@ -851,6 +857,7 @@ public class VehicleQuotation extends Transaction {
                 return poJSON;
             }
         }
+        computeFields();
         return poJSON;
     }
     
@@ -905,6 +912,8 @@ public class VehicleQuotation extends Transaction {
             poJSON.put("message", "No record loaded.");
             return poJSON;
         }
+        
+        computeFields();
         return poJSON;
     }
     
@@ -1051,6 +1060,8 @@ public class VehicleQuotation extends Transaction {
         } else {
             poJSON = SearchAccessories(value, byCode, row);
         }
+        
+        computeFields();
         return poJSON;
     }
     
@@ -1069,6 +1080,19 @@ public class VehicleQuotation extends Transaction {
             poJSON = checkExistingAccessories(object.getModel().getStockId(), row);
             if(isJSONSuccess(poJSON)){
                 row = (int) poJSON.get("row");
+                
+                for(int lnCtr = 0;lnCtr < getFreebiesListCount(); lnCtr++){
+                    if(object.getModel().getStockId().equals(FreebiesList(lnCtr).getStockId())){
+                        if(!FreebiesList(lnCtr).getRecordStatus()){
+                            paFreebies.remove(lnCtr);
+                        } else {
+                            poJSON = setJSON("error", "Selected accessory already exists in quotation freebies.");
+                            poJSON.put("row", lnCtr);
+                            return poJSON;
+                        }
+                    }
+                }
+                
                 AddOnList(row).setStockId(object.getModel().getStockId());
                 AddOnList(row).setQuantity(1);
                 AddOnList(row).setAmount(object.getModel().getCost().doubleValue());
@@ -1094,7 +1118,7 @@ public class VehicleQuotation extends Transaction {
                 row = (int) poJSON.get("row");
                 FreebiesList(row).setStockId(object.getModel().getStockId());
                 FreebiesList(row).setQuantity(1);
-                FreebiesList(row).setAmount(object.getModel().getCost().doubleValue());
+                FreebiesList(row).setAmount(0.00);
             }
         }
         return poJSON;
@@ -1229,7 +1253,8 @@ public class VehicleQuotation extends Transaction {
     
     public JSONObject AddAddOn() throws CloneNotSupportedException {
         if (getAddOnListCount() > 0) {
-            if ((AddOnList(getAddOnListCount() - 1).getAddOnId() == null || "".equals(AddOnList(getAddOnListCount() - 1).getAddOnId()))){
+            if ((AddOnList(getAddOnListCount() - 1).getAddOnId() == null || "".equals(AddOnList(getAddOnListCount() - 1).getAddOnId()))
+                && (AddOnList(getAddOnListCount() - 1).getStockId() == null || "".equals(AddOnList(getAddOnListCount() - 1).getStockId()))){
                 poJSON = new JSONObject();
                 poJSON = setJSON("error", "Last row has empty item.");
                 return poJSON;
@@ -1281,7 +1306,7 @@ public class VehicleQuotation extends Transaction {
     
     public JSONObject AddFreebies() throws CloneNotSupportedException {
         if (getFreebiesListCount() > 0) {
-            if ((FreebiesList(getFreebiesListCount() - 1).getAddOnId() == null || "".equals(FreebiesList(getFreebiesListCount() - 1).getAddOnId()))){
+            if ((FreebiesList(getFreebiesListCount() - 1).getStockId() == null || "".equals(FreebiesList(getFreebiesListCount() - 1).getStockId()))){
                 poJSON = new JSONObject();
                 poJSON = setJSON("error", "Last row has empty item.");
                 return poJSON;
