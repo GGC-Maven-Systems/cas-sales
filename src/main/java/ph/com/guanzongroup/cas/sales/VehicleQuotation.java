@@ -1378,9 +1378,10 @@ public class VehicleQuotation extends Transaction {
         Double ldblTotalDisc = 0.0000;
         
         for(int lnCtr = 0;lnCtr < getAddOnListCount();lnCtr++){
+            //Set Amount
+            AddOnList(lnCtr).setTotalAmount(AddOnList(lnCtr).getAmount() * AddOnList(lnCtr).getQuantity());
+            
             if(checkNotEmpty(AddOnList(lnCtr).AddOnMaster().AddOnType().getAddTypeName())){
-                AddOnList(lnCtr).setTotalAmount(AddOnList(lnCtr).getAmount() * AddOnList(lnCtr).getQuantity());
-                
                 if(AddOnList(lnCtr).AddOnMaster().AddOnType().getAddTypeName().contains("LTO")
                     || AddOnList(lnCtr).AddOnMaster().AddOnType().getAddTypeName().contains("TPL")
                     || AddOnList(lnCtr).AddOnMaster().AddOnType().getAddTypeName().contains("Comprehensive")
@@ -1389,7 +1390,6 @@ public class VehicleQuotation extends Transaction {
                 }
                 
                 ldblTotalAddOn = ldblTotalAddOn + AddOnList(lnCtr).getTotalAmount();
-                
             }
         }
         
