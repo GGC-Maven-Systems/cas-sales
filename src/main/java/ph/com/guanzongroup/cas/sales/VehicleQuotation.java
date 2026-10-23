@@ -199,6 +199,23 @@ public class VehicleQuotation extends Transaction {
             return poJSON;
         }
         
+        for(int lnCtr = 0;lnCtr < getAddOnListCount();lnCtr++){
+            if(AddOnList(lnCtr).getEditMode() == EditMode.READY){
+                poJSON = AddOnList(lnCtr).updateRecord();
+                if(!isJSONSuccess(poJSON)){
+                    return poJSON;
+                }
+            }
+        }
+        for(int lnCtr = 0;lnCtr < getFreebiesListCount() ;lnCtr++){
+            if(FreebiesList(lnCtr).getEditMode() == EditMode.READY){
+                poJSON = FreebiesList(lnCtr).updateRecord();
+                if(!isJSONSuccess(poJSON)){
+                    return poJSON;
+                }
+            }
+        }
+        
         ReloadAddOnList();
         ReloadFreebiesList();
         
@@ -1404,6 +1421,14 @@ public class VehicleQuotation extends Transaction {
         Double ldblTotalDisc = 0.0000;
         
         for(int lnCtr = 0;lnCtr < getAddOnListCount();lnCtr++){
+            if(checkNotEmpty(AddOnList(lnCtr).getAddOnId())
+                || checkNotEmpty(AddOnList(lnCtr).getStockId())){
+                if(AddOnList(lnCtr).getRecordStatus()){
+                    if(AddOnList(lnCtr).getQuantity() <= 0.00){
+                        AddOnList(lnCtr).setQuantity(1);
+                    }
+                }
+            }
             //Set Amount
             AddOnList(lnCtr).setTotalAmount(AddOnList(lnCtr).getAmount() * AddOnList(lnCtr).getQuantity());
             
