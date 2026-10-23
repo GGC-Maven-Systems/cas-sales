@@ -1459,10 +1459,11 @@ public class VehicleQuotation extends Transaction {
 
     @Override
     protected JSONObject isEntryOkay(String status) {
-        GValidator loValidator = new VehicleQuotationValidator();
+        VehicleQuotationValidator loValidator = new VehicleQuotationValidator();
         loValidator.setApplicationDriver(poGRider);
         loValidator.setTransactionStatus(status);
         loValidator.setMaster(Master());
+        loValidator.setQuotationVehicle(Detail(0));
         poJSON = loValidator.validate();
         return poJSON;
     }

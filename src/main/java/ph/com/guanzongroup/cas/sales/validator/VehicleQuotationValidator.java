@@ -62,7 +62,7 @@ public class VehicleQuotationValidator implements GValidator{
         throw new UnsupportedOperationException("Not supported yet.");
     }
     
-    public void setDetail(Object value) {
+    public void setQuotationVehicle(Object value) {
         poDetail = (Model_Sales_Quotation_Vehicle) value;
     }
 
@@ -126,6 +126,119 @@ public class VehicleQuotationValidator implements GValidator{
             poJSON.put("result", "error");
             poJSON.put("message", "Client is not set.");
             return poJSON;
+        }
+        
+        //Validation Quotation Vehicle
+        Date loExpectedDate = poDetail.getExpectedDate();
+        Date loValidThruDate = poDetail.getValidThruDate();
+        
+        if (loExpectedDate == null) {
+            poJSON.put("result", "error");
+            poJSON.put("message", "Invalid expected date.");
+            return poJSON;
+        }
+
+        if ("1900-01-01".equals(xsDateShort(loExpectedDate))) {
+            poJSON.put("result", "error");
+            poJSON.put("message", "Invalid expected date.");
+            return poJSON;
+        }
+        
+        if (loValidThruDate == null) {
+            poJSON.put("result", "error");
+            poJSON.put("message", "Invalid valid thru date.");
+            return poJSON;
+        }
+
+        if ("1900-01-01".equals(xsDateShort(loValidThruDate))) {
+            poJSON.put("result", "error");
+            poJSON.put("message", "Invalid valid thru date.");
+            return poJSON;
+        }
+        
+        LocalDate lldFromDate = strToDate(xsDateShort(loExpectedDate));
+        LocalDate lldToDate = strToDate(xsDateShort(loValidThruDate));
+        if (lldToDate.isAfter(lldFromDate)) {
+            poJSON.put("result", "error");
+            poJSON.put("message", "Expected date cannot be after the valid thru date.");
+            return poJSON;
+        }
+        
+        if (poDetail.getBranchCode() == null || "".equals(poDetail.getBranchCode())) {
+            poJSON.put("result", "error");
+            poJSON.put("message", "Branch is not set.");
+            return poJSON;
+        }
+        
+        if (poDetail.getVariantId() == null || "".equals(poDetail.getVariantId())) {
+            poJSON.put("result", "error");
+            poJSON.put("message", "Vehicle is not set.");
+            return poJSON;
+        }
+        
+        if (poDetail.getSourceNo() == null || "".equals(poDetail.getSourceNo())) {
+            poJSON.put("result", "error");
+            poJSON.put("message", "Source no is not set.");
+            return poJSON;
+        }
+        
+        if (poDetail.getSourceCode() == null || "".equals(poDetail.getSourceCode())) {
+            poJSON.put("result", "error");
+            poJSON.put("message", "Source code is not set.");
+            return poJSON;
+        }
+        
+        if (poDetail.getPaymentForm() == null || "".equals(poDetail.getPaymentForm())) {
+            poJSON.put("result", "error");
+            poJSON.put("message", "Mode of payment is not set.");
+            return poJSON;
+        }
+        
+        if (poDetail.getSRPAmount() <= 0.0000) {
+            poJSON.put("result", "error");
+            poJSON.put("message", "SRP amount is not set.");
+            return poJSON;
+        }
+        
+        if (poDetail.getDownPayment() <= 0.0000) {
+            poJSON.put("result", "error");
+            poJSON.put("message", "SRP amount is not set.");
+            return poJSON;
+        }
+        
+        //Validate financing if not cash
+        if (!"0".equals(poDetail.getPaymentForm())) { //Financing / PO
+            if (poDetail.getDownPayment() <= 0.0000) {
+                poJSON.put("result", "error");
+                poJSON.put("message", "SRP amount is not set.");
+                return poJSON;
+            }
+            
+            if (poDetail.getQuotationRate() == null || "".equals(poDetail.getQuotationRate())) {
+                poJSON.put("result", "error");
+                poJSON.put("message", "Bank is not set.");
+                return poJSON;
+            }
+            if (poDetail.getFinancingAmount() <= 0.0000) {
+                poJSON.put("result", "error");
+                poJSON.put("message", "Finance amount is not set.");
+                return poJSON;
+            }
+            if (poDetail.getMonthlyAmount() <= 0.0000) {
+                poJSON.put("result", "error");
+                poJSON.put("message", "Net monthly installment is not set.");
+                return poJSON;
+            }
+            if (poDetail.getGrossMonthlyInstallment() <= 0.0000) {
+                poJSON.put("result", "error");
+                poJSON.put("message", "Gross monthly installment is not set.");
+                return poJSON;
+            }
+            if (poDetail.getPromissoryNoteAmt() <= 0.0000) {
+                poJSON.put("result", "error");
+                poJSON.put("message", "Promissory note amount is not set.");
+                return poJSON;
+            }
         }
         
         poJSON.put("result", "success");
