@@ -275,11 +275,10 @@ public class Model_Sales_Quotation_Master extends Model {
             poClientMobile.setTableName("Client_Mobile");
             poClientMobile.initialize();
         }
-
         String contactId = (String) (
-                getValue("sContctID") == null
+                getValue("sClientID") == null
                         ? ""
-                        : getValue("sContctID")
+                        : getValue("sClientID")
         );
 
         if (!"".equals(contactId)) {
