@@ -131,6 +131,7 @@ public class VehicleQuotation extends Transaction {
         ReloadAddOnList();
         ReloadFreebiesList();
         
+        poJSON.put("result", "success");
         return poJSON;
     }
     
