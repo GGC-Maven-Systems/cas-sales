@@ -401,7 +401,7 @@ public class VehicleQuotation extends Transaction {
         
         if(!pbWthParent){
             psApprover = poGRider.getUserID();
-            if(validateStandardDetails(0)){ //require approval when result is true
+            if(validateStandardDetails()){ //require approval when result is true
                 poJSON = callApproval();
                 if (!isJSONSuccess(poJSON)) {
                     return poJSON;
@@ -1432,6 +1432,9 @@ public class VehicleQuotation extends Transaction {
     }
     
     public void computeFields() throws SQLException, GuanzonException{
+        String lsDecimalFormat = "###0.00";
+        DecimalFormat format = new DecimalFormat(lsDecimalFormat);
+        
         Double ldblDownpaymentAmount = 0.00;
         Double ldblBalance = 0.00;
         Double ldblMontlyAmortizationAmt = 0.00;
@@ -1450,6 +1453,13 @@ public class VehicleQuotation extends Transaction {
         Double ldblTotalAddOn = 0.0000;
         Double ldblTranTotal = 0.0000;
         Double ldblTotalDisc = 0.0000;
+        Double ldblDownpaymentPercentage = (Detail(0).getDownPayment() / Detail(0).getSRPAmount()) * 100;
+        
+        if(Detail(0).getSRPAmount() > 0.0000){
+            ldblDownpaymentPercentage = (Detail(0).getDownPayment() / Detail(0).getSRPAmount()) * 100;
+            ldblDownpaymentPercentage = Double.parseDouble(format.format(ldblDownpaymentPercentage));
+        }
+        Detail(0).setDownPaymentPercent(ldblDownpaymentPercentage);
         
         for(int lnCtr = 0;lnCtr < getAddOnListCount();lnCtr++){
             if(checkNotEmpty(AddOnList(lnCtr).getAddOnId())
@@ -1491,9 +1501,6 @@ public class VehicleQuotation extends Transaction {
             ldblBalance = Detail(0).getSRPAmount() - ldblDownpaymentAmount;
             ldblInterestRate = ((ldblInterestRate/100)+1);
             ldblMontlyAmortizationAmt = ((ldblBalance * ldblInterestRate) / lnDuration);//((ldblBalance * ldblInterestRate) / lnDuration)+2 = (double) NaN
-
-            String lsDecimalFormat = "###0.00";
-            DecimalFormat format = new DecimalFormat(lsDecimalFormat);
             ldblMontlyAmortizationAmt = Double.parseDouble(format.format(ldblMontlyAmortizationAmt));
             ldblFinancingAmount = ldblSRPAmt-ldblDPAmt;
             ldblGrossMonthlyInstallment = ldblMontlyAmortizationAmt-Detail(0).getPromptPaymentDiscount();
@@ -1554,23 +1561,74 @@ public class VehicleQuotation extends Transaction {
         return poJSON;
     }
     
-    private boolean validateStandardDetails(int row){
+    private boolean validateStandardDetails(){
         try {
-            Model_Financing_Rate_Master lObj = new SalesModels(poGRider).FinancingRateMaster();
+            boolean lbValidate = false;
+            //Check Standard Financing Rate for Duration and Rate Value
+            Model_Vehicle_Financing_Rates lObj = new SalesModels(poGRider).VehicleFinancingRates();
             String lsSQL = MiscUtil.addCondition(MiscUtil.makeSelect(lObj),
                                                     " cRecdStat = " + SQLUtil.toSQL(FinancingRateStatus.ACTIVE)
-//                                                    + " AND sBankIDxx = " + SQLUtil.toSQL("")
-                                                    + " AND nDuration = " + SQLUtil.toSQL(Detail(row).getDuration())
-                                                    + " AND nRateValx = " + SQLUtil.toSQL(Detail(row).getRateValue())
-//                                                    + " AND sCompnyID = " + SQLUtil.toSQL(Detail(row).Branch().getCompanyId())
+                                                    + " AND nDuration = " + SQLUtil.toSQL(Detail(0).getDuration())
+                                                    + " AND nRateValx = " + SQLUtil.toSQL(Detail(0).getRateValue())
+                                                    + SQLUtil.toSQL(xsDateShort(Master().getTransactionDate())) +  " BETWEEN dFromDate AND dThruDate " 
                                                     );
-            System.out.println("validateStandardDetails SQL: " + lsSQL);
+            System.out.println("Validate Standard Financing Rate SQL: " + lsSQL);
             ResultSet loRS = poGRider.executeQuery(lsSQL);
             if (MiscUtil.RecordCount(loRS) > 0) {
                 if(loRS.next()){
-                    return false;
+                    lbValidate = false;
                 }
             }
+            
+            //Check Standard Downpayment rate
+            if(!lbValidate){
+                lsSQL = MiscUtil.addCondition(VehicleFinancing_SQL(), SQLUtil.toSQL(xsDateShort(Master().getTransactionDate())) + " BETWEEN a.dFromDate AND a.dThruDate "
+                                                        + " AND a.cRecdStat = " + SQLUtil.toSQL(ValidityPeriodStatus.APPROVED)
+                                                        + " AND a.sCompnyID = " + SQLUtil.toSQL(psCompanyId)
+                                                        + " AND b.sVrntIDxx = " + SQLUtil.toSQL(Detail(0).getVariantId())
+                                                        + " AND b.nDPRatexx = " + SQLUtil.toSQL(Detail(0).getDownPaymentPercent())
+                                                        );
+                System.out.println("Validate Standard Downpayment Rate SQL: " + lsSQL);
+                loRS = poGRider.executeQuery(lsSQL);
+                if (MiscUtil.RecordCount(loRS) > 0) {
+                    if(loRS.next()){
+                        lbValidate = false;
+                    }
+                }
+            }
+            
+            //Check Standard Add Ons
+            if(!lbValidate){
+                for(int lnCtr = 0;lnCtr < getAddOnListCount();lnCtr++){
+                    lsSQL = MiscUtil.addCondition(VehicleAddOn_SQL(), SQLUtil.toSQL(xsDateShort(Master().getTransactionDate())) + " BETWEEN a.dFromDate AND a.dThruDate "
+                                                            + " AND a.cRecdStat = " + SQLUtil.toSQL(ValidityPeriodStatus.APPROVED)
+                                                            + " AND a.sCompnyID = " + SQLUtil.toSQL(psCompanyId)
+                                                            + " AND b.sVrntIDxx = " + SQLUtil.toSQL(Detail(0).getVariantId())
+                                                            + " AND b.sAddOnIDx = " + SQLUtil.toSQL(AddOnList(lnCtr).getAddOnId())
+                                                            + " AND b.nAmountxx = " + SQLUtil.toSQL(AddOnList(lnCtr).getAmount())
+                                                            );
+                    System.out.println("Validate Standard Vehicle Add Ons SQL: " + lsSQL);
+                    loRS = poGRider.executeQuery(lsSQL);
+                    if (MiscUtil.RecordCount(loRS) > 0) {
+                        if(loRS.next()){
+                            lbValidate = false;
+                        }
+                    } else {
+                        lbValidate = true;
+                        break;
+                    }
+                    
+                    if(!lbValidate){
+                        if(checkNotEmpty(AddOnList(lnCtr).getStockId())){
+                            lbValidate = true;
+                            break;
+                        }
+                    }
+                }
+            }
+            
+            //Check Standard Freebies
+            
         } catch (SQLException ex) {
             Logger.getLogger(getClass().getName()).log(Level.SEVERE, MiscUtil.getException(ex), ex);
         } 
@@ -1596,8 +1654,8 @@ public class VehicleQuotation extends Transaction {
             return poJSON;
         }
         
-        if(validateStandardDetails(0)){ //if true require approve upon saving
-            if(pbWithUI){
+        if(pbWithUI){
+            if(validateStandardDetails()){ //if true require approve upon saving
                 poJSON = callApproval();
                 if(!isJSONSuccess(poJSON)){
                     return poJSON;
