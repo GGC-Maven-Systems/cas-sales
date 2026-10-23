@@ -1034,7 +1034,7 @@ public class VehicleQuotation extends Transaction {
             if (poJSON != null) {
                 String lsAddOnId = (String) poJSON.get("sAddOnIDx");
                 String lsAddOnName = (String) poJSON.get("sAddTypNm");
-                Double lsAmount = (Double) poJSON.get("nAmountxx");
+                Double lsAmount = Double.valueOf((String) poJSON.get("nAmountxx"));
                 poJSON = checkExistingAddOn(lsAddOnId,lsAddOnName, row);
                 if(!isJSONSuccess(poJSON)){
                     return poJSON;
