@@ -66,6 +66,7 @@ import org.guanzon.cas.client.services.ClientControllers;
 import org.guanzon.cas.client.services.ClientModels;
 import org.guanzon.cas.inv.Inventory;
 import org.guanzon.cas.inv.services.InvControllers;
+import org.guanzon.cas.parameter.model.Model_Company;
 import ph.com.guanzongroup.cas.sales.status.FinancingRateStatus;
 import ph.com.guanzongroup.cas.sales.status.SalesInquiryStatic;
 import ph.com.guanzongroup.cas.sales.status.ValidityPeriodStatus;
@@ -81,6 +82,7 @@ public class VehicleQuotation extends Transaction {
     public String psClientName = "";
     public String psApprover = "";
 
+    Model_Company poCompany;
     public List<Model_Quotation_AddOn> paAddOn;
     public List<Model_Quotation_AddOn> paFreebies;
     public List<Model> paMaster;
@@ -108,6 +110,33 @@ public class VehicleQuotation extends Transaction {
     public void setClientName(String clientName) { psClientName = clientName; }
     public String getClientName() { return psClientName;}
     
+    public Model_Company Company() throws SQLException, GuanzonException {
+        if (poCompany == null) {
+            poCompany = new ParamModels(poGRider).Company();
+        }
+
+        String id = poGRider.getCompnyId();
+
+        if (!"".equals(id)) {
+            if (poCompany.getEditMode() == EditMode.READY
+                    && poCompany.getCompanyId().equals(id)) {
+                return poCompany;
+            } else {
+                poJSON = poCompany.openRecord(id);
+
+                if ("success".equals(poJSON.get("result"))) {
+                    return poCompany;
+                } else {
+                    poCompany.initialize();
+                    return poCompany;
+                }
+            }
+        } else {
+            poCompany.initialize();
+            return poCompany;
+        }
+    }
+
     private JSONObject setJSON(String fsResult, String fsMessage) {
         JSONObject loJSON = new JSONObject();
         loJSON.put("result", fsResult);
