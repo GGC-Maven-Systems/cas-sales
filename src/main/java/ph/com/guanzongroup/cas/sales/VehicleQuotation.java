@@ -2172,6 +2172,7 @@ public class VehicleQuotation extends Transaction {
         parameters.put("sTransmission",Detail(0).ModelVariant().VariantInsurance().getTransmission());
         parameters.put("sColor",Detail(0).ModelVariant().Color().getDescription());
         parameters.put("sBankFirm",Detail(0).FinancingRate().Bank().getBankName());
+        parameters.put("sTermsRate", Detail(0).getDuration() + " / " + Detail(0).getRateValue());
         String lsPaymentMode = "Cash";
         if("1".equals(Detail(0).getPaymentForm())){
             lsPaymentMode = "Financing";
@@ -2179,9 +2180,9 @@ public class VehicleQuotation extends Transaction {
             lsPaymentMode = "PO";
         } else {
             parameters.put("sBankFirm","");
+            parameters.put("sTermsRate", "");
         }
         parameters.put("sFinancing",lsPaymentMode);
-        parameters.put("sTermsRate", Detail(0).getDuration() + " / " + Detail(0).getRateValue());
         parameters.put("nAmountFinanced",Detail(0).getFinancingAmount());
         parameters.put("nNetMonthlyInstallment",Detail(0).getMonthlyAmount());
         parameters.put("nPromptPaymentDiscount",Detail(0).getPromptPaymentDiscount());
