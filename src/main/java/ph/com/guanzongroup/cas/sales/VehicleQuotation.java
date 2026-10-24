@@ -1177,7 +1177,9 @@ public class VehicleQuotation extends Transaction {
                 for(int lnCtr = 0;lnCtr < getFreebiesListCount(); lnCtr++){
                     if(object.getModel().getStockId().equals(FreebiesList(lnCtr).getStockId())){
                         if(!FreebiesList(lnCtr).getRecordStatus()){
-                            paFreebies.remove(lnCtr);
+                            if(FreebiesList(lnCtr).getEditMode() == EditMode.ADDNEW){
+                                paFreebies.remove(lnCtr);
+                            }
                         } else {
                             poJSON = setJSON("error", "Selected accessory already exists in quotation freebies.");
                             poJSON.put("row", lnCtr);
@@ -1209,6 +1211,21 @@ public class VehicleQuotation extends Transaction {
             poJSON = checkExistingFreebies(object.getModel().getStockId(), row);
             if(isJSONSuccess(poJSON)){
                 row = (int) poJSON.get("row");
+                
+                for(int lnCtr = 0;lnCtr < getAddOnListCount(); lnCtr++){
+                    if(object.getModel().getStockId().equals(AddOnList(lnCtr).getStockId())){
+                        if(!AddOnList(lnCtr).getRecordStatus()){
+                            if(AddOnList(lnCtr).getEditMode() == EditMode.ADDNEW){
+                                paAddOn.remove(lnCtr);
+                            }
+                        } else {
+                            poJSON = setJSON("error", "Selected accessory already exists in quotation add ons.");
+                            poJSON.put("row", lnCtr);
+                            return poJSON;
+                        }
+                    }
+                }
+                
                 FreebiesList(row).setStockId(object.getModel().getStockId());
                 FreebiesList(row).setQuantity(1);
                 FreebiesList(row).setAmount(0.00);
@@ -2375,6 +2392,10 @@ public class VehicleQuotation extends Transaction {
             //Group by dp rate 
             int lnRow = 0;
             for(int lnCtr = 0;lnCtr < getAddOnListCount();lnCtr++){
+                if(checkEmpty(AddOnList(lnCtr).getAddOnId())
+                    && checkEmpty(AddOnList(lnCtr).getStockId())){
+                    continue;
+                }
                 if(AddOnList(lnCtr).getRecordStatus()){
                     lnRow++;
                     String lsType = "Add On";
@@ -2427,6 +2448,9 @@ public class VehicleQuotation extends Transaction {
             //Group by dp rate 
             int lnRow = 0;
             for(int lnCtr = 0;lnCtr < getFreebiesListCount();lnCtr++){
+                if(checkEmpty(FreebiesList(lnCtr).getStockId())){
+                    continue;
+                }
                 if(FreebiesList(lnCtr).getRecordStatus()){
                     lnRow++;
                     addQuotationFreebies(rows
