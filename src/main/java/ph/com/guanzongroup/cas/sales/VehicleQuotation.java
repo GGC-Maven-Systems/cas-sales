@@ -1892,9 +1892,9 @@ public class VehicleQuotation extends Transaction {
                     lsCondition += ", " + SQLUtil.toSQL(Character.toString(psTranStat.charAt(lnCtr)));
                 }
 
-                lsCondition = "a.cRecdStat IN (" + lsCondition.substring(2) + ")";
+                lsCondition = "a.cTranStat IN (" + lsCondition.substring(2) + ")";
             } else {
-                lsCondition = "a.cRecdStat = " + SQLUtil.toSQL(psTranStat);
+                lsCondition = "a.cTranStat = " + SQLUtil.toSQL(psTranStat);
             }
         }
 
