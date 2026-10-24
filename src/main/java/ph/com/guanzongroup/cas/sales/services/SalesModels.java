@@ -13,18 +13,18 @@ import org.guanzon.appdriver.base.GRiderCAS;
  * @author MIS-PC
  */
 public class SalesModels {
-    
-    public SalesModels(GRiderCAS applicationDriver){
+
+    public SalesModels(GRiderCAS applicationDriver) {
         poGRider = applicationDriver;
     }
-    
-    public Model_Sales_Inquiry_Master SalesInquiryMaster(){
-        if (poGRider == null){
+
+    public Model_Sales_Inquiry_Master SalesInquiryMaster() {
+        if (poGRider == null) {
             System.err.println("SalesModels.SalesInquiryMaster: Application driver is not set.");
             return null;
         }
-        
-        if (poSalesInquiryMaster == null){
+
+        if (poSalesInquiryMaster == null) {
             poSalesInquiryMaster = new Model_Sales_Inquiry_Master();
             poSalesInquiryMaster.setApplicationDriver(poGRider);
             poSalesInquiryMaster.setXML("Model_Sales_Inquiry_Master");
@@ -34,14 +34,14 @@ public class SalesModels {
 
         return poSalesInquiryMaster;
     }
-    
-    public Model_Sales_Inquiry_Detail SalesInquiryDetails(){
-        if (poGRider == null){
+
+    public Model_Sales_Inquiry_Detail SalesInquiryDetails() {
+        if (poGRider == null) {
             System.err.println("SalesModels.SalesInquiryDetails: Application driver is not set.");
             return null;
         }
-        
-        if (poSalesInquiryDetail == null){
+
+        if (poSalesInquiryDetail == null) {
             poSalesInquiryDetail = new Model_Sales_Inquiry_Detail();
             poSalesInquiryDetail.setApplicationDriver(poGRider);
             poSalesInquiryDetail.setXML("Model_Sales_Inquiry_Detail");
@@ -51,14 +51,14 @@ public class SalesModels {
 
         return poSalesInquiryDetail;
     }
-    
-    public Model_Sales_Inquiry_Sources SalesInquirySources(){
-        if (poGRider == null){
+
+    public Model_Sales_Inquiry_Sources SalesInquirySources() {
+        if (poGRider == null) {
             System.err.println("SalesModels.SalesInquirySources: Application driver is not set.");
             return null;
         }
-        
-        if (poSalesInquirySources == null){
+
+        if (poSalesInquirySources == null) {
             poSalesInquirySources = new Model_Sales_Inquiry_Sources();
             poSalesInquirySources.setApplicationDriver(poGRider);
             poSalesInquirySources.setXML("Model_Sales_Inquiry_Sources");
@@ -68,14 +68,14 @@ public class SalesModels {
 
         return poSalesInquirySources;
     }
-    
-    public Model_Salesman Salesman(){
-        if (poGRider == null){
+
+    public Model_Salesman Salesman() {
+        if (poGRider == null) {
             System.err.println("SalesModels.Salesman: Application driver is not set.");
             return null;
         }
-        
-        if (poSalesman == null){
+
+        if (poSalesman == null) {
             poSalesman = new Model_Salesman();
             poSalesman.setApplicationDriver(poGRider);
             poSalesman.setXML("Model_Salesman");
@@ -85,14 +85,14 @@ public class SalesModels {
 
         return poSalesman;
     }
-    
-    public Model_Sales_Agent SalesAgent(){
-        if (poGRider == null){
+
+    public Model_Sales_Agent SalesAgent() {
+        if (poGRider == null) {
             System.err.println("SalesModels.SalesAgent: Application driver is not set.");
             return null;
         }
-        
-        if (poSalesAgent == null){
+
+        if (poSalesAgent == null) {
             poSalesAgent = new Model_Sales_Agent();
             poSalesAgent.setApplicationDriver(poGRider);
             poSalesAgent.setXML("Model_Sales_Agent");
@@ -103,13 +103,13 @@ public class SalesModels {
         return poSalesAgent;
     }
 
-    public Model_Sales_Giveaways_Master SalesGiveawaysMaster(){
-        if (poGRider == null){
+    public Model_Sales_Giveaways_Master SalesGiveawaysMaster() {
+        if (poGRider == null) {
             System.err.println("SalesModels.SalesGiveawaysMaster: Application driver is not set.");
             return null;
         }
 
-        if (poSalesGiveawaysMaster == null){
+        if (poSalesGiveawaysMaster == null) {
             poSalesGiveawaysMaster = new Model_Sales_Giveaways_Master();
             poSalesGiveawaysMaster.setApplicationDriver(poGRider);
             poSalesGiveawaysMaster.setXML("Model_Sales_Giveaways_Master");
@@ -120,13 +120,13 @@ public class SalesModels {
         return poSalesGiveawaysMaster;
     }
 
-    public Model_Sales_Giveaways_Item SalesGiveawaysItem(){
-        if (poGRider == null){
+    public Model_Sales_Giveaways_Item SalesGiveawaysItem() {
+        if (poGRider == null) {
             System.err.println("SalesModels.SalesGiveawaysItem: Application driver is not set.");
             return null;
         }
 
-        if (poSalesGiveawaysItem == null){
+        if (poSalesGiveawaysItem == null) {
             poSalesGiveawaysItem = new Model_Sales_Giveaways_Item();
             poSalesGiveawaysItem.setApplicationDriver(poGRider);
             poSalesGiveawaysItem.setXML("Model_Sales_Giveaways_Item");
@@ -137,13 +137,13 @@ public class SalesModels {
         return poSalesGiveawaysItem;
     }
 
-    public Model_Sales_Inquiry_Requirements SalesInquiryRequirements(){
-        if (poGRider == null){
+    public Model_Sales_Inquiry_Requirements SalesInquiryRequirements() {
+        if (poGRider == null) {
             System.err.println("SalesModels.SalesInquiryRequirements: Application driver is not set.");
             return null;
         }
-        
-        if (poSalesInquiryRequirements == null){
+
+        if (poSalesInquiryRequirements == null) {
             poSalesInquiryRequirements = new Model_Sales_Inquiry_Requirements();
             poSalesInquiryRequirements.setApplicationDriver(poGRider);
             poSalesInquiryRequirements.setXML("Model_Sales_Inquiry_Requirements");
@@ -153,14 +153,14 @@ public class SalesModels {
 
         return poSalesInquiryRequirements;
     }
-    
-    public Model_Bank_Application BankApplication(){
-        if (poGRider == null){
+
+    public Model_Bank_Application BankApplication() {
+        if (poGRider == null) {
             System.err.println("SalesModels.BankApplication: Application driver is not set.");
             return null;
         }
-        
-        if (poBankApplication == null){
+
+        if (poBankApplication == null) {
             poBankApplication = new Model_Bank_Application();
             poBankApplication.setApplicationDriver(poGRider);
             poBankApplication.setXML("Model_Bank_Application");
@@ -170,14 +170,14 @@ public class SalesModels {
 
         return poBankApplication;
     }
-    
-    public Model_Requirement_Source RequirementSource(){
-        if (poGRider == null){
+
+    public Model_Requirement_Source RequirementSource() {
+        if (poGRider == null) {
             System.err.println("SalesModels.RequirementSource: Application driver is not set.");
             return null;
         }
-        
-        if (poRequirementSource == null){
+
+        if (poRequirementSource == null) {
             poRequirementSource = new Model_Requirement_Source();
             poRequirementSource.setApplicationDriver(poGRider);
             poRequirementSource.setXML("Model_Requirement_Source");
@@ -187,14 +187,14 @@ public class SalesModels {
 
         return poRequirementSource;
     }
-    
-    public Model_Requirement_Source_PerGroup RequirementSourcePerGroup(){
-        if (poGRider == null){
+
+    public Model_Requirement_Source_PerGroup RequirementSourcePerGroup() {
+        if (poGRider == null) {
             System.err.println("SalesModels.RequirementSourcePerGroup: Application driver is not set.");
             return null;
         }
-        
-        if (poRequirementSourcePerGroup == null){
+
+        if (poRequirementSourcePerGroup == null) {
             poRequirementSourcePerGroup = new Model_Requirement_Source_PerGroup();
             poRequirementSourcePerGroup.setApplicationDriver(poGRider);
             poRequirementSourcePerGroup.setXML("Model_Requirement_Source_PerGroup");
@@ -205,13 +205,13 @@ public class SalesModels {
         return poRequirementSourcePerGroup;
     }
 
-    public Model_Customer_Inquiry_FollowUp CustomerInquiryFollowUp(){
-        if (poGRider == null){
+    public Model_Customer_Inquiry_FollowUp CustomerInquiryFollowUp() {
+        if (poGRider == null) {
             System.err.println("SalesModels.CustomerInquiryFollowUp: Application driver is not set.");
             return null;
         }
 
-        if (poSalesInquiryFollowUp == null){
+        if (poSalesInquiryFollowUp == null) {
             poSalesInquiryFollowUp = new Model_Customer_Inquiry_FollowUp();
             poSalesInquiryFollowUp.setApplicationDriver(poGRider);
             poSalesInquiryFollowUp.setXML("Model_Customer_Inquiry_FollowUp");
@@ -222,13 +222,13 @@ public class SalesModels {
         return poSalesInquiryFollowUp;
     }
 
-    public Model_Sales_Commitment_Master SalesCommitmentMaster(){
-        if (poGRider == null){
+    public Model_Sales_Commitment_Master SalesCommitmentMaster() {
+        if (poGRider == null) {
             System.err.println("SalesModels.SalesCommitmentMaster: Application driver is not set.");
             return null;
         }
-        
-        if (poSalesCommitmentMaster == null){
+
+        if (poSalesCommitmentMaster == null) {
             poSalesCommitmentMaster = new Model_Sales_Commitment_Master();
             poSalesCommitmentMaster.setApplicationDriver(poGRider);
             poSalesCommitmentMaster.setXML("Model_Sales_Commitment_Master");
@@ -238,14 +238,14 @@ public class SalesModels {
 
         return poSalesCommitmentMaster;
     }
-    
-    public Model_Sales_Commitment_Detail SalesCommitmentDetail(){
-        if (poGRider == null){
+
+    public Model_Sales_Commitment_Detail SalesCommitmentDetail() {
+        if (poGRider == null) {
             System.err.println("SalesModels.SalesCommitmentDetail: Application driver is not set.");
             return null;
         }
-        
-        if (poSalesCommitmentDetail == null){
+
+        if (poSalesCommitmentDetail == null) {
             poSalesCommitmentDetail = new Model_Sales_Commitment_Detail();
             poSalesCommitmentDetail.setApplicationDriver(poGRider);
             poSalesCommitmentDetail.setXML("Model_Sales_Commitment_Detail");
@@ -256,13 +256,13 @@ public class SalesModels {
         return poSalesCommitmentDetail;
     }
 
-    public Model_Vehicle_Release_Master VehicleReleaseMaster(){
-        if (poGRider == null){
+    public Model_Vehicle_Release_Master VehicleReleaseMaster() {
+        if (poGRider == null) {
             System.err.println("SalesModels.VehicleReleaseMaster: Application driver is not set.");
             return null;
         }
 
-        if (poVehicleReleaseMaster == null){
+        if (poVehicleReleaseMaster == null) {
             poVehicleReleaseMaster = new Model_Vehicle_Release_Master();
             poVehicleReleaseMaster.setApplicationDriver(poGRider);
             poVehicleReleaseMaster.setXML("Model_Vehicle_Release_Master");
@@ -272,13 +272,14 @@ public class SalesModels {
 
         return poVehicleReleaseMaster;
     }
-    public Model_Vsp_Master VspMaster(){
-        if (poGRider == null){
+
+    public Model_Vsp_Master VspMaster() {
+        if (poGRider == null) {
             System.err.println("SalesModels.Vsp: Application driver is not set.");
             return null;
         }
 
-        if (poVspMaster == null){
+        if (poVspMaster == null) {
             poVspMaster = new Model_Vsp_Master();
             poVspMaster.setApplicationDriver(poGRider);
             poVspMaster.setXML("Model_Vsp_Master");
@@ -289,13 +290,13 @@ public class SalesModels {
         return poVspMaster;
     }
 
-    public Model_Sales_Reservation_Master Sales_Reservation_Master(){
-        if (poGRider == null){
+    public Model_Sales_Reservation_Master Sales_Reservation_Master() {
+        if (poGRider == null) {
             System.err.println("CashflowModels.Sales Reservation Master: Application driver is not set.");
             return null;
         }
 
-        if (poSalesReservationMaster == null){
+        if (poSalesReservationMaster == null) {
             poSalesReservationMaster = new Model_Sales_Reservation_Master();
             poSalesReservationMaster.setApplicationDriver(poGRider);
             poSalesReservationMaster.setXML("Model_Sales_Reservation_Master");
@@ -306,13 +307,13 @@ public class SalesModels {
         return poSalesReservationMaster;
     }
 
-    public Model_Sales_Reservation_Detail Sales_Reservation_Detail(){
-        if (poGRider == null){
+    public Model_Sales_Reservation_Detail Sales_Reservation_Detail() {
+        if (poGRider == null) {
             System.err.println("CashflowModels.Sales Reservation Detail: Application driver is not set.");
             return null;
         }
 
-        if (poSalesReservationDetail == null){
+        if (poSalesReservationDetail == null) {
             poSalesReservationDetail = new Model_Sales_Reservation_Detail();
             poSalesReservationDetail.setApplicationDriver(poGRider);
             poSalesReservationDetail.setXML("Model_Sales_Reservation_Detail");
@@ -322,13 +323,14 @@ public class SalesModels {
 
         return poSalesReservationDetail;
     }
-    public Model_Sales_Quotation_Master SalesQuotationsMaster(){
-        if (poGRider == null){
+
+    public Model_Sales_Quotation_Master SalesQuotationsMaster() {
+        if (poGRider == null) {
             System.err.println("CashflowModels.Sales Quotation Master: Application driver is not set.");
             return null;
         }
 
-        if (poSalesQuotationMaster == null){
+        if (poSalesQuotationMaster == null) {
             poSalesQuotationMaster = new Model_Sales_Quotation_Master();
             poSalesQuotationMaster.setApplicationDriver(poGRider);
             poSalesQuotationMaster.setXML("Model_Sales_Quotation_Master");
@@ -338,13 +340,14 @@ public class SalesModels {
 
         return poSalesQuotationMaster;
     }
-    public Model_Sales_Quotation_FollowUp SalesQuotationFollowUp(){
-        if (poGRider == null){
+
+    public Model_Sales_Quotation_FollowUp SalesQuotationFollowUp() {
+        if (poGRider == null) {
             System.err.println("CashflowModels.Sales Quotation Follow Up: Application driver is not set.");
             return null;
         }
 
-        if (poSalesQuotationFollowUp == null){
+        if (poSalesQuotationFollowUp == null) {
             poSalesQuotationFollowUp = new Model_Sales_Quotation_FollowUp();
             poSalesQuotationFollowUp.setApplicationDriver(poGRider);
             poSalesQuotationFollowUp.setXML("Model_Sales_Quotation_FollowUp");
@@ -355,13 +358,13 @@ public class SalesModels {
         return poSalesQuotationFollowUp;
     }
 
-    public Model_Sales_Quotation_Version_Master SalesQuotationVersionMaster(){
-        if (poGRider == null){
+    public Model_Sales_Quotation_Version_Master SalesQuotationVersionMaster() {
+        if (poGRider == null) {
             System.err.println("CashflowModels.Sales Quotation Version Master: Application driver is not set.");
             return null;
         }
 
-        if (poSalesQuotationVersionMaster == null){
+        if (poSalesQuotationVersionMaster == null) {
             poSalesQuotationVersionMaster = new Model_Sales_Quotation_Version_Master();
             poSalesQuotationVersionMaster.setApplicationDriver(poGRider);
             poSalesQuotationVersionMaster.setXML("Model_Sales_Quotation_Version_Master");
@@ -372,13 +375,13 @@ public class SalesModels {
         return poSalesQuotationVersionMaster;
     }
 
-    public Model_Sales_Quotation_Version_Detail SalesQuotationVersionDetail(){
-        if (poGRider == null){
+    public Model_Sales_Quotation_Version_Detail SalesQuotationVersionDetail() {
+        if (poGRider == null) {
             System.err.println("CashflowModels.Sales Quotation Version Detail: Application driver is not set.");
             return null;
         }
 
-        if (poSalesQuotationVersionDetail == null){
+        if (poSalesQuotationVersionDetail == null) {
             poSalesQuotationVersionDetail = new Model_Sales_Quotation_Version_Detail();
             poSalesQuotationVersionDetail.setApplicationDriver(poGRider);
             poSalesQuotationVersionDetail.setXML("Model_Sales_Quotation_Version_Detail");
@@ -388,13 +391,14 @@ public class SalesModels {
 
         return poSalesQuotationVersionDetail;
     }
-    public Model_Sales_Quotation_Version_Giveaways SalesQuotationVersionGiveaways(){
-        if (poGRider == null){
+
+    public Model_Sales_Quotation_Version_Giveaways SalesQuotationVersionGiveaways() {
+        if (poGRider == null) {
             System.err.println("CashflowModels.Sales Quotation Version Giveaways: Application driver is not set.");
             return null;
         }
 
-        if (poSalesQuotationVersionGiveaways == null){
+        if (poSalesQuotationVersionGiveaways == null) {
             poSalesQuotationVersionGiveaways = new Model_Sales_Quotation_Version_Giveaways();
             poSalesQuotationVersionGiveaways.setApplicationDriver(poGRider);
             poSalesQuotationVersionGiveaways.setXML("Model_Sales_Quotation_Version_Giveaways");
@@ -404,10 +408,112 @@ public class SalesModels {
 
         return poSalesQuotationVersionGiveaways;
     }
-    
+
+    public Model_Sales_Master SalesMaster() {
+        if (poGRider == null) {
+            System.err.println("SalesModels.SalesMaster: Application driver is not set.");
+            return null;
+        }
+
+        if (poSalesMaster == null) {
+            poSalesMaster = new Model_Sales_Master();
+            poSalesMaster.setApplicationDriver(poGRider);
+            poSalesMaster.setXML("Model_Sales_Master");
+            poSalesMaster.setTableName("Sales_Master");
+            poSalesMaster.initialize();
+        }
+
+        return poSalesMaster;
+    }
+
+    public Model_Sales_Detail SalesDetail() {
+        if (poGRider == null) {
+            System.err.println("SalesModels.SalesDetail: Application driver is not set.");
+            return null;
+        }
+
+        if (poSalesDetail == null) {
+            poSalesDetail = new Model_Sales_Detail();
+            poSalesDetail.setApplicationDriver(poGRider);
+            poSalesDetail.setXML("Model_Sales_Detail");
+            poSalesDetail.setTableName("Sales_Detail");
+            poSalesDetail.initialize();
+        }
+
+        return poSalesDetail;
+    }
+
+    public Model_Sales_Giveaways SalesGiveaways() {
+        if (poGRider == null) {
+            System.err.println("SalesModels.SalesGiveaways: Application driver is not set.");
+            return null;
+        }
+
+        if (poSalesGiveaways == null) {
+            poSalesGiveaways = new Model_Sales_Giveaways();
+            poSalesGiveaways.setApplicationDriver(poGRider);
+            poSalesGiveaways.setXML("Model_Sales_Giveaways");
+            poSalesGiveaways.setTableName("Sales_Giveaways");
+            poSalesGiveaways.initialize();
+        }
+
+        return poSalesGiveaways;
+    }
+
+    public Model_Sales_Insurance SalesInsurance() {
+        if (poGRider == null) {
+            System.err.println("SalesModels.SalesInsurance: Application driver is not set.");
+            return null;
+        }
+
+        if (poSalesInsurance == null) {
+            poSalesInsurance = new Model_Sales_Insurance();
+            poSalesInsurance.setApplicationDriver(poGRider);
+            poSalesInsurance.setXML("Model_Sales_Insurance");
+            poSalesInsurance.setTableName("Sales_Insurance");
+            poSalesInsurance.initialize();
+        }
+
+        return poSalesInsurance;
+    }
+
+    public Model_Sales_Registration SalesRegistration() {
+        if (poGRider == null) {
+            System.err.println("SalesModels.SalesRegistration: Application driver is not set.");
+            return null;
+        }
+
+        if (poSalesRegistration == null) {
+            poSalesRegistration = new Model_Sales_Registration();
+            poSalesRegistration.setApplicationDriver(poGRider);
+            poSalesRegistration.setXML("Model_Sales_Registration");
+            poSalesRegistration.setTableName("Sales_Registration");
+            poSalesRegistration.initialize();
+        }
+
+        return poSalesRegistration;
+    }
+
+    public Model_G_Card_Application GCardApplication() {
+        if (poGRider == null) {
+            System.err.println("SalesModels.GCardApplication: Application driver is not set.");
+            return null;
+        }
+
+        if (poGCardApplication == null) {
+            poGCardApplication = new Model_G_Card_Application();
+            poGCardApplication.setApplicationDriver(poGRider);
+            poGCardApplication.setXML("Model_G_Card_Application");
+            poGCardApplication.setTableName("G_Card_Application");
+            poGCardApplication.initialize();
+        }
+
+        return poGCardApplication;
+    }
+
     @Override
     protected void finalize() throws Throwable {
-        try {                    
+        try {
             poSalesInquiryMaster = null;
             poSalesInquiryDetail = null;
             poSalesInquirySources = null;
@@ -430,13 +536,19 @@ public class SalesModels {
             poSalesQuotationVersionMaster = null;
             poSalesQuotationVersionDetail = null;
             poSalesQuotationVersionGiveaways = null;
+            poSalesMaster = null;
+            poSalesDetail = null;
+            poSalesGiveaways = null;
+            poSalesInsurance = null;
+            poSalesRegistration = null;
+            poGCardApplication = null;
 
             poGRider = null;
         } finally {
             super.finalize();
         }
     }
-    
+
     private GRiderCAS poGRider;
 
     private Model_Sales_Inquiry_Master poSalesInquiryMaster;
@@ -462,4 +574,10 @@ public class SalesModels {
     private Model_Sales_Quotation_Version_Master poSalesQuotationVersionMaster;
     private Model_Sales_Quotation_Version_Detail poSalesQuotationVersionDetail;
     private Model_Sales_Quotation_Version_Giveaways poSalesQuotationVersionGiveaways;
+    private Model_Sales_Master poSalesMaster;
+    private Model_Sales_Detail poSalesDetail;
+    private Model_Sales_Giveaways poSalesGiveaways;
+    private Model_Sales_Insurance poSalesInsurance;
+    private Model_Sales_Registration poSalesRegistration;
+    private Model_G_Card_Application poGCardApplication;
 }

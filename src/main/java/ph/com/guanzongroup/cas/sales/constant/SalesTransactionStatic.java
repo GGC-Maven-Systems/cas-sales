@@ -1,12 +1,12 @@
 package ph.com.guanzongroup.cas.sales.constant;
 
 /**
- * Static values for the Sales Transaction (Motorcycle Sales) form:
- * module name, combo box sources, status text, messages, table placeholders,
- * attachment settings and formats.
+ * Static values for the Sales Transaction (Motorcycle Sales) form: module name,
+ * combo box sources, status text, messages, table placeholders, attachment
+ * settings and formats.
  *
- * PLACEHOLDER VALUES: replace the combo descriptions (and add matching *_CODE arrays,
- * in the same order, like SalesQoutationStatic) with the real ones.
+ * PLACEHOLDER VALUES: replace the combo descriptions (and add matching *_CODE
+ * arrays, in the same order, like SalesQoutationStatic) with the real ones.
  * Array position = combo box index, so keep the order stable.
  */
 public class SalesTransactionStatic {
@@ -32,7 +32,7 @@ public class SalesTransactionStatic {
     // ---------------------------------------------------------------------
     // Combo box sources
     // ---------------------------------------------------------------------
-    public static final String[] TRANSACTION_STATUS = {"OPEN", "CONFIRMED", "CANCELLED","PAID", "DELIVERED"};
+    public static final String[] TRANSACTION_STATUS = {"OPEN", "CONFIRMED", "CANCELLED", "PAID", "DELIVERED"};
     public static final String[] CLIENT_TYPES = {"Individual", "Company"};
     public static final String[] VEHICLE_TYPES = {"Brand New", "Pre-Owned"};
     public static final String[] REGISTRATION_TYPES = {"Regular", "Temporary"};
@@ -42,9 +42,9 @@ public class SalesTransactionStatic {
     public static final String[] PAYMENT_TRAN_TYPES = {"Cash", "Credit"};
     public static final int PAYMENT_CREDIT = 1;   // index of "Credit" in PAYMENT_TRAN_TYPES
 
-    public static final String[] PAYMENT_FORMS = {"Cash", "Check", "Bank Transfer", "Credit Card"};
+    public static final String[] PAYMENT_FORMS = {"Cash", "Check", "Bank Transfer", "Credit Card","Cash Balance"};
     public static final String[] CWT_RATES = {"None", "1%", "2%"};
-    public static final String[] ATTACHMENT_TYPES = {"Others", "Customer ID", "Official Receipt"};
+    public static final String[] ATTACHMENT_TYPES = {"Others", "Customer ID", "Invoice","BIR 2317"};
 
     // ---------------------------------------------------------------------
     // Form status text
@@ -63,10 +63,10 @@ public class SalesTransactionStatic {
     public static final String MSG_ADD_CLIENT_UNDER_DEVELOPMENT = "Adding a client is under development.";
     public static final String MSG_ADD_COCLIENT_UNDER_DEVELOPMENT = "Adding a co-client is under development.";
 
-    public static final String MSG_CONFIRM_CANCEL =
-            "Do you really want to cancel this record? \nAny data collected will not be kept.";
-    public static final String MSG_CONFIRM_CLOSE =
-            "Do you really want to close this screen? \nAny unsaved data will not be kept.";
+    public static final String MSG_CONFIRM_CANCEL
+            = "Do you really want to cancel this record? \nAny data collected will not be kept.";
+    public static final String MSG_CONFIRM_CLOSE
+            = "Do you really want to close this screen? \nAny unsaved data will not be kept.";
     public static final String MSG_CONFIRM_REMOVE_UNIT = "Do you really want to remove this unit?";
     public static final String MSG_CONFIRM_REMOVE_GIVEAWAY = "Do you really want to remove this giveaway?";
     public static final String MSG_CONFIRM_REMOVE_ATTACHMENT = "Do you really want to remove this attachment?";
@@ -101,4 +101,22 @@ public class SalesTransactionStatic {
     // ---------------------------------------------------------------------
     public static final String HEADER_ROW_SELECTOR = "TableHeaderRow";
     public static final String REORDER_LOCK_KEY = "reorderLocked";
+
+    public static final String OPEN = "0";
+    public static final String CONFIRMED = "1";
+    public static final String PAID = "2";
+    public static final String CANCELLED = "3";
+    public static final String VOID = "4";
+    public static final String REPLACED = "5";
+    public static final String[] STATUS = {
+        "OPEN",
+        "CONFIRMED",
+        "PAID",
+        "CANCELLED",
+        "VOID",
+        "REPLACED"};
+
+    public static final String[] TRANSACTION_TYPE = {
+        "SALES",
+        "GIFT"};
 }

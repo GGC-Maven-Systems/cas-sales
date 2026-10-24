@@ -68,12 +68,12 @@ public class Model_Sales_Inquiry_Detail extends Model {
             ID2 = "nEntryNox";
 
             //initialize reference objects
-            ParamModels model = new ParamModels(poGRider);
-            poBrand = model.Brand();
-            poModel = model.Model();
-            poColor = model.Color();
-            poModelVariant = model.ModelVariant();
-            poCategory = model.Category2();
+//            ParamModels model = new ParamModels(poGRider);
+            poBrand = new ParamModels(poGRider).Brand();
+            poModel = new ParamModels(poGRider).Model();
+            poColor = new ParamModels(poGRider).Color();
+            poModelVariant = new ParamModels(poGRider).ModelVariant();
+            poCategory = new ParamModels(poGRider).Category2();
             
             InvModels invModel = new InvModels(poGRider); 
             poInventory = invModel.Inventory();

@@ -1,0 +1,2580 @@
+package ph.com.guanzongroup.cas.sales;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.sql.rowset.CachedRowSet;
+import net.sf.jasperreports.engine.JRException;
+import net.sf.jasperreports.engine.data.JRMapCollectionDataSource;
+import org.guanzon.appdriver.agent.ShowDialogFX;
+import org.guanzon.appdriver.agent.services.Model;
+import org.guanzon.appdriver.agent.services.Transaction;
+import org.guanzon.appdriver.base.CommonUtils;
+import org.guanzon.appdriver.base.GuanzonException;
+import org.guanzon.appdriver.base.MiscUtil;
+import org.guanzon.appdriver.base.SQLUtil;
+import org.guanzon.appdriver.constant.ClientType;
+import org.guanzon.appdriver.constant.EditMode;
+import org.guanzon.appdriver.constant.RecordStatus;
+import org.guanzon.appdriver.constant.UserRight;
+import org.guanzon.appdriver.iface.GValidator;
+import org.guanzon.cas.client.ClientGUI;
+import org.guanzon.cas.client.ClientInfo;
+import org.guanzon.cas.client.services.ClientControllers;
+import org.guanzon.cas.inv.InventoryBrowse;
+import org.guanzon.cas.parameter.InsuranceType;
+import org.guanzon.cas.parameter.services.ParamControllers;
+import org.json.simple.JSONObject;
+import ph.com.guanzongroup.cas.sales.constant.SalesTransactionStatic;
+import ph.com.guanzongroup.cas.sales.constant.Sales_Reservation_Static;
+import ph.com.guanzongroup.cas.sales.mcpromo.MCPromoSales;
+import ph.com.guanzongroup.cas.sales.mcpromo.services.PromoControllers;
+import ph.com.guanzongroup.cas.sales.mcpromo.validator.MCPromoSalesValidatorFactory;
+import ph.com.guanzongroup.cas.sales.model.Model_Sales_Detail;
+import ph.com.guanzongroup.cas.sales.model.Model_Sales_Giveaways;
+import ph.com.guanzongroup.cas.sales.model.Model_Sales_Insurance;
+import ph.com.guanzongroup.cas.sales.model.Model_Sales_Master;
+import ph.com.guanzongroup.cas.sales.model.Model_Sales_Registration;
+import static ph.com.guanzongroup.cas.sales.queries.SalesMasterQueries.getSalesClientBrowse;
+import static ph.com.guanzongroup.cas.sales.queries.SalesMasterQueries.getSalesClientSource;
+import static ph.com.guanzongroup.cas.sales.queries.SalesMasterQueries.getSalesPromotion;
+import ph.com.guanzongroup.cas.sales.services.SalesControllers;
+import ph.com.guanzongroup.cas.sales.services.SalesModels;
+
+public class MCSales extends Transaction {
+
+    private String psIndustryCode = "";
+    private String psCompanyID = "";
+    private String psCategorCD = "";
+    private String psClientType = "0";
+    private List<Model> paMaster;
+    private List<Model> paSalesGiveaways;
+    private List<Model> paSalesInsurance;
+    private List<Model> paSalesRegistration;
+    private MCPromoSales poPromo;
+    private String psApprovalUser = "";
+
+    public void setIndustryID(String industryId) {
+        psIndustryCode = industryId;
+    }
+
+    public void setCompanyID(String companyId) {
+        psCompanyID = companyId;
+    }
+
+    public void setCategoryID(String categoryId) {
+        psCategorCD = categoryId;
+    }
+
+    public void setClientType(String clientType) {
+        psClientType = clientType;
+    }
+
+    public String getClientType() {
+        return psClientType;
+    }
+
+    public Model_Sales_Master getMaster() {
+        return (Model_Sales_Master) poMaster;
+    }
+
+    @SuppressWarnings("unchecked")
+    public List<Model_Sales_Master> getMasterList() {
+        return (List<Model_Sales_Master>) (List<?>) paMaster;
+    }
+
+    public Model_Sales_Master getMaster(int masterRow) {
+        return (Model_Sales_Master) paMaster.get(masterRow);
+
+    }
+
+    @SuppressWarnings("unchecked")
+    public List<Model_Sales_Giveaways> getSalesGiveawaysList() {
+        return (List<Model_Sales_Giveaways>) (List<?>) paSalesGiveaways;
+    }
+
+    @SuppressWarnings("unchecked")
+    public List<Model_Sales_Insurance> getSalesInsurance() {
+        return (List<Model_Sales_Insurance>) (List<?>) paSalesInsurance;
+    }
+
+    @SuppressWarnings("unchecked")
+    public List<Model_Sales_Registration> getSalesRegistrations() {
+        return (List<Model_Sales_Registration>) (List<?>) paSalesRegistration;
+    }
+
+    public int getCount() {
+        return paSalesGiveaways.size();
+    }
+
+    public int getCountSalesGiveAway() {
+        return paSalesGiveaways.size();
+    }
+
+    public int getCountSalesInsurance() {
+        return paSalesInsurance.size();
+    }
+
+    public int getCountSalesRegistration() {
+        return paSalesRegistration.size();
+    }
+
+    public Model_Sales_Detail getDetail(int fnEntryNo) {
+        if (getMaster().getTransactionNo().isEmpty()) {
+            return null;
+        }
+
+        // Get the requested detail
+        Model_Sales_Detail loDetail;
+
+        //find the detail record
+        for (int lnCtr = 0; lnCtr <= paDetail.size() - 1; lnCtr++) {
+            loDetail = (Model_Sales_Detail) paDetail.get(lnCtr);
+
+            if (loDetail.getEntryNo() == fnEntryNo) {
+                return loDetail;
+            }
+        }
+
+        // No match found — create new
+        loDetail = new SalesModels(poGRider).SalesDetail();
+        loDetail.newRecord();
+        loDetail.setTransNo(getMaster().getTransactionNo());
+        loDetail.setEntryNo(fnEntryNo);
+        paDetail.add(loDetail);
+
+        return loDetail;
+    }
+
+    public Model_Sales_Giveaways getSalesGiveaways(int fnEntryNo) {
+        if (getMaster().getTransactionNo().isEmpty()) {
+            return null;
+        }
+
+        // Get the requested detail
+        Model_Sales_Giveaways loDetail;
+
+        //find the detail record
+        for (int lnCtr = 0; lnCtr <= paSalesGiveaways.size() - 1; lnCtr++) {
+            loDetail = (Model_Sales_Giveaways) paSalesGiveaways.get(lnCtr);
+
+            if (loDetail.getEntryNo() == fnEntryNo) {
+                return loDetail;
+            }
+        }
+
+        // No match found — create new
+        loDetail = new SalesModels(poGRider).SalesGiveaways();
+        loDetail.newRecord();
+        loDetail.setTransNo(getMaster().getTransactionNo());
+        loDetail.setEntryNo(fnEntryNo);
+        paSalesGiveaways.add(loDetail);
+
+        return loDetail;
+    }
+
+    public Model_Sales_Insurance getSalesInsurance(int fnEntryNo) {
+        if (getMaster().getTransactionNo().isEmpty()) {
+            return null;
+        }
+        // Get the requested detail
+        Model_Sales_Insurance loDetail;
+
+        //find the detail record
+        for (int lnCtr = 0; lnCtr <= paSalesInsurance.size() - 1; lnCtr++) {
+            loDetail = (Model_Sales_Insurance) paSalesInsurance.get(lnCtr);
+
+            if (loDetail.getEntryNo() == fnEntryNo) {
+                return loDetail;
+            }
+        }
+
+        // No match found — create new
+        loDetail = new SalesModels(poGRider).SalesInsurance();
+        loDetail.newRecord();
+        loDetail.setTransNo(getMaster().getTransactionNo());
+        loDetail.setEntryNo(fnEntryNo);
+        paSalesInsurance.add(loDetail);
+
+        return loDetail;
+    }
+
+    public Model_Sales_Registration getSalesRegistration(int fnEntryNo) {
+        if (getMaster().getTransactionNo().isEmpty()) {
+            return null;
+        }
+
+        // Get the requested detail
+        Model_Sales_Registration loDetail;
+
+        //find the detail record
+        for (int lnCtr = 0; lnCtr <= paSalesRegistration.size() - 1; lnCtr++) {
+            loDetail = (Model_Sales_Registration) paSalesRegistration.get(lnCtr);
+
+            if (loDetail.getEntryNo() == fnEntryNo) {
+                return loDetail;
+            }
+        }
+
+        // No match found — create new
+        loDetail = new SalesModels(poGRider).SalesRegistration();
+        loDetail.newRecord();
+        loDetail.setTransNo(getMaster().getTransactionNo());
+        loDetail.setEntryNo(fnEntryNo);
+        paSalesRegistration.add(loDetail);
+
+        return loDetail;
+    }
+
+    public JSONObject initTransaction() throws GuanzonException, SQLException {
+        SOURCE_CODE = "MCSl";
+
+        poMaster = new SalesModels(poGRider).SalesMaster();
+        poDetail = new SalesModels(poGRider).SalesDetail();
+
+        //Other Detail
+        paSalesGiveaways = new ArrayList<Model>();
+        paSalesInsurance = new ArrayList<Model>();
+        paSalesRegistration = new ArrayList<Model>();
+        paMaster = new ArrayList<Model>();
+        paDetail = new ArrayList<Model>();
+
+        pbWithUI = true; //allow input
+
+        return super.initialize();
+    }
+
+    public JSONObject searchTransaction(String value, boolean byCode, boolean byExact) {
+        try {
+            String lsSQL = SQL_BROWSE;
+            String lsCondition = "";
+            if (psTranStat != null) {
+                if (this.psTranStat.length() > 1) {
+                    for (int lnCtr = 0; lnCtr <= this.psTranStat.length() - 1; lnCtr++) {
+                        lsCondition = lsCondition + ", " + SQLUtil.toSQL(Character.toString(this.psTranStat.charAt(lnCtr)));
+                    }
+                    lsCondition = "cTranStat IN (" + lsCondition.substring(2) + ")";
+                } else {
+                    lsCondition = "cTranStat = " + SQLUtil.toSQL(this.psTranStat);
+                }
+                lsSQL = MiscUtil.addCondition(lsSQL, lsCondition);
+            }
+
+            if (!psCategorCD.isEmpty()) {
+                lsSQL = MiscUtil.addCondition(lsSQL, "sCategrCd = " + SQLUtil.toSQL(psCategorCD));
+            }
+
+            lsSQL = lsSQL + " GROUP BY a.sTransNox ";
+            poJSON = ShowDialogFX.Search(poGRider,
+                    lsSQL,
+                    value,
+                    "Promo ID»sPromDesc»Date»From Date»Thru Date",
+                    "a.sTransNox»a.sPromDesc»a.dTransact»a.dFromDate»a.dThruDate",
+                    "a.sTransNox»a.sPromDesc»a.dTransact»a.dFromDate»a.dThruDate",
+                    byExact ? (byCode ? 0 : 1) : 2);
+
+            if (poJSON != null) {
+                if ("error".equals((String) poJSON.get("result"))) {
+                    return poJSON;
+                } else {
+                    return openTransaction((String) poJSON.get("sTransNox"));
+                }
+            } else {
+                poJSON = new JSONObject();
+                poJSON.put("result", "error");
+                poJSON.put("message", "No record loaded.");
+                return poJSON;
+
+            }
+        } catch (CloneNotSupportedException | SQLException | GuanzonException ex) {
+            Logger.getLogger(MCSales.class
+                    .getName()).log(Level.SEVERE, null, ex);
+            poJSON = new JSONObject();
+            poJSON.put("result", "error");
+            poJSON.put("message", "No record loaded.");
+            return poJSON;
+        }
+    }
+
+    public JSONObject OpenTransaction(String transaction) throws CloneNotSupportedException, SQLException, GuanzonException {
+        return openTransaction(transaction);
+    }
+
+    public JSONObject openTransaction(String transaction) throws CloneNotSupportedException, SQLException, GuanzonException {
+        if (transaction.isEmpty()) {
+            poJSON = new JSONObject();
+            poJSON.put("result", "error");
+            poJSON.put("message", "Transaction must not empty.");
+            return poJSON;
+        }
+
+        poJSON = poMaster.openRecord(transaction);
+
+        if ("error".equals((String) poJSON.get("result"))) {
+            poJSON = new JSONObject();
+            poJSON.put("result", "error");
+            poJSON.put("message", "Unable to Open Transaction Record.");
+            return poJSON;
+        }
+        paSalesGiveaways.clear();
+        paSalesInsurance.clear();
+        paSalesRegistration.clear();
+        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        //Open Sales_Giveaways
+        String lsSQL = "SELECT * FROM Sales_Giveaways"
+                + " WHERE sTransNox = " + SQLUtil.toSQL(transaction);
+
+        ResultSet loRS = poGRider.executeQuery(lsSQL);
+
+        if (MiscUtil.RecordCount(loRS) > 0) {
+            while (loRS.next()) {
+                Model_Sales_Giveaways loDetail = new SalesModels(poGRider).SalesGiveaways();
+                loDetail.initialize();
+                loDetail.newRecord();
+                poJSON = loDetail.openRecord(transaction, loRS.getString("nEntryNox"));
+
+                if ("error".equals((String) poJSON.get("result"))) {
+                    poJSON.put("message", "Unable to open sales Sales Giveaways record.");
+                    clear();
+                    return poJSON;
+                }
+                loDetail.updateRecord();
+
+                paSalesGiveaways.add(loDetail);
+            }
+        }
+
+        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        //Open Sales_Insurance
+        lsSQL = "SELECT * FROM Sales_Insurance"
+                + " WHERE sTransNox = " + SQLUtil.toSQL(transaction);
+
+        loRS = poGRider.executeQuery(lsSQL);
+
+        if (MiscUtil.RecordCount(loRS) > 0) {
+            while (loRS.next()) {
+                Model_Sales_Insurance loDetail = new SalesModels(poGRider).SalesInsurance();
+                loDetail.initialize();
+                loDetail.newRecord();
+                poJSON = loDetail.openRecord(transaction, loRS.getString("nEntryNox"));
+
+                if ("error".equals((String) poJSON.get("result"))) {
+                    poJSON.put("message", "Unable to open Sales Insurance record.");
+                    clear();
+                    return poJSON;
+                }
+                loDetail.updateRecord();
+
+                paSalesRegistration.add(loDetail);
+            }
+        }
+
+        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        //Open Sales_Registration
+        lsSQL = "SELECT * FROM Sales_Registration"
+                + " WHERE sTransNox = " + SQLUtil.toSQL(transaction);
+
+        loRS = poGRider.executeQuery(lsSQL);
+
+        if (MiscUtil.RecordCount(loRS) > 0) {
+            while (loRS.next()) {
+                Model_Sales_Registration loDetail = new SalesModels(poGRider).SalesRegistration();
+                loDetail.initialize();
+                loDetail.newRecord();
+                poJSON = loDetail.openRecord(transaction, loRS.getString("nEntryNox"));
+
+                if ("error".equals((String) poJSON.get("result"))) {
+                    poJSON.put("message", "Unable to open Sales Registration record.");
+                    clear();
+                    return poJSON;
+                }
+                loDetail.updateRecord();
+
+                paSalesRegistration.add(loDetail);
+            }
+        }
+        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        //Open Sales_Detail
+        lsSQL = "SELECT * FROM Sales_Detail"
+                + " WHERE sTransNox = " + SQLUtil.toSQL(transaction);
+
+        loRS = poGRider.executeQuery(lsSQL);
+
+        if (MiscUtil.RecordCount(loRS) > 0) {
+            while (loRS.next()) {
+                Model_Sales_Detail loDetail = new SalesModels(poGRider).SalesDetail();
+                loDetail.initialize();
+                loDetail.newRecord();
+                poJSON = loDetail.openRecord(transaction, loRS.getString("nEntryNox"));
+
+                if ("error".equals((String) poJSON.get("result"))) {
+                    poJSON.put("message", "Unable to open sales detail record.");
+                    clear();
+                    return poJSON;
+                }
+                loDetail.updateRecord();
+
+                paDetail.add(loDetail);
+            }
+        }
+
+        poEvent = new JSONObject();
+
+        poEvent.put("event", "READY");
+
+        pnEditMode = EditMode.READY;
+        pbRecordExist = true;
+
+        poJSON = new JSONObject();
+
+        poJSON.put("result", "success");
+        poJSON.put("result", "Transaction loaded successfully");
+        return poJSON;
+    }
+
+    @Override
+    public JSONObject newTransaction() throws CloneNotSupportedException {
+        if (!pbInitTran) {
+            poJSON.put("result", "error");
+            poJSON.put("message", "Object is not initialized.");
+            return poJSON;
+        }
+
+        poMaster.initialize();
+        poMaster.newRecord();
+
+        //clear Data
+        paSalesGiveaways.clear();
+        paSalesInsurance.clear();
+        paSalesRegistration.clear();
+
+        poJSON = initFields();
+        if ("error".equals((String) poJSON.get("result"))) {
+            return poJSON;
+        }
+
+        getMaster().setIndustryCode(psIndustryCode);
+        getMaster().setCategory(psCategorCD);
+
+        pnEditMode = EditMode.ADDNEW;
+
+        poEvent = new JSONObject();
+        poEvent.put("event", "ADD NEW");
+
+        poJSON = new JSONObject();
+        poJSON.put("result", "success");
+        return poJSON;
+    }
+
+    @Override
+    protected JSONObject willSave() throws SQLException, GuanzonException {
+        poJSON = new JSONObject();
+
+        poJSON = isEntryOkay(SalesTransactionStatic.OPEN);
+        if ("error".equals((String) poJSON.get("result"))) {
+            return poJSON;
+        }
+
+        removeOther();
+
+        if (paSalesGiveaways.size() > 0) {
+            poJSON = new JSONObject();
+            poJSON = isEntryOkay(0);
+            if ("error".equals((String) poJSON.get("result"))) {
+                return poJSON;
+            }
+
+        }
+        if (paSalesInsurance.size() > 0) {
+
+            isEntryOkay(1);
+            poJSON = new JSONObject();
+            poJSON = isEntryOkay(0);
+            if ("error".equals((String) poJSON.get("result"))) {
+                return poJSON;
+            }
+
+        }
+        if (paSalesRegistration.size() > 0) {
+            isEntryOkay(2);
+            poJSON = new JSONObject();
+            poJSON = isEntryOkay(0);
+            if ("error".equals((String) poJSON.get("result"))) {
+                return poJSON;
+            }
+
+        }
+
+        //assign values needed
+        poJSON.put("result", "success");
+        return poJSON;
+
+    }
+
+    public void removeOther() {
+        //Giveaways
+        int lnDetailCount = 0;
+        for (int lnCtr = paSalesGiveaways.size() - 1; lnCtr >= 0; lnCtr--) {
+            Model_Sales_Giveaways loDetail = (Model_Sales_Giveaways) paSalesGiveaways.get(lnCtr);
+            if (loDetail.getStockID() == null || loDetail.getStockID().isEmpty()) {
+                if (loDetail.getSourceNo() == null || loDetail.getSourceNo().isEmpty()) {
+                    paSalesGiveaways.remove(lnCtr);
+                    continue;
+                }
+            }
+        }
+        for (int lnCtr = 0; lnCtr < paSalesGiveaways.size(); lnCtr++) {
+            Model_Sales_Giveaways loDetail = (Model_Sales_Giveaways) paSalesGiveaways.get(lnCtr);
+            lnDetailCount++;
+            loDetail.setTransNo(getMaster().getTransactionNo());
+            loDetail.setEntryNo(lnDetailCount);
+        }
+
+        //Insurance
+        lnDetailCount = 0;
+        for (int lnCtr = paSalesInsurance.size() - 1; lnCtr >= 0; lnCtr--) {
+            Model_Sales_Insurance loDetail = (Model_Sales_Insurance) paSalesInsurance.get(lnCtr);
+            if (loDetail.getInsuranceID() == null || loDetail.getInsuranceID().isEmpty()) {
+                paSalesInsurance.remove(lnCtr);
+                continue;
+            }
+        }
+
+        for (int lnCtr = 0; lnCtr < paSalesInsurance.size(); lnCtr++) {
+            Model_Sales_Insurance loDetail = (Model_Sales_Insurance) paSalesInsurance.get(lnCtr);
+            lnDetailCount++;
+            loDetail.setTransNo(getMaster().getTransactionNo());
+            loDetail.setEntryNo(lnDetailCount);
+        }
+
+        //Registration
+        lnDetailCount = 0;
+        for (int lnCtr = paSalesRegistration.size() - 1; lnCtr >= 0; lnCtr--) {
+            Model_Sales_Registration loDetail = (Model_Sales_Registration) paSalesRegistration.get(lnCtr);
+            if (loDetail.getInsuranceTypeID() == null || loDetail.getInsuranceTypeID().isEmpty()) {
+                paSalesRegistration.remove(lnCtr);
+                continue;
+            }
+        }
+
+        for (int lnCtr = 0; lnCtr < paSalesRegistration.size(); lnCtr++) {
+            Model_Sales_Insurance loDetail = (Model_Sales_Insurance) paSalesRegistration.get(lnCtr);
+            lnDetailCount++;
+            loDetail.setTransNo(getMaster().getTransactionNo());
+            loDetail.setEntryNo(lnDetailCount);
+        }
+
+        //Detail
+        lnDetailCount = 0;
+        for (int lnCtr = paDetail.size() - 1; lnCtr >= 0; lnCtr--) {
+            Model_Sales_Detail loDetail = (Model_Sales_Detail) paDetail.get(lnCtr);
+            if (loDetail.getStockID() == null || loDetail.getStockID().isEmpty()) {
+                paDetail.remove(lnCtr);
+                continue;
+            }
+        }
+        for (int lnCtr = 0; lnCtr < paDetail.size(); lnCtr++) {
+            Model_Sales_Detail loDetail = (Model_Sales_Detail) paDetail.get(lnCtr);
+            lnDetailCount++;
+            loDetail.setTransNo(getMaster().getTransactionNo());
+            loDetail.setEntryNo(lnDetailCount);
+        }
+
+    }
+
+    @Override
+    public JSONObject saveTransaction() throws CloneNotSupportedException, SQLException, GuanzonException {
+        poJSON = new JSONObject();
+
+        if (!pbInitTran) {
+            poJSON.put("result", "error");
+            poJSON.put("message", "Object is not initialized.");
+            return poJSON;
+        }
+
+        if (pnEditMode == EditMode.READY) {
+            poJSON.put("result", "error");
+            poJSON.put("message", "Saving of unmodified transaction is not allowed.");
+            return poJSON;
+        }
+        poJSON = willSave();
+        if ("error".equals((String) poJSON.get("result"))) {
+            return poJSON;
+        }
+
+        if (getEditMode() == EditMode.ADDNEW || pnEditMode == EditMode.UPDATE) {
+            pdModified = poGRider.getServerDate();
+            poMaster.setValue("sModified", poGRider.Encrypt(poGRider.getUserID()));
+        }
+
+        poJSON = save();
+
+        if (!pbWthParent) {
+            poGRider.beginTrans((String) poEvent.get("event"),
+                    poMaster.getTable(),
+                    SOURCE_CODE,
+                    String.valueOf(poMaster.getValue(1)));
+        }
+
+        if ("success".equals((String) poJSON.get("result"))) {
+            //save master and detail
+            if (pbVerifyEntryNo) {
+                poMaster.setValue("nEntryNox", paDetail.size());
+            }
+
+            if (pnEditMode == EditMode.ADDNEW || pnEditMode == EditMode.UPDATE) {
+                poMaster.setValue("dModified", pdModified);
+                poJSON = poMaster.saveRecord();
+
+                if ("error".equals((String) poJSON.get("result"))) {
+                    if (!pbWthParent) {
+                        poGRider.rollbackTrans();
+                    }
+                    return poJSON;
+                }
+                //Giveaways Save
+                for (int lnCtr = 0; lnCtr <= paSalesGiveaways.size() - 1; lnCtr++) {
+                    if (paSalesGiveaways.get(lnCtr).getValue("sTransNox") == null) {
+                        continue;
+                    }
+                    paSalesGiveaways.get(lnCtr).setValue("sTransNox", String.valueOf(poMaster.getValue(1)));
+                    poJSON = paSalesGiveaways.get(lnCtr).saveRecord();
+                    System.out.println(poJSON.get("message"));
+                    if ("error".equals((String) poJSON.get("result"))) {
+                        if (!pbWthParent) {
+                            poGRider.rollbackTrans();
+                        }
+                        return poJSON;
+                    }
+                }
+                //Insurance Save
+                for (int lnCtr = 0; lnCtr <= paSalesInsurance.size() - 1; lnCtr++) {
+                    if (paSalesInsurance.get(lnCtr).getValue("sTransNox") == null) {
+                        continue;
+                    }
+                    paSalesInsurance.get(lnCtr).setValue("sTransNox", String.valueOf(poMaster.getValue(1)));
+                    poJSON = paSalesInsurance.get(lnCtr).saveRecord();
+                    System.out.println(poJSON.get("message"));
+                    if ("error".equals((String) poJSON.get("result"))) {
+                        if (!pbWthParent) {
+                            poGRider.rollbackTrans();
+                        }
+                        return poJSON;
+                    }
+                }
+
+                //Registration Save
+                for (int lnCtr = 0; lnCtr <= paSalesRegistration.size() - 1; lnCtr++) {
+                    if (paSalesRegistration.get(lnCtr).getValue("sTransNox") == null) {
+                        continue;
+                    }
+                    paSalesRegistration.get(lnCtr).setValue("sTransNox", String.valueOf(poMaster.getValue(1)));
+                    poJSON = paSalesRegistration.get(lnCtr).saveRecord();
+                    System.out.println(poJSON.get("message"));
+                    if ("error".equals((String) poJSON.get("result"))) {
+                        if (!pbWthParent) {
+                            poGRider.rollbackTrans();
+                        }
+                        return poJSON;
+                    }
+                }
+
+            } else {
+                poJSON.put("result", "error");
+                poJSON.put("message", "Edit mode is not allowed to save transaction.");
+                return poJSON;
+            }
+        } else {
+            if (!pbWthParent) {
+                poGRider.rollbackTrans();
+            }
+
+            return poJSON;
+        }
+
+        if (!pbWthParent) {
+            poGRider.commitTrans();
+        }
+
+        pnEditMode = EditMode.UNKNOWN;
+        pbRecordExist = true;
+//        paMaster = new ArrayList<Model>();
+        JSONObject loJSON = new JSONObject();
+        loJSON.put("result", "success");
+        loJSON.put("message", "Transaction saved successfully.");
+        openTransaction(getMaster().getTransactionNo());
+        return loJSON;
+    }
+
+    public JSONObject UpdateTransaction() {
+        poJSON = new JSONObject();
+        if (SalesTransactionStatic.CONFIRMED.equals((String) poMaster.getValue("cTranStat"))) {
+            poJSON.put("result", "error");
+            poJSON.put("message", "Transaction was already confirmed.");
+            return poJSON;
+        }
+        if (SalesTransactionStatic.VOID.equals((String) poMaster.getValue("cTranStat"))) {
+            poJSON.put("result", "error");
+            poJSON.put("message", "Transaction was already voided.");
+            return poJSON;
+        }
+        if (SalesTransactionStatic.REPLACED.equals((String) poMaster.getValue("cTranStat"))) {
+            poJSON.put("result", "error");
+            poJSON.put("message", "Transaction was already replaced.");
+            return poJSON;
+        }
+        if (SalesTransactionStatic.CANCELLED.equals((String) poMaster.getValue("cTranStat"))) {
+            poJSON.put("result", "error");
+            poJSON.put("message", "Transaction was already cancelled.");
+            return poJSON;
+        }
+        if (SalesTransactionStatic.PAID.equals((String) poMaster.getValue("cTranStat"))) {
+            poJSON.put("result", "error");
+            poJSON.put("message", "Transaction was already posted.");
+            return poJSON;
+        }
+
+        poJSON = updateTransaction();
+        return poJSON;
+    }
+
+    @Override
+    protected JSONObject isEntryOkay(String status) throws SQLException, GuanzonException {
+        GValidator loValidator = MCPromoSalesValidatorFactory.make(getMaster().getIndustryCode());
+
+        loValidator.setApplicationDriver(poGRider);
+        loValidator.setTransactionStatus(status);
+        loValidator.setMaster(poMaster);
+
+        poJSON = loValidator.validate();
+        if (poJSON.containsKey("isRequiredApproval") && Boolean.TRUE.equals(poJSON.get("isRequiredApproval"))) {
+            if (poGRider.getUserLevel() <= UserRight.ENCODER) {
+                poJSON = ShowDialogFX.getUserApproval(poGRider);
+                if ("error".equals((String) poJSON.get("result"))) {
+                    return poJSON;
+                } else {
+                    //check if approving officer is authorized
+                    if (Integer.parseInt(poJSON.get("nUserLevl").toString()) <= UserRight.ENCODER) {
+                        poJSON.put("result", "error");
+                        poJSON.put("message", "User is not an authorized approving officer.");
+                        return poJSON;
+                    }
+
+                    String lsUserIDxx = poJSON.get("sUserIDxx").toString();
+                    int lnUserLevl = Integer.parseInt(poJSON.get("nUserLevl").toString());
+
+                    setApproving(lsUserIDxx);
+                    psApprovalUser = lsUserIDxx;
+                }
+            }
+        }
+
+        return poJSON;
+    }
+
+    protected JSONObject isEntryOkay(int otherEntry) {
+        JSONObject loJSON;
+        switch (otherEntry) {
+            case 0://GiveAways
+                loJSON = new JSONObject();
+                loJSON.put("result", "success");
+                break;
+            case 1://Insurance
+                loJSON = new JSONObject();
+                loJSON.put("result", "success");
+                break;
+            case 2://Registration
+                loJSON = new JSONObject();
+                loJSON.put("result", "success");
+                break;
+            default:
+                loJSON = new JSONObject();
+                loJSON.put("result", "error");
+                loJSON.put("message", "Key Validator is not configure. Please Inform MIS SEG.");
+                break;
+
+        }
+
+        return loJSON;
+    }
+
+    public JSONObject CloseTransaction() throws SQLException, GuanzonException, CloneNotSupportedException {
+        poJSON = new JSONObject();
+
+        if (getEditMode() != EditMode.READY) {
+            poJSON.put("result", "error");
+            poJSON.put("message", "No transacton was loaded.");
+            return poJSON;
+        }
+
+        if (SalesTransactionStatic.VOID.equals((String) poMaster.getValue("cTranStat"))) {
+            poJSON.put("result", "error");
+            poJSON.put("message", "Transaction was already voided.");
+            return poJSON;
+        }
+
+        if (SalesTransactionStatic.REPLACED.equals((String) poMaster.getValue("cTranStat"))) {
+            poJSON.put("result", "error");
+            poJSON.put("message", "Transaction was already replaced.");
+            return poJSON;
+        }
+
+        if (SalesTransactionStatic.CONFIRMED.equals((String) poMaster.getValue("cTranStat"))) {
+            poJSON.put("result", "error");
+            poJSON.put("message", "Transaction was already confirmed.");
+            return poJSON;
+        }
+
+        //validator
+        poJSON = isEntryOkay(SalesTransactionStatic.CONFIRMED);
+        if ("error".equals((String) poJSON.get("result"))) {
+            return poJSON;
+        }
+
+        poGRider.beginTrans("UPDATE STATUS", "ConfirmTransaction", SOURCE_CODE, getMaster().getTransactionNo());
+
+        poJSON = statusChange(poMaster.getTable(),
+                (String) poMaster.getValue("sTransNox"),
+                "",
+                SalesTransactionStatic.CONFIRMED,
+                false, true);
+        if ("error".equals((String) poJSON.get("result"))) {
+            poGRider.rollbackTrans();
+            return poJSON;
+        }
+
+        poGRider.commitTrans();
+
+        JSONObject loJSON = new JSONObject();
+        loJSON.put("result", "success");
+        loJSON.put("message", "Transaction confirmed successfully.");
+
+        openTransaction(getMaster().getTransactionNo());
+        return loJSON;
+    }
+
+    public JSONObject CancelTransaction() throws SQLException, GuanzonException, CloneNotSupportedException {
+        poJSON = new JSONObject();
+
+        if (getEditMode() != EditMode.READY) {
+            poJSON.put("result", "error");
+            poJSON.put("message", "Invalid Edit Mode");
+            return poJSON;
+        }
+
+        if (SalesTransactionStatic.VOID.equals((String) poMaster.getValue("cTranStat"))) {
+            poJSON.put("result", "error");
+            poJSON.put("message", "Transaction was already voided.");
+            return poJSON;
+        }
+
+        //validator
+        poJSON = isEntryOkay(SalesTransactionStatic.CANCELLED);
+        if ("error".equals((String) poJSON.get("result"))) {
+            return poJSON;
+        }
+
+        poGRider.beginTrans("UPDATE STATUS", "CancelTransaction", SOURCE_CODE, getMaster().getTransactionNo());
+
+        poJSON = statusChange(poMaster.getTable(),
+                (String) poMaster.getValue("sTransNox"),
+                "",
+                SalesTransactionStatic.CANCELLED,
+                false, true);
+        if ("error".equals((String) poJSON.get("result"))) {
+            poGRider.rollbackTrans();
+            return poJSON;
+        }
+
+        poGRider.commitTrans();
+
+        JSONObject loJSON = new JSONObject();
+        loJSON.put("result", "success");
+        loJSON.put("message", "Transaction cancelled successfully.");
+
+        openTransaction(getMaster().getTransactionNo());
+        return loJSON;
+    }
+
+    public JSONObject VoidTransaction() throws SQLException, GuanzonException, CloneNotSupportedException {
+        poJSON = new JSONObject();
+
+        if (getEditMode() != EditMode.READY) {
+            poJSON.put("result", "error");
+            poJSON.put("message", "Invalid Edit Mode.");
+            return poJSON;
+        }
+        if (SalesTransactionStatic.VOID.equals((String) poMaster.getValue("cTranStat"))) {
+            poJSON.put("result", "error");
+            poJSON.put("message", "Transaction was already voided.");
+            return poJSON;
+        }
+
+        //validator
+        poJSON = isEntryOkay(SalesTransactionStatic.VOID);
+        if ("error".equals((String) poJSON.get("result"))) {
+            return poJSON;
+        }
+
+        poGRider.beginTrans("UPDATE STATUS", "VoidTransaction", SOURCE_CODE, getMaster().getTransactionNo());
+
+        poJSON = statusChange(poMaster.getTable(),
+                (String) poMaster.getValue("sTransNox"),
+                "VoidTransaction",
+                SalesTransactionStatic.VOID,
+                false, true);
+        if ("error".equals((String) poJSON.get("result"))) {
+            poGRider.rollbackTrans();
+            return poJSON;
+        }
+
+        poGRider.commitTrans();
+
+        JSONObject loJSON = new JSONObject();
+        loJSON.put("result", "success");
+        loJSON.put("message", "Transaction voided successfully.");
+
+        openTransaction(getMaster().getTransactionNo());
+        return loJSON;
+    }
+
+    public JSONObject loadTransactionList(String value)
+            throws SQLException, GuanzonException, CloneNotSupportedException {
+//        poJSON = new JSONObject();
+
+        paMaster.clear();
+        String lsSQL = SQL_BROWSE;
+        String lsCondition = "";
+        if (psTranStat != null) {
+            if (this.psTranStat.length() > 1) {
+                for (int lnCtr = 0; lnCtr <= this.psTranStat.length() - 1; lnCtr++) {
+                    lsCondition = lsCondition + ", " + SQLUtil.toSQL(Character.toString(this.psTranStat.charAt(lnCtr)));
+                }
+                lsCondition = "cTranStat IN (" + lsCondition.substring(2) + ")";
+            } else {
+                lsCondition = "cTranStat = " + SQLUtil.toSQL(this.psTranStat);
+            }
+            lsSQL = MiscUtil.addCondition(lsSQL, lsCondition);
+        }
+
+        if (!psIndustryCode.isEmpty()) {
+            lsSQL = MiscUtil.addCondition(lsSQL, "sIndstCdx = " + SQLUtil.toSQL(psIndustryCode));
+        }
+        ResultSet loRS = poGRider.executeQuery(lsSQL);
+
+        if (MiscUtil.RecordCount(loRS)
+                <= 0) {
+            poJSON.put("result", "error");
+            poJSON.put("message", "No record found.");
+            return poJSON;
+        }
+
+        while (loRS.next()) {
+            Model_Sales_Master loSales = new SalesModels(poGRider).SalesMaster();
+
+            poJSON = loSales.openRecord(loRS.getString("sTransNox"));
+
+            if ("success".equals((String) poJSON.get("result"))) {
+                paMaster.add((Model) loSales);
+            } else {
+                return poJSON;
+            }
+        }
+
+        poJSON = new JSONObject();
+        poJSON.put(
+                "result", "success");
+        return poJSON;
+    }
+
+    public JSONObject PostTransaction() throws SQLException, GuanzonException, CloneNotSupportedException {
+        poJSON = new JSONObject();
+
+        if (getEditMode() != EditMode.UPDATE
+                && getEditMode() != EditMode.READY) {
+            poJSON.put("result", "error");
+            poJSON.put("message", "Invalid Edit Mode.");
+            return poJSON;
+        }
+
+        if (SalesTransactionStatic.PAID.equals((String) poMaster.getValue("cTranStat"))) {
+            poJSON.put("result", "error");
+            poJSON.put("message", "Transaction was already posted.");
+            return poJSON;
+        }
+
+        //validator
+        poJSON = isEntryOkay(SalesTransactionStatic.PAID);
+        if ("error".equals((String) poJSON.get("result"))) {
+            return poJSON;
+        }
+
+        poGRider.beginTrans("UPDATE STATUS", "PostTransaction", SOURCE_CODE, getMaster().getTransactionNo());
+
+        poJSON = statusChange(poMaster.getTable(),
+                (String) poMaster.getValue("sTransNox"),
+                "PostTransaction",
+                SalesTransactionStatic.PAID,
+                false, true);
+        if ("error".equals((String) poJSON.get("result"))) {
+            poGRider.rollbackTrans();
+            return poJSON;
+        }
+
+        poGRider.commitTrans();
+
+        JSONObject loJSON = new JSONObject();
+        loJSON.put("result", "success");
+        loJSON.put("message", "Transaction posted successfully.");
+        openTransaction(getMaster().getTransactionNo());
+        return loJSON;
+    }
+
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    public void ShowStatusHistory() throws SQLException, GuanzonException, Exception {
+        CachedRowSet crs = getStatusHistory();
+
+        crs.beforeFirst();
+
+        while (crs.next()) {
+            switch (crs.getString("cRefrStat")) {
+                case "":
+                    crs.updateString("cRefrStat", "-");
+                    break;
+                case SalesTransactionStatic.OPEN:
+                    crs.updateString("cRefrStat", "OPEN");
+                    break;
+                case SalesTransactionStatic.CONFIRMED:
+                    crs.updateString("cRefrStat", "CONFIRMED");
+                    break;
+                case SalesTransactionStatic.PAID:
+                    crs.updateString("cRefrStat", "PAID");
+                    break;
+                case SalesTransactionStatic.CANCELLED:
+                    crs.updateString("cRefrStat", "CANCELLED");
+                    break;
+                case SalesTransactionStatic.VOID:
+                    crs.updateString("cRefrStat", "VOID");
+                    break;
+
+                default:
+                    char ch = crs.getString("cRefrStat").charAt(0);
+                    String stat = String.valueOf((int) ch - 64);
+
+                    switch (stat) {
+                        case SalesTransactionStatic.OPEN:
+                            crs.updateString("cRefrStat", "OPEN");
+                            break;
+                        case SalesTransactionStatic.CONFIRMED:
+                            crs.updateString("cRefrStat", "CONFIRMED");
+                            break;
+                        case SalesTransactionStatic.PAID:
+                            crs.updateString("cRefrStat", "PAID");
+                            break;
+                        case SalesTransactionStatic.CANCELLED:
+                            crs.updateString("cRefrStat", "CANCELLED");
+                            break;
+                        case SalesTransactionStatic.VOID:
+                            crs.updateString("cRefrStat", "VOID");
+                            break;
+
+                    }
+            }
+            crs.updateRow();
+        }
+
+        JSONObject loJSON = getEntryBy();
+        String entryBy = "";
+        String entryDate = "";
+
+        if ("success".equals((String) loJSON.get("result"))) {
+            entryBy = (String) loJSON.get("sCompnyNm");
+            entryDate = (String) loJSON.get("sEntryDte");
+        }
+
+        showStatusHistoryUI("Sales_Promotion_Master", (String) poMaster.getValue("sTransNox"), entryBy, entryDate, crs);
+    }
+
+    public JSONObject getEntryBy() throws SQLException, GuanzonException {
+        poJSON = new JSONObject();
+        String lsEntry = "";
+        String lsEntryDate = "";
+        String lsSQL = " SELECT b.sModified, b.dModified "
+                + " FROM Sales_Promotion_Master a "
+                + " LEFT JOIN xxxAuditLogMaster b ON"
+                + " b.sSourceNo = a.sTransNox AND b.sEventNme LIKE 'ADD%NEW' AND b.sRemarksx = " + SQLUtil.toSQL(getMaster().getTable());
+        lsSQL = MiscUtil.addCondition(lsSQL, " a.sTransNox =  " + SQLUtil.toSQL(getMaster().getTransactionNo()));
+        System.out.println("Execute SQL : " + lsSQL);
+        ResultSet loRS = poGRider.executeQuery(lsSQL);
+        try {
+            if (MiscUtil.RecordCount(loRS) > 0L) {
+                if (loRS.next()) {
+                    if (loRS.getString("sModified") != null && !"".equals(loRS.getString("sModified"))) {
+                        if (loRS.getString("sModified").length() > 10) {
+                            lsEntry = getSysUser(poGRider.Decrypt(loRS.getString("sModified")));
+                        } else {
+                            lsEntry = getSysUser(loRS.getString("sModified"));
+
+                        }
+                        // Get the LocalDateTime from your result set
+                        LocalDateTime dModified = loRS.getObject("dModified", LocalDateTime.class
+                        );
+                        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM-dd-yyyy HH:mm:ss");
+                        lsEntryDate = dModified.format(formatter);
+                    }
+                }
+            }
+            MiscUtil.close(loRS);
+        } catch (SQLException e) {
+            poJSON.put("result", "error");
+            poJSON.put("message", e.getMessage());
+            return poJSON;
+        }
+
+        poJSON.put("result", "success");
+        poJSON.put("sCompnyNm", lsEntry);
+        poJSON.put("sEntryDte", lsEntryDate);
+        return poJSON;
+    }
+
+    public String getSysUser(String fsId) throws SQLException, GuanzonException {
+        String lsEntry = "";
+        String lsSQL = " SELECT IFNULL(b.sCompnyNm,'') sCompnyNm FROM xxxSysUser a "
+                + " LEFT JOIN Client_Master b ON b.sClientID = a.sEmployNo ";
+        lsSQL = MiscUtil.addCondition(lsSQL, " a.sUserIDxx =  " + SQLUtil.toSQL(fsId));
+        System.out.println("SQL " + lsSQL);
+        ResultSet loRS = poGRider.executeQuery(lsSQL);
+        try {
+            if (MiscUtil.RecordCount(loRS) > 0L) {
+                if (loRS.next()) {
+                    lsEntry = loRS.getString("sCompnyNm");
+                }
+            }
+            MiscUtil.close(loRS);
+        } catch (SQLException e) {
+            poJSON.put("result", "error");
+            poJSON.put("message", e.getMessage());
+        }
+        return lsEntry;
+    }
+
+    //Searching of Master
+    public JSONObject searchClient(String value, boolean byCode)
+            throws SQLException, GuanzonException, CloneNotSupportedException, Exception {
+        JSONObject loSourceTransaction = new JSONObject();
+        poJSON = new JSONObject();
+        JSONObject loJSON = new JSONObject();
+        //initialize Client GUI
+        ClientGUI loClient = new ClientGUI();
+
+        loClient.setGRider(poGRider);
+        loClient.setLogWrapper(null);
+
+        loClient.setClientType(getClientType());
+
+        String lsSQL = getSalesClientBrowse(psIndustryCode);
+
+        System.out.println("SQL : " + lsSQL);
+        poJSON = ShowDialogFX.Search(poGRider,
+                lsSQL,
+                value,
+                "Reservation»Quotation»Credit»Employee»Name»Address»dBirthDte»sAddressx»Client ID",
+                "xHasReserv»xHasQuotat»xHasComitment»xIsEmploye»sCompnyNm»xAddressx»sClientID",
+                "IFNULL(b.sClientID,'')»IFNULL(c.sClientID,'')»IFNULL(d.sClientID,'')»IFNULL(e.sClientID,'')"
+                + "»IFNULL(a.`sCompnyNm`,CONCAT(a.`sLastName`+', '+a.`sFrstName` , ' ',a.`sMiddName`))"
+                + "»dBirthDte»sAddressx»sClientID",
+                byCode ? 0 : 1);
+
+        if (poJSON != null) {
+            if ("success".equals((String) poJSON.get("result"))) {
+                loClient.setClientId((String) poJSON.get("clientId"));
+                //Load Client of Existing 
+
+                //load record
+                CommonUtils.showModal(loClient);
+                loJSON.put("result", "success");
+            } else {
+                loJSON = addClient();
+            }
+            if ("success".equals((String) loJSON.get("result"))) {
+
+                //check if has possible source 
+                if (poJSON.get("xHasReserv").toString().equals("YES")
+                        || poJSON.get("xHasQuotat").toString().equals("YES")
+                        || poJSON.get("xHasComitment").toString().equals("YES")) {
+                    lsSQL = getSalesClientSource(psIndustryCode);
+                    loSourceTransaction = ShowDialogFX.Search(poGRider,
+                            lsSQL,
+                            value,
+                            "Source»Source No»Date»Name»Client ID",
+                            "sSource»sTransNox»dTransact»xClientNm»sClientID",
+                            "sTransNox»dTransact"
+                            + "»IFNULL(a.`sCompnyNm`,CONCAT(a.`sLastName`+', '+a.`sFrstName` , ' ',a.`sMiddName`))"
+                            + "»sClientID",
+                            byCode ? 0 : 1);
+
+                    JSONObject loValidate = new JSONObject();
+                    switch (loSourceTransaction.get("sSource").toString()) {
+                        case "Sales Reservation":
+                            loValidate = validateReservation(loSourceTransaction.get("sTransNox").toString());
+
+                            if (!"success".equals((String) loValidate.get("result"))) {
+                                loValidate.put("result", "error");
+                                loValidate.put("message", "Unable to load Source Sales."
+                                        + "\n \t " + (String) loValidate.get("message"));
+
+                                return loValidate;
+                            }
+                            break;
+                        case "Sales Quotation":
+                            loValidate = validateQuotation(loSourceTransaction.get("sTransNox").toString());
+
+                            if (!"success".equals((String) loValidate.get("result"))) {
+                                loValidate.put("result", "error");
+                                loValidate.put("message", "Unable to load Source Sales."
+                                        + "\n \t " + (String) loValidate.get("message"));
+
+                                return loValidate;
+                            }
+                            break;
+                        case "Sales Commitment":
+                            loValidate.put("result", "error");
+                            loValidate.put("message", "Unable to load Source Sales.");
+
+                            return loValidate;
+
+                    }
+                }
+
+                //add possible business rule to Employee 
+                if (poJSON.get("Employee").toString().equals("YES")) {
+
+                }
+                if ("success".equals((String) poJSON.get("result"))) {
+                    getMaster().setClientID(loClient.getClientId());
+                    getMaster().setAddressID(loClient.getClient().Address(1).getAddressId());
+                    getMaster().setContactID(loClient.getClient().Mobile(1).getMobileId());
+
+                    getMaster().setCompanyName(loClient.getClient().getModel().getCompanyName());
+                    getMaster().setAddress(loClient.getClient().Address(1).getAddress());
+                    getMaster().setMobileNo(loClient.getClient().Mobile(1).getMobileNo());
+                    getMaster().setClientID(poJSON.get("sClientID").toString());
+                }
+                poJSON = new JSONObject();
+                poJSON.put("result", "success");
+                return poJSON;
+            } else {
+                poJSON = new JSONObject();
+                poJSON.put("result", "error");
+                poJSON.put("message", "No record loaded.");
+                return poJSON;
+            }
+        } else {
+            poJSON = new JSONObject();
+            poJSON.put("result", "error");
+            poJSON.put("message", "No record loaded.");
+            return poJSON;
+        }
+    }
+
+    public JSONObject addClient() throws SQLException, GuanzonException, Exception {
+        //initialize new json for result
+        JSONObject loResult = new JSONObject();
+
+        String lsClientId = getMaster().getClientID();
+        lsClientId = (lsClientId == null || lsClientId.isEmpty()) ? "" : lsClientId;
+
+        //initialize Client GUI
+        ClientGUI loClient = new ClientGUI();
+
+        loClient.setGRider(poGRider);
+        loClient.setLogWrapper(null);
+
+        loClient.setClientType(getClientType());
+        loClient.setByCode(false);
+        loClient.setClientId(lsClientId);
+
+        //load record
+        CommonUtils.showModal(loClient);
+
+        //load if button
+        if (!loClient.isCancelled()) {
+            lsClientId = loClient.getClient().getModel().getClientId();
+
+            getMaster().setClientID(loClient.getClientId());
+            getMaster().setAddressID(loClient.getClient().Address(1).getAddressId());
+            getMaster().setContactID(loClient.getClient().Mobile(1).getMobileId());
+
+            getMaster().setCompanyName(loClient.getClient().getModel().getCompanyName());
+            getMaster().setAddress(loClient.getClient().Address(1).getAddress());
+            getMaster().setMobileNo(loClient.getClient().Mobile(1).getMobileNo());
+
+        }
+        loResult.put("result", "success");
+        return loResult;
+    }
+
+    //Validate Source's
+    public JSONObject validateReservation(String sourceNo) throws SQLException, GuanzonException, CloneNotSupportedException {
+
+        JSONObject loValidateSource = new JSONObject();
+        SalesReservation loSalesSource = new SalesControllers(poGRider, null).SalesReservation();
+        loSalesSource.setTransactionStatus(Sales_Reservation_Static.CONFIRMED);
+
+        loSalesSource.setIndustryID(psIndustryCode);
+        loSalesSource.setCompanyID(psCompanyID);
+        loSalesSource.setCategoryCd(psCategorCD);
+        loSalesSource.setBranchCode(psBranchCode);
+
+        loValidateSource = loSalesSource.OpenTransaction(sourceNo);
+        if ("success".equals((String) loValidateSource.get("result"))) {
+
+            getMaster().setClientID(loSalesSource.Master().getClientID());
+            getMaster().setAddress(loSalesSource.Master().getAddressID());
+            getMaster().setMobileNo(loSalesSource.Master().getContactID());
+            getMaster().setAdvances(loSalesSource.Master().getAmountPaid());
+            getMaster().setSalesman(loSalesSource.Master().getEntryBy());
+            getMaster().setSourceNo(loSalesSource.Master().getTransactionNo());
+            getMaster().setSourceCode(loSalesSource.getSourceCode());
+
+            //clear existing detail
+            paDetail.clear();
+            paDetail = new ArrayList<Model>();
+            int lnRowSale = 0;
+            for (int lnCtr = 0; lnCtr < loSalesSource.getDetailCount(); lnCtr++) {
+
+                if (!loSalesSource.Detail(lnCtr).isReversed()) {
+                    continue;
+                }
+
+                //Entry No Sales
+                lnRowSale = lnRowSale++;
+                //initialize detail to set
+                getDetail(lnRowSale);
+                //Sync Detail to Sales Source's
+                getDetail(lnRowSale).setStockID(loSalesSource.Detail(lnCtr).getStockID());
+                getDetail(lnRowSale).setQuantity(Integer.parseInt(String.valueOf(loSalesSource.Detail(lnCtr).getApproved())));
+                getDetail(lnRowSale).setUnitCost(Double.parseDouble(loSalesSource.Detail(lnCtr).Inventory().getCost().toString()));
+                getDetail(lnRowSale).setUnitPrice(loSalesSource.Detail(lnCtr).getUnitPrice());
+
+            }
+
+        } else {
+            loValidateSource.put("result", "error");
+            loValidateSource.put("message", "Unable to Detect Entry No");
+            return loValidateSource;
+        }
+        loValidateSource = new JSONObject();
+        loValidateSource.put("result", "success");
+        return loValidateSource;
+    }
+
+    public JSONObject validateQuotation(String sourceNo) throws SQLException, GuanzonException, CloneNotSupportedException {
+
+        JSONObject loValidateSource = new JSONObject();
+        SalesQoutation loSalesSource = new SalesControllers(poGRider, null).SalesQoutation();
+        loSalesSource.setRecordStatus(Sales_Reservation_Static.CONFIRMED);
+
+        loValidateSource = loSalesSource.openRecord(sourceNo);
+        if ("success".equals((String) loValidateSource.get("result"))) {
+
+            getMaster().setClientID(loSalesSource.getModel().getClientId());
+            getMaster().setAddress(loSalesSource.getModel().getAddressId());
+            getMaster().setMobileNo(loSalesSource.getModel().getContactId());
+            getMaster().setPaymentForm(loSalesSource.Version().Master().getPaymentForm());
+            getMaster().setTermCode(loSalesSource.Version().Master().getTermId());
+            getMaster().setTransactionTotal(loSalesSource.Version().Master().getTransactionTotal());
+            getMaster().setDiscount(loSalesSource.Version().Master().getDiscountAmount());
+            getMaster().setAddDiscount(loSalesSource.Version().Master().getAdditionalDiscount());
+            getMaster().setFreight(loSalesSource.Version().Master().getFreight());
+            getMaster().setVATSales(loSalesSource.Version().Master().getVatSales());
+            getMaster().setFreight(loSalesSource.Version().Master().getFreight());
+            getMaster().setVATAmount(loSalesSource.Version().Master().getVatAmount());
+            getMaster().setNonVATSales(loSalesSource.Version().Master().getNonVatSales());
+            getMaster().setSourceCode(loSalesSource.Version().getSourceCode());
+            getMaster().setSourceNo(loSalesSource.Version().Master().getTransactionNo());
+
+            //clear existing detail
+            paDetail.clear();
+            paDetail = new ArrayList<Model>();
+            int lnRowSale = 0;
+            for (int lnCtr = 0; lnCtr < loSalesSource.Version().getDetailCount(); lnCtr++) {
+
+                if (loSalesSource.Version().Detail(lnCtr).getStockId().isEmpty()) {
+                    continue;
+                }
+
+                //Entry No Sales
+                lnRowSale = lnRowSale++;
+                //initialize detail to set
+                getDetail(lnRowSale);
+                //Sync Detail to Sales Source's
+                getDetail(lnRowSale).setStockID(loSalesSource.Version().Detail(lnCtr).getStockId());
+                getDetail(lnRowSale).setQuantity(loSalesSource.Version().Detail(lnCtr).getQuantity());
+                getDetail(lnRowSale).setUnitCost(Double.parseDouble(loSalesSource.Version().Detail(lnCtr).Inventory().getCost().toString()));
+                getDetail(lnRowSale).setUnitPrice(loSalesSource.Version().Detail(lnCtr).getUnitPrice());
+                getDetail(lnRowSale).setPromoID(loSalesSource.Version().Detail(lnCtr).getPromoCode());
+                getDetail(lnRowSale).setDiscount(loSalesSource.Version().Detail(lnCtr).getDiscount());
+                getDetail(lnRowSale).setAddDiscount(loSalesSource.Version().Detail(lnCtr).getAdditionalDiscount());
+                getDetail(lnRowSale).setFreight(loSalesSource.Version().Detail(lnCtr).getFreight());
+
+            }
+            lnRowSale = 0;
+            for (int lnCtr = 0; lnCtr < loSalesSource.Giveaways().getGiveawayCount(); lnCtr++) {
+
+                //Entry No Sales
+                lnRowSale = lnRowSale++;
+                //initialize detail to set
+                getDetail(lnRowSale);
+                //Sync Detail to Sales Source's
+                getSalesGiveaways(lnRowSale).setStockID(loSalesSource.Giveaways().Giveaway(lnCtr).getStockId());
+                getSalesGiveaways(lnRowSale).setQuantity(loSalesSource.Giveaways().Giveaway(lnCtr).getQuantity());
+                getSalesGiveaways(lnRowSale).setUnitCost(Double.parseDouble(loSalesSource.Giveaways().Giveaway(lnCtr).Inventory().getCost().toString()));
+                getSalesGiveaways(lnRowSale).setUnitPrice(Double.parseDouble(loSalesSource.Giveaways().Giveaway(lnCtr).Inventory().getSellingPrice().toString()));
+                getSalesGiveaways(lnRowSale).setQuantity(loSalesSource.Giveaways().Giveaway(lnCtr).getQuantity());
+                getSalesGiveaways(lnRowSale).setSourceNo(loSalesSource.Giveaways().Giveaway(lnCtr).getTransactionNo());
+                getSalesGiveaways(lnRowSale).setSourceCode(loSalesSource.Version().getSourceCode());
+
+            }
+
+        } else {
+            loValidateSource.put("result", "error");
+            loValidateSource.put("message", "Unable to Detect Entry No");
+            return loValidateSource;
+        }
+        loValidateSource = new JSONObject();
+        loValidateSource.put("result", "success");
+        return loValidateSource;
+    }
+
+    //Searching of Master Co Client
+    public JSONObject searchCoClient(String value, boolean byCode)
+            throws SQLException, GuanzonException, CloneNotSupportedException, Exception {
+        poJSON = new JSONObject();
+        JSONObject loJSON = new JSONObject();
+        //initialize Client GUI
+        ClientGUI loClient = new ClientGUI();
+
+        loClient.setGRider(poGRider);
+        loClient.setLogWrapper(null);
+
+        loClient.setClientType(getClientType());
+
+        poJSON = loClient.searchRecord(value, byCode);
+        if (poJSON != null) {
+            if ("success".equals((String) poJSON.get("result"))) {
+                loClient.setClientId((String) poJSON.get("clientId"));
+                //Load Client of Existing 
+
+                //load record
+                CommonUtils.showModal(loClient);
+                loJSON.put("result", "success");
+            } else {
+                loJSON = addCoClient();
+            }
+            if ("success".equals((String) loJSON.get("result"))) {
+
+                getMaster().setCoClientID(loClient.getClientId());
+                getMaster().setAddressID2(loClient.getClient().Address(1).getAddressId());
+
+                poJSON = new JSONObject();
+                poJSON.put("result", "success");
+                return poJSON;
+            } else {
+                poJSON = new JSONObject();
+                poJSON.put("result", "error");
+                poJSON.put("message", "No record loaded.");
+                return poJSON;
+            }
+        } else {
+            poJSON = new JSONObject();
+            poJSON.put("result", "error");
+            poJSON.put("message", "No record loaded.");
+            return poJSON;
+        }
+    }
+
+    public JSONObject addCoClient() throws SQLException, GuanzonException, Exception {
+        //initialize new json for result
+        JSONObject loResult = new JSONObject();
+
+        String lsClientId = getMaster().getClientID();
+        lsClientId = (lsClientId == null || lsClientId.isEmpty()) ? "" : lsClientId;
+
+        //initialize Client GUI
+        ClientGUI loClient = new ClientGUI();
+
+        loClient.setGRider(poGRider);
+        loClient.setLogWrapper(null);
+
+        loClient.setClientType(getClientType());
+        loClient.setByCode(false);
+        loClient.setClientId(lsClientId);
+
+        //load record
+        CommonUtils.showModal(loClient);
+
+        //load if button
+        if (!loClient.isCancelled()) {
+            lsClientId = loClient.getClient().getModel().getClientId();
+            getMaster().setCoClientID(loClient.getClientId());
+            getMaster().setAddressID2(loClient.getClient().Address(1).getAddressId());
+
+        }
+        loResult.put("result", "success");
+        return loResult;
+    }
+
+    //Searching of Master salesman/referral
+    public JSONObject searchSalesMan(String value, boolean byCode)
+            throws SQLException, GuanzonException, CloneNotSupportedException, Exception {
+        poJSON = new JSONObject();
+
+        ClientInfo loClient = new ClientControllers(poGRider, logwrapr).ClientInfo();
+        loClient.initialize();
+        loClient.setWithParentClass(true);
+        loClient.setWithUI(false);
+
+        poJSON = searchClient(value, byCode);
+
+        if (poJSON != null) {
+            if ("success".equals((String) poJSON.get("result"))) {
+
+                getMaster().setSalesman((String) poJSON.get("sClientID"));
+
+                poJSON = new JSONObject();
+                poJSON.put("result", "success");
+                return poJSON;
+            } else {
+                poJSON = new JSONObject();
+                poJSON.put("result", "error");
+                poJSON.put("message", "No record loaded.");
+                return poJSON;
+            }
+        } else {
+            poJSON = new JSONObject();
+            poJSON.put("result", "error");
+            poJSON.put("message", "No record loaded.");
+            return poJSON;
+        }
+    }
+
+    //Searching of Detail Promotion
+    public JSONObject searchSalesDetailPromotion(int fnRow, String value, boolean byCode)
+            throws SQLException, GuanzonException, CloneNotSupportedException, Exception {
+        poJSON = new JSONObject();
+
+        JSONObject loResult = new JSONObject();
+
+        //validate every required before selection
+        if (getDetail(fnRow).getSerialID().isEmpty()) {
+            poJSON = new JSONObject();
+            poJSON.put("result", "error");
+            poJSON.put("message", "Please select a Inventory Serial First.");
+            return poJSON;
+        }
+        if (getDetail(fnRow).getStockID().isEmpty()) {
+            poJSON = new JSONObject();
+            poJSON.put("result", "error");
+            poJSON.put("message", "Please select a Inventory First.");
+            return poJSON;
+        }
+        if (getDetail(fnRow).Inventory().getModelId() == null && getDetail(fnRow).Inventory().getModelId().isEmpty()) {
+            poJSON = new JSONObject();
+            poJSON.put("result", "error");
+            poJSON.put("message", "Invalid Model to proceed with Promo Selection");
+            return poJSON;
+        }
+
+        String lsSQL = getSalesPromotion(
+                getDetail(fnRow).Inventory().getModelId(),
+                getDetail(fnRow).Inventory().getBrandId());
+        poJSON = ShowDialogFX.Search(poGRider,
+                lsSQL,
+                value,
+                "sPromIDxx»Description»Date»Promo Start»Promo End",
+                "a.sPromIDxx»a.sPromDesc»a.dTransact»a.dFromDate»a.dThruDate",
+                "a.sPromIDxx»a.sPromDesc»a.dTransact»a.dFromDate»a.dThruDate",
+                byCode ? 0 : 1);
+        if (poJSON != null) {
+            if ("success".equals((String) poJSON.get("result"))) {
+
+                getDetail(fnRow).setPromoID((String) poJSON.get("sPromIDxx"));
+                //load Promotion Data
+
+                MCPromoSales loObject = new PromoControllers(poGRider, null).MCPromoSales();
+                loObject.initTransaction();
+                loObject.setTransactionStatus("1");
+                loObject.setIndustryID(psIndustryCode);
+                loObject.setCompanyID(psCompanyID);
+                loObject.setCategoryID(psCategorCD);
+
+                loResult = loObject.OpenTransaction((String) poJSON.get("sPromIDxx"));
+                if ("success".equals((String) loResult.get("result"))) {
+                    //set Promo object for valadtion usage;
+                    poPromo = loObject;
+                    if (loObject.getCountSalesPromotionGiveAwayItem() > 0) {
+                        int lnRowSale = 0;
+                        for (int lnCtr = 1; lnCtr <= loObject.getCountSalesPromotionGiveAwayItem(); lnCtr++) {
+                            if (!loObject.getSalesPromotionGiveAway(lnCtr).isWithActive()) {
+                                continue;
+                            }
+                            //Entry No Sales
+                            lnRowSale = lnRowSale++;
+                            //initialize detail to set
+                            getSalesGiveaways(lnRowSale);
+                            //Sync Detail to Sales Promo's
+                            getSalesGiveaways(lnRowSale).setStockID(loObject.getSalesPromotionGiveAway(lnCtr).getStockID());
+                            getSalesGiveaways(lnRowSale).setQuantity(loObject.getSalesPromotionGiveAway(lnCtr).getQuantity());
+                            getSalesGiveaways(lnRowSale).setUnitCost(Double.parseDouble(loObject.getSalesPromotionGiveAway(lnCtr).Inventory().getCost().toString()));
+                            getSalesGiveaways(lnRowSale).setUnitPrice(Double.parseDouble(loObject.getSalesPromotionGiveAway(lnCtr).Inventory().getSellingPrice().toString()));
+                            getSalesGiveaways(lnRowSale).setQuantity(loObject.getSalesPromotionGiveAway(lnCtr).getQuantity());
+                            getSalesGiveaways(lnRowSale).setSourceNo(loObject.getMaster().getPromoID());
+                            getSalesGiveaways(lnRowSale).setSourceCode(loObject.getSourceCode());
+
+                        }
+
+                    }
+
+                    int lnRowSale = 0;
+                    int lnRowSaleR = 0;
+                    if (loObject.getCountSalesPromotionBrand() > 0) {
+                        for (int lnCtr = 1; lnCtr <= loObject.getCountSalesPromotionBrand(); lnCtr++) {
+                            if (loObject.getSalesPromotionBrand(lnCtr).getBrandID().equals(getDetail(fnRow).Inventory().getBrandId())) {
+
+                                //Entry No Sales
+                                lnRowSale = getCountSalesInsurance() + 1;
+                                lnRowSaleR = getCountSalesRegistration() + 1;
+
+                                //initialize detail to set
+                                getSalesInsurance(lnRowSale);
+
+                                //Sync Detail to Sales Insurance's
+                                getSalesInsurance(lnRowSale).setSerialID(getDetail(fnRow).getSerialID());
+                                getSalesInsurance(lnRowSale).isChargeTo(!loObject.getSalesPromotionBrand(lnCtr).isInsuranceFree());
+
+                                //Sync Detail to Sales Registration's
+                                getSalesRegistration(lnRowSaleR).setSerialID(getDetail(fnRow).getSerialID());
+                                getSalesRegistration(lnRowSaleR).isChargeTo(!loObject.getSalesPromotionBrand(lnCtr).isRegistrationFree());
+
+                                //Sync Detail to Sales Detail's
+                                getDetail(fnRow).setDiscount(loObject.getSalesPromotionBrand(lnCtr).getDiscountRate());
+                                getDetail(fnRow).setAddDiscount(loObject.getSalesPromotionBrand(lnCtr).getDiscAmount());
+                                getDetail(fnRow).setFreight(loObject.getSalesPromotionBrand(lnCtr).getFreight());
+                                break;
+                            }
+                        }
+                    }
+                    if (loObject.getCountSalesPromotionModel() > 0) {
+                        for (int lnCtr = 1; lnCtr <= loObject.getCountSalesPromotionModel(); lnCtr++) {
+                            if (loObject.getSalesPromotionModel(lnCtr).getModelID().equals(getDetail(fnRow).Inventory().getModelId())) {
+
+                                //Entry No Sales
+                                lnRowSale = getCountSalesRegistration() + 1;
+                                //initialize detail to set
+                                getSalesRegistration(lnRowSale);
+
+                                //Sync Detail to Sales Insurance's
+                                getSalesInsurance(lnRowSale).setSerialID(getDetail(fnRow).getSerialID());
+                                getSalesInsurance(lnRowSale).isChargeTo(!loObject.getSalesPromotionModel(lnCtr).isInsuranceFree());
+
+                                //Sync Detail to Sales Registration's
+                                getSalesRegistration(lnRowSaleR).setSerialID(getDetail(fnRow).getSerialID());
+                                getSalesRegistration(lnRowSaleR).isChargeTo(!loObject.getSalesPromotionModel(lnCtr).isRegistrationFree());
+
+                                //Sync Detail to Sales Detail's
+                                getDetail(fnRow).setDiscount(loObject.getSalesPromotionModel(lnCtr).getDiscountRate());
+                                getDetail(fnRow).setAddDiscount(loObject.getSalesPromotionModel(lnCtr).getDiscAmount());
+                                getDetail(fnRow).setFreight(loObject.getSalesPromotionModel(lnCtr).getFreight());
+                                break;
+                            }
+                        }
+                    }
+
+                }
+
+            } else {
+                poJSON = new JSONObject();
+                poJSON.put("result", "error");
+                poJSON.put("message", "No record loaded.");
+                return poJSON;
+            }
+
+        } else {
+            poJSON = new JSONObject();
+            poJSON.put("result", "error");
+            poJSON.put("message", "No record loaded.");
+            return poJSON;
+        }
+
+        poJSON = new JSONObject();
+        poJSON.put("result", "success");
+        return poJSON;
+    }
+    
+    public JSONObject searchDetailBySerial(int row, String value, boolean byCode) throws SQLException, GuanzonException, CloneNotSupportedException {
+        InventoryBrowse loBrowse = new InventoryBrowse(poGRider, logwrapr);
+        loBrowse.initTransaction();
+        if (!psIndustryCode.isEmpty()) {
+            loBrowse.setIndustry(psIndustryCode);
+        }
+        loBrowse.setCategoryFilters(psCategorCD);
+        loBrowse.setBranch(poGRider.getBranchCode());
+        //allow negative quantity NEW BR 07-2026
+        loBrowse.isWithQuantityStock(false);
+
+        poJSON = new JSONObject();
+       
+        poJSON = loBrowse.searchInventorySerialWithStock(value, byCode);
+        System.out.println("result " + (String) poJSON.get("result"));
+        if ("success".equals((String) poJSON.get("result"))) {
+            for (int lnExisting = 0; lnExisting <= paDetail.size() - 1; lnExisting++) {
+                Model_Sales_Detail loExisting = (Model_Sales_Detail) paDetail.get(lnExisting);
+                if (loExisting.getStockID()!= null) {
+                    if (loExisting.getStockID().equals(loBrowse.getModelInventory().getStockId())) {
+                        if (!loExisting.getSerialID().isEmpty()) {
+                            if (loBrowse.getModelInventorySerial().getSerialId() != null) {
+                                if (!loExisting.getSerialID().equals(loBrowse.getModelInventorySerial().getSerialId())) {
+                                    continue;
+                                }
+                            }
+                        }
+                        poJSON = new JSONObject();
+                        poJSON.put("result", "error");
+                        poJSON.put("message", "Selected Inventory is already exist!");
+                        return poJSON;
+
+                    }
+                }
+            }
+        }
+
+        getDetail(row).setStockID(loBrowse.getModelInventory().getStockId());
+        if (loBrowse.getModelInventorySerial().getSerialId() != null) {
+            getDetail(row).setSerialID(loBrowse.getModelInventorySerial().getSerialId());
+        }
+
+        getDetail(row).setUnitCost(Double.parseDouble(loBrowse.getModelInventory().getCost().toString()));
+        getDetail(row).setQuantity(1);
+        // handle cloning if has promo and qty > 1
+        if (getDetail(row).getQuantity()> 1) {
+
+            getDetail(row).setQuantity(1);
+//
+//            //clone detail to transfer
+//            int lnStockRow = row;
+//            double lnIssuedCount = 0;
+//            InventoryRequestApproval loStockRequest = getRequestApproval(getMaster().getOrderNo());
+//            if (loStockRequest != null) {
+//                //check existing record for row and count of issued
+//                for (int lnCtr = 1; lnCtr <= loStockRequest.getDetailCount(); lnCtr++) {
+//                    if (loStockRequest.getDetail(lnCtr).getStockId() != null) {
+//                        if (loStockRequest.getDetail(lnCtr).getStockId()
+//                                .equals(getDetail(row).getStockId())) {
+//                            lnStockRow = lnCtr;
+//                            for (int lnRowDetail = 1; lnRowDetail <= getDetailCount(); lnRowDetail++) {
+//                                if (getDetail(lnRowDetail).getStockId() != null) {
+//
+//                                    if (loStockRequest.getDetail(lnCtr).getStockId()
+//                                            .equals(getDetail(lnRowDetail).getStockId())) {
+//
+//                                        lnIssuedCount = lnIssuedCount + getDetail(row).getQuantity();
+//                                    }
+//                                }
+//                            }
+//                        }
+//                    }
+//                }
+//            }
+//            //add seperate detail
+//            Model_Inventory_Transfer_Detail loLastDetailOther = getDetail(getDetailCount());
+//            if (loLastDetailOther.getStockId() == null || loLastDetailOther.getStockId().isEmpty()) {
+//                //count if the detail is already has issued
+//                loLastDetailOther.setOrderNo(loStockRequest.getMaster().getTransactionNo());
+//                loLastDetailOther.setStockId(loStockRequest.getDetail(lnStockRow).getStockId());
+//                loLastDetailOther.setInventoryCost(((Number) loStockRequest.getDetail(lnStockRow).Inventory().getCost()).doubleValue());
+//                loLastDetailOther.InventoryStockRequest().setApproved(loStockRequest.getDetail(lnStockRow).getApproved() - lnIssuedCount);
+//
+//            } else {
+//                Model_Inventory_Transfer_Detail loNewDetailOther = getDetail(getDetailCount() + 1);
+//                loNewDetailOther.setOrderNo(loStockRequest.getMaster().getTransactionNo());
+//                loNewDetailOther.setStockId(loStockRequest.getDetail(lnStockRow).getStockId());
+//                loNewDetailOther.setInventoryCost(((Number) loStockRequest.getDetail(lnStockRow).Inventory().getCost()).doubleValue());
+//                loNewDetailOther.InventoryStockRequest().setApproved(loStockRequest.getDetail(lnStockRow).getApproved() - lnIssuedCount);
+//
+//            }
+        }
+        poJSON = new JSONObject();
+        poJSON.put("result", "success");
+
+        return poJSON;
+
+    }
+
+    public JSONObject searchSalesGiveAway(int fsRow, String value, boolean byCode)
+            throws SQLException, GuanzonException, CloneNotSupportedException {
+
+        InventoryBrowse loBrowse = new InventoryBrowse(poGRider, logwrapr);
+        loBrowse.initTransaction();
+        if (!psIndustryCode.isEmpty()) {
+            loBrowse.setIndustry(psIndustryCode);
+        }
+        loBrowse.setCategoryFilters(psCategorCD);
+        loBrowse.setBranch(poGRider.getBranchCode());
+        //allow negative quantity NEW BR 07-2026
+        loBrowse.isWithQuantityStock(false);
+
+        poJSON = new JSONObject();
+
+        poJSON = loBrowse.searchInventory(value, byCode);
+        System.out.println("result " + (String) poJSON.get("result"));
+        if ("success".equals((String) poJSON.get("result"))) {
+            for (int lnExisting = 0; lnExisting <= paSalesGiveaways.size() - 1; lnExisting++) {
+                Model_Sales_Giveaways loExisting = (Model_Sales_Giveaways) paSalesGiveaways.get(lnExisting);
+                if (loExisting.getStockID() != null) {
+                    if (loExisting.getStockID().equals(loBrowse.getModelInventory().getStockId())) {
+                        poJSON = new JSONObject();
+                        poJSON.put("result", "error");
+                        poJSON.put("message", "Selected Barcode is already exist!");
+                        return poJSON;
+
+                    }
+                }
+            }
+
+            getSalesGiveaways(fsRow).setStockID(
+                    loBrowse.getModelInventory().getStockId());
+
+            poJSON = new JSONObject();
+            poJSON.put("result", "success");
+        }
+        return poJSON;
+    }
+
+    public JSONObject removeSalesGiveAway(int entryNo) {
+        poJSON = new JSONObject();
+        int lnDetailCount = 0;
+        if (paSalesGiveaways.size() < entryNo) {
+            poJSON.put("result", "error");
+            poJSON.put("message", "Unable to Detect Entry No");
+            return poJSON;
+        }
+        paSalesGiveaways.remove(entryNo - 1);
+
+        //realign entry no
+        for (int lnCtr = 0; lnCtr < paSalesGiveaways.size(); lnCtr++) {
+            Model_Sales_Giveaways loDetail = (Model_Sales_Giveaways) paSalesGiveaways.get(lnCtr);
+            lnDetailCount++;
+            loDetail.setTransNo(getMaster().getTransactionNo());
+            loDetail.setEntryNo(lnDetailCount);
+        }
+        return poJSON;
+
+    }
+
+    public JSONObject searchInsuranceTypeInsurance(int fnRow, String value, boolean byCode)
+            throws SQLException, GuanzonException, CloneNotSupportedException {
+
+        if (getSalesInsurance(fnRow).getSerialID().isEmpty()) {
+
+            poJSON.put("result", "error");
+            poJSON.put("message", "Unable to load Insurance Type. Please select a Serial.");
+            return poJSON;
+        }
+        InsuranceType loBrowse = new ParamControllers(poGRider, logwrapr).InsuranceType();
+        loBrowse.initialize();
+        loBrowse.setRecordStatus(RecordStatus.ACTIVE);
+        loBrowse.setWithParentClass(true);
+
+        poJSON = loBrowse.searchRecord(value, byCode);
+        System.out.println("result " + (String) poJSON.get("result"));
+        if ("success".equals((String) poJSON.get("result"))) {
+            for (int lnExisting = 0; lnExisting <= paSalesInsurance.size() - 1; lnExisting++) {
+                Model_Sales_Insurance loExisting = (Model_Sales_Insurance) paSalesInsurance.get(lnExisting);
+                if (loExisting.getSerialID() != null && getSalesInsurance(fnRow).getSerialID().equals(loExisting.getSerialID())) {
+                    if (loExisting.getInsuranceTypeID().equals(loBrowse.getModel().getInsuranceTypeID())) {
+                        poJSON = new JSONObject();
+                        poJSON.put("result", "error");
+                        poJSON.put("message", "Selected Insurance Type is already exist for Serial #");
+                        return poJSON;
+
+                    }
+                }
+            }
+
+            // keep adding into detail
+            getSalesInsurance(
+                    getCountSalesInsurance() + 1)
+                    .setInsuranceTypeID(
+                            loBrowse.getModel().getInsuranceTypeID());
+
+            poJSON = new JSONObject();
+            poJSON.put("result", "success");
+        }
+        return poJSON;
+    }
+
+    public JSONObject removeSalesInsurance(int entryNo) {
+        poJSON = new JSONObject();
+        int lnDetailCount = 0;
+        if (paSalesInsurance.size() < entryNo) {
+            poJSON.put("result", "error");
+            poJSON.put("message", "Unable to Detect Entry No");
+            return poJSON;
+        }
+        paSalesInsurance.remove(entryNo - 1);
+
+        //realign entry no
+        for (int lnCtr = 0; lnCtr < paSalesInsurance.size(); lnCtr++) {
+            Model_Sales_Insurance loDetail = (Model_Sales_Insurance) paSalesInsurance.get(lnCtr);
+            lnDetailCount++;
+            loDetail.setTransNo(getMaster().getTransactionNo());
+            loDetail.setEntryNo(lnDetailCount);
+        }
+        return poJSON;
+
+    }
+
+    public JSONObject searchInsuranceTypeRegistration(int fnRow, String value, boolean byCode)
+            throws SQLException, GuanzonException, CloneNotSupportedException {
+
+        if (getSalesRegistration(fnRow).getSerialID().isEmpty()) {
+
+            poJSON.put("result", "error");
+            poJSON.put("message", "Unable to load Insurance Type. Please select a Serial.");
+            return poJSON;
+        }
+        InsuranceType loBrowse = new ParamControllers(poGRider, logwrapr).InsuranceType();
+        loBrowse.initialize();
+        loBrowse.setRecordStatus(RecordStatus.ACTIVE);
+        loBrowse.setWithParentClass(true);
+
+        poJSON = loBrowse.searchRecord(value, byCode);
+        System.out.println("result " + (String) poJSON.get("result"));
+        if ("success".equals((String) poJSON.get("result"))) {
+            for (int lnExisting = 0; lnExisting <= paSalesInsurance.size() - 1; lnExisting++) {
+                Model_Sales_Insurance loExisting = (Model_Sales_Insurance) paSalesInsurance.get(lnExisting);
+                if (loExisting.getSerialID() != null && getSalesInsurance(fnRow).getSerialID().equals(loExisting.getSerialID())) {
+                    if (loExisting.getInsuranceTypeID().equals(loBrowse.getModel().getInsuranceTypeID())) {
+                        poJSON = new JSONObject();
+                        poJSON.put("result", "error");
+                        poJSON.put("message", "Selected Insurance Type is already exist for Serial #");
+                        return poJSON;
+
+                    }
+                }
+            }
+
+            // keep adding into detail
+            getSalesRegistration(
+                    getCountSalesRegistration() + 1)
+                    .setInsuranceTypeID(
+                            loBrowse.getModel().getInsuranceTypeID());
+
+            poJSON = new JSONObject();
+            poJSON.put("result", "success");
+        }
+        return poJSON;
+    }
+
+    public JSONObject removeSalesRegistration(int entryNo) {
+        poJSON = new JSONObject();
+        int lnDetailCount = 0;
+        if (paSalesRegistration.size() < entryNo) {
+            poJSON.put("result", "error");
+            poJSON.put("message", "Unable to Detect Entry No");
+            return poJSON;
+        }
+        paSalesRegistration.remove(entryNo - 1);
+
+        //realign entry no
+        for (int lnCtr = 0; lnCtr < paSalesRegistration.size(); lnCtr++) {
+            Model_Sales_Registration loDetail = (Model_Sales_Registration) paSalesRegistration.get(lnCtr);
+            lnDetailCount++;
+            loDetail.setTransNo(getMaster().getTransactionNo());
+            loDetail.setEntryNo(lnDetailCount);
+        }
+        return poJSON;
+
+    }
+//    public JSONObject printRecord()
+//            throws SQLException, JRException, CloneNotSupportedException, GuanzonException {
+//
+//        poJSON = new JSONObject();
+//
+//        if (getMaster().getTransactionNo() == null
+//                || getMaster().getTransactionNo().isEmpty()) {
+//
+//            poJSON.put("result", "error");
+//            poJSON.put("message", "No record is selected.");
+//            return poJSON;
+//        }
+//
+//        // =====================================================
+//        // REPORT ROWS
+//        // =====================================================
+//        List<Map<String, ?>> brandRows = new ArrayList<>();
+//        List<Map<String, ?>> modelRows = new ArrayList<>();
+//        List<Map<String, ?>> exceptionRows = new ArrayList<>();
+//        List<Map<String, ?>> giveAwayRows = new ArrayList<>();
+//
+//        // =====================================================
+//        // BRAND ROWS
+//        // =====================================================
+//        for (Model item : paSalesPromotionBrand) {
+//
+//            Model_Sales_Promotion_Brand loBrand
+//                    = (Model_Sales_Promotion_Brand) item;
+//            if (!loBrand.isWithActive()) {
+//                continue;
+//            }
+//            String brandDesc;
+//
+//            try {
+//                brandDesc = loBrand.Brand().getDescription();
+//            } catch (SQLException | GuanzonException ex) {
+//                brandDesc = loBrand.getBrandID();
+//            }
+//
+//            double srp = loBrand.getTotalAmount();
+//            double discRate = loBrand.getDiscountRate();
+//            double discAmt = loBrand.getDiscAmount();
+//            double freight = loBrand.getFreight();
+//            double incentiveAmount = loBrand.getAmount();
+//
+//            String remarks = loBrand.getRemarks();
+//
+//            // Build complete promotion description
+//            String promoDetail = buildPromoDetail(
+//                    srp,
+//                    discRate,
+//                    discAmt,
+//                    loBrand.isRegistrationFree(),
+//                    loBrand.isInsuranceFree(),
+//                    freight,
+//                    incentiveAmount,
+//                    remarks
+//            );
+//
+//            Map<String, Object> row = new HashMap<>();
+//
+//            row.put("brand", brandDesc == null ? "" : brandDesc);
+//            row.put("promoDetail", promoDetail);
+//
+//            brandRows.add(row);
+//        }
+//
+//        // =====================================================
+//        // MODEL ROWS
+//        // =====================================================
+//        for (Model item : paSalesPromotionModel) {
+//
+//            Model_Sales_Promotion_Model loModel
+//                    = (Model_Sales_Promotion_Model) item;
+//            if (!loModel.isWithActive()) {
+//                continue;
+//            }
+//            String brandDesc;
+//
+//            try {
+//                brandDesc = loModel.Model()
+//                        .Brand()
+//                        .getDescription();
+//
+//            } catch (SQLException | GuanzonException ex) {
+//
+//                brandDesc = "";
+//            }
+//
+//            String modelDesc;
+//
+//            try {
+//                modelDesc = loModel.Model()
+//                        .getDescription();
+//
+//            } catch (SQLException | GuanzonException ex) {
+//
+//                modelDesc = loModel.getModelID();
+//            }
+//
+//            double srp = loModel.getTotalAmount();
+//            double discRate = loModel.getDiscountRate();
+//            double discAmt = loModel.getDiscAmount();
+//            double freight = loModel.getFreight();
+//            double incentiveAmount = loModel.getAmount();
+//
+//            String remarks = loModel.getRemarks();
+//
+//            // Build complete promotion description
+//            String promoDetail = buildPromoDetail(
+//                    srp,
+//                    discRate,
+//                    discAmt,
+//                    loModel.isRegistrationFree(),
+//                    loModel.isInsuranceFree(),
+//                    freight,
+//                    incentiveAmount,
+//                    remarks
+//            );
+//
+//            Map<String, Object> row = new HashMap<>();
+//
+//            row.put("brand", brandDesc == null ? "" : brandDesc);
+//            row.put("model", modelDesc == null ? "" : modelDesc);
+//            row.put("promoDetail", promoDetail);
+//
+//            modelRows.add(row);
+//        }
+//
+//        // =====================================================
+//        // MODEL EXCEPTION ROWS
+//        // =====================================================
+//        for (Model item : paSalesPromotionModelException) {
+//
+//            Model_Sales_Promotion_Model_Exception loException
+//                    = (Model_Sales_Promotion_Model_Exception) item;
+//            if (!loException.isWithActive()) {
+//                continue;
+//            }
+//            String brandDesc;
+//
+//            try {
+//                brandDesc = loException.Model()
+//                        .Brand()
+//                        .getDescription();
+//
+//            } catch (SQLException | GuanzonException ex) {
+//
+//                brandDesc = "";
+//            }
+//
+//            String modelDesc;
+//
+//            try {
+//                modelDesc = loException.Model()
+//                        .getDescription();
+//
+//            } catch (SQLException | GuanzonException ex) {
+//
+//                modelDesc = loException.getModelID();
+//            }
+//
+//            Map<String, Object> row = new HashMap<>();
+//
+//            row.put("brand", brandDesc == null ? "" : brandDesc);
+//            row.put("model", modelDesc == null ? "" : modelDesc);
+//
+//            exceptionRows.add(row);
+//        }
+//
+//        // =====================================================
+//        // GIVE AWAY ROWS
+//        // =====================================================
+//        for (Model item : paSalesPromotionGiveAwayItem) {
+//
+//            Model_Sales_Promotion_GiveAway_Item loGiveAway
+//                    = (Model_Sales_Promotion_GiveAway_Item) item;
+//
+//            if (!loGiveAway.isWithActive()) {
+//                continue;
+//            }
+//            String barcode;
+//
+//            try {
+//                barcode = loGiveAway.Inventory()
+//                        .getBarCode();
+//
+//            } catch (SQLException | GuanzonException ex) {
+//
+//                barcode = "";
+//            }
+//
+//            String description;
+//
+//            try {
+//                description = loGiveAway.Inventory()
+//                        .getDescription();
+//
+//            } catch (SQLException | GuanzonException ex) {
+//
+//                description = "";
+//            }
+//
+//            Map<String, Object> row = new HashMap<>();
+//
+//            row.put("barcode", barcode);
+//            row.put("description", description);
+//            row.put("quantity", loGiveAway.getQuantity());
+//            row.put(
+//                    "note",
+//                    loGiveAway.getRemarks() == null
+//                    ? ""
+//                    : loGiveAway.getRemarks()
+//            );
+//
+//            giveAwayRows.add(row);
+//        }
+//
+//        // =====================================================
+//        // REPORT UTIL
+//        // =====================================================
+//        ReportUtil poReportJasper = new ReportUtil(poGRider);
+//
+//        poReportJasper.setReportListener(new ReportUtilListener() {
+//
+//            @Override
+//            public void onReportOpen() {
+//                System.out.println("Report opened.");
+//            }
+//
+//            @Override
+//            public void onReportClose() {
+//                System.out.println("Report closed.");
+//            }
+//
+//            @Override
+//            public void onReportPrint() {
+//
+//                System.out.println("Report printing...");
+//
+//                poReportJasper.CloseReportUtil();
+//            }
+//
+//            @Override
+//            public void onReportExport() {
+//                // Optional
+//            }
+//
+//            @Override
+//            public void onReportExportPDF() {
+//
+//                System.out.println(
+//                        "Report exported to PDF."
+//                );
+//            }
+//        });
+//
+//        // =====================================================
+//        // BUILD "IMPLEMENTED TO" SUMMARY: shop types + provinces + branch areas
+//        // =====================================================
+//        List<String> implementToParts = new ArrayList<>();
+//
+//        // --- Shop Types (delimited string on master, decode codes to labels) ---
+//        String lsShopType = getMaster().getShopType();
+//        if (lsShopType != null && !lsShopType.trim().isEmpty()) {
+//            String[] laShopType = lsShopType.split("»");
+//            for (String lsCode : laShopType) {
+//                String lsCode2 = lsCode.trim();
+//                if (lsCode2.isEmpty()) {
+//                    continue;
+//                }
+//                String lsLabel;
+//                switch (lsCode2) {
+//                    case "0":
+//                        lsLabel = "3S Shop";
+//                        break;
+//                    case "1":
+//                        lsLabel = "Multi Brand";
+//                        break;
+//                    case "2":
+//                        lsLabel = "Big Bike";
+//                        break;
+//                    default:
+//                        lsLabel = "Other Shop";
+//                        break;
+//                }
+//                implementToParts.add(lsLabel);
+//            }
+//        }
+//
+//        // --- Provinces ---
+//        for (Model item : paSalesPromotionProvince) {
+//            Model_Sales_Promotion_Province loProvince = (Model_Sales_Promotion_Province) item;
+//            try {
+//                String lsDesc = loProvince.Province().getDescription();
+//                if (lsDesc != null && !lsDesc.trim().isEmpty()) {
+//                    implementToParts.add(lsDesc.trim());
+//                }
+//            } catch (SQLException | GuanzonException ex) {
+//                // skip on lookup failure
+//            }
+//        }
+//
+//        // --- Branch Areas ---
+//        for (Model item : paSalesPromotionBranchArea) {
+//            Model_Sales_Promotion_Branch_Area loArea = (Model_Sales_Promotion_Branch_Area) item;
+//            try {
+//                String lsDesc = loArea.BranchArea().getAreaDescription();
+//                if (lsDesc != null && !lsDesc.trim().isEmpty()) {
+//                    implementToParts.add(lsDesc.trim());
+//                }
+//            } catch (SQLException | GuanzonException ex) {
+//                // skip on lookup failure
+//            }
+//        }
+//
+//        String lsImplementTo = implementToParts.isEmpty()
+//                ? "ALL Branches"
+//                : String.join(", ", implementToParts);
+//        // =====================================================
+//        // MASTER PARAMETERS
+//        // =====================================================
+//        poReportJasper.addParameter(
+//                "ImplentTo",
+//                lsImplementTo);
+//
+//        poReportJasper.addParameter(
+//                "PromoID",
+//                getMaster().getTransactionNo());
+//
+//        poReportJasper.addParameter(
+//                "PromoDescription",
+//                getMaster().getPromoDescription());
+//
+//        poReportJasper.addParameter(
+//                "ReferNo",
+//                getMaster().getReferNo());
+//
+//        poReportJasper.addParameter(
+//                "TransactionDate",
+//                SQLUtil.dateFormat(
+//                        getMaster().getDate(),
+//                        SQLUtil.FORMAT_LONG_DATE));
+//
+//        poReportJasper.addParameter(
+//                "PromoStart",
+//                SQLUtil.dateFormat(
+//                        getMaster().getFromDate(),
+//                        SQLUtil.FORMAT_LONG_DATE));
+//
+//        poReportJasper.addParameter(
+//                "PromoEnd", (getMaster().getThruDate() == null ? ""
+//                : SQLUtil.dateFormat(
+//                        getMaster().getThruDate(),
+//                        SQLUtil.FORMAT_LONG_DATE))
+//        );
+//
+//        poReportJasper.addParameter(
+//                "Remarks",
+//                getMaster().getRemarks());
+//
+//        poReportJasper.addParameter(
+//                "BranchName", poGRider.getBranchName());
+//
+//        poReportJasper.addParameter(
+//                "DatePrinted",
+//                SQLUtil.dateFormat(poGRider.getServerDate(), SQLUtil.FORMAT_TIMESTAMP));
+//
+//        // =====================================================
+//        // BRAND DATASOURCE
+//        // =====================================================
+//        poReportJasper.addParameter(
+//                "BrandDataSource",
+//                new JRMapCollectionDataSource(brandRows));
+//
+//        // =====================================================
+//        // MODEL DATASOURCE
+//        // =====================================================
+//        poReportJasper.addParameter(
+//                "ModelDataSource",
+//                new JRMapCollectionDataSource(modelRows));
+//
+//        // =====================================================
+//        // MODEL EXCEPTION DATASOURCE
+//        // =====================================================
+//        poReportJasper.addParameter(
+//                "ModelExceptionDataSource",
+//                new JRMapCollectionDataSource(exceptionRows));
+//
+//        // =====================================================
+//        // GIVE AWAY DATASOURCE
+//        // =====================================================
+//        poReportJasper.addParameter(
+//                "GiveAwayDataSource",
+//                new JRMapCollectionDataSource(giveAwayRows));
+//
+//        // =====================================================
+//        // VISIBILITY
+//        // =====================================================
+//        poReportJasper.addParameter(
+//                "HasBrand",
+//                !brandRows.isEmpty()
+//        );
+//
+//        poReportJasper.addParameter(
+//                "HasModel",
+//                !modelRows.isEmpty()
+//        );
+//
+//        poReportJasper.addParameter(
+//                "HasModelException",
+//                !exceptionRows.isEmpty()
+//        );
+//
+//        poReportJasper.addParameter(
+//                "HasGiveAway",
+//                !giveAwayRows.isEmpty()
+//        );
+//
+//        // =====================================================
+//        // APPROVAL REMARKS
+//        // =====================================================
+//        if (getMaster().getTransactionStatus().equals(SalesTransactionStatic.CONFIRMED)) {
+//            poReportJasper.addParameter("watermarkImagePath", poGRider.getReportPath() + "images\\blank.png");
+//        }
+//        JSONObject loJSON = getEntryBy();
+//        String entryBy = "";
+//        String entryDate = "";
+//
+//        if ("success".equals((String) loJSON.get("result"))) {
+//            entryBy = (String) loJSON.get("sCompnyNm");
+//            entryDate = (String) loJSON.get("sEntryDte");
+//        }
+//        String lsPreparedBy = entryBy;
+//        String lsPreparedByDate = entryDate;
+//        String lsConfirmedBy = "";
+//        String lsConfirmedDate = "";
+//
+//        String lsSQL = " SELECT sModified, dModified "
+//                + " FROM Transaction_Status_History "
+//                + " WHERE sTableNme ='Sales_Promotion_Master' "
+//                + " AND cRefrStat = '1' AND cTranStat = '1' ORDER BY dModified DESC";
+//        lsSQL = MiscUtil.addCondition(lsSQL, " sSourceNo =  " + SQLUtil.toSQL(getMaster().getTransactionNo()));
+//        System.out.println("Execute SQL : " + lsSQL);
+//        ResultSet loRS = poGRider.executeQuery(lsSQL);
+//
+//        if (MiscUtil.RecordCount(loRS) > 0L) {
+//            if (loRS.next()) {
+//                if (loRS.getString("sModified") != null && !"".equals(loRS.getString("sModified"))) {
+//                    lsConfirmedBy = loRS.getString("sModified") == null ? "" : getSysUser(poGRider.Decrypt(loRS.getString("sModified")));
+//                    LocalDateTime dModified = loRS.getObject("dModified", LocalDateTime.class);
+//                    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM-dd-yyyy HH:mm:ss");
+//                    lsConfirmedDate = dModified.format(formatter);
+//                }
+//            }
+//        }
+//
+//        MiscUtil.close(loRS);
+//
+//        poReportJasper.addParameter("PrepNme", lsPreparedBy + " - " + lsPreparedByDate);
+//        poReportJasper.addParameter("ConfirmNme", lsConfirmedBy + " - " + lsConfirmedDate);
+//        poReportJasper.addParameter("ReceivrNme", "");
+//        // =====================================================
+//        // MAIN REPORT DATASOURCE
+//        // =====================================================
+//        List<Map<String, ?>> masterRows = new ArrayList<>();
+//
+//        masterRows.add(
+//                new HashMap<String, Object>());
+//
+//        poReportJasper.setJRBeanCollectionDataSource(
+//                new JRMapCollectionDataSource(masterRows));
+//
+//        // =====================================================
+//        // REPORT
+//        // =====================================================
+//        poReportJasper.setJasperPath(
+//                PromoMaintenancePrint.getJasperReport(
+//                        psIndustryCode
+//                )
+//        );
+//
+//        poReportJasper.isAlwaysTop(false);
+//        poReportJasper.isWithUI(true);
+//        poReportJasper.isWithExport(false);
+//        poReportJasper.isWithExportPDF(true);
+//        poReportJasper.willExport(false);
+//
+//        return poReportJasper.generateReport();
+//    }
+
+    @Override
+    public void initSQL() {
+        SQL_BROWSE = "SELECT a.* FROM Sales_Master a";
+
+    }
+
+    public JSONObject loadTransactionList()
+            throws SQLException, GuanzonException, CloneNotSupportedException {
+
+//        if (psIndustryCode.isEmpty()) {
+//            poJSON.put("result", "error");
+//            poJSON.put("message", "I is not set");
+//            return poJSON;
+//        }
+        paMaster.clear();
+        initSQL();
+        String lsSQL = SQL_BROWSE;
+        String lsCondition = "";
+
+        if (!psIndustryCode.isEmpty()) {
+            lsSQL = MiscUtil.addCondition(lsSQL, "a.sIndstCdx = " + SQLUtil.toSQL(psIndustryCode));
+        }
+        if (!psCategorCD.isEmpty()) {
+            lsSQL = MiscUtil.addCondition(lsSQL, "a.sCategrCd = " + SQLUtil.toSQL(psCategorCD));
+        }
+
+        lsSQL = lsSQL + " GROUP BY a.sTransNox ";
+        ResultSet loRS = poGRider.executeQuery(lsSQL);
+        System.out.println("Load Transaction list query is " + lsSQL);
+
+        if (MiscUtil.RecordCount(loRS)
+                <= 0) {
+            poJSON.put("result", "error");
+            poJSON.put("message", "No record found.");
+            return poJSON;
+        }
+
+        while (loRS.next()) {
+            Model_Sales_Master loObject = new SalesModels(poGRider).SalesMaster();
+
+            for (int lnCtr = 1; lnCtr <= loRS.getMetaData().getColumnCount(); ++lnCtr) {
+                String lsColumnName = loRS.getMetaData().getColumnName(lnCtr);
+                loObject.setValue(lsColumnName, loRS.getObject(lnCtr));
+            }
+            paMaster.add((Model) loObject);
+        }
+
+        poJSON = new JSONObject();
+        poJSON.put("result", "success");
+        return poJSON;
+    }
+
+    public JSONObject ReplaceTransaction(String fsTransaction) throws SQLException, GuanzonException {
+        poJSON = new JSONObject();
+
+        if (fsTransaction == null || fsTransaction.isEmpty()) {
+            poJSON.put("result", "error");
+            poJSON.put("message", "No Transaction to replace.");
+            return poJSON;
+        }
+
+        String lsSQL = "UPDATE Sales_Master SET"
+                + "  cTranStat = " + SQLUtil.toSQL(SalesTransactionStatic.REPLACED)
+                + ", sModified = " + SQLUtil.toSQL(poGRider.Encrypt(poGRider.getUserID()))
+                + ", dModified = " + SQLUtil.toSQL(poGRider.getServerDate())
+                + " WHERE sTransNox= " + SQLUtil.toSQL(fsTransaction);
+
+        poGRider.beginTrans("UPDATE STATUS", "ReplaceTransaction", SOURCE_CODE, fsTransaction);
+
+        if (poGRider.executeQuery(lsSQL, "Sales_Promotion_Master", poGRider.getBranchCode(), "", "") <= 0) {
+            poGRider.rollbackTrans();
+            poJSON.put("result", "error");
+            poJSON.put("message", "Unable to replace conflicting promo(s).");
+            return poJSON;
+        }
+
+        poGRider.commitTrans();
+
+        poJSON.put("result", "success");
+        poJSON.put("message", "Transaction replaced successfully.");
+        return poJSON;
+    }
+}
