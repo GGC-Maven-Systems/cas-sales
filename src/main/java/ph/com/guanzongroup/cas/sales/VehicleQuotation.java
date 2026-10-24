@@ -55,9 +55,14 @@ import java.util.*;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.guanzon.appdriver.base.CommonUtils;
+import org.guanzon.appdriver.constant.ClientType;
 import org.guanzon.appdriver.constant.Logical;
+import org.guanzon.cas.client.Client;
+import org.guanzon.cas.client.ClientGUI;
 import org.guanzon.cas.client.model.Model_Client_Address;
 import org.guanzon.cas.client.model.Model_Client_Mobile;
+import org.guanzon.cas.client.services.ClientControllers;
 import org.guanzon.cas.client.services.ClientModels;
 import org.guanzon.cas.inv.Inventory;
 import org.guanzon.cas.inv.services.InvControllers;
@@ -73,6 +78,7 @@ public class VehicleQuotation extends Transaction {
     public String psCompanyId = "";
     public String psIndustryId = "";
     public String psCategoryId = "";
+    public String psClientName = "";
     public String psApprover = "";
 
     public List<Model_Quotation_AddOn> paAddOn;
@@ -99,6 +105,8 @@ public class VehicleQuotation extends Transaction {
     public void setCompanyId(String companyId) { psCompanyId = companyId; }
     public void setIndustryId(String industryId) { psIndustryId = industryId; }
     public void setCategoryId(String categoryId) { psCategoryId = categoryId; }
+    public void setClientName(String clientName) { psClientName = clientName; }
+    public String getClientName() { return psClientName;}
     
     private JSONObject setJSON(String fsResult, String fsMessage) {
         JSONObject loJSON = new JSONObject();
@@ -612,7 +620,7 @@ public class VehicleQuotation extends Transaction {
         }
     }
     
-    public JSONObject SearchTransaction(String fsClient, String fsTransactionNo) throws CloneNotSupportedException, SQLException, GuanzonException, ScriptException{
+    public JSONObject SearchTransaction(String fsClient, String fsTransactionNo, boolean fbByCode) throws CloneNotSupportedException, SQLException, GuanzonException, ScriptException{
         poJSON = new JSONObject();
 
         initSQL();
@@ -631,7 +639,7 @@ public class VehicleQuotation extends Transaction {
                     "Transaction No»Client»Transaction Date",
                     "sTransNox»sCompnyNm»dTransact",
                     "a.sTransNox»c.sCompnyNm»a.dTransact" ,
-                   0);
+                   fbByCode ? 0 : 1);
         }
         if (poJSON != null) {
             return OpenTransaction((String) poJSON.get("sTransNox"));
@@ -702,6 +710,21 @@ public class VehicleQuotation extends Transaction {
         return poJSON;
     }
     
+    public JSONObject SearchClient(String value)
+            throws SQLException,
+            GuanzonException {
+        poJSON = new JSONObject();
+
+        Client object = new ClientControllers(poGRider, logwrapr).Client();
+        object.Master().setRecordStatus(RecordStatus.ACTIVE);
+        poJSON = object.Master().searchRecord(value, false);
+        if (isJSONSuccess(poJSON)) {
+            setClientName(object.Master().getModel().getCompanyName());
+        }
+        
+        return poJSON;
+    }
+        
     public String getFullAddress() throws GuanzonException, SQLException{
         String lsAddress = Master().ClientAddress().getAddress();
         if(checkNotEmpty(lsAddress)){
