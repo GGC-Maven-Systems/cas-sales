@@ -21,7 +21,7 @@ public class SalesMasterQueries {
 
     public static String getSalesClientBrowse(String industrycode) {
 
-        return "SELECT"
+        return "SELECT * FROM (SELECT"
                 + "          IF(b.sClientID IS NULL, 'NO', 'YES') AS xHasReserv"
                 + ",\n       IF(c.sClientID IS NULL, 'NO', 'YES') AS xHasQuotat"
                 + ",\n       IF(d.sClientID IS NULL, 'NO', 'YES') AS xHasComitment"
@@ -37,7 +37,8 @@ public class SalesMasterQueries {
                 + "         AND sIndstCdx = " + SQLUtil.toSQL(industrycode) + " AND sTransNox IN (SELECT sParentID FROM Sales_Quotation_Version_Master WHERE cTranStat = '1')) c ON a.sClientID = c.sClientID "
                 + "\n LEFT JOIN (SELECT DISTINCT sClientID FROM Sales_Commitment_Master WHERE cTranStat = '1' )   d ON a.sClientID = d.sClientID"
                 + "\n LEFT JOIN Employee_Master001 e ON a.sClientID = e.sEmployID"
-                + "\n LEFT JOIN (SELECT DISTINCT sClientID,sAddressx FROM Client_Address  WHERE cPrimaryx = 1) f  ON a.sClientID = f.sClientID ";
+                + "\n LEFT JOIN (SELECT DISTINCT sClientID,sAddressx FROM Client_Address  WHERE cPrimaryx = 1) f  ON a.sClientID = f.sClientID"
+                + ") ClientSource ";
 
     }
 

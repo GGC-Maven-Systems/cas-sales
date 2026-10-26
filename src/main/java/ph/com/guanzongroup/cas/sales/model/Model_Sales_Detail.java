@@ -7,6 +7,7 @@ import org.guanzon.appdriver.agent.services.ReferenceCache;
 import org.guanzon.appdriver.base.GuanzonException;
 import org.guanzon.appdriver.base.MiscUtil;
 import org.guanzon.appdriver.constant.EditMode;
+import org.guanzon.cas.inv.model.Model_Inv_Master;
 import org.guanzon.cas.inv.model.Model_Inv_Serial;
 import org.guanzon.cas.inv.model.Model_Inventory;
 import org.guanzon.cas.inv.services.InvModels;
@@ -17,6 +18,7 @@ public class Model_Sales_Detail extends Model {
 
     private Model_Inventory poInventory;
     private Model_Inv_Serial poInventorySerial;
+    private Model_Inv_Master poInventoryMaster;
     private Model_Sales_Promotion_Master poSalesPromo;
 
     @Override
@@ -32,9 +34,7 @@ public class Model_Sales_Detail extends Model {
             poEntity.updateDouble("nFreightx", 0.0d);
             poEntity.updateDouble("nInsurAdd", 0.0d);
             poEntity.updateDouble("nInsAmtxx", 0.0d);
-            poEntity.updateDouble("nAmtPaidx", 0.0d);
-            poEntity.updateDouble("nAmtPaidx", 0.0d);
-            poEntity.updateInt("nEntryNox", 0);
+            poEntity.updateObject("nEntryNox", 0);
             poEntity.updateString("cNewStock", "1");
             poEntity.updateString("cWithVATx", "1");
             poEntity.updateNull("sPromoIDx");
@@ -329,4 +329,31 @@ public class Model_Sales_Detail extends Model {
             return poInventory;
         }
     }
+
+    public Model_Inv_Master InventoryMaster() throws SQLException, GuanzonException {
+        if (poInventoryMaster == null) {
+            poInventoryMaster = new InvModels(poGRider).InventoryMaster();
+        }
+
+        if (!"".equals((String) getValue("sStockIDx"))) {
+            if (poInventoryMaster.getEditMode() == EditMode.READY
+                    && poInventoryMaster.getStockId().equals((String) getValue("sStockIDx"))) {
+                return poInventoryMaster;
+            } else {
+                poJSON = poInventoryMaster.openRecord((String) getValue("sStockIDx"),
+                         poGRider.getIndustry(), poGRider.getBranchCode());
+
+                if ("success".equals((String) poJSON.get("result"))) {
+                    return poInventoryMaster;
+                } else {
+                    poInventoryMaster.initialize();
+                    return poInventoryMaster;
+                }
+            }
+        } else {
+            poInventoryMaster.initialize();
+            return poInventoryMaster;
+        }
+    }
+
 }

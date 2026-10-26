@@ -1,30 +1,44 @@
 package ph.com.guanzongroup.cas.sales;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileReader;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Calendar;
 import java.util.List;
-import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javafx.application.Platform;
 import javax.sql.rowset.CachedRowSet;
-import net.sf.jasperreports.engine.JRException;
-import net.sf.jasperreports.engine.data.JRMapCollectionDataSource;
+import org.apache.commons.codec.binary.Base64;
 import org.guanzon.appdriver.agent.ShowDialogFX;
+import org.guanzon.appdriver.agent.ShowMessageFX;
 import org.guanzon.appdriver.agent.services.Model;
 import org.guanzon.appdriver.agent.services.Transaction;
+import org.guanzon.appdriver.agent.systables.Model_Transaction_Attachment;
+import org.guanzon.appdriver.agent.systables.SysTableContollers;
+import org.guanzon.appdriver.agent.systables.TransactionAttachment;
 import org.guanzon.appdriver.base.CommonUtils;
+import org.guanzon.appdriver.base.GRiderCAS;
 import org.guanzon.appdriver.base.GuanzonException;
+import org.guanzon.appdriver.base.MiscReplUtil;
 import org.guanzon.appdriver.base.MiscUtil;
 import org.guanzon.appdriver.base.SQLUtil;
-import org.guanzon.appdriver.constant.ClientType;
+import org.guanzon.appdriver.base.WebFile;
 import org.guanzon.appdriver.constant.EditMode;
 import org.guanzon.appdriver.constant.RecordStatus;
 import org.guanzon.appdriver.constant.UserRight;
 import org.guanzon.appdriver.iface.GValidator;
+import org.guanzon.appdriver.token.RequestAccess;
 import org.guanzon.cas.client.ClientGUI;
 import org.guanzon.cas.client.ClientInfo;
 import org.guanzon.cas.client.services.ClientControllers;
@@ -32,6 +46,8 @@ import org.guanzon.cas.inv.InventoryBrowse;
 import org.guanzon.cas.parameter.InsuranceType;
 import org.guanzon.cas.parameter.services.ParamControllers;
 import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 import ph.com.guanzongroup.cas.sales.constant.SalesTransactionStatic;
 import ph.com.guanzongroup.cas.sales.constant.Sales_Reservation_Static;
 import ph.com.guanzongroup.cas.sales.mcpromo.MCPromoSales;
@@ -60,6 +76,8 @@ public class MCSales extends Transaction {
     private List<Model> paSalesRegistration;
     private MCPromoSales poPromo;
     private String psApprovalUser = "";
+
+    private List<TransactionAttachment> paAttachments;
 
     public void setIndustryID(String industryId) {
         psIndustryCode = industryId;
@@ -161,6 +179,14 @@ public class MCSales extends Transaction {
         // Get the requested detail
         Model_Sales_Giveaways loDetail;
 
+        //auto add detail
+        Model_Sales_Giveaways lastDetail = (Model_Sales_Giveaways) paSalesGiveaways.get(paSalesGiveaways.size() - 1);
+
+        if (getEditMode() == EditMode.ADDNEW) {
+            lastDetail.setTransNo(getMaster().getTransactionNo());
+            lastDetail.setEntryNo(getCountSalesGiveAway());
+        }
+
         //find the detail record
         for (int lnCtr = 0; lnCtr <= paSalesGiveaways.size() - 1; lnCtr++) {
             loDetail = (Model_Sales_Giveaways) paSalesGiveaways.get(lnCtr);
@@ -233,8 +259,34 @@ public class MCSales extends Transaction {
         return loDetail;
     }
 
+    private List<TransactionAttachment> TransactionAttachmentList() {
+        return paAttachments;
+    }
+
+    public TransactionAttachment TransactionAttachmentList(int row) {
+        return (TransactionAttachment) paAttachments.get(row);
+    }
+
+    @SuppressWarnings("unchecked")
+    public List<Model_Transaction_Attachment> getAttachmentList() {
+        return (List<Model_Transaction_Attachment>) (List<?>) paAttachments;
+    }
+
+    public Model_Transaction_Attachment getAttachmentList(int entryRow) {
+        TransactionAttachment loAttachment = (TransactionAttachment) paAttachments.get(entryRow);
+        return loAttachment.getModel();
+    }
+
+    public int getTransactionAttachmentCount() {
+        if (paAttachments == null) {
+            paAttachments = new ArrayList<>();
+        }
+
+        return paAttachments.size();
+    }
+
     public JSONObject initTransaction() throws GuanzonException, SQLException {
-        SOURCE_CODE = "MCSl";
+        SOURCE_CODE = "Sale";
 
         poMaster = new SalesModels(poGRider).SalesMaster();
         poDetail = new SalesModels(poGRider).SalesDetail();
@@ -245,6 +297,7 @@ public class MCSales extends Transaction {
         paSalesRegistration = new ArrayList<Model>();
         paMaster = new ArrayList<Model>();
         paDetail = new ArrayList<Model>();
+        paAttachments = new ArrayList<>();
 
         pbWithUI = true; //allow input
 
@@ -447,6 +500,7 @@ public class MCSales extends Transaction {
             return poJSON;
         }
 
+        paAttachments = new ArrayList<>();
         poMaster.initialize();
         poMaster.newRecord();
 
@@ -516,6 +570,113 @@ public class MCSales extends Transaction {
         poJSON.put("result", "success");
         return poJSON;
 
+    }
+
+    @Override
+    public JSONObject saveOthers() {
+
+        //assign other info on attachment
+        for (int lnCtr = 0; lnCtr <= getTransactionAttachmentCount() - 1; lnCtr++) {
+            TransactionAttachmentList(lnCtr).getModel().setSourceNo(getMaster().getTransactionNo());
+            TransactionAttachmentList(lnCtr).getModel().setSourceCode(getSourceCode());
+            TransactionAttachmentList(lnCtr).getModel().setBranchCode(getMaster().getBranchCode());
+            TransactionAttachmentList(lnCtr).getModel().setImagePath(System.getProperty("sys.default.path.temp.attachments"));
+
+            String lsOriginalFileName = TransactionAttachmentList(lnCtr).getModel().getFileName();
+            //Check existing file name in database
+            if (EditMode.ADDNEW == TransactionAttachmentList(lnCtr).getModel().getEditMode()) {
+                int lnCopies = 0;
+                String fsFilePath = TransactionAttachmentList(lnCtr).getModel().getImagePath() + "/" + TransactionAttachmentList(lnCtr).getModel().getFileName();
+                String lsNewFileName = TransactionAttachmentList(lnCtr).getModel().getFileName();
+                try {
+                    while ("error".equals((String) checkExistingFileName(lsNewFileName).get("result"))) {
+                        lnCopies++;
+                        //Rename the file
+                        int dotIndex = TransactionAttachmentList(lnCtr).getModel().getFileName().lastIndexOf(".");
+                        if (dotIndex == -1) {
+                            lsNewFileName = TransactionAttachmentList(lnCtr).getModel().getFileName() + "_" + lnCopies;
+                        } else {
+                            lsNewFileName = TransactionAttachmentList(lnCtr).getModel().getFileName().substring(0, dotIndex) + "_" + lnCopies + TransactionAttachmentList(lnCtr).getModel().getFileName().substring(dotIndex);
+                        }
+                    }
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                } catch (GuanzonException ex) {
+                    ex.printStackTrace();
+                }
+
+                if (lnCopies > 0) {
+                    Path source = Paths.get(fsFilePath);
+                    try {
+                        // Copy file into the target directory with a new name
+                        Path target = Paths.get(System.getProperty("sys.default.path.temp.attachments")).resolve(lsNewFileName);
+                        Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING);
+                        //check if file is existing
+                        int lnChecker = 0;
+                        File file = new File(TransactionAttachmentList(lnCtr).getModel().getImagePath() + "/" + lsNewFileName);
+                        while (!file.exists() && lnChecker < 5) {
+                            Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING);
+                            System.out.println("Re-Copying... " + lnChecker);
+                            lnChecker++;
+                        }
+                        TransactionAttachmentList(lnCtr).getModel().setFileName(lsNewFileName);
+                        System.out.println("File copied successfully as " + lsNewFileName);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+
+            //Upload Attachment when send status is 0
+            try {
+                if ("0".equals(TransactionAttachmentList(lnCtr).getModel().getSendStatus())) {
+                    poJSON = uploadCASAttachments(poGRider, System.getProperty("sys.default.access.token"), lnCtr, lsOriginalFileName);
+                    if ("error".equals((String) poJSON.get("result"))) {
+                        return poJSON;
+                    }
+                }
+            } catch (Exception ex) {
+                Logger.getLogger(getClass().getName()).log(Level.SEVERE, MiscUtil.getException(ex), ex);
+                poJSON = setJSON("error", MiscUtil.getException(ex));
+                return poJSON;
+            }
+
+        }
+        try {
+            System.out.println("--------------------------SAVE OTHERS---------------------------------------------");
+            System.out.println("Class Edit Mode : " + getEditMode());
+            System.out.println("Master Edit Mode : " + getMaster().getEditMode());
+            System.out.println("-----------------------------------------------------------------------");
+//            for(int lnCtr = 0; lnCtr <= getDetailCount() - 1; lnCtr++){
+//            System.out.println("COUNTER : " + lnCtr);
+//            System.out.println("Transaction No : " + getDetail(lnCtr).getTransactionNo());
+//            System.out.println("Stock ID : " + getDetail(lnCtr).getStockId());
+            System.out.println("-----------------------------------------------------------------------");
+//            }
+
+            //Save Attachments
+            System.out.println("-----------------------------SAVE TRANSACTION ATTACHMENT------------------------------------------");
+            for (int lnCtr = 0; lnCtr <= getTransactionAttachmentCount() - 1; lnCtr++) {
+                if (paAttachments.get(lnCtr).getEditMode() == EditMode.ADDNEW || paAttachments.get(lnCtr).getEditMode() == EditMode.UPDATE) {
+                    paAttachments.get(lnCtr).getModel().setModifyingId(poGRider.Encrypt(poGRider.getUserID()));
+                    paAttachments.get(lnCtr).getModel().setModifiedDate(poGRider.getServerDate());
+                    paAttachments.get(lnCtr).setWithParentClass(true);
+                    poJSON = paAttachments.get(lnCtr).saveRecord();
+                    if (!isJSONSuccess(poJSON)) {
+                        return poJSON;
+                    }
+                }
+            }
+            System.out.println("-----------------------------------------------------------------------");
+
+        } catch (SQLException | GuanzonException | CloneNotSupportedException ex) {
+            Logger.getLogger(getClass().getName()).log(Level.SEVERE, MiscUtil.getException(ex), ex);
+            poJSON = setJSON("error", MiscUtil.getException(ex));
+            return poJSON;
+        }
+
+        poJSON = setJSON("success", "success");
+        return poJSON;
     }
 
     public void removeOther() {
@@ -1173,7 +1334,6 @@ public class MCSales extends Transaction {
         JSONObject loJSON = new JSONObject();
         //initialize Client GUI
         ClientGUI loClient = new ClientGUI();
-
         loClient.setGRider(poGRider);
         loClient.setLogWrapper(null);
 
@@ -1190,7 +1350,7 @@ public class MCSales extends Transaction {
                 "IFNULL(b.sClientID,'')»IFNULL(c.sClientID,'')»IFNULL(d.sClientID,'')»IFNULL(e.sClientID,'')"
                 + "»IFNULL(a.`sCompnyNm`,CONCAT(a.`sLastName`+', '+a.`sFrstName` , ' ',a.`sMiddName`))"
                 + "»dBirthDte»sAddressx»sClientID",
-                byCode ? 0 : 1);
+                byCode ? 4 : 6);
 
         if (poJSON != null) {
             if ("success".equals((String) poJSON.get("result"))) {
@@ -1202,9 +1362,9 @@ public class MCSales extends Transaction {
                 loJSON.put("result", "success");
             } else {
                 loJSON = addClient();
+                return loJSON;
             }
             if ("success".equals((String) loJSON.get("result"))) {
-
                 //check if has possible source 
                 if (poJSON.get("xHasReserv").toString().equals("YES")
                         || poJSON.get("xHasQuotat").toString().equals("YES")
@@ -1218,7 +1378,7 @@ public class MCSales extends Transaction {
                             "sTransNox»dTransact"
                             + "»IFNULL(a.`sCompnyNm`,CONCAT(a.`sLastName`+', '+a.`sFrstName` , ' ',a.`sMiddName`))"
                             + "»sClientID",
-                            byCode ? 0 : 1);
+                            byCode ? 3 : 4);
 
                     JSONObject loValidate = new JSONObject();
                     switch (loSourceTransaction.get("sSource").toString()) {
@@ -1718,8 +1878,8 @@ public class MCSales extends Transaction {
         poJSON.put("result", "success");
         return poJSON;
     }
-    
-    public JSONObject searchDetailBySerial(int row, String value, boolean byCode) throws SQLException, GuanzonException, CloneNotSupportedException {
+
+    public JSONObject searchDetailBySerial(int row, String value, int fnColumn) throws SQLException, GuanzonException, CloneNotSupportedException {
         InventoryBrowse loBrowse = new InventoryBrowse(poGRider, logwrapr);
         loBrowse.initTransaction();
         if (!psIndustryCode.isEmpty()) {
@@ -1727,95 +1887,137 @@ public class MCSales extends Transaction {
         }
         loBrowse.setCategoryFilters(psCategorCD);
         loBrowse.setBranch(poGRider.getBranchCode());
+
         //allow negative quantity NEW BR 07-2026
         loBrowse.isWithQuantityStock(false);
 
         poJSON = new JSONObject();
-       
-        poJSON = loBrowse.searchInventorySerialWithStock(value, byCode);
-        System.out.println("result " + (String) poJSON.get("result"));
-        if ("success".equals((String) poJSON.get("result"))) {
-            for (int lnExisting = 0; lnExisting <= paDetail.size() - 1; lnExisting++) {
-                Model_Sales_Detail loExisting = (Model_Sales_Detail) paDetail.get(lnExisting);
-                if (loExisting.getStockID()!= null) {
-                    if (loExisting.getStockID().equals(loBrowse.getModelInventory().getStockId())) {
-                        if (!loExisting.getSerialID().isEmpty()) {
-                            if (loBrowse.getModelInventorySerial().getSerialId() != null) {
-                                if (!loExisting.getSerialID().equals(loBrowse.getModelInventorySerial().getSerialId())) {
-                                    continue;
-                                }
-                            }
-                        }
-                        poJSON = new JSONObject();
-                        poJSON.put("result", "error");
-                        poJSON.put("message", "Selected Inventory is already exist!");
-                        return poJSON;
 
+        String lscolHeader = "Serial 01»Serial 02»Model»Color/Varian»Description»ID";
+        String lscolName = "sSerial01»sSerial02»xModelNme»xColorNme»xDescript»sSerialID";
+        String lscolCriteria = "a.sSerial01»a.sSerial02»IFNULL (d.sDescript, '')»IFNULL (e.sDescript, '')»b.sDescript»a.sSerialID";
+        loBrowse.setCustomColHeader(lscolHeader);
+        loBrowse.setCustomColName(lscolName);
+        loBrowse.setCustomColCriteria(lscolCriteria);
+        poJSON = loBrowse.searchInventorySerialWithStock(value, fnColumn);
+
+        System.out.println("result " + (String) poJSON.get("result"));
+        System.out.println("result " + (String) poJSON.get("result"));
+        if (!"success".equals((String) poJSON.get("result"))) {
+            return poJSON; // nothing selected, do not touch the row
+        }
+
+        String lsStockID = loBrowse.getModelInventory().getStockId();
+        String lsSerialID = loBrowse.getModelInventorySerial().getSerialId(); // may be null (non-serialized)
+        boolean lbWithSerial = lsSerialID != null && !lsSerialID.isEmpty();
+
+        // ---------- duplicate check (ignore the row being edited) ----------
+        for (int lnCtr = 0; lnCtr < paDetail.size(); lnCtr++) {
+            Model_Sales_Detail loExisting = (Model_Sales_Detail) paDetail.get(lnCtr);
+            if (loExisting.getEntryNo() == row || loExisting.getStockID() == null
+                    || !loExisting.getStockID().equals(lsStockID)) {
+                continue;
+            }
+            boolean lbExistingSerial = loExisting.getSerialID() != null && !loExisting.getSerialID().isEmpty();
+
+            if (lbWithSerial && lbExistingSerial && loExisting.getSerialID().equals(lsSerialID)) {
+                poJSON = new JSONObject();
+                poJSON.put("result", "error");
+                poJSON.put("message", "Selected Serial is already exist!");
+                return poJSON;
+            }
+            if (!lbWithSerial && !lbExistingSerial && !hasSource()) {
+                poJSON = new JSONObject();
+                poJSON.put("result", "error");
+                poJSON.put("message", "Selected Inventory is already exist!");
+                return poJSON;
+            }
+        }
+
+        Model_Sales_Detail loDetail = getDetail(row);
+        double lnUnitCost = Double.parseDouble(loBrowse.getModelInventory().getCost().toString());
+        int lnRemaining = 0;
+
+        // ---------- source handling: consume source qty, push remainder to a new row ----------
+        if (hasSource()) {
+            Model_Sales_Detail loSourceRow = null;
+
+            boolean lbRowIsSource = loDetail.getStockID() != null
+                    && loDetail.getStockID().equals(lsStockID)
+                    && (loDetail.getSerialID() == null || loDetail.getSerialID().isEmpty());
+
+            if (lbRowIsSource) {
+                loSourceRow = loDetail;
+            } else {
+                // the selected stock may sit in another (unassigned) source row
+                for (int lnCtr = 0; lnCtr < paDetail.size(); lnCtr++) {
+                    Model_Sales_Detail loTmp = (Model_Sales_Detail) paDetail.get(lnCtr);
+                    if (loTmp.getEntryNo() != row
+                            && lsStockID.equals(loTmp.getStockID())
+                            && (loTmp.getSerialID() == null || loTmp.getSerialID().isEmpty())
+                            && loTmp.getQuantity() > 0) {
+                        loSourceRow = loTmp;
+                        break;
                     }
+                }
+            }
+
+            if (loSourceRow != null) {
+                lnRemaining = loSourceRow.getQuantity() - 1; // this serial takes 1
+
+                lnUnitCost = loSourceRow.getUnitCost();
+                loDetail.setUnitPrice(loSourceRow.getUnitPrice());
+                loDetail.setPromoID(loSourceRow.getPromoID());
+                loDetail.setDiscount(loSourceRow.getDiscount());
+                loDetail.setAddDiscount(loSourceRow.getAddDiscount());
+                loDetail.setFreight(loSourceRow.getFreight());
+
+                if (loSourceRow != loDetail) {
+                    // consume from the other source row
+                    if (lnRemaining > 0) {
+                        loSourceRow.setQuantity(lnRemaining);
+                    } else {
+                        paDetail.remove(loSourceRow); // fully consumed; removeOther() realigns entry no on save
+                    }
+                    lnRemaining = 0; // remainder stays in that source row, no new row needed
                 }
             }
         }
 
-        getDetail(row).setStockID(loBrowse.getModelInventory().getStockId());
-        if (loBrowse.getModelInventorySerial().getSerialId() != null) {
-            getDetail(row).setSerialID(loBrowse.getModelInventorySerial().getSerialId());
+        // ---------- fill the selected row (one serial = qty 1) ----------
+        loDetail.setStockID(lsStockID);
+        if (lbWithSerial) {
+            loDetail.setSerialID(lsSerialID);
+        }
+        loDetail.setUnitCost(lnUnitCost);
+        loDetail.setQuantity(1);
+
+        // ---------- repopulate remaining qty in a new row ----------
+        if (lnRemaining > 0) {
+            int lnNewEntry = 0;
+            for (int lnCtr = 0; lnCtr < paDetail.size(); lnCtr++) {
+                lnNewEntry = Math.max(lnNewEntry, ((Model_Sales_Detail) paDetail.get(lnCtr)).getEntryNo());
+            }
+            lnNewEntry++;
+
+            Model_Sales_Detail loNew = getDetail(lnNewEntry); // creates + adds the row
+            loNew.setStockID(lsStockID);
+            loNew.setQuantity(lnRemaining);      // no serial yet; user searches the next engine/frame no
+            loNew.setUnitCost(lnUnitCost);
+            loNew.setUnitPrice(loDetail.getUnitPrice());
+            loNew.setPromoID(loDetail.getPromoID());
+            loNew.setDiscount(loDetail.getDiscount());
+            loNew.setAddDiscount(loDetail.getAddDiscount());
+            loNew.setFreight(loDetail.getFreight());
         }
 
-        getDetail(row).setUnitCost(Double.parseDouble(loBrowse.getModelInventory().getCost().toString()));
-        getDetail(row).setQuantity(1);
-        // handle cloning if has promo and qty > 1
-        if (getDetail(row).getQuantity()> 1) {
-
-            getDetail(row).setQuantity(1);
-//
-//            //clone detail to transfer
-//            int lnStockRow = row;
-//            double lnIssuedCount = 0;
-//            InventoryRequestApproval loStockRequest = getRequestApproval(getMaster().getOrderNo());
-//            if (loStockRequest != null) {
-//                //check existing record for row and count of issued
-//                for (int lnCtr = 1; lnCtr <= loStockRequest.getDetailCount(); lnCtr++) {
-//                    if (loStockRequest.getDetail(lnCtr).getStockId() != null) {
-//                        if (loStockRequest.getDetail(lnCtr).getStockId()
-//                                .equals(getDetail(row).getStockId())) {
-//                            lnStockRow = lnCtr;
-//                            for (int lnRowDetail = 1; lnRowDetail <= getDetailCount(); lnRowDetail++) {
-//                                if (getDetail(lnRowDetail).getStockId() != null) {
-//
-//                                    if (loStockRequest.getDetail(lnCtr).getStockId()
-//                                            .equals(getDetail(lnRowDetail).getStockId())) {
-//
-//                                        lnIssuedCount = lnIssuedCount + getDetail(row).getQuantity();
-//                                    }
-//                                }
-//                            }
-//                        }
-//                    }
-//                }
-//            }
-//            //add seperate detail
-//            Model_Inventory_Transfer_Detail loLastDetailOther = getDetail(getDetailCount());
-//            if (loLastDetailOther.getStockId() == null || loLastDetailOther.getStockId().isEmpty()) {
-//                //count if the detail is already has issued
-//                loLastDetailOther.setOrderNo(loStockRequest.getMaster().getTransactionNo());
-//                loLastDetailOther.setStockId(loStockRequest.getDetail(lnStockRow).getStockId());
-//                loLastDetailOther.setInventoryCost(((Number) loStockRequest.getDetail(lnStockRow).Inventory().getCost()).doubleValue());
-//                loLastDetailOther.InventoryStockRequest().setApproved(loStockRequest.getDetail(lnStockRow).getApproved() - lnIssuedCount);
-//
-//            } else {
-//                Model_Inventory_Transfer_Detail loNewDetailOther = getDetail(getDetailCount() + 1);
-//                loNewDetailOther.setOrderNo(loStockRequest.getMaster().getTransactionNo());
-//                loNewDetailOther.setStockId(loStockRequest.getDetail(lnStockRow).getStockId());
-//                loNewDetailOther.setInventoryCost(((Number) loStockRequest.getDetail(lnStockRow).Inventory().getCost()).doubleValue());
-//                loNewDetailOther.InventoryStockRequest().setApproved(loStockRequest.getDetail(lnStockRow).getApproved() - lnIssuedCount);
-//
-//            }
-        }
         poJSON = new JSONObject();
         poJSON.put("result", "success");
-
         return poJSON;
+    }
 
+    private boolean hasSource() {
+        return getMaster().getSourceNo() != null && !getMaster().getSourceNo().isEmpty();
     }
 
     public JSONObject searchSalesGiveAway(int fsRow, String value, boolean byCode)
@@ -2576,5 +2778,290 @@ public class MCSales extends Transaction {
         poJSON.put("result", "success");
         poJSON.put("message", "Transaction replaced successfully.");
         return poJSON;
+    }
+
+    //------------------------ATTACHMENT CODE HERE-------------------------------------------------------------------------------------
+    private TransactionAttachment TransactionAttachment()
+            throws SQLException,
+            GuanzonException {
+        return new SysTableContollers(poGRider, null).TransactionAttachment();
+    }
+
+    public JSONObject loadAttachments()
+            throws SQLException,
+            GuanzonException {
+        poJSON = new JSONObject();
+        paAttachments = new ArrayList<>();
+
+        TransactionAttachment loAttachment = new SysTableContollers(poGRider, null).TransactionAttachment();
+        List loList = loAttachment.getAttachments(SOURCE_CODE, getMaster().getTransactionNo());
+        for (int lnCtr = 0; lnCtr <= loList.size() - 1; lnCtr++) {
+            paAttachments.add(TransactionAttachment());
+            poJSON = paAttachments.get(getTransactionAttachmentCount() - 1).openRecord((String) loList.get(lnCtr));
+            if ("success".equals((String) poJSON.get("result"))) {
+                if (getMaster().getEditMode() == EditMode.UPDATE) {
+                    poJSON = paAttachments.get(getTransactionAttachmentCount() - 1).updateRecord();
+                }
+                System.out.println(paAttachments.get(getTransactionAttachmentCount() - 1).getModel().getTransactionNo());
+                System.out.println(paAttachments.get(getTransactionAttachmentCount() - 1).getModel().getSourceNo());
+                System.out.println(paAttachments.get(getTransactionAttachmentCount() - 1).getModel().getSourceCode());
+                System.out.println(paAttachments.get(getTransactionAttachmentCount() - 1).getModel().getFileName());
+
+                //Download Attachments
+                poJSON = WebFile.DownloadFile(WebFile.getAccessToken(System.getProperty("sys.default.access.token")),
+                        "0032" //Constant
+                        ,
+                         "" //Empty
+                        ,
+                         paAttachments.get(getTransactionAttachmentCount() - 1).getModel().getFileName(),
+                        SOURCE_CODE,
+                        paAttachments.get(getTransactionAttachmentCount() - 1).getModel().getSourceNo(),
+                        "");
+                if ("success".equals((String) poJSON.get("result"))) {
+
+                    poJSON = (JSONObject) poJSON.get("payload");
+                    if (WebFile.Base64ToFile((String) poJSON.get("data"),
+                            (String) poJSON.get("hash"),
+                            System.getProperty("sys.default.path.temp.attachments") + "/",
+                            (String) poJSON.get("filename"))) {
+                        System.out.println("poJSON success: " + poJSON.toJSONString());
+                        System.out.println("File downloaded succesfully.");
+                    } else {
+                        poJSON = (JSONObject) poJSON.get("error");
+                        poJSON.put("result", "error");
+                        System.out.println("ERROR WebFile.DownloadFile: " + poJSON.get("message"));
+                        System.out.println("poJSON error WebFile.DownloadFile: " + poJSON.toJSONString());
+                    }
+
+                } else {
+                    System.out.println("poJSON error WebFile.DownloadFile: " + poJSON.toJSONString());
+                }
+            }
+        }
+        return poJSON;
+    }
+
+    @Override
+    public String getSourceCode() {
+        return SOURCE_CODE;
+    }
+
+    private JSONObject setJSON(String fsResult, String fsMessage) {
+        JSONObject loJSON = new JSONObject();
+        loJSON.put("result", fsResult);
+        loJSON.put("message", fsMessage);
+        return loJSON;
+    }
+
+    public JSONObject addAttachment()
+            throws SQLException,
+            GuanzonException {
+        poJSON = new JSONObject();
+
+        if (paAttachments.isEmpty()) {
+            paAttachments.add(TransactionAttachment());
+            poJSON = paAttachments.get(getTransactionAttachmentCount() - 1).newRecord();
+        } else {
+            if (!paAttachments.get(paAttachments.size() - 1).getModel().getTransactionNo().isEmpty()) {
+                paAttachments.add(TransactionAttachment());
+            } else {
+                poJSON = setJSON("error", "Unable to add transaction attachment.");
+                return poJSON;
+            }
+        }
+        poJSON = setJSON("success", "success");
+        return poJSON;
+    }
+
+    public JSONObject removeAttachment(int fnRow) throws GuanzonException, SQLException {
+        poJSON = new JSONObject();
+        if (getTransactionAttachmentCount() <= 0) {
+            poJSON = setJSON("error", "No transaction attachment to be removed.");
+            return poJSON;
+        }
+
+        if (paAttachments.get(fnRow).getEditMode() == EditMode.ADDNEW) {
+            paAttachments.remove(fnRow);
+            System.out.println("Attachment :" + fnRow + " Removed");
+        } else {
+            paAttachments.get(fnRow).getModel().setRecordStatus(RecordStatus.INACTIVE);
+            System.out.println("Attachment :" + fnRow + " Deactivate");
+        }
+
+        poJSON.put("result", "success");
+        return poJSON;
+    }
+
+    public int addAttachment(String fFileName) throws SQLException, GuanzonException {
+        for (int lnCtr = 0; lnCtr <= getTransactionAttachmentCount() - 1; lnCtr++) {
+            if (fFileName.equals(paAttachments.get(lnCtr).getModel().getFileName())
+                    && RecordStatus.INACTIVE.equals(paAttachments.get(lnCtr).getModel().getRecordStatus())) {
+                paAttachments.get(lnCtr).getModel().setRecordStatus(RecordStatus.ACTIVE);
+                System.out.println("Attachment :" + lnCtr + " Activate");
+                return lnCtr;
+            }
+        }
+
+        addAttachment();
+        paAttachments.get(getTransactionAttachmentCount() - 1).getModel().setFileName(fFileName);
+        paAttachments.get(getTransactionAttachmentCount() - 1).getModel().setSourceNo(getMaster().getTransactionNo());
+        paAttachments.get(getTransactionAttachmentCount() - 1).getModel().setRecordStatus(RecordStatus.ACTIVE);
+        return getTransactionAttachmentCount() - 1;
+    }
+
+    public void copyFile(String fsPath) {
+        Path source = Paths.get(fsPath);
+        Path targetDir = Paths.get(System.getProperty("sys.default.path.temp.attachments"));
+
+        try {
+            // Ensure target directory exists
+            if (!Files.exists(targetDir)) {
+                Files.createDirectories(targetDir);
+            }
+
+            // Copy file into the target directory
+            Files.copy(source, targetDir.resolve(source.getFileName()),
+                    StandardCopyOption.REPLACE_EXISTING);
+
+            System.out.println("File copied successfully!");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public JSONObject checkExistingFileName(String fsValue) throws SQLException, GuanzonException {
+        poJSON = new JSONObject();
+
+        String lsSQL = MiscUtil.addCondition(MiscUtil.makeSelect(TransactionAttachment().getModel()), " sFileName = " + SQLUtil.toSQL(fsValue));
+        System.out.println("Executing SQL: " + lsSQL);
+        ResultSet loRS = poGRider.executeQuery(lsSQL);
+        try {
+            if (MiscUtil.RecordCount(loRS) > 0) {
+                if (loRS.next()) {
+                    if (loRS.getString("sFileName") != null && !"".equals(loRS.getString("sFileName"))) {
+                        poJSON.put("result", "error");
+                        poJSON.put("message", "File name already exist in database.\nTry changing the file name to upload.");
+                    }
+                }
+            }
+            MiscUtil.close(loRS);
+        } catch (SQLException e) {
+            System.out.println("No record loaded.");
+        }
+        return poJSON;
+    }
+
+    public JSONObject uploadCASAttachments(GRiderCAS instance, String access, int fnRow, String fsOriginalFileName) throws Exception {
+        poJSON = new JSONObject();
+        System.out.println("Uploading... : fsOriginalFileName : " + fsOriginalFileName);
+        System.out.println("New File Name... : " + paAttachments.get(fnRow).getModel().getFileName());
+        String hash;
+        String lsFile = paAttachments.get(fnRow).getModel().getFileName();
+
+        //check if new file is existing
+        File file = new File(paAttachments.get(fnRow).getModel().getImagePath() + "/" + lsFile);
+        if (!file.exists()) {
+            //check if original file is existing
+            lsFile = fsOriginalFileName;
+            file = new File(paAttachments.get(fnRow).getModel().getImagePath() + "/" + lsFile);
+            if (!file.exists()) {
+                poJSON = setJSON("error", "Cannot locate file in " + paAttachments.get(fnRow).getModel().getImagePath() + "/" + lsFile
+                        + ".\nContact system administrator for assistance.");
+                return poJSON;
+            }
+        }
+
+        //check if file hash is not empty
+        hash = paAttachments.get(fnRow).getModel().getMD5Hash();
+        if (paAttachments.get(fnRow).getModel().getMD5Hash() == null || "".equals(paAttachments.get(fnRow).getModel().getMD5Hash())) {
+            hash = MiscReplUtil.md5Hash(paAttachments.get(fnRow).getModel().getImagePath() + "/" + lsFile);
+        }
+
+        JSONObject result = WebFile.UploadFile(getAccessToken(access),
+                "0032",
+                "",
+                paAttachments.get(fnRow).getModel().getFileName(),
+                instance.getBranchCode(),
+                hash,
+                encodeFileToBase64Binary(file),
+                paAttachments.get(fnRow).getModel().getSourceCode(),
+                paAttachments.get(fnRow).getModel().getSourceNo(),
+                "");
+
+        if ("error".equalsIgnoreCase((String) result.get("result"))) {
+            System.out.println("Upload Error : " + result.toJSONString());
+            System.out.println("Upload Error : " + paAttachments.get(fnRow).getModel().getFileName());
+            poJSON = setJSON("error", "System error while uploading file " + paAttachments.get(fnRow).getModel().getFileName()
+                    + ".\nContact system administrator for assistance.");
+            return poJSON;
+        }
+        paAttachments.get(fnRow).getModel().setMD5Hash(hash);
+        paAttachments.get(fnRow).getModel().setSendStatus("1");
+        System.out.println("Upload Success : " + paAttachments.get(fnRow).getModel().getFileName());
+        poJSON.put("result", "success");
+        return poJSON;
+    }
+
+    private static String encodeFileToBase64Binary(File file) throws Exception {
+        FileInputStream fileInputStreamReader = new FileInputStream(file);
+        byte[] bytes = new byte[(int) file.length()];
+        fileInputStreamReader.read(bytes);
+        return new String(Base64.encodeBase64(bytes), "UTF-8");
+    }
+
+    private static JSONObject token = null;
+
+    private static String getAccessToken(String access) {
+        try {
+            JSONParser oParser = new JSONParser();
+            if (token == null) {
+                token = (JSONObject) oParser.parse(new FileReader(access));
+            }
+
+            Calendar current_date = Calendar.getInstance();
+            current_date.add(Calendar.MINUTE, -25);
+            Calendar date_created = Calendar.getInstance();
+            date_created.setTime(SQLUtil.toDate((String) token.get("created"), SQLUtil.FORMAT_TIMESTAMP));
+
+            //Check if token is still valid within the time frame
+            //Request new access token if not in the current period range
+            if (current_date.after(date_created)) {
+                String[] xargs = new String[]{(String) token.get("parent"), access};
+                RequestAccess.main(xargs);
+                token = (JSONObject) oParser.parse(new FileReader(access));
+            }
+
+            return (String) token.get("access_key");
+        } catch (IOException ex) {
+            return null;
+        } catch (ParseException ex) {
+            return null;
+        }
+    }
+
+    public boolean isJSONSuccess(JSONObject foJSON) {
+        return ("success".equals((String) foJSON.get("result")) || !"error".equals((String) foJSON.get("result")));
+    }
+
+    private boolean isJSONSuccess(JSONObject loJSON, String module, String fsModule) {
+        String result = (String) loJSON.get("result");
+        if ("error".equals(result)) {
+            String message = (String) loJSON.get("message");
+            Platform.runLater(() -> {
+                if (message != null) {
+                    ShowMessageFX.Warning(null, module, fsModule + ": " + message);
+                }
+            });
+            return false;
+        }
+        String message = (String) loJSON.get("message");
+
+        Platform.runLater(() -> {
+            if (message != null) {
+                ShowMessageFX.Information(null, module, fsModule + ": " + message);
+            }
+        });
+        return true;
+
     }
 }

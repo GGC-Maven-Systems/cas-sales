@@ -6,6 +6,7 @@ import org.guanzon.appdriver.agent.services.Model;
 import org.guanzon.appdriver.base.GuanzonException;
 import org.guanzon.appdriver.base.MiscUtil;
 import org.guanzon.appdriver.constant.EditMode;
+import org.guanzon.cas.inv.model.Model_Inv_Master;
 import org.guanzon.cas.inv.model.Model_Inventory;
 import org.guanzon.cas.inv.services.InvModels;
 import org.json.simple.JSONObject;
@@ -13,6 +14,8 @@ import org.json.simple.JSONObject;
 public class Model_Sales_Giveaways extends Model {
 
     private Model_Inventory poInventory;
+
+    private Model_Inv_Master poInventoryMaster;
 
     @Override
     public void initialize() {
@@ -179,4 +182,31 @@ public class Model_Sales_Giveaways extends Model {
             return poInventory;
         }
     }
+
+    public Model_Inv_Master InventoryMaster() throws SQLException, GuanzonException {
+        if (poInventoryMaster == null) {
+            poInventoryMaster = new InvModels(poGRider).InventoryMaster();
+        }
+
+        if (!"".equals((String) getValue("sStockIDx"))) {
+            if (poInventoryMaster.getEditMode() == EditMode.READY
+                    && poInventoryMaster.getStockId().equals((String) getValue("sStockIDx"))) {
+                return poInventoryMaster;
+            } else {
+                poJSON = poInventoryMaster.openRecord((String) getValue("sStockIDx"),
+                        poGRider.getIndustry(), poGRider.getBranchCode());
+
+                if ("success".equals((String) poJSON.get("result"))) {
+                    return poInventoryMaster;
+                } else {
+                    poInventoryMaster.initialize();
+                    return poInventoryMaster;
+                }
+            }
+        } else {
+            poInventoryMaster.initialize();
+            return poInventoryMaster;
+        }
+    }
+
 }
