@@ -383,13 +383,14 @@ public class VehicleDescription extends Parameter {
     public JSONObject searchRecord(String value, boolean byCode) throws SQLException, GuanzonException{
         String lsSQL = MiscUtil.addCondition(getSQ_Browse(), "d.sIndstCdx = " + SQLUtil.toSQL(psIndustryId));
         
+        System.out.println("Search Record by industry id SQL : " + lsSQL);
         poJSON = ShowDialogFX.Search(poGRider,
                 lsSQL,
                 value,
-                "Brand»Code»Model Name»Variant»Year Model»Color",
-                "xBrandNme»xModelCde»xModelNme»sDescript»nYearMdlx»xColorNme",
-                "IFNULL(d.sDescript, '')»IFNULL(b.sModelCde, '')»IFNULL(b.sDescript, '')»a.sDescript»a.nYearMdlx»IFNULL(c.sDescript, '')",
-                byCode ? 0 : 3);
+                "Model Name»Variant»Transmission»Year Model»Color",
+                "xModelNme»sDescript»sTransmss»nYearMdlx»xColorNme",
+                "IFNULL(b.sDescript, '')»a.sDescript»IFNULL(e.sTransmss,'')»a.nYearMdlx»IFNULL(c.sDescript, '')",
+                byCode ? 0 : 1);
 
         if (poJSON != null) {
             return OpenRecord((String) poJSON.get("sVrntIDxx"));
@@ -401,19 +402,20 @@ public class VehicleDescription extends Parameter {
         }
     }   
     
-    public JSONObject searchRecord(String value, boolean byCode, String modelId) throws SQLException, GuanzonException{
+    public JSONObject searchRecordByModel(String value, boolean byCode, String modelId) throws SQLException, GuanzonException{
         String lsSQL = getSQ_Browse();
         
         if (modelId != null){
             lsSQL = MiscUtil.addCondition(lsSQL, "a.sModelIDx = " + SQLUtil.toSQL(modelId));
         }
         
+        System.out.println("Search Record by model id SQL : " + lsSQL);
         poJSON = ShowDialogFX.Search(poGRider,
                 lsSQL,
                 value,
-                "Code»Model Name»Variant»Year Model»Color",
-                "xModelCde»xModelNme»sDescript»nYearMdlx»xColorNme",
-                "IFNULL(b.sModelCde, '')»IFNULL(b.sDescript, '')»a.sDescript»a.nYearMdlx»IFNULL(c.sDescript, '')",
+                "Model Name»Variant»Transmission»Year Model»Color",
+                "xModelNme»sDescript»sTransmss»nYearMdlx»xColorNme",
+                "IFNULL(b.sDescript, '')»a.sDescript»IFNULL(e.sTransmss,'')»a.nYearMdlx»IFNULL(c.sDescript, '')",
                 byCode ? 0 : 1);
 
         if (poJSON != null) {
@@ -427,21 +429,21 @@ public class VehicleDescription extends Parameter {
         
     }    
     
-    public JSONObject searchRecordByModel(String value, boolean byCode, String brandId) throws SQLException, GuanzonException{
+    public JSONObject searchRecordByBrand(String value, boolean byCode, String brandId) throws SQLException, GuanzonException{
         String lsSQL = getSQ_Browse();
         
         if (brandId != null){
             lsSQL = MiscUtil.addCondition(lsSQL, "b.sBrandIDx = " + SQLUtil.toSQL(brandId));
         }
-        
+        System.out.println("Search Record By brand id SQL : " + lsSQL);
         poJSON = ShowDialogFX.Search(poGRider,
                 lsSQL,
                 value,
-                "Code»Model Name»Variant»Year Model»Color",
-                "xModelCde»xModelNme»sDescript»nYearMdlx»xColorNme",
-                "IFNULL(b.sModelCde, '')»IFNULL(b.sDescript, '')»a.sDescript»a.nYearMdlx»IFNULL(c.sDescript, '')",
+                "Model Name»Variant»Transmission»Year Model»Color",
+                "xModelNme»sDescript»sTransmss»nYearMdlx»xColorNme",
+                "IFNULL(b.sDescript, '')»a.sDescript»IFNULL(e.sTransmss,'')»a.nYearMdlx»IFNULL(c.sDescript, '')",
                 byCode ? 0 : 1);
-
+        
         if (poJSON != null) {
             return OpenRecord((String) poJSON.get("sVrntIDxx"));
         } else {
@@ -732,6 +734,7 @@ public class VehicleDescription extends Parameter {
                             ", IFNULL(d.sDescript, '') xBrandNme" +
                             ", IFNULL(b.sBrandIDx, '') xBrandIDx" +
                             ", d.sIndstCdx " +
+                            ", e.sTransmss " +
                         " FROM Model_Variant a" +
                             " INNER JOIN Model_Variant_Insurance e ON e.sVrntIDxx = a.sVrntIDxx" +
                             " LEFT JOIN Model b ON a.sModelIDx = b.sModelIDx" +

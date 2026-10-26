@@ -61,6 +61,7 @@ import org.guanzon.appdriver.constant.Logical;
 import org.guanzon.cas.client.Client;
 import org.guanzon.cas.client.ClientGUI;
 import org.guanzon.cas.client.model.Model_Client_Address;
+import org.guanzon.cas.client.model.Model_Client_Mail;
 import org.guanzon.cas.client.model.Model_Client_Mobile;
 import org.guanzon.cas.client.services.ClientControllers;
 import org.guanzon.cas.client.services.ClientModels;
@@ -698,37 +699,8 @@ public class VehicleQuotation extends Transaction {
         }
         if (isJSONSuccess(poJSON)) {
             Master().setClientId(object.Master().getClientId());
-            
-            ClientModels clientModel = new ClientModels(poGRider);
-            Model_Client_Address loClientAddress = clientModel.ClientAddress();
-            Model_Client_Mobile loClientMobile = clientModel.ClientMobile();
-            
-            String lsSQL = MiscUtil.addCondition(MiscUtil.makeSelect(loClientAddress), 
-                                        " sClientID = " + SQLUtil.toSQL(object.Master().getClientId())
-                                        + " AND cPrimaryx = " + SQLUtil.toSQL(Logical.YES)
-                                        );
-            System.out.println("loClientAddress SQL: " + lsSQL);
-            ResultSet loRS = poGRider.executeQuery(lsSQL);
-            String lsAddressId = "";
-            ReloadAddOnList();
-            if (MiscUtil.RecordCount(loRS) > 0) {
-                if(loRS.next()){
-                    lsAddressId = loRS.getString("sAddrssID");
-                }
-            }
-            lsSQL = MiscUtil.addCondition(MiscUtil.makeSelect(loClientMobile), 
-                                        " sClientID = " + SQLUtil.toSQL(object.Master().getClientId())
-                                        + " AND cPrimaryx = " + SQLUtil.toSQL(Logical.YES)
-                                        );
-            System.out.println("loClientMobile SQL: " + lsSQL);
-            loRS = poGRider.executeQuery(lsSQL);
-            String lsMobileId = "";
-            ReloadAddOnList();
-            if (MiscUtil.RecordCount(loRS) > 0) {
-                if(loRS.next()){
-                    lsMobileId = loRS.getString("sMobileID");
-                }
-            }
+            String lsAddressId = getAddress(object.Master().getClientId(),true, true);
+            String lsMobileId = getContact(object.Master().getClientId(),true, true);
             Master().setAddressId(lsAddressId);
             Master().setContactId(lsMobileId);
             Detail(0).setSourceCode(object.getSourceCode());
@@ -738,6 +710,80 @@ public class VehicleQuotation extends Transaction {
         
         return poJSON;
     }
+    
+    private String getAddress(String fsClientId,boolean isReturnBycode, boolean isSearch) throws SQLException, CloneNotSupportedException, GuanzonException{
+        ClientModels clientModel = new ClientModels(poGRider);
+        Model_Client_Address loClientAddress = clientModel.ClientAddress();
+        String lsSQL = MiscUtil.addCondition(MiscUtil.makeSelect(loClientAddress), 
+                                    " sClientID = " + SQLUtil.toSQL(fsClientId)
+                                    + " AND cPrimaryx = " + SQLUtil.toSQL(Logical.YES)
+                                    );
+        System.out.println("loClientAddress SQL: " + lsSQL);
+        ResultSet loRS = poGRider.executeQuery(lsSQL);
+        String lsAddressId = "";
+        ReloadAddOnList();
+        if (MiscUtil.RecordCount(loRS) > 0) {
+            if(loRS.next()){
+                if(isReturnBycode){
+                    lsAddressId = loRS.getString("sAddrssID");
+                } else {
+                    //Todo
+                }
+            }
+        }
+        
+        return lsAddressId;
+    }
+    private String getContact(String fsClientId,boolean isReturnBycode, boolean isSearch) throws SQLException, CloneNotSupportedException, GuanzonException{
+        ClientModels clientModel = new ClientModels(poGRider);
+        Model_Client_Mobile loClientMobile = clientModel.ClientMobile();
+
+        String lsSQL = MiscUtil.addCondition(MiscUtil.makeSelect(loClientMobile), 
+                                    " sClientID = " + SQLUtil.toSQL(fsClientId)
+                                    + " AND cPrimaryx = " + SQLUtil.toSQL(Logical.YES)
+                                    );
+        System.out.println("loClientMobile SQL: " + lsSQL);
+        ResultSet loRS = poGRider.executeQuery(lsSQL);
+        String lsMobileId = "";
+        ReloadAddOnList();
+        if (MiscUtil.RecordCount(loRS) > 0) {
+            if(loRS.next()){
+                if(isReturnBycode){
+                    lsMobileId = loRS.getString("sMobileID");
+                } else {
+                    lsMobileId = loRS.getString("sMobileNo");
+                }
+            }
+        }
+        
+        return lsMobileId;
+    }
+    
+    private String getEmail(String fsClientId,boolean isReturnBycode, boolean isSearch) throws SQLException, CloneNotSupportedException, GuanzonException{
+        ClientModels clientModel = new ClientModels(poGRider);
+        Model_Client_Mail loClientEmail = clientModel.ClientMail();
+
+        String lsSQL = MiscUtil.addCondition(MiscUtil.makeSelect(loClientEmail), 
+                                    " sClientID = " + SQLUtil.toSQL(fsClientId)
+                                    + " AND cPrimaryx = " + SQLUtil.toSQL(Logical.YES)
+                                    );
+        System.out.println("loClientEmail SQL: " + lsSQL);
+        ResultSet loRS = poGRider.executeQuery(lsSQL);
+        String lsEmail = "";
+        ReloadAddOnList();
+        if (MiscUtil.RecordCount(loRS) > 0) {
+            if(loRS.next()){
+                if(isReturnBycode){
+                    lsEmail = loRS.getString("sEmailIDx");
+                } else {
+                    lsEmail = loRS.getString("sEMailAdd");
+                }
+            }
+        }
+        
+        return lsEmail;
+    }
+    
     
     public JSONObject SearchClient(String value)
             throws SQLException,
@@ -876,13 +922,13 @@ public class VehicleQuotation extends Transaction {
             return poJSON;
         }
         
-        if("0".equals(Detail(row).getPaymentForm())){ //Cash
+//        if("0".equals(Detail(row).getPaymentForm())){ //Cash
             VehicleDescription object = new SalesControllers(poGRider, logwrapr).VehicleDescription();
             object.initialize();
             object.setRecordStatus(RecordStatus.ACTIVE);
             object.setIndustryId(psIndustryId);
             if(pbWithUI){
-                poJSON = object.searchRecord(value, byCode, Detail(row).getModelId());
+                poJSON = object.searchRecordByModel(value, byCode, Detail(row).getModelId());
             } else {
                 poJSON = object.openRecord(value);
             }
@@ -895,57 +941,54 @@ public class VehicleQuotation extends Transaction {
                     return poJSON;
                 }
             }
-        } else {
-            String lsSQL = VehicleFinancing_SQL();
-            lsSQL = MiscUtil.addCondition(lsSQL, SQLUtil.toSQL(xsDateShort(Master().getTransactionDate())) + " BETWEEN a.dFromDate AND a.dThruDate "
-                                            + " AND e.sModelIDx = " + SQLUtil.toSQL(Detail(row).getModelId())
-                                            + " AND a.cRecdStat = " + SQLUtil.toSQL(ValidityPeriodStatus.APPROVED)
-                                            + " AND a.sCompnyID = " + SQLUtil.toSQL(psCompanyId)
-                                        );
-            System.out.println("Executing SQL: " + lsSQL);
-            if(pbWithUI){
-                poJSON = ShowDialogFX.Browse(poGRider,
-                lsSQL,
-                value,
-                "Financing ID»Description»Downpayment Rate",
-                "sVhclFIDx»xDescription»nDPRatexx",
-                "a.sVhclFIDx»CONCAT(f.sDescript,' ', e.sDescript, ' ', c.sDescript, ' ', g.sDescript, ' ', c.nYearMdlx, ' ',d.sTransmss )»a.nDPRatexx",
-                byCode ? 0 : 1);
-            } else {
-                poJSON = new JSONObject();
-                poJSON.put("result", "success");
-                poJSON.put("sVrntIDxx", value);
-                poJSON.put("nDPRatexx", 15.00); //for testing only
-                poJSON.put("nRsrvAmtx", 10000.00); //for testing only
-                poJSON.put("nSelPrice", 10000.00); //for testing only
-            }
-            if (poJSON != null) {
-                String lsVariantId = (String) poJSON.get("sVrntIDxx");
-                Double ldblDPRate = Double.valueOf((String) poJSON.get("nDPRatexx"));
-                Double ldblRSVAmt =  Double.valueOf((String) poJSON.get("nRsrvAmtx"));
-                Double ldblSRPAmt =  Double.valueOf((String) poJSON.get("nSelPrice"));
-                
-                Detail(row).setVariantId(lsVariantId);
-                Detail(row).setDownPaymentPercent(ldblDPRate);
-                Detail(row).setDownPayment(ldblSRPAmt*(ldblDPRate/100));
-                Detail(row).setReservationAmount(ldblRSVAmt);
-                Detail(row).setSRPAmount(ldblSRPAmt); 
-                
-                poJSON = AutoPopulateVehicleAddOn(lsVariantId);
-                if(!isJSONSuccess(poJSON)){
-                    return poJSON;
-                }
-                
-            } else {
-                poJSON = new JSONObject();
-                poJSON.put("result", "error");
-                poJSON.put("message", "No record loaded.");
-                return poJSON;
-            }
-        }
-        computeFields();
-        poJSON.put("result", "success");
-        poJSON.put("message", "success");
+//        } else {
+//            String lsSQL = VehicleFinancing_SQL();
+//            lsSQL = MiscUtil.addCondition(lsSQL, SQLUtil.toSQL(xsDateShort(Master().getTransactionDate())) + " BETWEEN a.dFromDate AND a.dThruDate "
+//                                            + " AND e.sModelIDx = " + SQLUtil.toSQL(Detail(row).getModelId())
+//                                            + " AND a.cRecdStat = " + SQLUtil.toSQL(ValidityPeriodStatus.APPROVED)
+//                                            + " AND a.sCompnyID = " + SQLUtil.toSQL(psCompanyId)
+//                                        );
+//            System.out.println("Executing SQL: " + lsSQL);
+//            if(pbWithUI){
+//                poJSON = ShowDialogFX.Browse(poGRider,
+//                lsSQL,
+//                value,
+//                "Financing ID»Description»Downpayment Rate",
+//                "sVhclFIDx»xDescription»nDPRatexx",
+//                "a.sVhclFIDx»CONCAT(f.sDescript,' ', e.sDescript, ' ', c.sDescript, ' ', g.sDescript, ' ', c.nYearMdlx, ' ',d.sTransmss )»a.nDPRatexx",
+//                byCode ? 0 : 1);
+//            } else {
+//                poJSON = new JSONObject();
+//                poJSON.put("result", "success");
+//                poJSON.put("sVrntIDxx", value);
+//                poJSON.put("nDPRatexx", 15.00); //for testing only
+//                poJSON.put("nRsrvAmtx", 10000.00); //for testing only
+//                poJSON.put("nSelPrice", 10000.00); //for testing only
+//            }
+//            if (poJSON != null) {
+//                String lsVariantId = (String) poJSON.get("sVrntIDxx");
+//                Double ldblDPRate = Double.valueOf((String) poJSON.get("nDPRatexx"));
+//                Double ldblRSVAmt =  Double.valueOf((String) poJSON.get("nRsrvAmtx"));
+//                Double ldblSRPAmt =  Double.valueOf((String) poJSON.get("nSelPrice"));
+//                
+//                Detail(row).setVariantId(lsVariantId);
+//                Detail(row).setDownPaymentPercent(ldblDPRate);
+//                Detail(row).setDownPayment(ldblSRPAmt*(ldblDPRate/100));
+//                Detail(row).setReservationAmount(ldblRSVAmt);
+//                Detail(row).setSRPAmount(ldblSRPAmt); 
+//                
+//                poJSON = AutoPopulateVehicleAddOn(lsVariantId);
+//                if(!isJSONSuccess(poJSON)){
+//                    return poJSON;
+//                }
+//                
+//            } else {
+//                poJSON = new JSONObject();
+//                poJSON.put("result", "error");
+//                poJSON.put("message", "No record loaded.");
+//                return poJSON;
+//            }
+//        }
         return poJSON;
     }
     
@@ -1001,9 +1044,6 @@ public class VehicleQuotation extends Transaction {
             return poJSON;
         }
         
-        computeFields();
-        poJSON.put("result", "success");
-        poJSON.put("message", "success");
         return poJSON;
     }
     
@@ -1151,10 +1191,6 @@ public class VehicleQuotation extends Transaction {
             poJSON = SearchAccessories(value, byCode, row);
         }
         
-        computeFields();
-        
-        poJSON.put("result", "success");
-        poJSON.put("message", "success");
         return poJSON;
     }
     
@@ -1181,7 +1217,7 @@ public class VehicleQuotation extends Transaction {
                                 paFreebies.remove(lnCtr);
                             }
                         } else {
-                            poJSON = setJSON("error", "Selected accessory already exists in quotation freebies.");
+                            poJSON = setJSON("error", "Selected accessory <"+FreebiesList(lnCtr).Inventory().getDescription()+"> already exists in quotation freebies.");
                             poJSON.put("row", lnCtr);
                             return poJSON;
                         }
@@ -1219,7 +1255,7 @@ public class VehicleQuotation extends Transaction {
                                 paAddOn.remove(lnCtr);
                             }
                         } else {
-                            poJSON = setJSON("error", "Selected accessory already exists in quotation add ons.");
+                            poJSON = setJSON("error", "Selected freebie <"+AddOnList(lnCtr).Inventory().getDescription()+"> already exists in quotation add ons.");
                             poJSON.put("row", lnCtr);
                             return poJSON;
                         }
@@ -1244,7 +1280,7 @@ public class VehicleQuotation extends Transaction {
                         poJSON.put("row", lnCtr);
                         return poJSON;
                     } else {
-                        poJSON = setJSON("error", "Selected Add-On already exist.");
+                        poJSON = setJSON("error", "Selected addon <"+AddOnList(lnCtr).AddOnMaster().AddOnType().getAddTypeName()+"> already exist.");
                         poJSON.put("row", lnCtr);
                         return poJSON;
                     }
@@ -1263,7 +1299,7 @@ public class VehicleQuotation extends Transaction {
         return poJSON;
     }
     
-    private JSONObject checkExistingAccessories(String fsId, int row){
+    private JSONObject checkExistingAccessories(String fsId, int row) throws SQLException, GuanzonException{
         poJSON.put("row", row);
         for(int lnCtr = 0;lnCtr < getAddOnListCount(); lnCtr++){
             if(fsId.equals(AddOnList(lnCtr).getStockId())
@@ -1273,7 +1309,7 @@ public class VehicleQuotation extends Transaction {
                     poJSON.put("row", lnCtr);
                     return poJSON;
                 } else {
-                    poJSON = setJSON("error", "Selected accessory already exist.");
+                    poJSON = setJSON("error", "Selected accessory <"+AddOnList(lnCtr).Inventory().getDescription()+"> already exist.");
                     poJSON.put("row", lnCtr);
                     return poJSON;
                 }
@@ -1284,7 +1320,7 @@ public class VehicleQuotation extends Transaction {
         return poJSON;
     }
 
-    private JSONObject checkExistingFreebies(String fsId, int row){
+    private JSONObject checkExistingFreebies(String fsId, int row) throws SQLException, GuanzonException{
         poJSON.put("row", row);
         for(int lnCtr = 0;lnCtr < getFreebiesListCount(); lnCtr++){
             if(fsId.equals(FreebiesList(lnCtr).getStockId())
@@ -1294,7 +1330,7 @@ public class VehicleQuotation extends Transaction {
                     poJSON.put("row", lnCtr);
                     return poJSON;
                 } else {
-                    poJSON = setJSON("error", "Selected freebies already exist.");
+                    poJSON = setJSON("error", "Selected freebie <"+FreebiesList(lnCtr).Inventory().getDescription()+"> already exist.");
                     poJSON.put("row", lnCtr);
                     return poJSON;
                 }
@@ -1535,7 +1571,9 @@ public class VehicleQuotation extends Transaction {
                 || checkNotEmpty(AddOnList(lnCtr).getStockId())){
                 if(AddOnList(lnCtr).getRecordStatus()){
                     if(AddOnList(lnCtr).getQuantity() <= 0.00){
-                        AddOnList(lnCtr).setQuantity(1);
+                        if(pnEditMode == EditMode.ADDNEW || pnEditMode == EditMode.UPDATE){
+                            AddOnList(lnCtr).setQuantity(1);
+                        }
                     }
                 }
             }
@@ -1543,10 +1581,41 @@ public class VehicleQuotation extends Transaction {
             AddOnList(lnCtr).setTotalAmount(AddOnList(lnCtr).getAmount() * AddOnList(lnCtr).getQuantity());
             
             if(checkNotEmpty(AddOnList(lnCtr).AddOnMaster().AddOnType().getAddTypeName())){
-                if(AddOnList(lnCtr).AddOnMaster().AddOnType().getAddTypeName().contains("LTO")
-                    || AddOnList(lnCtr).AddOnMaster().AddOnType().getAddTypeName().contains("TPL")
-                    || AddOnList(lnCtr).AddOnMaster().AddOnType().getAddTypeName().contains("Comprehensive")
+                if(AddOnList(lnCtr).AddOnMaster().AddOnType().getAddTypeName().toUpperCase().contains("LTO")
+                    || AddOnList(lnCtr).AddOnMaster().AddOnType().getAddTypeName().toUpperCase().contains("TPL")
+                    || AddOnList(lnCtr).AddOnMaster().AddOnType().getAddTypeName().toUpperCase().contains("Comprehensive")
                 ){
+                    
+                    if(AddOnList(lnCtr).AddOnMaster().AddOnType().getAddTypeName().toUpperCase().contains("TPL")){
+                        if(AddOnList(lnCtr).getQuantity() <= 0.00){
+                            Detail(0).setTPLAmount(0.0000);
+                        } else {
+                            if(Detail(0).getTPLAmount() <= 0.0000){
+                                Detail(0).setTPLAmount(AddOnList(lnCtr).AddOnMaster().getAmount());
+                            }
+                        }
+                    }
+                    
+                    if(AddOnList(lnCtr).AddOnMaster().AddOnType().getAddTypeName().toUpperCase().contains("LTO")){
+                        if(AddOnList(lnCtr).getQuantity() <= 0.00){
+                            Detail(0).setLTOAmount(0.0000);
+                        } else {
+                            if(Detail(0).getLTOAmount() <= 0.0000){
+                                Detail(0).setLTOAmount(AddOnList(lnCtr).AddOnMaster().getAmount());
+                            }
+                        }
+                    }
+                    
+                    if(AddOnList(lnCtr).AddOnMaster().AddOnType().getAddTypeName().toUpperCase().contains("Comprehensive")){
+                        if(AddOnList(lnCtr).getQuantity() <= 0.00){
+                            Detail(0).setComprehensiveAmount(0.0000);
+                        } else {
+                            if(Detail(0).getComprehensiveAmount() <= 0.0000){
+                                Detail(0).setComprehensiveAmount(AddOnList(lnCtr).AddOnMaster().getAmount());
+                            }
+                        }
+                    }
+                    
                     continue;
                 }
                 
@@ -1554,10 +1623,8 @@ public class VehicleQuotation extends Transaction {
             }
         }
         
-        ldblTranTotal = ldblDPAmt + ldblRSVAmt + ldblTPLAmt + ldblCompAmt + ldblLTOAmt + ldblCHMOAmt + ldblTotalAddOn;
-        Detail(0).setTransactionTotal(ldblTranTotal);
+        ldblTranTotal = ldblSRPAmt + ldblDPAmt + ldblRSVAmt + ldblTPLAmt + ldblCompAmt + ldblLTOAmt + ldblCHMOAmt + ldblTotalAddOn;
         ldblTotalDisc = Detail(0).getDiscountAmount() + Detail(0).getAdditionalDiscountAmount();
-        Detail(0).setTotalAmount(ldblTranTotal - ldblTotalDisc);
         
         //Financing Computation
         /**
@@ -1580,10 +1647,14 @@ public class VehicleQuotation extends Transaction {
             Detail(0).setPromptPaymentDiscount(0.0000);
         }
         
-        Detail(0).setFinancingAmount(ldblFinancingAmount);
-        Detail(0).setMonthlyAmount(ldblMontlyAmortizationAmt);
-        Detail(0).setGrossMonthlyInstallment(ldblGrossMonthlyInstallment);
-        Detail(0).setPromissoryNoteAmt(ldblPromissoryNoteAmt);
+        if(pnEditMode == EditMode.ADDNEW || pnEditMode == EditMode.UPDATE){
+            Detail(0).setFinancingAmount(ldblFinancingAmount);
+            Detail(0).setMonthlyAmount(ldblMontlyAmortizationAmt);
+            Detail(0).setGrossMonthlyInstallment(ldblGrossMonthlyInstallment);
+            Detail(0).setPromissoryNoteAmt(ldblPromissoryNoteAmt);
+            Detail(0).setTotalAmount(ldblTranTotal - ldblTotalDisc);
+            Detail(0).setTransactionTotal(ldblTranTotal);
+        }
     }
     
     @Override
@@ -2136,7 +2207,7 @@ public class VehicleQuotation extends Transaction {
         if(lsLandLine == null) {
             lsLandLine = "";
         } else {
-            if(!lsContact.isEmpty()){
+            if(!lsLandLine.isEmpty()){
                 lsContact = lsContact 
                             + "\nTel No : " + lsLandLine;
             }
@@ -2150,9 +2221,12 @@ public class VehicleQuotation extends Transaction {
         }
 
         parameters.put("sBranch",lsBranchName.toUpperCase());
+        parameters.put("sBrandBranch",lsBranchName.toUpperCase());
         parameters.put("sBranchAddress",lsBranchAddress.toUpperCase());
         parameters.put("sBranchDesc",lsBranchDesc.toUpperCase());
         parameters.put("sContact",lsContact);
+        parameters.put("sCarModel",Detail(0).ModelVariant().Model().Brand().getDescription().toUpperCase() + " " + Detail(0).Model().getDescription().toUpperCase());
+        parameters.put("sColorPreference", Detail(0).ModelVariant().Color().getDescription().toUpperCase());
         parameters.put("validFrom",SQLUtil.dateFormat(Master().getTransactionDate(),SQLUtil.FORMAT_LONG_DATE));
         String lsToDate = "";
         if(Detail(0).getValidThruDate() == null){
@@ -2163,69 +2237,153 @@ public class VehicleQuotation extends Transaction {
         parameters.put("validTo",lsToDate);
         
         parameters.put("sTransactionNo",Master().getTransactionNo());
-        parameters.put("sClientName",Master().Client().getCompanyName());
-        parameters.put("sContactNo", Master().ClientMobile().getMobileNo());
+        parameters.put("sCustomerName",Master().Client().getCompanyName());
+        parameters.put("sAddress", getFullAddress());
+        parameters.put("sCustomerContact", Master().ClientMobile().getMobileNo());
         parameters.put("sEmail", Master().ClientEmail().getMailAddress());
-        parameters.put("sBrand", Detail(0).ModelVariant().Model().Brand().getDescription());
-        parameters.put("sModel",Detail(0).ModelVariant().Model().getDescription());
-        parameters.put("sModelVariant",Detail(0).ModelVariant().getDescription());
-        parameters.put("sTransmission",Detail(0).ModelVariant().VariantInsurance().getTransmission());
-        parameters.put("sColor",Detail(0).ModelVariant().Color().getDescription());
-        parameters.put("sBankFirm",Detail(0).FinancingRate().Bank().getBankName());
-        parameters.put("sTermsRate", Detail(0).getDuration() + " / " + Detail(0).getRateValue());
-        String lsPaymentMode = "Cash";
-        if("1".equals(Detail(0).getPaymentForm())){
-            lsPaymentMode = "Financing";
-        } else if("2".equals(Detail(0).getPaymentForm())){
-            lsPaymentMode = "PO";
-        } else {
-            parameters.put("sBankFirm","");
-            parameters.put("sTermsRate", "");
+        parameters.put("sReceivingMethod", "");
+        parameters.put("sLHBankRate", Detail(0).getRateValue());
+        parameters.put("sRemarks", Detail(0).getRemarks());
+        parameters.put("dDeliverySchedule", Detail(0).getExpectedDate());
+        parameters.put("sConsultantPhone", getContact(Detail(0).SalesInquiry().getSalesMan(), false, false));
+        parameters.put("sConsultantEmail", getEmail(Detail(0).SalesInquiry().getSalesMan(), false, false));
+        parameters.put("sPreparedBySignature", "");
+        parameters.put("sPreparedBy", Detail(0).SalesInquiry().SalesPerson().getFullName().toUpperCase());
+        parameters.put("sApprovedBySignature", "");
+        poJSON = getUpdateStatusBy(Master().getTransactionStatus());
+        if(!isJSONSuccess(poJSON)){
+            return poJSON;
         }
-        parameters.put("sFinancing",lsPaymentMode);
-        parameters.put("nAmountFinanced",Detail(0).getFinancingAmount());
-        parameters.put("nNetMonthlyInstallment",Detail(0).getMonthlyAmount());
-        parameters.put("nPromptPaymentDiscount",Detail(0).getPromptPaymentDiscount());
-        parameters.put("nGrossMonthlyInstallment",Detail(0).getGrossMonthlyInstallment());
-        parameters.put("nPromissoryNoteAmount",Detail(0).getPromissoryNoteAmt());
-        parameters.put("nUnitSRP",Detail(0).getSRPAmount());
-        parameters.put("nDownpayment",Detail(0).getDownPayment());
-        parameters.put("nTPL",Detail(0).getTPLAmount());
-        parameters.put("nComprehensive",Detail(0).getComprehensiveAmount());
-        parameters.put("nLTO",Detail(0).getLTOAmount());
-        parameters.put("nCHMODocStmp",Detail(0).getCHMOAmount());
-        parameters.put("nTotalAmount",Detail(0).getTotalAmount());
+        parameters.put("sApprovedBy", ((String) poJSON.get("sUpdateByx")).toUpperCase() );
         
-        Double ldblOtherAddOnsTotal = 0.0000;
-        for(int lnCtr = 0;lnCtr < getAddOnListCount();lnCtr++){
-            if(AddOnList(lnCtr).getRecordStatus()){
-                if(checkNotEmpty(AddOnList(lnCtr).AddOnMaster().AddOnType().getAddTypeName())){
-                    if(AddOnList(lnCtr).AddOnMaster().AddOnType().getAddTypeName().contains("LTO")
-                        || AddOnList(lnCtr).AddOnMaster().AddOnType().getAddTypeName().contains("TPL")
-                        || AddOnList(lnCtr).AddOnMaster().AddOnType().getAddTypeName().contains("Comprehensive")
-                    ){
-                        continue;
-                    }
 
-                    ldblOtherAddOnsTotal = ldblOtherAddOnsTotal + AddOnList(lnCtr).getTotalAmount();
-                }
-                
-            }
+//        parameters.put("sBrand", Detail(0).ModelVariant().Model().Brand().getDescription());
+//        parameters.put("sModel",Detail(0).ModelVariant().Model().getDescription());
+//        parameters.put("sModelVariant",Detail(0).ModelVariant().getDescription());
+//        parameters.put("sTransmission",Detail(0).ModelVariant().VariantInsurance().getTransmission());
+//        parameters.put("sColor",Detail(0).ModelVariant().Color().getDescription());
+//        parameters.put("sBankFirm",Detail(0).FinancingRate().Bank().getBankName());
+//        parameters.put("sTermsRate", Detail(0).getDuration() + " / " + Detail(0).getRateValue());
+//        String lsPaymentMode = "Cash";
+//         if("1".equals(Detail(0).getPaymentForm())){
+//            lsPaymentMode = "Financing";
+//        } else if("2".equals(Detail(0).getPaymentForm())){
+//            lsPaymentMode = "PO";
+//        } else {
+//            parameters.put("sBankFirm","");
+//            parameters.put("sTermsRate", "");
+//        }
+//                parameters.put("sFinancing",lsPaymentMode);
+//                parameters.put("nAmountFinanced",Detail(0).getFinancingAmount());
+//                parameters.put("nNetMonthlyInstallment",Detail(0).getMonthlyAmount());
+//                parameters.put("nPromptPaymentDiscount",Detail(0).getPromptPaymentDiscount());
+//                parameters.put("nGrossMonthlyInstallment",Detail(0).getGrossMonthlyInstallment());
+//                parameters.put("nPromissoryNoteAmount",Detail(0).getPromissoryNoteAmt());
+//                parameters.put("nPrice",Detail(0).getSRPAmount());
+//                parameters.put("nDownpayment",Detail(0).getDownPayment());
+//                parameters.put("nTPL",Detail(0).getTPLAmount());
+//                parameters.put("nComprehensive",Detail(0).getComprehensiveAmount());
+//                parameters.put("nLTO",Detail(0).getLTOAmount());
+//                parameters.put("nCHMODocStmp",Detail(0).getCHMOAmount());
+//                parameters.put("nTotalAmount",Detail(0).getTotalAmount());
+//        Double ldblOtherAddOnsTotal = 0.0000;
+//        for(int lnCtr = 0;lnCtr < getAddOnListCount();lnCtr++){
+//            if(AddOnList(lnCtr).getRecordStatus()){
+//                if(checkNotEmpty(AddOnList(lnCtr).AddOnMaster().AddOnType().getAddTypeName())){
+//                    if(AddOnList(lnCtr).AddOnMaster().AddOnType().getAddTypeName().contains("LTO")
+//                        || AddOnList(lnCtr).AddOnMaster().AddOnType().getAddTypeName().contains("TPL")
+//                        || AddOnList(lnCtr).AddOnMaster().AddOnType().getAddTypeName().contains("Comprehensive")
+//                    ){
+//                        continue;
+//                    }
+//
+//                    ldblOtherAddOnsTotal = ldblOtherAddOnsTotal + AddOnList(lnCtr).getTotalAmount();
+//                }
+//                
+//            }
+//        }
+//        parameters.put("nOtherAddOnsTotal",ldblOtherAddOnsTotal);
+    
+        Double ldblTotalAccessories = 0.0000;
+        for(int lnCtr = 0;lnCtr < getAddOnListCount();lnCtr++){
+//            if(checkNotEmpty(AddOnList(lnCtr).getStockId())){
+                ldblTotalAccessories = ldblTotalAccessories + AddOnList(lnCtr).getTotalAmount();
+//            }
         }
-        parameters.put("nOtherAddOnsTotal",ldblOtherAddOnsTotal);
+        
+        parameters.put("nInclusionTotal",0.00);
+        
+        parameters.put("nVehiclePrice",Detail(0).getSRPAmount());
+        parameters.put("nAddOnTotal",ldblTotalAccessories);
+        parameters.put("nAccessories",ldblTotalAccessories);
+        parameters.put("nInsurance",Detail(0).getComprehensiveAmount());
+        parameters.put("nTPL",Detail(0).getTPLAmount());
+        parameters.put("nLTO",Detail(0).getLTOAmount());
+        parameters.put("nTotalPackagePrice",Detail(0).getTotalAmount());
+        
+        //Initial value
+        parameters.put("nCashUnitPrice",0.00);
+        parameters.put("nCashInsurance",0.00);
+        parameters.put("nCashTPL",0.00);
+        parameters.put("nCashLTO",0.00);
+        parameters.put("nCashTotal",0.00);
+        parameters.put("nPOUnitPrice",0.00);
+        parameters.put("nPOPromoDiscount",0.00);
+        parameters.put("nPOGuanzonGoodwillDiscount",0.00);
+        parameters.put("nPOReferralSales",0.00);
+        parameters.put("nPOTPL",0.00);
+        parameters.put("nPOLTO",0.00);
+        parameters.put("nPOTotal",0.00);
+        parameters.put("nIHUUnitPrice",0.00);
+        parameters.put("nIHUDownpayment",0.00);
+        parameters.put("nIHUMonthly",0.00);
+        parameters.put("nIHBankRate",0.00);
+        parameters.put("nIHYears",0.00);
+        switch(Detail(0).getPaymentForm()){
+            case "1": //Financing 
+                parameters.put("sMOP","Financing");
+                parameters.put("nIHUnitPrice",Detail(0).getSRPAmount());
+                parameters.put("nIHDownpayment",Detail(0).getDownPayment());
+                parameters.put("nIHYears",Detail(0).getDuration() / 12);
+                parameters.put("nIHMonthly",Detail(0).getGrossMonthlyInstallment());
+                parameters.put("nIHBankRate",Detail(0).getRateValue());
+            break;
+            case "2": //PO
+                parameters.put("sMOP","PO");
+                parameters.put("nPOUnitPrice",Detail(0).getSRPAmount());
+                parameters.put("nPOPromoDiscount",0.00);
+                parameters.put("nPOGuanzonGoodwillDiscount",0.00);
+                parameters.put("nPOReferralSales",0.00);
+                parameters.put("nPOTPL",Detail(0).getTPLAmount());
+                parameters.put("nPOLTO",Detail(0).getLTOAmount());
+                parameters.put("nPOTotal",Detail(0).getTotalAmount());
+            break;
+            default: //Cash
+                parameters.put("sMOP","Cash");
+                parameters.put("nCashUnitPrice",Detail(0).getSRPAmount());
+                parameters.put("nCashInsurance",Detail(0).getComprehensiveAmount()); //TODO
+                parameters.put("nCashTPL",Detail(0).getTPLAmount());
+                parameters.put("nCashLTO",Detail(0).getLTOAmount());
+                parameters.put("nCashTotal",Detail(0).getTotalAmount());
+            break;
+        
+        }
         
         
         // ---------------------------------------------
         // Build data for current DP rate
         // ---------------------------------------------
-        List<Map<String, Object>> lAddOnList = buildQuotationAddOns();
+        List<Map<String, Object>> laVehicleInfo = buildQuotationVehicleInfo();
+        List<Map<String, ?>> vehicleInfo = new ArrayList<>(laVehicleInfo);
+        List<Map<String, Object>> lAddOnList = buildQuotationAddOns(false);
         List<Map<String, ?>> addons = new ArrayList<>(lAddOnList);
         List<Map<String, Object>> lFreebiesList = buildQuotationFreebies();
         List<Map<String, ?>> freebies = new ArrayList<>(lFreebiesList);
         
         // --- hand the rows to the report ---
+        parameters.put("VehicleDataSource",    new JRMapCollectionDataSource((Collection) vehicleInfo));
         parameters.put("AddOnDataSource",    new JRMapCollectionDataSource((Collection) addons));
-        parameters.put("FreebiesDataSource", new JRMapCollectionDataSource((Collection) freebies));
+        parameters.put("InclusionDataSource", new JRMapCollectionDataSource((Collection) freebies));
         
         // ---------------------------------------------
         // Generate JasperPrint
@@ -2272,7 +2430,7 @@ public class VehicleQuotation extends Transaction {
         poJSON.put("result", "error");
         poJSON.put("message","Transaction print aborted!");
         Logger.getLogger(getClass().getName())
-                .log(Level.SEVERE, null, ex);
+                .log(Level.SEVERE, MiscUtil.getException(ex), ex);
     }
 
     return poJSON;
@@ -2388,7 +2546,7 @@ public class VehicleQuotation extends Transaction {
         }
     }
     
-    private List<Map<String, Object>> buildQuotationAddOns() {
+    private List<Map<String, Object>> buildQuotationAddOns(boolean isInclusions) {
         List<Map<String, Object>> rows = new ArrayList<>();
 
         try{
@@ -2441,6 +2599,50 @@ public class VehicleQuotation extends Transaction {
         row.put("nAmount", amount);
         row.put("nQuantity", quantity);
         row.put("nTotal", total);
+        rows.add(row);
+    }
+    
+    private List<Map<String, Object>> buildQuotationVehicleInfo() {
+        List<Map<String, Object>> rows = new ArrayList<>();
+
+        try{
+             addVehicleInfo(rows
+                        , Detail(0).ModelVariant().Model().Brand().getDescription() + " " + Detail(0).ModelVariant().Model().getDescription()
+                        , Detail(0).ModelVariant().getDescription()
+                        , Detail(0).ModelVariant().Color().getDescription()
+                        , Detail(0).ModelVariant().VariantInsurance().getTransmission()
+                        , ""
+                        , Detail(0).ModelVariant().getYearModel()
+                        , Detail(0).getSRPAmount()
+                );
+        } catch (SQLException | GuanzonException ex) {
+            Logger.getLogger(VehicleQuotation.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return rows;
+    }
+ 
+    // Keys here MUST match the <field name="..."> values in the .jrxml exactly.
+    private void addVehicleInfo(List<Map<String, Object>> rows
+                                , String sModel
+                                , String sVariant
+                                , String sColor
+                                , String sTransmission
+                                , String sFuelType
+                                , int nYear
+                                , Double nPrice
+                        ) {
+        Map<String, Object> row = new LinkedHashMap<>();
+        if(sModel == null){ sModel = "";}
+        if(sVariant == null){ sVariant = "";}
+        if(sTransmission == null){ sTransmission = "";}
+        if(sFuelType == null){ sFuelType = "";}
+        row.put("sModel", sModel.toUpperCase());
+        row.put("sVariant", sVariant.toUpperCase());
+        row.put("sColor", sColor.toUpperCase());
+        row.put("sTransmission", sTransmission.toUpperCase());
+        row.put("sFuelType", sFuelType.toUpperCase());
+        row.put("nYear", nYear);
+        row.put("nPrice", nPrice);
         rows.add(row);
     }
     

@@ -1054,7 +1054,7 @@ public class VehiclePriceList extends Transaction {
         VehicleDescription object = new SalesControllers(poGRider, logwrapr).VehicleDescription();
         object.setRecordStatus(RecordStatus.ACTIVE);
         object.setIndustryId(psIndustryId);
-        poJSON = object.searchRecord(value, byCode, Detail(row).getModelId());
+        poJSON = object.searchRecordByModel(value, byCode, Detail(row).getModelId());
         if (isJSONSuccess(poJSON)) {
             //Check existing variant in detail
             lsVariantId = object.getModel().getVariantId();
