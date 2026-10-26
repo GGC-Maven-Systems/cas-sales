@@ -18,18 +18,17 @@ public class Model_Sales_Insurance extends Model {
         try {
             poEntity = MiscUtil.xml2ResultSet(System.getProperty("sys.default.path.metadata")
                     + "/Model_Sales_Insurance.xml", getTable());
-
-            poEntity.updateInt("nEntryNox", 0);
-            poEntity.updateDouble("nInsAmtxx", 0.0d);
-            poEntity.updateString("cChargeTo", "1");
-            poEntity.last();
-            poEntity.moveToInsertRow();
-
             MiscUtil.initRowSet(poEntity);
 
             poEntity.insertRow();
             poEntity.moveToCurrentRow();
             poEntity.absolute(1);
+
+            poEntity.updateObject("nEntryNox", 0);
+            poEntity.updateDouble("nInsAmtxx", 0.0d);
+            poEntity.updateString("cChargeTo", "1");
+            poEntity.last();
+            poEntity.moveToInsertRow();
 
             ID = "sTransNox";
             ID2 = "nEntryNox";
@@ -120,9 +119,8 @@ public class Model_Sales_Insurance extends Model {
         return "1".equals((String) getValue("cChargeTo"));
     }
 
-    
     public JSONObject isChargeTo(boolean isCharge) {
-        return setValue("cChargeTo", isCharge ? "1":"0");
+        return setValue("cChargeTo", isCharge ? "1" : "0");
     }
 
     @Override

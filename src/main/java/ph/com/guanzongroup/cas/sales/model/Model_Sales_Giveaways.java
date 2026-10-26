@@ -23,7 +23,15 @@ public class Model_Sales_Giveaways extends Model {
             poEntity = MiscUtil.xml2ResultSet(System.getProperty("sys.default.path.metadata")
                     + "/Model_Sales_Giveaways.xml", getTable());
 
-            poEntity.updateInt("nEntryNox", 0);
+            poEntity.last();
+            poEntity.moveToInsertRow();
+
+            MiscUtil.initRowSet(poEntity);
+            poEntity.insertRow();
+            poEntity.moveToCurrentRow();
+            poEntity.absolute(1);
+            
+            poEntity.updateObject("nEntryNox", 0);
             poEntity.updateInt("nQuantity", 0);
             poEntity.updateInt("nGivenxxx", 0);
             poEntity.updateInt("nIssuedxx", 0);
@@ -32,14 +40,7 @@ public class Model_Sales_Giveaways extends Model {
             poEntity.updateString("cGAwyStat", "1");
             poEntity.updateNull("sSourceCD");
             poEntity.updateNull("sSourceNo");
-            poEntity.last();
-            poEntity.moveToInsertRow();
 
-            MiscUtil.initRowSet(poEntity);
-
-            poEntity.insertRow();
-            poEntity.moveToCurrentRow();
-            poEntity.absolute(1);
 
             ID = "sTransNox";
             ID2 = "nEntryNox";

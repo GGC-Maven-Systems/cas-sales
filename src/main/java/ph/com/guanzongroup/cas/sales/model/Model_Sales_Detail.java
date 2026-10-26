@@ -27,6 +27,15 @@ public class Model_Sales_Detail extends Model {
             poEntity = MiscUtil.xml2ResultSet(System.getProperty("sys.default.path.metadata")
                     + "/Model_Sales_Detail.xml", getTable());
 
+            poEntity.last();
+            poEntity.moveToInsertRow();
+
+            MiscUtil.initRowSet(poEntity);
+
+            poEntity.insertRow();
+            poEntity.moveToCurrentRow();
+            poEntity.absolute(1);
+
             poEntity.updateDouble("nUnitCost", 0.0d);
             poEntity.updateDouble("nUnitPrce", 0.0d);
             poEntity.updateDouble("nDiscount", 0.0d);
@@ -38,15 +47,6 @@ public class Model_Sales_Detail extends Model {
             poEntity.updateString("cNewStock", "1");
             poEntity.updateString("cWithVATx", "1");
             poEntity.updateNull("sPromoIDx");
-
-            poEntity.last();
-            poEntity.moveToInsertRow();
-
-            MiscUtil.initRowSet(poEntity);
-
-            poEntity.insertRow();
-            poEntity.moveToCurrentRow();
-            poEntity.absolute(1);
 
             ID = "sTransNox";
             ID2 = "nEntryNox";

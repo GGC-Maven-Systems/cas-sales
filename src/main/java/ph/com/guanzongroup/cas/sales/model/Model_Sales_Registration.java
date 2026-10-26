@@ -18,11 +18,6 @@ public class Model_Sales_Registration extends Model {
         try {
             poEntity = MiscUtil.xml2ResultSet(System.getProperty("sys.default.path.metadata")
                     + "/Model_Sales_Registration.xml", getTable());
-
-            poEntity.updateInt("nEntryNox", 0);
-            poEntity.updateDouble("nInsAmtxx", 0.0d);
-            poEntity.updateString("cChargeTo", "1");
-            poEntity.updateString("cRegisTyp", "0");
             poEntity.last();
             poEntity.moveToInsertRow();
 
@@ -31,6 +26,10 @@ public class Model_Sales_Registration extends Model {
             poEntity.insertRow();
             poEntity.moveToCurrentRow();
             poEntity.absolute(1);
+            poEntity.updateObject("nEntryNox", 0);
+            poEntity.updateDouble("nInsAmtxx", 0.0d);
+            poEntity.updateString("cChargeTo", "1");
+            poEntity.updateString("cRegisTyp", "0");
 
             ID = "sTransNox";
             ID2 = "nEntryNox";

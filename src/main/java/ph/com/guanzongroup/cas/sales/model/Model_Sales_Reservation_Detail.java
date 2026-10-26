@@ -42,6 +42,11 @@ public class Model_Sales_Reservation_Detail extends Model {
             poEntity.moveToInsertRow();
 
             MiscUtil.initRowSet(poEntity);
+            poEntity.insertRow();
+            poEntity.moveToCurrentRow();
+
+            poEntity.absolute(1);
+
 
             //assign default values
             poEntity.updateObject("nEntryNox", Sales_Reservation_Static.DefaultValues.default_zero_integer);
@@ -55,11 +60,6 @@ public class Model_Sales_Reservation_Detail extends Model {
             poEntity.updateObject("cReversed", Sales_Reservation_Static.DefaultValues. default_reversed_plus);
 
             //end - assign default values
-            poEntity.insertRow();
-            poEntity.moveToCurrentRow();
-
-            poEntity.absolute(1);
-
             ID = "sTransNox";
             ID2 = "nEntryNox";
 
