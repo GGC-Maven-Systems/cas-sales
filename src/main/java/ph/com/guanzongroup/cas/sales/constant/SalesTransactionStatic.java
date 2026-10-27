@@ -38,7 +38,7 @@ public class SalesTransactionStatic {
     public static final String[] REGISTRATION_TYPES = {"Regular", "Temporary"};
     public static final String[] INSURANCE_TYPES = {"CTPL", "Comprehensive"};
     public static final String[] INSURANCE_OPTIONS = {"In-house", "Outside"};
-
+    public static final String[] GENDER_TEXT = {"Male", "Female"};
     public static final String[] PAYMENT_TRAN_TYPES = {"Cash", "Credit"};
     public static final int PAYMENT_CREDIT = 1;   // index of "Credit" in PAYMENT_TRAN_TYPES
 
