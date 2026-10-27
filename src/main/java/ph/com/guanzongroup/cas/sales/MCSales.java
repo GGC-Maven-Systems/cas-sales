@@ -821,6 +821,9 @@ public class MCSales extends Transaction {
                     poJSON = paSalesGiveaways.get(lnCtr).saveRecord();
                     System.out.println(poJSON.get("message"));
                     if ("error".equals((String) poJSON.get("result"))) {
+                        if ("message".contains("unmodified")) {
+                            continue;
+                        }
                         if (!pbWthParent) {
                             poGRider.rollbackTrans();
                         }
@@ -836,6 +839,10 @@ public class MCSales extends Transaction {
                     poJSON = paSalesInsurance.get(lnCtr).saveRecord();
                     System.out.println(poJSON.get("message"));
                     if ("error".equals((String) poJSON.get("result"))) {
+
+                        if ("message".contains("unmodified")) {
+                            continue;
+                        }
                         if (!pbWthParent) {
                             poGRider.rollbackTrans();
                         }
@@ -852,6 +859,31 @@ public class MCSales extends Transaction {
                     poJSON = paSalesRegistration.get(lnCtr).saveRecord();
                     System.out.println(poJSON.get("message"));
                     if ("error".equals((String) poJSON.get("result"))) {
+
+                        if ("message".contains("unmodified")) {
+                            continue;
+                        }
+                        if (!pbWthParent) {
+                            poGRider.rollbackTrans();
+                        }
+                        return poJSON;
+                    }
+                }
+
+                //Detail Save
+                for (int lnCtr = 0; lnCtr <= paDetail.size() - 1; lnCtr++) {
+                    if (paDetail.get(lnCtr).getValue("sTransNox") == null) {
+                        continue;
+                    }
+                    paDetail.get(lnCtr).setValue("sTransNox", String.valueOf(poMaster.getValue(1)));
+                    poJSON = paDetail.get(lnCtr).saveRecord();
+
+                    System.out.println(poJSON.get("message"));
+                    if ("error".equals((String) poJSON.get("result"))) {
+
+                        if ("message".contains("unmodified")) {
+                            continue;
+                        }
                         if (!pbWthParent) {
                             poGRider.rollbackTrans();
                         }

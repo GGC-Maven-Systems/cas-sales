@@ -45,9 +45,11 @@ public class Model_Sales_Detail extends Model {
             poEntity.updateDouble("nInsAmtxx", 0.0d);
             poEntity.updateObject("nEntryNox", 0);
             poEntity.updateObject("nQuantity", 0);
+            poEntity.updateObject("nIssuedxx", 0);
             poEntity.updateString("cNewStock", "1");
             poEntity.updateString("cWithVATx", "1");
             poEntity.updateNull("sPromoIDx");
+            poEntity.updateObject("dModified", poGRider.getServerDate());
 
             ID = "sTransNox";
             ID2 = "nEntryNox";
