@@ -1623,7 +1623,10 @@ public class VehicleQuotation extends Transaction {
             }
         }
         
-        ldblTranTotal = ldblSRPAmt + ldblDPAmt + ldblRSVAmt + ldblTPLAmt + ldblCompAmt + ldblLTOAmt + ldblCHMOAmt + ldblTotalAddOn;
+        ldblTranTotal = ldblDPAmt + ldblRSVAmt + ldblTPLAmt + ldblCompAmt + ldblLTOAmt + ldblCHMOAmt + ldblTotalAddOn;
+        if("0".equals(Detail(0).getPaymentForm())){
+            ldblTranTotal = ldblTranTotal + ldblSRPAmt;
+        }
         ldblTotalDisc = Detail(0).getDiscountAmount() + Detail(0).getAdditionalDiscountAmount();
         
         //Financing Computation
@@ -1652,8 +1655,8 @@ public class VehicleQuotation extends Transaction {
             Detail(0).setMonthlyAmount(ldblMontlyAmortizationAmt);
             Detail(0).setGrossMonthlyInstallment(ldblGrossMonthlyInstallment);
             Detail(0).setPromissoryNoteAmt(ldblPromissoryNoteAmt);
-            Detail(0).setTotalAmount(ldblTranTotal - ldblTotalDisc);
             Detail(0).setTransactionTotal(ldblTranTotal);
+            Detail(0).setTotalAmount(ldblTranTotal - ldblTotalDisc);
         }
     }
     
@@ -2305,16 +2308,26 @@ public class VehicleQuotation extends Transaction {
 //        parameters.put("nOtherAddOnsTotal",ldblOtherAddOnsTotal);
     
         Double ldblTotalAccessories = 0.0000;
+        Double ldblTotalAddOns = 0.0000;
         for(int lnCtr = 0;lnCtr < getAddOnListCount();lnCtr++){
+            ldblTotalAddOns = ldblTotalAddOns + AddOnList(lnCtr).getTotalAmount();
 //            if(checkNotEmpty(AddOnList(lnCtr).getStockId())){
-                ldblTotalAccessories = ldblTotalAccessories + AddOnList(lnCtr).getTotalAmount();
+            if(checkNotEmpty(AddOnList(lnCtr).AddOnMaster().AddOnType().getAddTypeName())){
+                if(AddOnList(lnCtr).AddOnMaster().AddOnType().getAddTypeName().toUpperCase().contains("LTO")
+                        || AddOnList(lnCtr).AddOnMaster().AddOnType().getAddTypeName().toUpperCase().contains("TPL")
+                        || AddOnList(lnCtr).AddOnMaster().AddOnType().getAddTypeName().toUpperCase().contains("Comprehensive")
+                    ){
+                    continue;
+                }
+            }
+            ldblTotalAccessories = ldblTotalAccessories + AddOnList(lnCtr).getTotalAmount();
 //            }
         }
         
         parameters.put("nInclusionTotal",0.00);
         
         parameters.put("nVehiclePrice",Detail(0).getSRPAmount());
-        parameters.put("nAddOnTotal",ldblTotalAccessories);
+        parameters.put("nAddOnTotal",ldblTotalAddOns);
         parameters.put("nAccessories",ldblTotalAccessories);
         parameters.put("nInsurance",Detail(0).getComprehensiveAmount());
         parameters.put("nTPL",Detail(0).getTPLAmount());
