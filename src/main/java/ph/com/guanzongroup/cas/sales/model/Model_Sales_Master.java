@@ -21,6 +21,7 @@ import org.guanzon.cas.parameter.model.Model_Category;
 import org.guanzon.cas.parameter.model.Model_Company;
 import org.guanzon.cas.parameter.model.Model_Industry;
 import org.guanzon.cas.parameter.model.Model_Term;
+import org.guanzon.cas.parameter.model.Model_xxxTransactionSource;
 import org.json.simple.JSONObject;
 
 public class Model_Sales_Master extends Model {
@@ -38,6 +39,7 @@ public class Model_Sales_Master extends Model {
     private Model_Client_Master poSalesmanClient;
     private Model_Client_Mail poClientMail;
     private Model_Client_Mail poCoClientMail;
+    private Model_xxxTransactionSource poTransactionSource;
 
     @Override
     public void initialize() {
@@ -998,9 +1000,7 @@ public class Model_Sales_Master extends Model {
             return poClientMail;
         }
     }
-    
-    
-    
+
     public Model_Client_Mail CoClientMail()
             throws SQLException, GuanzonException {
 
@@ -1064,6 +1064,52 @@ public class Model_Sales_Master extends Model {
         } else {
             poCoClientMail.initialize();
             return poCoClientMail;
+        }
+    }
+
+    public Model_xxxTransactionSource TransactionSource()
+            throws SQLException, GuanzonException {
+
+        if (poTransactionSource == null) {
+            poTransactionSource = new Model_xxxTransactionSource();
+            poTransactionSource.setApplicationDriver(poGRider);
+            poTransactionSource.setXML("Model_xxxTransactionSource");
+            poTransactionSource.setTableName("xxxTransactionSource");
+            poTransactionSource.initialize();
+        }
+        String modelPrimary = (String) (getValue("sSourceCd") == null
+                ? "" : getValue("sSourceCd"));
+
+        if (!"".equals(modelPrimary)) {
+
+            if (poTransactionSource.getEditMode() == EditMode.READY
+                    && poTransactionSource.getSourceCode().equals(modelPrimary)) {
+                return poTransactionSource;
+            }
+
+            if (ReferenceCache.tryLoad(
+                    "xxxTransactionSource",
+                    modelPrimary,
+                    poTransactionSource)) {
+                return poTransactionSource;
+            }
+
+            poJSON = poTransactionSource.openRecord(modelPrimary);
+
+            if ("success".equals((String) poJSON.get("result"))) {
+                ReferenceCache.store(
+                        "xxxTransactionSource",
+                        modelPrimary,
+                        poTransactionSource);
+                return poTransactionSource;
+            } else {
+                poTransactionSource.initialize();
+                return poTransactionSource;
+            }
+
+        } else {
+            poTransactionSource.initialize();
+            return poTransactionSource;
         }
     }
 }
