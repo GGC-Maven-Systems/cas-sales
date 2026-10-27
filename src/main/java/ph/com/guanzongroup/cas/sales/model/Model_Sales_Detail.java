@@ -44,6 +44,7 @@ public class Model_Sales_Detail extends Model {
             poEntity.updateDouble("nInsurAdd", 0.0d);
             poEntity.updateDouble("nInsAmtxx", 0.0d);
             poEntity.updateObject("nEntryNox", 0);
+            poEntity.updateObject("nQuantity", 0);
             poEntity.updateString("cNewStock", "1");
             poEntity.updateString("cWithVATx", "1");
             poEntity.updateNull("sPromoIDx");
@@ -68,7 +69,7 @@ public class Model_Sales_Detail extends Model {
 
     public JSONObject setEntryNo(int value) {
         return setValue("nEntryNox", value);
-    }
+    }   
 
     public int getEntryNo() {
         return Integer.valueOf(getValue("nEntryNox").toString());
@@ -95,7 +96,6 @@ public class Model_Sales_Detail extends Model {
     }
 
     public int getIssued() {
-
         return Integer.valueOf(getValue("nIssuedxx").toString());
     }
 
@@ -104,7 +104,6 @@ public class Model_Sales_Detail extends Model {
     }
 
     public double getUnitCost() {
-
         return Double.valueOf(getValue("nUnitCost").toString());
     }
 

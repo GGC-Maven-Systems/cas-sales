@@ -157,6 +157,13 @@ public class MCSales extends Transaction {
         // Get the requested detail
         Model_Sales_Detail loDetail;
 
+        // keep the last detail's keys in sync (only when there is one)
+        if (!paDetail.isEmpty() && getEditMode() == EditMode.ADDNEW) {
+            Model_Sales_Giveaways lastDetail = (Model_Sales_Giveaways) paSalesGiveaways.get(paSalesGiveaways.size() - 1);
+            lastDetail.setTransNo(getMaster().getTransactionNo());
+            lastDetail.setEntryNo(getCountSalesGiveAway());
+        }
+
         //find the detail record
         for (int lnCtr = 0; lnCtr <= paDetail.size() - 1; lnCtr++) {
             loDetail = (Model_Sales_Detail) paDetail.get(lnCtr);
@@ -1694,7 +1701,7 @@ public class MCSales extends Transaction {
         loClient.setWithParentClass(true);
         loClient.setWithUI(false);
 
-        poJSON = searchClient(value, byCode);
+        poJSON = loClient.searchRecord(value, byCode);
 
         if (poJSON != null) {
             if ("success".equals((String) poJSON.get("result"))) {
@@ -1862,7 +1869,28 @@ public class MCSales extends Transaction {
         return poJSON;
     }
 
-    public JSONObject searchDetailBySerial(int row, String value, int fnColumn) throws SQLException, GuanzonException, CloneNotSupportedException {
+    /**
+     * Renumbers detail rows 1..n in list order.
+     */
+    private void realignDetailEntryNo() {
+        for (int lnCtr = 0; lnCtr < paDetail.size(); lnCtr++) {
+            Model_Sales_Detail loRow = (Model_Sales_Detail) paDetail.get(lnCtr);
+            loRow.setTransNo(getMaster().getTransactionNo());
+            loRow.setEntryNo(lnCtr + 1);
+        }
+    }
+
+    public JSONObject searchDetailBySerial(int row, String value, int fnColumn)
+            throws SQLException, GuanzonException, CloneNotSupportedException {
+
+        // entry numbers are 1-based and must be contiguous
+        if (row < 1) {
+            row = 1;
+        }
+        if (row > paDetail.size() + 1) {
+            row = paDetail.size() + 1;
+        }
+
         InventoryBrowse loBrowse = new InventoryBrowse(poGRider, logwrapr);
         loBrowse.initTransaction();
         if (!psIndustryCode.isEmpty()) {
@@ -1874,20 +1902,18 @@ public class MCSales extends Transaction {
         //allow negative quantity NEW BR 07-2026
         loBrowse.isWithQuantityStock(false);
 
-        poJSON = new JSONObject();
+        loBrowse.setCustomColHeader("Serial 01»Serial 02»Model»Color/Varian»Description»ID");
+        loBrowse.setCustomColName("sSerial01»sSerial02»xModelNme»xColorNme»b.sDescript»sSerialID");
+        loBrowse.setCustomColCriteria("a.sSerial01»a.sSerial02»IFNULL (d.sDescript, '')»IFNULL (e.sDescript, '')»b.sDescript»a.sSerialID");
 
-        String lscolHeader = "Serial 01»Serial 02»Model»Color/Varian»Description»ID";
-        String lscolName = "sSerial01»sSerial02»xModelNme»xColorNme»b.sDescript»sSerialID";
-        String lscolCriteria = "a.sSerial01»a.sSerial02»IFNULL (d.sDescript, '')»IFNULL (e.sDescript, '')»b.sDescript»a.sSerialID";
-        loBrowse.setCustomColHeader(lscolHeader);
-        loBrowse.setCustomColName(lscolName);
-        loBrowse.setCustomColCriteria(lscolCriteria);
         poJSON = loBrowse.searchInventorySerialWithStock(value, fnColumn);
 
-        System.out.println("result " + (String) poJSON.get("result"));
-        System.out.println("result " + (String) poJSON.get("result"));
+        // nothing selected or error: do not touch the row
         if (poJSON == null) {
-            return poJSON; // nothing selected, do not touch the row
+            return setJSON("error", "No record loaded.");
+        }
+        if ("error".equals((String) poJSON.get("result"))) {
+            return poJSON;
         }
 
         String lsStockID = loBrowse.getModelInventory().getStockId();
@@ -1904,24 +1930,18 @@ public class MCSales extends Transaction {
             boolean lbExistingSerial = loExisting.getSerialID() != null && !loExisting.getSerialID().isEmpty();
 
             if (lbWithSerial && lbExistingSerial && loExisting.getSerialID().equals(lsSerialID)) {
-                poJSON = new JSONObject();
-                poJSON.put("result", "error");
-                poJSON.put("message", "Selected Serial is already exist!");
-                return poJSON;
+                return setJSON("error", "Selected Serial is already exist!");
             }
             if (!lbWithSerial && !lbExistingSerial && !hasSource()) {
-                poJSON = new JSONObject();
-                poJSON.put("result", "error");
-                poJSON.put("message", "Selected Inventory is already exist!");
-                return poJSON;
+                return setJSON("error", "Selected Inventory is already exist!");
             }
         }
 
-        Model_Sales_Detail loDetail = getDetail(row);
+        Model_Sales_Detail loDetail = getDetail(row);   // entry no = row (1-based)
         double lnUnitCost = Double.parseDouble(loBrowse.getModelInventory().getCost().toString());
         int lnRemaining = 0;
 
-        // ---------- source handling: consume source qty, push remainder to a new row ----------
+        // ---------- source handling ----------
         if (hasSource()) {
             Model_Sales_Detail loSourceRow = null;
 
@@ -1931,10 +1951,9 @@ public class MCSales extends Transaction {
             if (lbRowIsSource) {
                 loSourceRow = loDetail;
             } else {
-                // the selected stock may sit in another (unassigned) source row
                 for (int lnCtr = 0; lnCtr < paDetail.size(); lnCtr++) {
                     Model_Sales_Detail loTmp = (Model_Sales_Detail) paDetail.get(lnCtr);
-                    if (loTmp.getEntryNo() != row
+                    if (loTmp != loDetail
                             && lsStockID.equals(loTmp.getStockID())
                             && (loTmp.getSerialID() == null || loTmp.getSerialID().isEmpty())
                             && loTmp.getQuantity() > 0) {
@@ -1955,13 +1974,12 @@ public class MCSales extends Transaction {
                 loDetail.setFreight(loSourceRow.getFreight());
 
                 if (loSourceRow != loDetail) {
-                    // consume from the other source row
                     if (lnRemaining > 0) {
                         loSourceRow.setQuantity(lnRemaining);
                     } else {
-                        paDetail.remove(loSourceRow); // fully consumed; removeOther() realigns entry no on save
+                        paDetail.remove(loSourceRow);
                     }
-                    lnRemaining = 0; // remainder stays in that source row, no new row needed
+                    lnRemaining = 0; // remainder stays in the other source row
                 }
             }
         }
@@ -1974,17 +1992,14 @@ public class MCSales extends Transaction {
         loDetail.setUnitCost(lnUnitCost);
         loDetail.setQuantity(1);
 
-        // ---------- repopulate remaining qty in a new row ----------
-        if (lnRemaining > 0) {
-            int lnNewEntry = 0;
-            for (int lnCtr = 0; lnCtr < paDetail.size(); lnCtr++) {
-                lnNewEntry = Math.max(lnNewEntry, ((Model_Sales_Detail) paDetail.get(lnCtr)).getEntryNo());
-            }
-            lnNewEntry++;
+        // ---------- keep entry numbers 1..n with no gaps (a source row may have been removed) ----------
+        realignDetailEntryNo();
 
-            Model_Sales_Detail loNew = getDetail(lnNewEntry); // creates + adds the row
+        // ---------- push remaining qty to a new row at the end ----------
+        if (lnRemaining > 0) {
+            Model_Sales_Detail loNew = getDetail(paDetail.size() + 1); // creates + adds row, entry no = size + 1
             loNew.setStockID(lsStockID);
-            loNew.setQuantity(lnRemaining);      // no serial yet; user searches the next engine/frame no
+            loNew.setQuantity(lnRemaining);
             loNew.setUnitCost(lnUnitCost);
             loNew.setUnitPrice(loDetail.getUnitPrice());
             loNew.setPromoID(loDetail.getPromoID());
@@ -1993,9 +2008,7 @@ public class MCSales extends Transaction {
             loNew.setFreight(loDetail.getFreight());
         }
 
-        poJSON = new JSONObject();
-        poJSON.put("result", "success");
-        return poJSON;
+        return setJSON("success", "success");
     }
 
     private boolean hasSource() {
