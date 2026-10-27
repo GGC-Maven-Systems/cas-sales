@@ -65,7 +65,7 @@ public class SalesMasterQueries {
                 + ",\n          a.sClientID"
                 + "\n     FROM Sales_Quotation_Master a"
                 + "\n     JOIN Client_Master b ON a.sClientID = b.sClientID"
-                + "\n    WHERE a.`cTranStat` = '1' AND a.sIndstCdx = " + SQLUtil.toSQL(industrycode)
+                + "\n    WHERE a.`cTranStat` = '0' AND a.sIndstCdx = " + SQLUtil.toSQL(industrycode)
                 + "             AND a.sTransNox IN (SELECT sParentID FROM Sales_Quotation_Version_Master WHERE cTranStat = '1')"
                 + "\n   UNION ALL"
                 + "\n   SELECT 'Sales Commitment' AS sSource"
