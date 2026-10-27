@@ -128,6 +128,11 @@ public class MCSales extends Transaction {
         return (List<Model_Sales_Registration>) (List<?>) paSalesRegistration;
     }
 
+    @SuppressWarnings("unchecked")
+    public List<Model_Sales_Insurance> getSalesInsurancesList() {
+        return (List<Model_Sales_Insurance>) (List<?>) paSalesInsurance;
+    }
+
     public int getCount() {
         return paSalesGiveaways.size();
     }
