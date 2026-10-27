@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>MCSales_General.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">cas-sales</a> &gt; <a href="index.source.html" class="el_package">ph.com.guanzongroup.cas.sales.validator</a> &gt; <span class="el_source">MCSales_General.java</span></div><h1>MCSales_General.java</h1><pre class="source lang-java linenums">package ph.com.guanzongroup.cas.sales.validator;
+
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import org.guanzon.appdriver.base.GRiderCAS;
+import org.guanzon.appdriver.constant.UserRight;
+import org.guanzon.appdriver.iface.GValidator;
+import org.json.simple.JSONObject;
+import org.guanzon.cas.inv.warehouse.status.DeliveryScheduleStatus;
+import ph.com.guanzongroup.cas.sales.model.Model_Sales_Master;
+
+/**
+ *
+ * @author MNV
+ */
+<span class="nc" id="L18">public class MCSales_General implements GValidator {</span>
+
+    GRiderCAS poGRider;
+    String psTranStat;
+    JSONObject poJSON;
+
+    Model_Sales_Master poMaster;
+
+    @Override
+    public void setApplicationDriver(Object applicationDriver) {
+<span class="nc" id="L28">        poGRider = (GRiderCAS) applicationDriver;</span>
+<span class="nc" id="L29">    }</span>
+
+    @Override
+    public void setTransactionStatus(String transactionStatus) {
+<span class="nc" id="L33">        psTranStat = transactionStatus;</span>
+<span class="nc" id="L34">    }</span>
+
+    @Override
+    public void setMaster(Object value) {
+<span class="nc" id="L38">        poMaster = (Model_Sales_Master) value;</span>
+<span class="nc" id="L39">    }</span>
+
+    @SuppressWarnings(&quot;unchecked&quot;)
+    @Override
+    public void setDetail(ArrayList&lt;Object&gt; value) {
+<span class="nc" id="L44">        throw new UnsupportedOperationException(&quot;Not supported yet.&quot;);</span>
+    }
+
+    @Override
+    public void setOthers(ArrayList&lt;Object&gt; value) {
+<span class="nc" id="L49">        throw new UnsupportedOperationException(&quot;Not supported yet.&quot;);</span>
+    }
+
+    @Override
+    public JSONObject validate() {
+        try {
+<span class="nc bnc" id="L55" title="All 6 branches missed.">            switch (psTranStat) {</span>
+                case DeliveryScheduleStatus.OPEN:
+<span class="nc" id="L57">                    return validateNew();</span>
+                case DeliveryScheduleStatus.CONFIRMED:
+<span class="nc" id="L59">                    return validateConfirmed();</span>
+                case DeliveryScheduleStatus.POSTED:
+<span class="nc" id="L61">                    return validatePosted();</span>
+                case DeliveryScheduleStatus.CANCELLED:
+<span class="nc" id="L63">                    return validateCancelled();</span>
+                case DeliveryScheduleStatus.VOID:
+<span class="nc" id="L65">                    return validateVoid();</span>
+                default:
+<span class="nc" id="L67">                    poJSON = new JSONObject();</span>
+<span class="nc" id="L68">                    poJSON.put(&quot;result&quot;, &quot;error&quot;);</span>
+<span class="nc" id="L69">                    poJSON.put(&quot;message&quot;, &quot;unsupported function&quot;);</span>
+            }
+<span class="nc" id="L71">        } catch (SQLException ex) {</span>
+<span class="nc" id="L72">            Logger.getLogger(MCSales_General.class.getName()).log(Level.SEVERE, null, ex);</span>
+<span class="nc" id="L73">        }</span>
+
+<span class="nc" id="L75">        return poJSON;</span>
+    }
+
+    private JSONObject validateNew() throws SQLException {
+<span class="nc" id="L79">        poJSON = new JSONObject();</span>
+<span class="nc" id="L80">        boolean isRequiredApproval = false;</span>
+
+<span class="nc bnc" id="L82" title="All 2 branches missed.">        if (poMaster.getTransactionDate()== null) {</span>
+<span class="nc" id="L83">            poJSON.put(&quot;result&quot;, &quot;error&quot;);</span>
+<span class="nc" id="L84">            poJSON.put(&quot;message&quot;, &quot;Invalid Transaction Date.&quot;);</span>
+<span class="nc" id="L85">            return poJSON;</span>
+        }
+
+<span class="nc" id="L88">        poJSON.put(&quot;result&quot;, &quot;success&quot;);</span>
+<span class="nc" id="L89">        poJSON.put(&quot;isRequiredApproval&quot;, isRequiredApproval);</span>
+
+<span class="nc" id="L91">        return poJSON;</span>
+    }
+
+    private JSONObject validateConfirmed() throws SQLException {
+<span class="nc" id="L95">        poJSON = new JSONObject();</span>
+<span class="nc" id="L96">        boolean isRequiredApproval = false;</span>
+
+<span class="nc bnc" id="L98" title="All 2 branches missed.">        if (poMaster.getTransactionDate() == null) {</span>
+<span class="nc" id="L99">            poJSON.put(&quot;result&quot;, &quot;error&quot;);</span>
+<span class="nc" id="L100">            poJSON.put(&quot;message&quot;, &quot;Invalid Transaction Date.&quot;);</span>
+<span class="nc" id="L101">            return poJSON;</span>
+        }
+
+<span class="nc bnc" id="L104" title="All 2 branches missed.">        if (poGRider.getUserLevel() &lt;= UserRight.ENCODER) {</span>
+<span class="nc" id="L105">            isRequiredApproval = true;</span>
+        }
+<span class="nc" id="L107">        poJSON.put(&quot;result&quot;, &quot;success&quot;);</span>
+<span class="nc" id="L108">        poJSON.put(&quot;isRequiredApproval&quot;, isRequiredApproval);</span>
+
+<span class="nc" id="L110">        return poJSON;</span>
+    }
+
+    private JSONObject validatePosted() {
+<span class="nc" id="L114">        poJSON = new JSONObject();</span>
+<span class="nc" id="L115">        boolean isRequiredApproval = false;</span>
+<span class="nc bnc" id="L116" title="All 2 branches missed.">        if (poGRider.getUserLevel() &lt;= UserRight.ENCODER) {</span>
+<span class="nc" id="L117">            isRequiredApproval = true;</span>
+        }
+<span class="nc" id="L119">        poJSON.put(&quot;result&quot;, &quot;success&quot;);</span>
+<span class="nc" id="L120">        poJSON.put(&quot;isRequiredApproval&quot;, isRequiredApproval);</span>
+<span class="nc" id="L121">        return poJSON;</span>
+    }
+
+    private JSONObject validateCancelled() throws SQLException {
+<span class="nc" id="L125">        boolean isRequiredApproval = false;</span>
+<span class="nc" id="L126">        poJSON = new JSONObject();</span>
+
+<span class="nc bnc" id="L128" title="All 2 branches missed.">        if (poGRider.getUserLevel() &lt;= UserRight.ENCODER) {</span>
+<span class="nc" id="L129">            isRequiredApproval = true;</span>
+        }
+<span class="nc" id="L131">        poJSON.put(&quot;result&quot;, &quot;success&quot;);</span>
+<span class="nc" id="L132">        poJSON.put(&quot;isRequiredApproval&quot;, isRequiredApproval);</span>
+<span class="nc" id="L133">        return poJSON;</span>
+    }
+
+    private JSONObject validateVoid() throws SQLException {
+//        boolean isRequiredApproval = false;
+<span class="nc" id="L138">        poJSON = new JSONObject();</span>
+//
+//        if (poGRider.getUserLevel() &lt;= UserRight.ENCODER) {
+//            isRequiredApproval = true;
+//        }
+<span class="nc" id="L143">        poJSON.put(&quot;result&quot;, &quot;success&quot;);</span>
+//        poJSON.put(&quot;isRequiredApproval&quot;, isRequiredApproval);
+<span class="nc" id="L145">        return poJSON;</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

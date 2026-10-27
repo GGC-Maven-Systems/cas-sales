@@ -60,9 +60,11 @@ import ph.com.guanzongroup.cas.sales.model.Model_Sales_Master;
 import ph.com.guanzongroup.cas.sales.model.Model_Sales_Registration;
 import static ph.com.guanzongroup.cas.sales.queries.SalesMasterQueries.getSalesClientBrowse;
 import static ph.com.guanzongroup.cas.sales.queries.SalesMasterQueries.getSalesClientSource;
+import static ph.com.guanzongroup.cas.sales.queries.SalesMasterQueries.getSalesMasterWithSource;
 import static ph.com.guanzongroup.cas.sales.queries.SalesMasterQueries.getSalesPromotion;
 import ph.com.guanzongroup.cas.sales.services.SalesControllers;
 import ph.com.guanzongroup.cas.sales.services.SalesModels;
+import ph.com.guanzongroup.cas.sales.validator.MCSalesValidatorFactory;
 
 public class MCSales extends Transaction {
 
@@ -158,7 +160,7 @@ public class MCSales extends Transaction {
         Model_Sales_Detail loDetail;
 
         // keep the last detail's keys in sync (only when there is one)
-        if (!paDetail.isEmpty() && getEditMode() == EditMode.ADDNEW) {
+        if (!paDetail.isEmpty() && (getEditMode() == EditMode.ADDNEW || getEditMode() == EditMode.UPDATE)) {
             Model_Sales_Giveaways lastDetail = (Model_Sales_Giveaways) paSalesGiveaways.get(paSalesGiveaways.size() - 1);
             lastDetail.setTransNo(getMaster().getTransactionNo());
             lastDetail.setEntryNo(getCountSalesGiveAway());
@@ -315,7 +317,7 @@ public class MCSales extends Transaction {
 
     public JSONObject searchTransaction(String value, boolean byCode, boolean byExact) {
         try {
-            String lsSQL = SQL_BROWSE;
+            String lsSQL = getSalesMasterWithSource(poGRider.getIndustry());
             String lsCondition = "";
             if (psTranStat != null) {
                 if (this.psTranStat.length() > 1) {
@@ -333,13 +335,16 @@ public class MCSales extends Transaction {
                 lsSQL = MiscUtil.addCondition(lsSQL, "sCategrCd = " + SQLUtil.toSQL(psCategorCD));
             }
 
-            lsSQL = lsSQL + " GROUP BY a.sTransNox ";
+            lsSQL = lsSQL + " WHERE 1=1";
+            lsSQL = lsSQL + " GROUP BY sTransNox ";
+
+            System.out.println("search Transaction Query =\n" + lsSQL);
             poJSON = ShowDialogFX.Search(poGRider,
                     lsSQL,
                     value,
-                    "Promo ID»sPromDesc»Date»From Date»Thru Date",
-                    "a.sTransNox»a.sPromDesc»a.dTransact»a.dFromDate»a.dThruDate",
-                    "a.sTransNox»a.sPromDesc»a.dTransact»a.dFromDate»a.dThruDate",
+                    "Transaction»Date»Name»Source»Source No»Source Date",
+                    "sTransNox»dTransact»xClientNm»sSource»sSourceNo»dSourceDt",
+                    "sTransNox»dTransact»xClientNm»sSource»sSourceNo»adSourceDt",
                     byExact ? (byCode ? 0 : 1) : 2);
 
             if (poJSON != null) {
@@ -694,10 +699,8 @@ public class MCSales extends Transaction {
         for (int lnCtr = paSalesGiveaways.size() - 1; lnCtr >= 0; lnCtr--) {
             Model_Sales_Giveaways loDetail = (Model_Sales_Giveaways) paSalesGiveaways.get(lnCtr);
             if (loDetail.getStockID() == null || loDetail.getStockID().isEmpty()) {
-                if (loDetail.getSourceNo() == null || loDetail.getSourceNo().isEmpty()) {
-                    paSalesGiveaways.remove(lnCtr);
-                    continue;
-                }
+                paSalesGiveaways.remove(lnCtr);
+                continue;
             }
         }
         for (int lnCtr = 0; lnCtr < paSalesGiveaways.size(); lnCtr++) {
@@ -917,7 +920,7 @@ public class MCSales extends Transaction {
 
     @Override
     protected JSONObject isEntryOkay(String status) throws SQLException, GuanzonException {
-        GValidator loValidator = MCPromoSalesValidatorFactory.make(getMaster().getIndustryCode());
+        GValidator loValidator = MCSalesValidatorFactory.make(getMaster().getIndustryCode());
 
         loValidator.setApplicationDriver(poGRider);
         loValidator.setTransactionStatus(status);
@@ -1269,7 +1272,7 @@ public class MCSales extends Transaction {
             entryDate = (String) loJSON.get("sEntryDte");
         }
 
-        showStatusHistoryUI("Sales_Promotion_Master", (String) poMaster.getValue("sTransNox"), entryBy, entryDate, crs);
+        showStatusHistoryUI("Sales_Master", (String) poMaster.getValue("sTransNox"), entryBy, entryDate, crs);
     }
 
     public JSONObject getEntryBy() throws SQLException, GuanzonException {
@@ -1541,78 +1544,92 @@ public class MCSales extends Transaction {
         loSalesSource.setRecordStatus(Sales_Reservation_Static.CONFIRMED);
 
         loValidateSource = loSalesSource.openRecord(sourceNo);
+
         if ("success".equals((String) loValidateSource.get("result"))) {
 
             getMaster().setClientID(loSalesSource.getModel().getClientId());
             getMaster().setAddress(loSalesSource.getModel().getAddressId());
             getMaster().setMobileNo(loSalesSource.getModel().getContactId());
-            getMaster().setPaymentForm(loSalesSource.Version().Master().getPaymentForm());
-            getMaster().setTermCode(loSalesSource.Version().Master().getTermId());
-            getMaster().setTransactionTotal(loSalesSource.Version().Master().getTransactionTotal());
-            getMaster().setDiscount(loSalesSource.Version().Master().getDiscountAmount());
-            getMaster().setAddDiscount(loSalesSource.Version().Master().getAdditionalDiscount());
-            getMaster().setFreight(loSalesSource.Version().Master().getFreight());
-            getMaster().setVATSales(loSalesSource.Version().Master().getVatSales());
-            getMaster().setFreight(loSalesSource.Version().Master().getFreight());
-            getMaster().setVATAmount(loSalesSource.Version().Master().getVatAmount());
-            getMaster().setNonVATSales(loSalesSource.Version().Master().getNonVatSales());
-            getMaster().setSourceCode(loSalesSource.Version().getSourceCode());
-            getMaster().setSourceNo(loSalesSource.Version().Master().getTransactionNo());
+            if (loSalesSource.Version().Master().getValidThruDate() != null && !loSalesSource.Version().Master().getValidThruDate().before(getMaster().getTransactionDate())) {
 
-            //clear existing detail
-            paDetail.clear();
-            paDetail = new ArrayList<Model>();
-            int lnRowSale = 0;
-            for (int lnCtr = 0; lnCtr < loSalesSource.Version().getDetailCount(); lnCtr++) {
+                getMaster().setPaymentForm(loSalesSource.Version().Master().getPaymentForm());
+                getMaster().setTermCode(loSalesSource.Version().Master().getTermId());
+                getMaster().setTransactionTotal(loSalesSource.Version().Master().getTransactionTotal());
+                getMaster().setDiscount(loSalesSource.Version().Master().getDiscountAmount());
+                getMaster().setAddDiscount(loSalesSource.Version().Master().getAdditionalDiscount());
+                getMaster().setFreight(loSalesSource.Version().Master().getFreight());
+                getMaster().setVATSales(loSalesSource.Version().Master().getVatSales());
+                getMaster().setFreight(loSalesSource.Version().Master().getFreight());
+                getMaster().setVATAmount(loSalesSource.Version().Master().getVatAmount());
+                getMaster().setNonVATSales(loSalesSource.Version().Master().getNonVatSales());
+                getMaster().setSourceCode(loSalesSource.Version().getSourceCode());
+                getMaster().setSourceNo(loSalesSource.Version().Master().getParentId());
 
-                if (loSalesSource.Version().Detail(lnCtr).getStockId().isEmpty()) {
-                    continue;
+                //clear existing detail
+                paDetail.clear();
+                paDetail = new ArrayList<Model>();
+                int lnRowSale = 0;
+                for (int lnCtr = 0; lnCtr < loSalesSource.Version().getDetailCount(); lnCtr++) {
+
+                    if ((loSalesSource.Version().Detail(lnCtr).getStockId()) == null || (loSalesSource.Version().Detail(lnCtr).getStockId().isEmpty())) {
+                        continue;
+                    }
+
+                    //Entry No Sales
+                    lnRowSale = lnRowSale++;
+                    //initialize detail to set
+                    getDetail(lnRowSale);
+                    //Sync Detail to Sales Source's
+                    getDetail(lnRowSale).setStockID(loSalesSource.Version().Detail(lnCtr).getStockId());
+                    getDetail(lnRowSale).setQuantity(loSalesSource.Version().Detail(lnCtr).getQuantity());
+                    getDetail(lnRowSale).setUnitCost(Double.parseDouble(loSalesSource.Version().Detail(lnCtr).Inventory().getCost().toString()));
+                    getDetail(lnRowSale).setUnitPrice(loSalesSource.Version().Detail(lnCtr).getUnitPrice());
+                    getDetail(lnRowSale).setPromoID(loSalesSource.Version().Detail(lnCtr).getPromoCode());
+                    getDetail(lnRowSale).setDiscount(loSalesSource.Version().Detail(lnCtr).getDiscount());
+                    getDetail(lnRowSale).setAddDiscount(loSalesSource.Version().Detail(lnCtr).getAdditionalDiscount());
+                    getDetail(lnRowSale).setFreight(loSalesSource.Version().Detail(lnCtr).getFreight());
+
                 }
+                lnRowSale = 0;
+                for (int lnCtr = 0; lnCtr < loSalesSource.Giveaways().getGiveawayCount(); lnCtr++) {
 
-                //Entry No Sales
-                lnRowSale = lnRowSale++;
-                //initialize detail to set
-                getDetail(lnRowSale);
-                //Sync Detail to Sales Source's
-                getDetail(lnRowSale).setStockID(loSalesSource.Version().Detail(lnCtr).getStockId());
-                getDetail(lnRowSale).setQuantity(loSalesSource.Version().Detail(lnCtr).getQuantity());
-                getDetail(lnRowSale).setUnitCost(Double.parseDouble(loSalesSource.Version().Detail(lnCtr).Inventory().getCost().toString()));
-                getDetail(lnRowSale).setUnitPrice(loSalesSource.Version().Detail(lnCtr).getUnitPrice());
-                getDetail(lnRowSale).setPromoID(loSalesSource.Version().Detail(lnCtr).getPromoCode());
-                getDetail(lnRowSale).setDiscount(loSalesSource.Version().Detail(lnCtr).getDiscount());
-                getDetail(lnRowSale).setAddDiscount(loSalesSource.Version().Detail(lnCtr).getAdditionalDiscount());
-                getDetail(lnRowSale).setFreight(loSalesSource.Version().Detail(lnCtr).getFreight());
+                    if ((loSalesSource.Giveaways().Giveaway(lnCtr).getStockId()) == null
+                            || (loSalesSource.Giveaways().Giveaway(lnCtr).getStockId().isEmpty())) {
+                        continue;
+                    }
 
+                    //Entry No Sales
+                    lnRowSale = lnRowSale++;
+                    //initialize detail to set
+                    getDetail(lnRowSale);
+                    //Sync Detail to Sales Source's
+                    getSalesGiveaways(lnRowSale).setStockID(loSalesSource.Giveaways().Giveaway(lnCtr).getStockId());
+                    getSalesGiveaways(lnRowSale).setQuantity(loSalesSource.Giveaways().Giveaway(lnCtr).getQuantity());
+                    getSalesGiveaways(lnRowSale).setUnitCost(Double.parseDouble(loSalesSource.Giveaways().Giveaway(lnCtr).Inventory().getCost().toString()));
+                    getSalesGiveaways(lnRowSale).setUnitPrice(Double.parseDouble(loSalesSource.Giveaways().Giveaway(lnCtr).Inventory().getSellingPrice().toString()));
+                    getSalesGiveaways(lnRowSale).setQuantity(loSalesSource.Giveaways().Giveaway(lnCtr).getQuantity());
+                    getSalesGiveaways(lnRowSale).setSourceNo(loSalesSource.Giveaways().Giveaway(lnCtr).getTransactionNo());
+                    getSalesGiveaways(lnRowSale).setSourceCode(loSalesSource.Version().getSourceCode());
+
+                }
             }
-            lnRowSale = 0;
-            for (int lnCtr = 0; lnCtr < loSalesSource.Giveaways().getGiveawayCount(); lnCtr++) {
-
-                //Entry No Sales
-                lnRowSale = lnRowSale++;
-                //initialize detail to set
-                getDetail(lnRowSale);
-                //Sync Detail to Sales Source's
-                getSalesGiveaways(lnRowSale).setStockID(loSalesSource.Giveaways().Giveaway(lnCtr).getStockId());
-                getSalesGiveaways(lnRowSale).setQuantity(loSalesSource.Giveaways().Giveaway(lnCtr).getQuantity());
-                getSalesGiveaways(lnRowSale).setUnitCost(Double.parseDouble(loSalesSource.Giveaways().Giveaway(lnCtr).Inventory().getCost().toString()));
-                getSalesGiveaways(lnRowSale).setUnitPrice(Double.parseDouble(loSalesSource.Giveaways().Giveaway(lnCtr).Inventory().getSellingPrice().toString()));
-                getSalesGiveaways(lnRowSale).setQuantity(loSalesSource.Giveaways().Giveaway(lnCtr).getQuantity());
-                getSalesGiveaways(lnRowSale).setSourceNo(loSalesSource.Giveaways().Giveaway(lnCtr).getTransactionNo());
-                getSalesGiveaways(lnRowSale).setSourceCode(loSalesSource.Version().getSourceCode());
-
-            }
-
         } else {
             loValidateSource.put("result", "error");
             loValidateSource.put("message", "Unable to Detect Entry No");
             return loValidateSource;
         }
         loValidateSource = new JSONObject();
-        loValidateSource.put("result", "success");
+
+        loValidateSource.put(
+                "result", "success");
+        if (loSalesSource.Version()
+                .Master().getValidThruDate() != null && loSalesSource.Version().Master().getValidThruDate().before(getMaster().getTransactionDate())) {
+            loValidateSource.put("message", "Quotation is already Expired");
+        }
         return loValidateSource;
     }
 
-    //Searching of Master Co Client
+//Searching of Master Co Client
     public JSONObject searchCoClient(String value, boolean byCode)
             throws SQLException, GuanzonException, CloneNotSupportedException, Exception {
         poJSON = new JSONObject();

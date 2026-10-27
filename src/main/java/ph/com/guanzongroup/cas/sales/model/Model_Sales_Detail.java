@@ -236,8 +236,8 @@ public class Model_Sales_Detail extends Model {
             poSalesPromo.initialize();
         }
 
-        String modelPrimary = (String) (getValue("sPromIDxx") == null
-                ? "" : getValue("sPromIDxx"));
+        String modelPrimary = (String) (getValue("sPromoIDx") == null
+                ? "" : getValue("sPromoIDx"));
 
         if (!"".equals(modelPrimary)) {
 

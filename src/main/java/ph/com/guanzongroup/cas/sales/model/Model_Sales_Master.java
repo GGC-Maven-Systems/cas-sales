@@ -70,6 +70,8 @@ public class Model_Sales_Master extends Model {
 
             poEntity.updateNull("sSourceCd");
             poEntity.updateNull("sSourceNo");
+            poEntity.updateNull("dDueDatex");
+            poEntity.updateObject("dDueDatex", poGRider.getServerDate());
             poEntity.updateObject("dTransact", poGRider.getServerDate());
 
             poEntity.insertRow();

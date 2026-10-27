@@ -32,7 +32,7 @@ public class SalesMasterQueries {
                 + ",\n       a.sClientID "
                 + ",\n       a.cClientTp "
                 + "     FROM Client_Master a"
-                + "\n LEFT JOIN (SELECT DISTINCT sClientID FROM Sales_Reservation_Master WHERE cTranStat = '1' "
+                + "\n LEFT JOIN (SELECT DISTINCT sClientID FROM Sales_Reservation_Master WHERE cTranStat = '2' "
                 + "\n       AND sIndstCdx =" + SQLUtil.toSQL(industrycode) + ") b ON a.sClientID = b.sClientID "
                 + "\n LEFT JOIN (SELECT DISTINCT sClientID FROM Sales_Quotation_Master WHERE cTranStat = '0' "
                 + "         AND sIndstCdx = " + SQLUtil.toSQL(industrycode) + " AND sTransNox IN (SELECT sParentID FROM Sales_Quotation_Version_Master WHERE cTranStat = '1')) c ON a.sClientID = c.sClientID "
@@ -56,7 +56,7 @@ public class SalesMasterQueries {
                 + ",\n          a.sClientID"
                 + "\n     FROM Sales_Reservation_Master a"
                 + "\n     JOIN Client_Master b ON a.sClientID = b.sClientID"
-                + "\n    WHERE a.`cTranStat` = '1' AND a.sIndstCdx = " + SQLUtil.toSQL(industrycode)
+                + "\n    WHERE a.`cTranStat` = '2' AND a.sIndstCdx = " + SQLUtil.toSQL(industrycode)
                 + "\n   UNION ALL"
                 + "\n   SELECT 'Sales Quotation' AS sSource"
                 + ",\n          a.sTransNox"
@@ -82,7 +82,7 @@ public class SalesMasterQueries {
     public static String getSalesPromotion(String model, String brand) {
         boolean lbHasModel = model != null && !model.trim().isEmpty();
         boolean lbHasBrand = brand != null && !brand.trim().isEmpty();
-        
+
         // nothing to search by -> return no rows instead of every promo
         if (!lbHasModel && !lbHasBrand) {
             return "SELECT a.* FROM Sales_Promotion_Master a WHERE 1 = 0";
@@ -128,5 +128,47 @@ public class SalesMasterQueries {
                 + "\n AND (a.dThruDate IS NULL OR DATE(a.dThruDate) >= CURDATE())";
 
         return lsSQL;
+    }
+
+    public static String getSalesMasterWithSource(String industrycode) {
+        String lsName = "IFNULL(c.sCompnyNm, '')"; // use the same name expression you already use
+
+        return "SELECT * FROM ("
+                + "\n   SELECT a.*"
+                + ",\n          'Sales Reservation' AS sSource"
+                + ",\n          s.dTransact AS dSourceDt"
+                + ",\n          " + lsName + " AS xClientNm"
+                + "\n     FROM Sales_Master a"
+                + "\n     JOIN Sales_Reservation_Master s ON a.sSourceNo = s.sTransNox"
+                + "\n     LEFT JOIN Client_Master c ON a.sClientID = c.sClientID"
+                + "\n    WHERE a.sIndstCdx = " + SQLUtil.toSQL(industrycode)
+                + "\n   UNION ALL"
+                + "\n   SELECT a.*"
+                + ",\n          'Sales Quotation' AS sSource"
+                + ",\n          s.dTransact AS dSourceDt"
+                + ",\n          " + lsName + " AS xClientNm"
+                + "\n     FROM Sales_Master a"
+                + "\n     JOIN Sales_Quotation_Master s ON a.sSourceNo = s.sTransNox"
+                + "\n     LEFT JOIN Client_Master c ON a.sClientID = c.sClientID"
+                + "\n    WHERE a.sIndstCdx = " + SQLUtil.toSQL(industrycode)
+                + "\n   UNION ALL"
+                + "\n   SELECT a.*"
+                + ",\n          'Sales Commitment' AS sSource"
+                + ",\n          s.dTransact AS dSourceDt"
+                + ",\n          " + lsName + " AS xClientNm"
+                + "\n     FROM Sales_Master a"
+                + "\n     JOIN Sales_Commitment_Master s ON a.sSourceNo = s.sTransNox"
+                + "\n     LEFT JOIN Client_Master c ON a.sClientID = c.sClientID"
+                + "\n    WHERE a.sIndstCdx = " + SQLUtil.toSQL(industrycode)
+                + "\n   UNION ALL"
+                + "\n   SELECT a.*"
+                + ",\n          'No Source' AS sSource"
+                + ",\n          NULL AS dSourceDt"
+                + ",\n          " + lsName + " AS xClientNm"
+                + "\n     FROM Sales_Master a"
+                + "\n     LEFT JOIN Client_Master c ON a.sClientID = c.sClientID"
+                + "\n    WHERE a.sIndstCdx = " + SQLUtil.toSQL(industrycode)
+                + "\n      AND (a.sSourceNo IS NULL OR a.sSourceNo = '')"
+                + "\n ) x";
     }
 }
