@@ -119,7 +119,7 @@ public class SalesReservation extends Transaction {
     public JSONObject OpenTransaction(String transactionNo) throws CloneNotSupportedException, SQLException, GuanzonException {
         resetMaster();
         resetOthers();
-        Detail().clear();
+//        Detail().clear();
         return openTransaction(transactionNo);
     }
 

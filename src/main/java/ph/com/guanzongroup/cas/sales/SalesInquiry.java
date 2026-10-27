@@ -1016,7 +1016,7 @@ public class SalesInquiry extends Transaction {
             Detail(row).setCategory("");
 
             System.out.println("MODEL : " + Detail(row).Model().getDescription());
-            System.out.println("MODEL Variant :" + Detail(row).ModelVariant().getDescription());
+                System.out.println("MODEL Variant :" + Detail(row).ModelVariant().getDescription());
         }
 
         return poJSON;

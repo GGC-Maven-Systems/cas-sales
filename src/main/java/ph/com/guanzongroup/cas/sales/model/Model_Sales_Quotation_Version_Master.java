@@ -32,6 +32,10 @@ public class Model_Sales_Quotation_Version_Master extends Model {
             poEntity.moveToInsertRow();
 
             MiscUtil.initRowSet(poEntity);
+            poEntity.insertRow();
+            poEntity.moveToCurrentRow();
+
+            poEntity.absolute(1);
 
             // assign default values
             poEntity.updateObject("dTransact", poGRider.getServerDate());
@@ -45,25 +49,19 @@ public class Model_Sales_Quotation_Version_Master extends Model {
             );
 
             poEntity.updateObject("nEntryNox", 0);
-            poEntity.updateObject("nTranTotl", 0.00);
-            poEntity.updateObject("nDiscAmtx", 0.00);
-            poEntity.updateObject("nAddDiscx", 0.00);
-            poEntity.updateObject("nFreightx", 0.00);
-            poEntity.updateObject("nVATSales", 0.00);
-            poEntity.updateObject("nVATAmtxx", 0.00);
-            poEntity.updateObject("nNonVATSl", 0.00);
+            poEntity.updateDouble("nTranTotl", 0.00d);
+            poEntity.updateDouble("nDiscAmtx", 0.00d);
+            poEntity.updateDouble("nAddDiscx", 0.00d);
+            poEntity.updateDouble("nFreightx", 0.00d);
+            poEntity.updateDouble("nVATSales", 0.00d);
+            poEntity.updateDouble("nVATAmtxx", 0.00d);
+            poEntity.updateDouble("nNonVATSl", 0.00d);
             // end - assign default values
-
-            poEntity.insertRow();
-            poEntity.moveToCurrentRow();
-
-            poEntity.absolute(1);
 
             ID = "sTransNox";
 
             // poBranch/poTerm are intentionally NOT constructed here.
             // They are initialized lazily in Branch()/Terms().
-
         } catch (SQLException e) {
             logwrapr.severe(e.getMessage());
             System.exit(1);
@@ -195,7 +193,7 @@ public class Model_Sales_Quotation_Version_Master extends Model {
     }
 
     public Double getTransactionTotal() {
-        return (Double) getValue("nTranTotl");
+        return Double.valueOf(getValue("nTranTotl").toString());
     }
 
     public JSONObject setDiscountAmount(Double discountAmount) {
@@ -203,7 +201,7 @@ public class Model_Sales_Quotation_Version_Master extends Model {
     }
 
     public Double getDiscountAmount() {
-        return (Double) getValue("nDiscAmtx");
+        return  Double.valueOf(getValue("nDiscAmtx").toString());
     }
 
     public JSONObject setAdditionalDiscount(Double additionalDiscount) {
@@ -211,7 +209,7 @@ public class Model_Sales_Quotation_Version_Master extends Model {
     }
 
     public Double getAdditionalDiscount() {
-        return (Double) getValue("nAddDiscx");
+        return  Double.valueOf(getValue("nAddDiscx").toString());
     }
 
     public JSONObject setFreight(Double freight) {
@@ -219,7 +217,7 @@ public class Model_Sales_Quotation_Version_Master extends Model {
     }
 
     public Double getFreight() {
-        return (Double) getValue("nFreightx");
+        return  Double.valueOf(getValue("nFreightx").toString());
     }
 
     public JSONObject setVatSales(Double vatSales) {
@@ -227,7 +225,7 @@ public class Model_Sales_Quotation_Version_Master extends Model {
     }
 
     public Double getVatSales() {
-        return (Double) getValue("nVATSales");
+        return  Double.valueOf(getValue("nVATSales").toString());
     }
 
     public JSONObject setVatAmount(Double vatAmount) {
@@ -235,7 +233,7 @@ public class Model_Sales_Quotation_Version_Master extends Model {
     }
 
     public Double getVatAmount() {
-        return (Double) getValue("nVATAmtxx");
+        return  Double.valueOf(getValue("nVATAmtxx").toString());
     }
 
     public JSONObject setNonVatSales(Double nonVatSales) {
@@ -243,7 +241,7 @@ public class Model_Sales_Quotation_Version_Master extends Model {
     }
 
     public Double getNonVatSales() {
-        return (Double) getValue("nNonVATSl");
+        return  Double.valueOf(getValue("nNonVATSl").toString());
     }
 
     public JSONObject setApproverCode(String approverCode) {
@@ -320,7 +318,6 @@ public class Model_Sales_Quotation_Version_Master extends Model {
     // ============================================================
     // Reference Object Models
     // ============================================================
-
     public Model_Branch Branch() throws SQLException, GuanzonException {
 
         if (poBranch == null) {
@@ -331,11 +328,9 @@ public class Model_Sales_Quotation_Version_Master extends Model {
             poBranch.initialize();
         }
 
-        String branchCode = (String) (
-                getValue("sBranchCd") == null
-                        ? ""
-                        : getValue("sBranchCd")
-        );
+        String branchCode = (String) (getValue("sBranchCd") == null
+                ? ""
+                : getValue("sBranchCd"));
 
         if (!"".equals(branchCode)) {
 
@@ -381,11 +376,9 @@ public class Model_Sales_Quotation_Version_Master extends Model {
             poTerm.initialize();
         }
 
-        String termId = (String) (
-                getValue("sTermIDxx") == null
-                        ? ""
-                        : getValue("sTermIDxx")
-        );
+        String termId = (String) (getValue("sTermIDxx") == null
+                ? ""
+                : getValue("sTermIDxx"));
 
         if (!"".equals(termId)) {
 

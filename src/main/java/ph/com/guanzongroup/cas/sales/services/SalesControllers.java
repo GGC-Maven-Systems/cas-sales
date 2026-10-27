@@ -26,6 +26,24 @@ public class SalesControllers {
         poLogWrapper = logWrapper;
     }
     
+    public MCSales MCSales() {
+        if (poGRider == null) {
+            poLogWrapper.severe("SalesControllers.SalesInquiry: Application driver is not set.");
+            return null;
+        }
+
+        if (poMCSales != null) {
+            return poMCSales;
+        }
+
+        poMCSales = new MCSales();
+        poMCSales.setApplicationDriver(poGRider);
+        poMCSales.setBranchCode(poGRider.getBranchCode());
+        poMCSales.setVerifyEntryNo(true);
+        poMCSales.setWithParent(false);
+        poMCSales.setLogWrapper(poLogWrapper);
+        return poMCSales;
+    }
     public SalesInquiry SalesInquiry() {
         if (poGRider == null) {
             poLogWrapper.severe("SalesControllers.SalesInquiry: Application driver is not set.");
@@ -372,6 +390,7 @@ public class SalesControllers {
     private GRiderCAS poGRider;
     private LogWrapper poLogWrapper;
 
+    private MCSales poMCSales;
     private SalesInquiry poSalesInquiry;
     private SalesInquirySources poSalesInquirySources;
     private Salesman poSalesman;

@@ -172,31 +172,28 @@ public class MCSales extends Transaction {
     }
 
     public Model_Sales_Giveaways getSalesGiveaways(int fnEntryNo) {
-        if (getMaster().getTransactionNo().isEmpty()) {
+        if (getMaster().getTransactionNo() == null || getMaster().getTransactionNo().isEmpty()) {
             return null;
         }
 
-        // Get the requested detail
         Model_Sales_Giveaways loDetail;
 
-        //auto add detail
-        Model_Sales_Giveaways lastDetail = (Model_Sales_Giveaways) paSalesGiveaways.get(paSalesGiveaways.size() - 1);
-
-        if (getEditMode() == EditMode.ADDNEW) {
+        // keep the last detail's keys in sync (only when there is one)
+        if (!paSalesGiveaways.isEmpty() && getEditMode() == EditMode.ADDNEW) {
+            Model_Sales_Giveaways lastDetail = (Model_Sales_Giveaways) paSalesGiveaways.get(paSalesGiveaways.size() - 1);
             lastDetail.setTransNo(getMaster().getTransactionNo());
             lastDetail.setEntryNo(getCountSalesGiveAway());
         }
 
-        //find the detail record
+        // find the detail record
         for (int lnCtr = 0; lnCtr <= paSalesGiveaways.size() - 1; lnCtr++) {
             loDetail = (Model_Sales_Giveaways) paSalesGiveaways.get(lnCtr);
-
             if (loDetail.getEntryNo() == fnEntryNo) {
                 return loDetail;
             }
         }
 
-        // No match found — create new
+        // no match found, create new
         loDetail = new SalesModels(poGRider).SalesGiveaways();
         loDetail.newRecord();
         loDetail.setTransNo(getMaster().getTransactionNo());
@@ -1339,109 +1336,98 @@ public class MCSales extends Transaction {
 
         loClient.setClientType(getClientType());
 
-        String lsSQL = getSalesClientBrowse(psIndustryCode);
-
-        System.out.println("SQL : " + lsSQL);
+        String lsSQL = getSalesClientBrowse(poGRider.getIndustry());
+        lsSQL = lsSQL + " WHERE cClientTp = " + SQLUtil.toSQL(getClientType());
+        System.out.println("SQL Client: " + lsSQL);
         poJSON = ShowDialogFX.Search(poGRider,
                 lsSQL,
                 value,
-                "Reservation»Quotation»Credit»Employee»Name»Address»dBirthDte»sAddressx»Client ID",
-                "xHasReserv»xHasQuotat»xHasComitment»xIsEmploye»sCompnyNm»xAddressx»sClientID",
-                "IFNULL(b.sClientID,'')»IFNULL(c.sClientID,'')»IFNULL(d.sClientID,'')»IFNULL(e.sClientID,'')"
-                + "»IFNULL(a.`sCompnyNm`,CONCAT(a.`sLastName`+', '+a.`sFrstName` , ' ',a.`sMiddName`))"
-                + "»dBirthDte»sAddressx»sClientID",
-                byCode ? 4 : 6);
+                "Reservation»Quotation»Credit»Employee»Name»Birth Date»Address»Client ID",
+                "xHasReserv»xHasQuotat»xHasComitment»xIsEmploye»xCompnyNm»dBirthDte»sAddressx»sClientID",
+                "xHasReserv»xHasQuotat»xHasComitment»xIsEmploye»xCompnyNm»dBirthDte»sAddressx»sClientID",
+                byCode ? 4 : 7);
 
-        if (poJSON != null) {
-            if ("success".equals((String) poJSON.get("result"))) {
-                loClient.setClientId((String) poJSON.get("clientId"));
-                //Load Client of Existing 
+        if (poJSON == null) {
+            return setJSON("error", "No record loaded.");
+        }
 
-                //load record
-                CommonUtils.showModal(loClient);
-                loJSON.put("result", "success");
-            } else {
-                loJSON = addClient();
-                return loJSON;
+        // a selected row has no "result" key, it only carries the column values
+        boolean lbHasClient = poJSON.get("sClientID") != null
+                && !poJSON.get("sClientID").toString().isEmpty();
+
+        if (!lbHasClient) {
+            // nothing selected / no match -> add a new client
+            if ("error".equals((String) poJSON.get("result"))
+                    && poJSON.get("message") != null
+                    && !"No record to load.".equals(poJSON.get("message"))) {
+                return poJSON; // real error, not just "no match"
             }
-            if ("success".equals((String) loJSON.get("result"))) {
-                //check if has possible source 
-                if (poJSON.get("xHasReserv").toString().equals("YES")
-                        || poJSON.get("xHasQuotat").toString().equals("YES")
-                        || poJSON.get("xHasComitment").toString().equals("YES")) {
-                    lsSQL = getSalesClientSource(psIndustryCode);
-                    loSourceTransaction = ShowDialogFX.Search(poGRider,
-                            lsSQL,
-                            value,
-                            "Source»Source No»Date»Name»Client ID",
-                            "sSource»sTransNox»dTransact»xClientNm»sClientID",
-                            "sTransNox»dTransact"
-                            + "»IFNULL(a.`sCompnyNm`,CONCAT(a.`sLastName`+', '+a.`sFrstName` , ' ',a.`sMiddName`))"
-                            + "»sClientID",
-                            byCode ? 3 : 4);
+            return addClient();
+        }
 
+        // ----- existing client -----
+        String lsClientID = poJSON.get("sClientID").toString();
+        boolean lbHasReserv = "YES".equals(String.valueOf(poJSON.get("xHasReserv")));
+        boolean lbHasQuotat = "YES".equals(String.valueOf(poJSON.get("xHasQuotat")));
+        boolean lbHasCommit = "YES".equals(String.valueOf(poJSON.get("xHasComitment")));
+        boolean lbIsEmploye = "YES".equals(String.valueOf(poJSON.get("xIsEmploye")));
+
+        loClient.setClientId(lsClientID);
+        CommonUtils.showModal(loClient);   // show / edit the client record
+
+        if (loClient.isCancelled()) {
+            return setJSON("error", "No record loaded.");
+        }
+
+        // ----- possible source transaction -----
+        if (lbHasReserv || lbHasQuotat || lbHasCommit) {
+            lsSQL = getSalesClientSource(poGRider.getIndustry());
+            lsSQL = lsSQL + " WHERE sClientID = " + SQLUtil.toSQL(lsClientID);
+            System.out.println("SQL Client Source: " + lsSQL);
+
+            ResultSet loRS = poGRider.executeQuery(lsSQL);
+//
+            if (MiscUtil.RecordCount(loRS) > 0L) {
+                loSourceTransaction = ShowDialogFX.Browse(poGRider,
+                        lsSQL,
+                        lsClientID,
+                        "Source»Source No»Date»Name»Client ID",
+                        "sSource»sTransNox»dTransact»xClientNm»sClientID",
+                        "sSource»sTransNox»dTransact»xClientNm»sClientID",
+                        4);
+
+                if (loSourceTransaction != null && loSourceTransaction.get("sSource") != null) {
                     JSONObject loValidate = new JSONObject();
                     switch (loSourceTransaction.get("sSource").toString()) {
                         case "Sales Reservation":
                             loValidate = validateReservation(loSourceTransaction.get("sTransNox").toString());
-
-                            if (!"success".equals((String) loValidate.get("result"))) {
-                                loValidate.put("result", "error");
-                                loValidate.put("message", "Unable to load Source Sales."
-                                        + "\n \t " + (String) loValidate.get("message"));
-
-                                return loValidate;
-                            }
                             break;
                         case "Sales Quotation":
                             loValidate = validateQuotation(loSourceTransaction.get("sTransNox").toString());
-
-                            if (!"success".equals((String) loValidate.get("result"))) {
-                                loValidate.put("result", "error");
-                                loValidate.put("message", "Unable to load Source Sales."
-                                        + "\n \t " + (String) loValidate.get("message"));
-
-                                return loValidate;
-                            }
                             break;
-                        case "Sales Commitment":
-                            loValidate.put("result", "error");
-                            loValidate.put("message", "Unable to load Source Sales.");
-
-                            return loValidate;
-
+                        default:
+                            loValidate = setJSON("error", "Sales Commitment is not yet supported.");
+                    }
+                    if (!"success".equals((String) loValidate.get("result"))) {
+                        return setJSON("error", "Unable to load Source Sales.\n\t "
+                                + loValidate.get("message"));
                     }
                 }
-
-                //add possible business rule to Employee 
-                if (poJSON.get("Employee").toString().equals("YES")) {
-
-                }
-                if ("success".equals((String) poJSON.get("result"))) {
-                    getMaster().setClientID(loClient.getClientId());
-                    getMaster().setAddressID(loClient.getClient().Address(1).getAddressId());
-                    getMaster().setContactID(loClient.getClient().Mobile(1).getMobileId());
-
-                    getMaster().setCompanyName(loClient.getClient().getModel().getCompanyName());
-                    getMaster().setAddress(loClient.getClient().Address(1).getAddress());
-                    getMaster().setMobileNo(loClient.getClient().Mobile(1).getMobileNo());
-                    getMaster().setClientID(poJSON.get("sClientID").toString());
-                }
-                poJSON = new JSONObject();
-                poJSON.put("result", "success");
-                return poJSON;
-            } else {
-                poJSON = new JSONObject();
-                poJSON.put("result", "error");
-                poJSON.put("message", "No record loaded.");
-                return poJSON;
             }
-        } else {
-            poJSON = new JSONObject();
-            poJSON.put("result", "error");
-            poJSON.put("message", "No record loaded.");
-            return poJSON;
         }
+        // business rule for employee here
+        if (lbIsEmploye) {
+        }
+
+        // ----- set master (use the selected id, not the GUI's) -----
+        getMaster().setClientID(lsClientID);
+        getMaster().setCompanyName(poJSON.get("xCompnyNm") == null ? "" : poJSON.get("xCompnyNm").toString());
+        getMaster().setAddressID(loClient.getClient().Address(0).getAddressId());
+        getMaster().setAddress(loClient.getClient().Address(0).getAddress());
+        getMaster().setContactID(loClient.getClient().Mobile(0).getMobileId());
+        getMaster().setMobileNo(loClient.getClient().Mobile(0).getMobileNo());
+
+        return setJSON("success", "success");
     }
 
     public JSONObject addClient() throws SQLException, GuanzonException, Exception {
@@ -1469,12 +1455,12 @@ public class MCSales extends Transaction {
             lsClientId = loClient.getClient().getModel().getClientId();
 
             getMaster().setClientID(loClient.getClientId());
-            getMaster().setAddressID(loClient.getClient().Address(1).getAddressId());
-            getMaster().setContactID(loClient.getClient().Mobile(1).getMobileId());
+            getMaster().setAddressID(loClient.getClient().Address(0).getAddressId());
+            getMaster().setContactID(loClient.getClient().Mobile(0).getMobileId());
 
             getMaster().setCompanyName(loClient.getClient().getModel().getCompanyName());
-            getMaster().setAddress(loClient.getClient().Address(1).getAddress());
-            getMaster().setMobileNo(loClient.getClient().Mobile(1).getMobileNo());
+            getMaster().setAddress(loClient.getClient().Address(0).getAddress());
+            getMaster().setMobileNo(loClient.getClient().Mobile(0).getMobileNo());
 
         }
         loResult.put("result", "success");
@@ -1638,11 +1624,12 @@ public class MCSales extends Transaction {
                 loJSON.put("result", "success");
             } else {
                 loJSON = addCoClient();
+                return loJSON;
             }
             if ("success".equals((String) loJSON.get("result"))) {
 
                 getMaster().setCoClientID(loClient.getClientId());
-                getMaster().setAddressID2(loClient.getClient().Address(1).getAddressId());
+                getMaster().setAddressID2(loClient.getClient().Address(0).getAddressId());
 
                 poJSON = new JSONObject();
                 poJSON.put("result", "success");
@@ -1685,7 +1672,7 @@ public class MCSales extends Transaction {
         if (!loClient.isCancelled()) {
             lsClientId = loClient.getClient().getModel().getClientId();
             getMaster().setCoClientID(loClient.getClientId());
-            getMaster().setAddressID2(loClient.getClient().Address(1).getAddressId());
+            getMaster().setAddressID2(loClient.getClient().Address(0).getAddressId());
 
         }
         loResult.put("result", "success");
@@ -1764,107 +1751,98 @@ public class MCSales extends Transaction {
                 "a.sPromIDxx»a.sPromDesc»a.dTransact»a.dFromDate»a.dThruDate",
                 byCode ? 0 : 1);
         if (poJSON != null) {
-            if ("success".equals((String) poJSON.get("result"))) {
+            getDetail(fnRow).setPromoID((String) poJSON.get("sPromIDxx"));
+            //load Promotion Data
 
-                getDetail(fnRow).setPromoID((String) poJSON.get("sPromIDxx"));
-                //load Promotion Data
+            MCPromoSales loObject = new PromoControllers(poGRider, null).MCPromoSales();
+            loObject.initTransaction();
+            loObject.setTransactionStatus("1");
+            loObject.setIndustryID(psIndustryCode);
+            loObject.setCompanyID(psCompanyID);
+            loObject.setCategoryID(psCategorCD);
 
-                MCPromoSales loObject = new PromoControllers(poGRider, null).MCPromoSales();
-                loObject.initTransaction();
-                loObject.setTransactionStatus("1");
-                loObject.setIndustryID(psIndustryCode);
-                loObject.setCompanyID(psCompanyID);
-                loObject.setCategoryID(psCategorCD);
-
-                loResult = loObject.OpenTransaction((String) poJSON.get("sPromIDxx"));
-                if ("success".equals((String) loResult.get("result"))) {
-                    //set Promo object for valadtion usage;
-                    poPromo = loObject;
-                    if (loObject.getCountSalesPromotionGiveAwayItem() > 0) {
-                        int lnRowSale = 0;
-                        for (int lnCtr = 1; lnCtr <= loObject.getCountSalesPromotionGiveAwayItem(); lnCtr++) {
-                            if (!loObject.getSalesPromotionGiveAway(lnCtr).isWithActive()) {
-                                continue;
-                            }
-                            //Entry No Sales
-                            lnRowSale = lnRowSale++;
-                            //initialize detail to set
-                            getSalesGiveaways(lnRowSale);
-                            //Sync Detail to Sales Promo's
-                            getSalesGiveaways(lnRowSale).setStockID(loObject.getSalesPromotionGiveAway(lnCtr).getStockID());
-                            getSalesGiveaways(lnRowSale).setQuantity(loObject.getSalesPromotionGiveAway(lnCtr).getQuantity());
-                            getSalesGiveaways(lnRowSale).setUnitCost(Double.parseDouble(loObject.getSalesPromotionGiveAway(lnCtr).Inventory().getCost().toString()));
-                            getSalesGiveaways(lnRowSale).setUnitPrice(Double.parseDouble(loObject.getSalesPromotionGiveAway(lnCtr).Inventory().getSellingPrice().toString()));
-                            getSalesGiveaways(lnRowSale).setQuantity(loObject.getSalesPromotionGiveAway(lnCtr).getQuantity());
-                            getSalesGiveaways(lnRowSale).setSourceNo(loObject.getMaster().getPromoID());
-                            getSalesGiveaways(lnRowSale).setSourceCode(loObject.getSourceCode());
-
-                        }
-
-                    }
-
+            loResult = loObject.OpenTransaction((String) poJSON.get("sPromIDxx"));
+            if ("success".equals((String) loResult.get("result"))) {
+                //set Promo object for valadtion usage;
+                poPromo = loObject;
+                if (loObject.getCountSalesPromotionGiveAwayItem() > 0) {
                     int lnRowSale = 0;
-                    int lnRowSaleR = 0;
-                    if (loObject.getCountSalesPromotionBrand() > 0) {
-                        for (int lnCtr = 1; lnCtr <= loObject.getCountSalesPromotionBrand(); lnCtr++) {
-                            if (loObject.getSalesPromotionBrand(lnCtr).getBrandID().equals(getDetail(fnRow).Inventory().getBrandId())) {
-
-                                //Entry No Sales
-                                lnRowSale = getCountSalesInsurance() + 1;
-                                lnRowSaleR = getCountSalesRegistration() + 1;
-
-                                //initialize detail to set
-                                getSalesInsurance(lnRowSale);
-
-                                //Sync Detail to Sales Insurance's
-                                getSalesInsurance(lnRowSale).setSerialID(getDetail(fnRow).getSerialID());
-                                getSalesInsurance(lnRowSale).isChargeTo(!loObject.getSalesPromotionBrand(lnCtr).isInsuranceFree());
-
-                                //Sync Detail to Sales Registration's
-                                getSalesRegistration(lnRowSaleR).setSerialID(getDetail(fnRow).getSerialID());
-                                getSalesRegistration(lnRowSaleR).isChargeTo(!loObject.getSalesPromotionBrand(lnCtr).isRegistrationFree());
-
-                                //Sync Detail to Sales Detail's
-                                getDetail(fnRow).setDiscount(loObject.getSalesPromotionBrand(lnCtr).getDiscountRate());
-                                getDetail(fnRow).setAddDiscount(loObject.getSalesPromotionBrand(lnCtr).getDiscAmount());
-                                getDetail(fnRow).setFreight(loObject.getSalesPromotionBrand(lnCtr).getFreight());
-                                break;
-                            }
+                    for (int lnCtr = 1; lnCtr <= loObject.getCountSalesPromotionGiveAwayItem(); lnCtr++) {
+                        if (!loObject.getSalesPromotionGiveAway(lnCtr).isWithActive()) {
+                            continue;
                         }
-                    }
-                    if (loObject.getCountSalesPromotionModel() > 0) {
-                        for (int lnCtr = 1; lnCtr <= loObject.getCountSalesPromotionModel(); lnCtr++) {
-                            if (loObject.getSalesPromotionModel(lnCtr).getModelID().equals(getDetail(fnRow).Inventory().getModelId())) {
+                        //Entry No Sales
+                        lnRowSale = lnRowSale++;
+                        //initialize detail to set
+                        getSalesGiveaways(lnRowSale);
+                        //Sync Detail to Sales Promo's
+                        getSalesGiveaways(lnRowSale).setStockID(loObject.getSalesPromotionGiveAway(lnCtr).getStockID());
+                        getSalesGiveaways(lnRowSale).setQuantity(loObject.getSalesPromotionGiveAway(lnCtr).getQuantity());
+                        getSalesGiveaways(lnRowSale).setUnitCost(Double.parseDouble(loObject.getSalesPromotionGiveAway(lnCtr).Inventory().getCost().toString()));
+                        getSalesGiveaways(lnRowSale).setUnitPrice(Double.parseDouble(loObject.getSalesPromotionGiveAway(lnCtr).Inventory().getSellingPrice().toString()));
+                        getSalesGiveaways(lnRowSale).setQuantity(loObject.getSalesPromotionGiveAway(lnCtr).getQuantity());
+                        getSalesGiveaways(lnRowSale).setSourceNo(loObject.getMaster().getPromoID());
+                        getSalesGiveaways(lnRowSale).setSourceCode(loObject.getSourceCode());
 
-                                //Entry No Sales
-                                lnRowSale = getCountSalesRegistration() + 1;
-                                //initialize detail to set
-                                getSalesRegistration(lnRowSale);
-
-                                //Sync Detail to Sales Insurance's
-                                getSalesInsurance(lnRowSale).setSerialID(getDetail(fnRow).getSerialID());
-                                getSalesInsurance(lnRowSale).isChargeTo(!loObject.getSalesPromotionModel(lnCtr).isInsuranceFree());
-
-                                //Sync Detail to Sales Registration's
-                                getSalesRegistration(lnRowSaleR).setSerialID(getDetail(fnRow).getSerialID());
-                                getSalesRegistration(lnRowSaleR).isChargeTo(!loObject.getSalesPromotionModel(lnCtr).isRegistrationFree());
-
-                                //Sync Detail to Sales Detail's
-                                getDetail(fnRow).setDiscount(loObject.getSalesPromotionModel(lnCtr).getDiscountRate());
-                                getDetail(fnRow).setAddDiscount(loObject.getSalesPromotionModel(lnCtr).getDiscAmount());
-                                getDetail(fnRow).setFreight(loObject.getSalesPromotionModel(lnCtr).getFreight());
-                                break;
-                            }
-                        }
                     }
 
                 }
 
-            } else {
-                poJSON = new JSONObject();
-                poJSON.put("result", "error");
-                poJSON.put("message", "No record loaded.");
-                return poJSON;
+                int lnRowSale = 0;
+                int lnRowSaleR = 0;
+                if (loObject.getCountSalesPromotionBrand() > 0) {
+                    for (int lnCtr = 1; lnCtr <= loObject.getCountSalesPromotionBrand(); lnCtr++) {
+                        if (loObject.getSalesPromotionBrand(lnCtr).getBrandID().equals(getDetail(fnRow).Inventory().getBrandId())) {
+
+                            //Entry No Sales
+                            lnRowSale = getCountSalesInsurance() + 1;
+                            lnRowSaleR = getCountSalesRegistration() + 1;
+
+                            //initialize detail to set
+                            getSalesInsurance(lnRowSale);
+
+                            //Sync Detail to Sales Insurance's
+                            getSalesInsurance(lnRowSale).setSerialID(getDetail(fnRow).getSerialID());
+                            getSalesInsurance(lnRowSale).isChargeTo(!loObject.getSalesPromotionBrand(lnCtr).isInsuranceFree());
+
+                            //Sync Detail to Sales Registration's
+                            getSalesRegistration(lnRowSaleR).setSerialID(getDetail(fnRow).getSerialID());
+                            getSalesRegistration(lnRowSaleR).isChargeTo(!loObject.getSalesPromotionBrand(lnCtr).isRegistrationFree());
+
+                            //Sync Detail to Sales Detail's
+                            getDetail(fnRow).setDiscount(loObject.getSalesPromotionBrand(lnCtr).getDiscountRate());
+                            getDetail(fnRow).setAddDiscount(loObject.getSalesPromotionBrand(lnCtr).getDiscAmount());
+                            getDetail(fnRow).setFreight(loObject.getSalesPromotionBrand(lnCtr).getFreight());
+                            break;
+                        }
+                    }
+                }
+                if (loObject.getCountSalesPromotionModel() > 0) {
+                    for (int lnCtr = 1; lnCtr <= loObject.getCountSalesPromotionModel(); lnCtr++) {
+                        if (loObject.getSalesPromotionModel(lnCtr).getModelID().equals(getDetail(fnRow).Inventory().getModelId())) {
+
+                            //Entry No Sales
+                            lnRowSale = getCountSalesRegistration() + 1;
+                            //initialize detail to set
+                            getSalesRegistration(lnRowSale);
+
+                            //Sync Detail to Sales Insurance's
+                            getSalesInsurance(lnRowSale).setSerialID(getDetail(fnRow).getSerialID());
+                            getSalesInsurance(lnRowSale).isChargeTo(!loObject.getSalesPromotionModel(lnCtr).isInsuranceFree());
+
+                            //Sync Detail to Sales Registration's
+                            getSalesRegistration(lnRowSaleR).setSerialID(getDetail(fnRow).getSerialID());
+                            getSalesRegistration(lnRowSaleR).isChargeTo(!loObject.getSalesPromotionModel(lnCtr).isRegistrationFree());
+
+                            //Sync Detail to Sales Detail's
+                            getDetail(fnRow).setDiscount(loObject.getSalesPromotionModel(lnCtr).getDiscountRate());
+                            getDetail(fnRow).setAddDiscount(loObject.getSalesPromotionModel(lnCtr).getDiscAmount());
+                            getDetail(fnRow).setFreight(loObject.getSalesPromotionModel(lnCtr).getFreight());
+                            break;
+                        }
+                    }
+                }
+
             }
 
         } else {
@@ -1894,7 +1872,7 @@ public class MCSales extends Transaction {
         poJSON = new JSONObject();
 
         String lscolHeader = "Serial 01»Serial 02»Model»Color/Varian»Description»ID";
-        String lscolName = "sSerial01»sSerial02»xModelNme»xColorNme»xDescript»sSerialID";
+        String lscolName = "sSerial01»sSerial02»xModelNme»xColorNme»b.sDescript»sSerialID";
         String lscolCriteria = "a.sSerial01»a.sSerial02»IFNULL (d.sDescript, '')»IFNULL (e.sDescript, '')»b.sDescript»a.sSerialID";
         loBrowse.setCustomColHeader(lscolHeader);
         loBrowse.setCustomColName(lscolName);
@@ -1903,7 +1881,7 @@ public class MCSales extends Transaction {
 
         System.out.println("result " + (String) poJSON.get("result"));
         System.out.println("result " + (String) poJSON.get("result"));
-        if (!"success".equals((String) poJSON.get("result"))) {
+        if (poJSON == null) {
             return poJSON; // nothing selected, do not touch the row
         }
 
