@@ -791,6 +791,11 @@ public class VehicleAddOns extends Transaction {
         return (Model_Model_Variant) paVehicleList.get(row);
     }
     
+    private boolean pbRequireApprove = false;
+    public void setRequireApprove(boolean pbisApprove){
+        pbRequireApprove =  pbisApprove;
+    }
+    
     public JSONArray loadUniqueAddOnTypeId(String fsAsOfDate) throws SQLException, GuanzonException {
         JSONArray loJSONArray = new JSONArray();
         JSONObject loJSON = new JSONObject();
@@ -805,6 +810,10 @@ public class VehicleAddOns extends Transaction {
                 lsSQL = lsSQL + " AND " + SQLUtil.toSQL(formatDate(fsAsOfDate))+ " BETWEEN a.dFromDate AND a.dThruDate " ;
             } else {
                 lsSQL = lsSQL + " AND " + SQLUtil.toSQL(fsAsOfDate)+ " BETWEEN a.dFromDate AND a.dThruDate " ;
+            }
+            
+            if(pbRequireApprove){
+                lsSQL = lsSQL + " AND a.cRecdStat = " + SQLUtil.toSQL(ValidityPeriodStatus.APPROVED);
             }
             lsSQL = lsSQL + " GROUP BY b.sAddTypex ORDER BY c.sAddTypNm ASC";
             System.out.println("loadUniqueAddOnTypeId SQL: " + lsSQL);
@@ -843,6 +852,9 @@ public class VehicleAddOns extends Transaction {
                 lsSQL = lsSQL + " AND " + SQLUtil.toSQL(formatDate(fsAsOfDate))+ " BETWEEN a.dFromDate AND a.dThruDate " ;
             } else {
                 lsSQL = lsSQL + " AND " + SQLUtil.toSQL(fsAsOfDate)+ " BETWEEN a.dFromDate AND a.dThruDate " ;
+            }
+            if(pbRequireApprove){
+                lsSQL = lsSQL + " AND a.cRecdStat = " + SQLUtil.toSQL(ValidityPeriodStatus.APPROVED);
             }
             System.out.println("getAmount SQL: " + lsSQL);
             ResultSet loRS = poGRider.executeQuery(lsSQL);
