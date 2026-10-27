@@ -114,17 +114,17 @@ public class MCSales extends Transaction {
     }
 
     @SuppressWarnings("unchecked")
+    public List<Model_Sales_Detail> getSalesDetailList() {
+        return (List<Model_Sales_Detail>) (List<?>) paDetail;
+    }
+
+    @SuppressWarnings("unchecked")
     public List<Model_Sales_Giveaways> getSalesGiveawaysList() {
         return (List<Model_Sales_Giveaways>) (List<?>) paSalesGiveaways;
     }
 
     @SuppressWarnings("unchecked")
-    public List<Model_Sales_Insurance> getSalesInsurance() {
-        return (List<Model_Sales_Insurance>) (List<?>) paSalesInsurance;
-    }
-
-    @SuppressWarnings("unchecked")
-    public List<Model_Sales_Registration> getSalesRegistrations() {
+    public List<Model_Sales_Registration> getSalesRegistrationsList() {
         return (List<Model_Sales_Registration>) (List<?>) paSalesRegistration;
     }
 
@@ -1921,8 +1921,7 @@ public class MCSales extends Transaction {
             Model_Sales_Detail loSourceRow = null;
 
             boolean lbRowIsSource = loDetail.getStockID() != null
-                    && loDetail.getStockID().equals(lsStockID)
-                    && (loDetail.getSerialID() == null || loDetail.getSerialID().isEmpty());
+                    && loDetail.getStockID().equals(lsStockID);
 
             if (lbRowIsSource) {
                 loSourceRow = loDetail;

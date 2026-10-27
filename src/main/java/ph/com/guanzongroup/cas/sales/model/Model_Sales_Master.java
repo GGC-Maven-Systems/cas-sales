@@ -1,15 +1,21 @@
 package ph.com.guanzongroup.cas.sales.model;
 
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Date;
 import org.guanzon.appdriver.agent.services.Model;
 import org.guanzon.appdriver.agent.services.ReferenceCache;
 import org.guanzon.appdriver.base.GuanzonException;
 import org.guanzon.appdriver.base.MiscUtil;
+import org.guanzon.appdriver.base.SQLUtil;
 import org.guanzon.appdriver.constant.EditMode;
+import org.guanzon.cas.client.ClientInfo;
 import org.guanzon.cas.client.model.Model_Client_Address;
+import org.guanzon.cas.client.model.Model_Client_Mail;
 import org.guanzon.cas.client.model.Model_Client_Master;
 import org.guanzon.cas.client.model.Model_Client_Mobile;
+import org.guanzon.cas.client.model.Model_Client_Social_Media;
+import org.guanzon.cas.client.services.ClientControllers;
 import org.guanzon.cas.parameter.model.Model_Branch;
 import org.guanzon.cas.parameter.model.Model_Category;
 import org.guanzon.cas.parameter.model.Model_Company;
@@ -30,6 +36,8 @@ public class Model_Sales_Master extends Model {
     private Model_Client_Master poCoClient;
     private Model_Client_Address poCoClientAddress;
     private Model_Client_Master poSalesmanClient;
+    private Model_Client_Mail poClientMail;
+    private Model_Client_Mail poCoClientMail;
 
     @Override
     public void initialize() {
@@ -234,8 +242,7 @@ public class Model_Sales_Master extends Model {
     }
 
     public double getTransactionTotal() {
-        Object v = getValue("nTranTotl");
-        return v == null ? 0.00 : ((Number) v).doubleValue();
+        return Double.valueOf(getValue("nTranTotl").toString());
     }
 
     public JSONObject setAdvances(double value) {
@@ -243,8 +250,7 @@ public class Model_Sales_Master extends Model {
     }
 
     public double getAdvances() {
-        Object v = getValue("nAdvances");
-        return v == null ? 0.00 : ((Number) v).doubleValue();
+        return Double.valueOf(getValue("nAdvances").toString());
     }
 
     public JSONObject setDiscount(double value) {
@@ -252,8 +258,7 @@ public class Model_Sales_Master extends Model {
     }
 
     public double getDiscount() {
-        Object v = getValue("nDiscount");
-        return v == null ? 0.00 : ((Number) v).doubleValue();
+        return Double.valueOf(getValue("nDiscount").toString());
     }
 
     public JSONObject setAddDiscount(double value) {
@@ -261,8 +266,7 @@ public class Model_Sales_Master extends Model {
     }
 
     public double getAddDiscount() {
-        Object v = getValue("nAddDiscx");
-        return v == null ? 0.00 : ((Number) v).doubleValue();
+        return Double.valueOf(getValue("nAddDiscx").toString());
     }
 
     public JSONObject setFreight(double value) {
@@ -270,8 +274,7 @@ public class Model_Sales_Master extends Model {
     }
 
     public double getFreight() {
-        Object v = getValue("nFreightx");
-        return v == null ? 0.00 : ((Number) v).doubleValue();
+        return Double.valueOf(getValue("nFreightx").toString());
     }
 
     public JSONObject setInsuranceAdd(double value) {
@@ -279,8 +282,7 @@ public class Model_Sales_Master extends Model {
     }
 
     public double getInsuranceAdd() {
-        Object v = getValue("nInsurAdd");
-        return v == null ? 0.00 : ((Number) v).doubleValue();
+        return Double.valueOf(getValue("nInsurAdd").toString());
     }
 
     public JSONObject setRegistrationAmount(double value) {
@@ -288,8 +290,7 @@ public class Model_Sales_Master extends Model {
     }
 
     public double getRegistrationAmount() {
-        Object v = getValue("nRegAmtxx");
-        return v == null ? 0.00 : ((Number) v).doubleValue();
+        return Double.valueOf(getValue("nRegAmtxx").toString());
     }
 
     public JSONObject setVATSales(double value) {
@@ -297,8 +298,7 @@ public class Model_Sales_Master extends Model {
     }
 
     public double getVATSales() {
-        Object v = getValue("nVATSales");
-        return v == null ? 0.00 : ((Number) v).doubleValue();
+        return Double.valueOf(getValue("nVATSales").toString());
     }
 
     public JSONObject setVATAmount(double value) {
@@ -306,8 +306,8 @@ public class Model_Sales_Master extends Model {
     }
 
     public double getVATAmount() {
-        Object v = getValue("nVATAmtxx");
-        return v == null ? 0.00 : ((Number) v).doubleValue();
+
+        return Double.valueOf(getValue("nVATAmtxx").toString());
     }
 
     public JSONObject setNonVATSales(double value) {
@@ -315,8 +315,7 @@ public class Model_Sales_Master extends Model {
     }
 
     public double getNonVATSales() {
-        Object v = getValue("nNonVATSl");
-        return v == null ? 0.00 : ((Number) v).doubleValue();
+        return Double.valueOf(getValue("nNonVATSl").toString());
     }
 
     public JSONObject setZeroVATSales(double value) {
@@ -324,8 +323,8 @@ public class Model_Sales_Master extends Model {
     }
 
     public double getZeroVATSales() {
-        Object v = getValue("nZroVATSl");
-        return v == null ? 0.00 : ((Number) v).doubleValue();
+
+        return Double.valueOf(getValue("nZroVATSl").toString());
     }
 
     public JSONObject setCWTAmount(double value) {
@@ -333,8 +332,7 @@ public class Model_Sales_Master extends Model {
     }
 
     public double getCWTAmount() {
-        Object v = getValue("nCWTAmtxx");
-        return v == null ? 0.00 : ((Number) v).doubleValue();
+        return Double.valueOf(getValue("nCWTAmtxx").toString());
     }
 
     public JSONObject setAmountPaid(double value) {
@@ -342,8 +340,7 @@ public class Model_Sales_Master extends Model {
     }
 
     public double getAmountPaid() {
-        Object v = getValue("nAmtPaidx");
-        return v == null ? 0.00 : ((Number) v).doubleValue();
+        return Double.valueOf(getValue("nAmtPaidx").toString());
     }
 
     public JSONObject setDueDate(Date value) {
@@ -383,8 +380,7 @@ public class Model_Sales_Master extends Model {
     }
 
     public int getEntryNo() {
-        Object v = getValue("nEntryNox");
-        return v == null ? 0 : ((Number) v).intValue();
+        return Integer.valueOf(getValue("nEntryNox").toString());
     }
 
     public JSONObject setReleased(String value) {
@@ -932,6 +928,140 @@ public class Model_Sales_Master extends Model {
         } else {
             poTerm.initialize();
             return poTerm;
+        }
+    }
+
+    public Model_Client_Mail ClientMail()
+            throws SQLException, GuanzonException {
+
+        if (poClientMail == null) {
+            poClientMail = new Model_Client_Mail();
+            poClientMail.setApplicationDriver(poGRider);
+            poClientMail.setXML("Model_Client_Mail");
+            poClientMail.setTableName("Client_eMail_Address");
+            poClientMail.initialize();
+        }
+        String modelClient = (String) (getValue("sClientID") == null
+                ? "" : getValue("sClientID"));
+
+        if ("".equals(modelClient)) {
+            poClientMail.initialize();
+            return poClientMail;
+        }
+
+        //load email addresses
+        String lsSQL = "SELECT * FROM Client_eMail_Address"
+                + " WHERE sClientID = " + SQLUtil.toSQL(modelClient)
+                + " ORDER BY sEmailIDx";
+
+        ResultSet loRS = poGRider.executeQuery(lsSQL);
+        if (MiscUtil.RecordCount(loRS) > 0L) {
+
+            String modelPrimary = loRS.getString("sEmailIDx") == null
+                    ? "" : loRS.getString("sEmailIDx");
+
+            if (!"".equals(modelPrimary)) {
+
+                if (poClientMail.getEditMode() == EditMode.READY
+                        && poClientMail.getEmailId().equals(modelPrimary)) {
+                    return poClientMail;
+                }
+
+                if (ReferenceCache.tryLoad(
+                        "Client_eMail_Address",
+                        modelPrimary,
+                        poClientMail)) {
+                    return poClientMail;
+                }
+
+                poJSON = poClientMail.openRecord(modelPrimary);
+
+                if ("success".equals((String) poJSON.get("result"))) {
+                    ReferenceCache.store(
+                            "Client_eMail_Address",
+                            modelPrimary,
+                            poClientMail);
+                    return poClientMail;
+                } else {
+                    poClientMail.initialize();
+                    return poClientMail;
+                }
+
+            } else {
+                poClientMail.initialize();
+                return poClientMail;
+            }
+        } else {
+            poClientMail.initialize();
+            return poClientMail;
+        }
+    }
+    
+    
+    
+    public Model_Client_Mail CoClientMail()
+            throws SQLException, GuanzonException {
+
+        if (poCoClientMail == null) {
+            poCoClientMail = new Model_Client_Mail();
+            poCoClientMail.setApplicationDriver(poGRider);
+            poCoClientMail.setXML("Model_Client_Mail");
+            poCoClientMail.setTableName("Client_eMail_Address");
+            poCoClientMail.initialize();
+        }
+        String modelClient = (String) (getValue("sCoCltID1") == null
+                ? "" : getValue("sCoCltID1"));
+
+        if ("".equals(modelClient)) {
+            poCoClientMail.initialize();
+            return poCoClientMail;
+        }
+
+        //load email addresses
+        String lsSQL = "SELECT * FROM Client_eMail_Address"
+                + " WHERE sClientID = " + SQLUtil.toSQL(modelClient)
+                + " ORDER BY sEmailIDx";
+
+        ResultSet loRS = poGRider.executeQuery(lsSQL);
+        if (MiscUtil.RecordCount(loRS) > 0L) {
+
+            String modelPrimary = loRS.getString("sEmailIDx") == null
+                    ? "" : loRS.getString("sEmailIDx");
+
+            if (!"".equals(modelPrimary)) {
+
+                if (poCoClientMail.getEditMode() == EditMode.READY
+                        && poCoClientMail.getEmailId().equals(modelPrimary)) {
+                    return poCoClientMail;
+                }
+
+                if (ReferenceCache.tryLoad(
+                        "Client_eMail_Address",
+                        modelPrimary,
+                        poCoClientMail)) {
+                    return poCoClientMail;
+                }
+
+                poJSON = poCoClientMail.openRecord(modelPrimary);
+
+                if ("success".equals((String) poJSON.get("result"))) {
+                    ReferenceCache.store(
+                            "Client_eMail_Address",
+                            modelPrimary,
+                            poCoClientMail);
+                    return poCoClientMail;
+                } else {
+                    poCoClientMail.initialize();
+                    return poCoClientMail;
+                }
+
+            } else {
+                poCoClientMail.initialize();
+                return poCoClientMail;
+            }
+        } else {
+            poCoClientMail.initialize();
+            return poCoClientMail;
         }
     }
 }

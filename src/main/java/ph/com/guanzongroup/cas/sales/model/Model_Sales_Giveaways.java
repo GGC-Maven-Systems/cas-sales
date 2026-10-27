@@ -30,17 +30,16 @@ public class Model_Sales_Giveaways extends Model {
             poEntity.insertRow();
             poEntity.moveToCurrentRow();
             poEntity.absolute(1);
-            
+
             poEntity.updateObject("nEntryNox", 0);
-            poEntity.updateInt("nQuantity", 0);
-            poEntity.updateInt("nGivenxxx", 0);
-            poEntity.updateInt("nIssuedxx", 0);
+            poEntity.updateObject("nQuantity", 0);
+            poEntity.updateObject("nGivenxxx", 0);
+            poEntity.updateObject("nIssuedxx", 0);
             poEntity.updateDouble("nUnitCost", 0.0d);
             poEntity.updateDouble("nUnitPrce", 0.0d);
             poEntity.updateString("cGAwyStat", "1");
             poEntity.updateNull("sSourceCD");
             poEntity.updateNull("sSourceNo");
-
 
             ID = "sTransNox";
             ID2 = "nEntryNox";
@@ -65,8 +64,7 @@ public class Model_Sales_Giveaways extends Model {
     }
 
     public int getEntryNo() {
-        Object v = getValue("nEntryNox");
-        return v == null ? 0 : ((Number) v).intValue();
+        return Integer.valueOf(getValue("nEntryNox").toString());
     }
 
     public JSONObject setStockID(String value) {
@@ -82,8 +80,7 @@ public class Model_Sales_Giveaways extends Model {
     }
 
     public int getQuantity() {
-        Object v = getValue("nQuantity");
-        return v == null ? 0 : ((Number) v).intValue();
+        return Integer.valueOf(getValue("nQuantity").toString());
     }
 
     public JSONObject setGiven(int value) {
@@ -91,8 +88,7 @@ public class Model_Sales_Giveaways extends Model {
     }
 
     public int getGiven() {
-        Object v = getValue("nGivenxxx");
-        return v == null ? 0 : ((Number) v).intValue();
+        return Integer.valueOf(getValue("nGivenxxx").toString());
     }
 
     public JSONObject setIssued(int value) {
@@ -100,8 +96,7 @@ public class Model_Sales_Giveaways extends Model {
     }
 
     public int getIssued() {
-        Object v = getValue("nIssuedxx");
-        return v == null ? 0 : ((Number) v).intValue();
+        return Integer.valueOf(getValue("nIssuedxx").toString());
     }
 
     public JSONObject setUnitCost(double value) {
@@ -109,8 +104,8 @@ public class Model_Sales_Giveaways extends Model {
     }
 
     public double getUnitCost() {
-        Object v = getValue("nUnitCost");
-        return v == null ? 0.00 : ((Number) v).doubleValue();
+
+        return Double.valueOf(getValue("nUnitCost").toString());
     }
 
     public JSONObject setUnitPrice(double value) {
@@ -118,8 +113,7 @@ public class Model_Sales_Giveaways extends Model {
     }
 
     public double getUnitPrice() {
-        Object v = getValue("nUnitPrce");
-        return v == null ? 0.00 : ((Number) v).doubleValue();
+        return Double.valueOf(getValue("nUnitPrce").toString());
     }
 
     public JSONObject setGiveAwayStatus(String value) {

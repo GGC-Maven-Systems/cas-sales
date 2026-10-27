@@ -71,8 +71,7 @@ public class Model_Sales_Detail extends Model {
     }
 
     public int getEntryNo() {
-        Object v = getValue("nEntryNox");
-        return v == null ? 0 : ((Number) v).intValue();
+        return Integer.valueOf(getValue("nEntryNox").toString());
     }
 
     public JSONObject setStockID(String value) {
@@ -88,8 +87,7 @@ public class Model_Sales_Detail extends Model {
     }
 
     public int getQuantity() {
-        Object v = getValue("nQuantity");
-        return v == null ? 0 : ((Number) v).intValue();
+        return Integer.valueOf(getValue("nQuantity").toString());
     }
 
     public JSONObject setIssued(int value) {
@@ -97,8 +95,8 @@ public class Model_Sales_Detail extends Model {
     }
 
     public int getIssued() {
-        Object v = getValue("nIssuedxx");
-        return v == null ? 0 : ((Number) v).intValue();
+
+        return Integer.valueOf(getValue("nIssuedxx").toString());
     }
 
     public JSONObject setUnitCost(double value) {
@@ -106,8 +104,8 @@ public class Model_Sales_Detail extends Model {
     }
 
     public double getUnitCost() {
-        Object v = getValue("nUnitCost");
-        return v == null ? 0.00 : ((Number) v).doubleValue();
+
+        return Double.valueOf(getValue("nUnitCost").toString());
     }
 
     public JSONObject setUnitPrice(double value) {
@@ -115,8 +113,7 @@ public class Model_Sales_Detail extends Model {
     }
 
     public double getUnitPrice() {
-        Object v = getValue("nUnitPrce");
-        return v == null ? 0.00 : ((Number) v).doubleValue();
+        return Double.valueOf(getValue("nUnitPrce").toString());
     }
 
     public JSONObject setDiscount(double value) {
@@ -124,8 +121,8 @@ public class Model_Sales_Detail extends Model {
     }
 
     public double getDiscount() {
-        Object v = getValue("nDiscount");
-        return v == null ? 0.00 : ((Number) v).doubleValue();
+
+        return Double.valueOf(getValue("nDiscount").toString());
     }
 
     public JSONObject setAddDiscount(double value) {
@@ -133,8 +130,7 @@ public class Model_Sales_Detail extends Model {
     }
 
     public double getAddDiscount() {
-        Object v = getValue("nAddDiscx");
-        return v == null ? 0.00 : ((Number) v).doubleValue();
+        return Double.valueOf(getValue("nAddDiscx").toString());
     }
 
     public JSONObject setFreight(double value) {
@@ -142,8 +138,7 @@ public class Model_Sales_Detail extends Model {
     }
 
     public double getFreight() {
-        Object v = getValue("nFreightx");
-        return v == null ? 0.00 : ((Number) v).doubleValue();
+        return Double.valueOf(getValue("nFreightx").toString());
     }
 
     public JSONObject setInsuranceAdd(double value) {
@@ -151,8 +146,7 @@ public class Model_Sales_Detail extends Model {
     }
 
     public double getInsuranceAdd() {
-        Object v = getValue("nInsurAdd");
-        return v == null ? 0.00 : ((Number) v).doubleValue();
+        return Double.valueOf(getValue("nInsurAdd").toString());
     }
 
     public JSONObject setInsuranceAmount(double value) {
@@ -160,8 +154,7 @@ public class Model_Sales_Detail extends Model {
     }
 
     public double getInsuranceAmount() {
-        Object v = getValue("nInsAmtxx");
-        return v == null ? 0.00 : ((Number) v).doubleValue();
+        return Double.valueOf(getValue("nInsAmtxx").toString());
     }
 
     public JSONObject setSerialID(String value) {
@@ -341,7 +334,7 @@ public class Model_Sales_Detail extends Model {
                 return poInventoryMaster;
             } else {
                 poJSON = poInventoryMaster.openRecord((String) getValue("sStockIDx"),
-                         poGRider.getIndustry(), poGRider.getBranchCode());
+                        poGRider.getIndustry(), poGRider.getBranchCode());
 
                 if ("success".equals((String) poJSON.get("result"))) {
                     return poInventoryMaster;

@@ -54,8 +54,7 @@ public class Model_Sales_Registration extends Model {
     }
 
     public int getEntryNo() {
-        Object v = getValue("nEntryNox");
-        return v == null ? 0 : ((Number) v).intValue();
+        return Integer.valueOf(getValue("nEntryNox").toString());
     }
 
     public JSONObject setSerialID(String value) {
@@ -79,8 +78,7 @@ public class Model_Sales_Registration extends Model {
     }
 
     public double getInsuranceAmount() {
-        Object v = getValue("nInsAmtxx");
-        return v == null ? 0.00 : ((Number) v).doubleValue();
+        return Double.valueOf(getValue("nInsAmtxx").toString());
     }
 
     public JSONObject setRegistrationType(String value) {
