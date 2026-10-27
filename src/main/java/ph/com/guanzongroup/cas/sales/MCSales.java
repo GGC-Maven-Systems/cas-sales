@@ -818,6 +818,7 @@ public class MCSales extends Transaction {
                         continue;
                     }
                     paSalesGiveaways.get(lnCtr).setValue("sTransNox", String.valueOf(poMaster.getValue(1)));
+                    paSalesGiveaways.get(lnCtr).setValue("dModified", pdModified);
                     poJSON = paSalesGiveaways.get(lnCtr).saveRecord();
                     System.out.println(poJSON.get("message"));
                     if ("error".equals((String) poJSON.get("result"))) {
@@ -836,6 +837,7 @@ public class MCSales extends Transaction {
                         continue;
                     }
                     paSalesInsurance.get(lnCtr).setValue("sTransNox", String.valueOf(poMaster.getValue(1)));
+                    
                     poJSON = paSalesInsurance.get(lnCtr).saveRecord();
                     System.out.println(poJSON.get("message"));
                     if ("error".equals((String) poJSON.get("result"))) {
@@ -876,6 +878,7 @@ public class MCSales extends Transaction {
                         continue;
                     }
                     paDetail.get(lnCtr).setValue("sTransNox", String.valueOf(poMaster.getValue(1)));
+                    paDetail.get(lnCtr).setValue("dModified", pdModified);
                     poJSON = paDetail.get(lnCtr).saveRecord();
 
                     System.out.println(poJSON.get("message"));
