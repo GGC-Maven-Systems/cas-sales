@@ -125,7 +125,7 @@ public class MCSales extends Transaction {
 
     @SuppressWarnings("unchecked")
     public List<Model_Sales_Giveaways> getSalesGiveawaysList() {
-        
+
         return (List<Model_Sales_Giveaways>) (List<?>) paSalesGiveaways;
     }
 
@@ -847,7 +847,6 @@ public class MCSales extends Transaction {
                     poJSON = paSalesInsurance.get(lnCtr).saveRecord();
                     System.out.println(poJSON.get("message"));
                     if ("error".equals((String) poJSON.get("result"))) {
-
                         if ("message".contains("unmodified")) {
                             continue;
                         }
@@ -2197,6 +2196,38 @@ public class MCSales extends Transaction {
         }
         return poJSON;
 
+    }
+
+    //Searching of Master salesman/referral
+    public JSONObject searchInsuranceTypePayee(int fnrow, String value, boolean byCode)
+            throws SQLException, GuanzonException, CloneNotSupportedException, Exception {
+        poJSON = new JSONObject();
+
+        ClientInfo loClient = new ClientControllers(poGRider, logwrapr).ClientInfo();
+        loClient.initialize();
+        loClient.setWithParentClass(true);
+        loClient.setWithUI(false);
+
+        poJSON = loClient.searchRecord(value, byCode);
+
+        if (poJSON != null) {
+            if ("success".equals((String) poJSON.get("result"))) {
+                getSalesInsurance(fnrow).setInsuranceClientID((String) poJSON.get("sClientID"));
+                poJSON = new JSONObject();
+                poJSON.put("result", "success");
+                return poJSON;
+            } else {
+                poJSON = new JSONObject();
+                poJSON.put("result", "error");
+                poJSON.put("message", "No record loaded.");
+                return poJSON;
+            }
+        } else {
+            poJSON = new JSONObject();
+            poJSON.put("result", "error");
+            poJSON.put("message", "No record loaded.");
+            return poJSON;
+        }
     }
 
     public JSONObject searchInsuranceTypeRegistration(int fnRowDetail, String value, boolean byCode)

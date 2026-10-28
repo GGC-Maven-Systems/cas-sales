@@ -6,12 +6,14 @@ import org.guanzon.appdriver.agent.services.ReferenceCache;
 import org.guanzon.appdriver.base.GuanzonException;
 import org.guanzon.appdriver.base.MiscUtil;
 import org.guanzon.appdriver.constant.EditMode;
+import org.guanzon.cas.client.model.Model_Client_Master;
 import org.guanzon.cas.parameter.model.Model_Insurance_Type;
 import org.json.simple.JSONObject;
 
 public class Model_Sales_Insurance extends Model {
 
     private Model_Insurance_Type poInsuranceType;
+    private Model_Client_Master poClient;
 
     @Override
     public void initialize() {
@@ -53,8 +55,7 @@ public class Model_Sales_Insurance extends Model {
     }
 
     public int getEntryNo() {
-        Object v = getValue("nEntryNox");
-        return v == null ? 0 : ((Number) v).intValue();
+        return Integer.valueOf(getValue("nEntryNox").toString());
     }
 
     public JSONObject setInsuranceNo(String value) {
@@ -82,10 +83,18 @@ public class Model_Sales_Insurance extends Model {
     }
 
     public JSONObject setInsuranceID(String value) {
-        return setValue("sInsurIDx", value);
+        return setValue("sInsTypID", value);
     }
 
     public String getInsuranceID() {
+        return (String) getValue("sInsTypID");
+    }
+
+    public JSONObject setInsuranceClientID(String value) {
+        return setValue("sInsurIDx", value);
+    }
+
+    public String getInsuranceClientID() {
         return (String) getValue("sInsurIDx");
     }
 
@@ -94,8 +103,7 @@ public class Model_Sales_Insurance extends Model {
     }
 
     public double getInsuranceAmount() {
-        Object v = getValue("nInsAmtxx");
-        return v == null ? 0.00 : ((Number) v).doubleValue();
+        return Double.valueOf(getValue("nInsAmtxx").toString());
     }
 
     public JSONObject setInsuranceYear(int value) {
@@ -103,8 +111,7 @@ public class Model_Sales_Insurance extends Model {
     }
 
     public int getInsuranceYear() {
-        Object v = getValue("nInsurYrx");
-        return v == null ? 0 : ((Number) v).intValue();
+        return Integer.valueOf(getValue("nInsurYrx").toString());
     }
 
     public JSONObject setChargeTo(String value) {
@@ -172,6 +179,47 @@ public class Model_Sales_Insurance extends Model {
         } else {
             poInsuranceType.initialize();
             return poInsuranceType;
+        }
+    }
+
+    public Model_Client_Master InusrancePayeeClient() throws SQLException, GuanzonException {
+
+        if (poClient == null) {
+            poClient = new Model_Client_Master();
+            poClient.setApplicationDriver(poGRider);
+            poClient.setXML("Model_Client_Master");
+            poClient.setTableName("Client_Master");
+            poClient.initialize();
+        }
+
+        String clientId = (String) (getValue("sInsurIDx") == null
+                ? ""
+                : getValue("sInsurIDx"));
+
+        if (!"".equals(clientId)) {
+
+            if (poClient.getEditMode() == EditMode.READY
+                    && poClient.getClientId().equals(clientId)) {
+                return poClient;
+            }
+
+            if (ReferenceCache.tryLoad("Client_Master", clientId, poClient)) {
+                return poClient;
+            }
+
+            poJSON = poClient.openRecord(clientId);
+
+            if ("success".equals((String) poJSON.get("result"))) {
+                ReferenceCache.store("Client_Master", clientId, poClient);
+                return poClient;
+            } else {
+                poClient.initialize();
+                return poClient;
+            }
+
+        } else {
+            poClient.initialize();
+            return poClient;
         }
     }
 }
