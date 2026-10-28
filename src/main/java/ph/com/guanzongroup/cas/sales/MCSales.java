@@ -2067,7 +2067,7 @@ public class MCSales extends Transaction {
         return getMaster().getSourceNo() != null && !getMaster().getSourceNo().isEmpty();
     }
 
-    public JSONObject searchSalesGiveAway(int fnRowDetail, int fsRow, String value, boolean byCode)
+    public JSONObject searchSalesGiveAway(int fsRow, String value, boolean byCode)
             throws SQLException, GuanzonException, CloneNotSupportedException {
 
         InventoryBrowse loBrowse = new InventoryBrowse(poGRider, logwrapr);
