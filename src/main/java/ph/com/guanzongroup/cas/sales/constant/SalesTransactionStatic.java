@@ -35,7 +35,10 @@ public class SalesTransactionStatic {
     public static final String[] TRANSACTION_STATUS = {"OPEN", "CONFIRMED", "CANCELLED", "PAID", "DELIVERED"};
     public static final String[] CLIENT_TYPES = {"Individual", "Company"};
     public static final String[] VEHICLE_TYPES = {"Brand New", "Pre-Owned"};
-    public static final String[] REGISTRATION_TYPES = {"Regular", "Temporary"};
+    public static final String[] REGISTRATION_TYPES = {"New Registration",
+                                                        "Transfer of Ownership",
+                                                        "Registration Renewal",
+                                                        "Transfer of Ownership and Renewal"};
     public static final String[] INSURANCE_TYPES = {"CTPL", "Comprehensive"};
     public static final String[] INSURANCE_OPTIONS = {"In-house", "Outside"};
     public static final String[] GENDER_TEXT = {"Male", "Female"};
