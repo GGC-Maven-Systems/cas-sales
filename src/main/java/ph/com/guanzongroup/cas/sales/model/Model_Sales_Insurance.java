@@ -18,17 +18,17 @@ public class Model_Sales_Insurance extends Model {
         try {
             poEntity = MiscUtil.xml2ResultSet(System.getProperty("sys.default.path.metadata")
                     + "/Model_Sales_Insurance.xml", getTable());
+            poEntity.last();
+            poEntity.moveToInsertRow();
+
             MiscUtil.initRowSet(poEntity);
 
             poEntity.insertRow();
             poEntity.moveToCurrentRow();
             poEntity.absolute(1);
-
             poEntity.updateObject("nEntryNox", 0);
             poEntity.updateDouble("nInsAmtxx", 0.0d);
             poEntity.updateString("cChargeTo", "1");
-            poEntity.last();
-            poEntity.moveToInsertRow();
 
             ID = "sTransNox";
             ID2 = "nEntryNox";

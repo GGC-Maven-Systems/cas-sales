@@ -2208,7 +2208,6 @@ public class MCSales extends Transaction {
         loBrowse.initialize();
         loBrowse.setRecordStatus(RecordStatus.ACTIVE);
         loBrowse.setWithParentClass(true);
-
         loJSON = loBrowse.searchRecord(value, byCode);
         if (!"success".equals((String) loJSON.get("result"))) {
             return loJSON;
@@ -2230,8 +2229,9 @@ public class MCSales extends Transaction {
 
         // add a new registration row for this serial
         Model_Sales_Registration loNew
-                = getSalesRegistration(getCountSalesRegistration() + 1);  // adjust to your index base
+                = getSalesRegistration(getCountSalesRegistration() + 1);  
         loNew.setInsuranceTypeID(lsTypeID);
+        loNew.setRegistrationType(loBrowse.getModel().getRegistrationType());
         loNew.setSerialID(lsSerialID);
 
         loJSON = new JSONObject();

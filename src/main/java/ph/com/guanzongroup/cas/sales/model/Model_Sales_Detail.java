@@ -1,11 +1,13 @@
 package ph.com.guanzongroup.cas.sales.model;
 
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Date;
 import org.guanzon.appdriver.agent.services.Model;
 import org.guanzon.appdriver.agent.services.ReferenceCache;
 import org.guanzon.appdriver.base.GuanzonException;
 import org.guanzon.appdriver.base.MiscUtil;
+import org.guanzon.appdriver.base.SQLUtil;
 import org.guanzon.appdriver.constant.EditMode;
 import org.guanzon.cas.inv.model.Model_Inv_Master;
 import org.guanzon.cas.inv.model.Model_Inv_Serial;
@@ -378,13 +380,13 @@ public class Model_Sales_Detail extends Model {
                 && lsModelID.equals(poPromoModel.getModelID())) {
             return poPromoModel;
         }
-
-        String lsKey = lsPromoID + lsModelID;   // composite cache key
+        String getModelEntryNo = PromoModelEntryNo(lsPromoID, lsModelID);
+        String lsKey = lsPromoID + getModelEntryNo;   // composite cache key
         if (ReferenceCache.tryLoad("Sales_Promotion_Model", lsKey, poPromoModel)) {
             return poPromoModel;
         }
 
-        poJSON = poPromoModel.openRecord(lsPromoID, lsModelID);
+        poJSON = poPromoModel.openRecord(lsPromoID, getModelEntryNo);
         if ("success".equals((String) poJSON.get("result"))) {
             ReferenceCache.store("Sales_Promotion_Model", lsKey, poPromoModel);
         } else {
@@ -418,12 +420,13 @@ public class Model_Sales_Detail extends Model {
             return poPromoBrand;
         }
 
-        String lsKey = lsPromoID + lsBrandID;
+        String getModelEntryNo = PromoModelEntryNo(lsPromoID, lsBrandID);
+        String lsKey = lsPromoID + getModelEntryNo;   // composite cache key
         if (ReferenceCache.tryLoad("Sales_Promotion_Brand", lsKey, poPromoBrand)) {
             return poPromoBrand;
         }
 
-        poJSON = poPromoBrand.openRecord(lsPromoID, lsBrandID);
+        poJSON = poPromoBrand.openRecord(lsPromoID, getModelEntryNo);
         if ("success".equals((String) poJSON.get("result"))) {
             ReferenceCache.store("Sales_Promotion_Brand", lsKey, poPromoBrand);
         } else {
@@ -438,4 +441,47 @@ public class Model_Sales_Detail extends Model {
 
     }
 
+    public boolean HasModelPromo() throws SQLException, GuanzonException {
+        String lsPromoID = getValue("sPromoIDx") == null ? "" : (String) getValue("sPromoIDx");
+        String lsModelID = Inventory().getModelId() == null ? "" : Inventory().getModelId();
+
+        return !PromoModelEntryNo(lsPromoID, lsModelID).isEmpty();
+
+    }
+
+    public String PromoModelEntryNo(String promo, String model) throws SQLException {
+        String lsSQL = "SELECT * FROM Sales_Promotion_Model"
+                + "              WHERE sPromIDxx = " + SQLUtil.toSQL(promo);
+        lsSQL = MiscUtil.addCondition(lsSQL, "sModelIDx = " + SQLUtil.toSQL(model));
+        ResultSet loRS = poGRider.executeQuery(lsSQL);
+        System.out.println("Load Transaction list query is " + lsSQL);
+
+        if (MiscUtil.RecordCount(loRS) <= 0) {
+            return "";
+        }
+
+        loRS.beforeFirst();
+        if (loRS.next()) {
+            return loRS.getObject("nEntryNox").toString();
+        }
+        return "";
+    }
+
+    public String PromoBrandEntryNo(String promo, String brand) throws SQLException {
+        String lsSQL = "SELECT * FROM Sales_Promotion_Brand"
+                + "              WHERE sPromIDxx = " + SQLUtil.toSQL(promo);
+        lsSQL = MiscUtil.addCondition(lsSQL, "sBrandIDx = " + SQLUtil.toSQL(brand));
+        ResultSet loRS = poGRider.executeQuery(lsSQL);
+        System.out.println("Load Transaction list query is " + lsSQL);
+
+        if (MiscUtil.RecordCount(loRS) <= 0) {
+            return "";
+        }
+
+        loRS.beforeFirst();
+        if (loRS.next()) {
+            return loRS.getObject("nEntryNox").toString();
+        }
+        return "";
+    }
 }
