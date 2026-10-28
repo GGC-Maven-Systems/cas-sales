@@ -39,10 +39,16 @@ public class SalesTransactionStatic {
                                                         "Transfer of Ownership",
                                                         "Registration Renewal",
                                                         "Transfer of Ownership and Renewal"};
+
+
     public static final String[] INSURANCE_TYPES = {"CTPL", "Comprehensive"};
     public static final String[] INSURANCE_OPTIONS = {"In-house", "Outside"};
     public static final String[] GENDER_TEXT = {"Male", "Female"};
-    public static final String[] PAYMENT_TRAN_TYPES = {"Cash", "Credit"};
+    
+    public static final String[] PAYMENT_TRAN_TYPES = {"Cash",
+                                                        "Term",
+                                                        "Cash Balance",
+                                                        "Financing" };
     public static final int PAYMENT_CREDIT = 1;   // index of "Credit" in PAYMENT_TRAN_TYPES
 
     public static final String[] PAYMENT_FORMS = {"Cash", "Check", "Bank Transfer", "Credit Card","Cash Balance"};
