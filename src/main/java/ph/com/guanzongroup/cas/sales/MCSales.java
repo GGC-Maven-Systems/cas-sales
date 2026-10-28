@@ -114,7 +114,6 @@ public class MCSales extends Transaction {
 
     public Model_Sales_Master getMaster(int masterRow) {
         return (Model_Sales_Master) paMaster.get(masterRow);
-
     }
 
     @SuppressWarnings("unchecked")
@@ -1762,7 +1761,7 @@ public class MCSales extends Transaction {
         if (poJSON != null) {
             if ("success".equals((String) poJSON.get("result"))) {
 
-                getMaster().setSalesman((String) poJSON.get("sClientID"));
+                getMaster().setSalesman(loClient.getModel().getClientId());
 
                 poJSON = new JSONObject();
                 poJSON.put("result", "success");
@@ -2147,7 +2146,7 @@ public class MCSales extends Transaction {
         loBrowse.initialize();
         loBrowse.setRecordStatus(RecordStatus.ACTIVE);
         loBrowse.setWithParentClass(true);
-
+        loBrowse.setInsuranceOnly(true);
         loJSON = loBrowse.searchRecord(value, byCode);
         if (!"success".equals((String) loJSON.get("result"))) {
             return loJSON;
@@ -2211,7 +2210,7 @@ public class MCSales extends Transaction {
 
         if (poJSON != null) {
             if ("success".equals((String) poJSON.get("result"))) {
-                getSalesInsurance(fnrow).setInsuranceClientID((String) poJSON.get("sClientID"));
+                getSalesInsurance(fnrow).setInsuranceClientID(loClient.getModel().getClientId());
                 poJSON = new JSONObject();
                 poJSON.put("result", "success");
                 return poJSON;
