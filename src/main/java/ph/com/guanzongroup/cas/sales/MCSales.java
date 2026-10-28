@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -117,26 +119,26 @@ public class MCSales extends Transaction {
 
     @SuppressWarnings("unchecked")
     public List<Model_Sales_Detail> getSalesDetailList() {
+        computeTransaction();
         return (List<Model_Sales_Detail>) (List<?>) paDetail;
     }
 
     @SuppressWarnings("unchecked")
     public List<Model_Sales_Giveaways> getSalesGiveawaysList() {
+        
         return (List<Model_Sales_Giveaways>) (List<?>) paSalesGiveaways;
     }
 
     @SuppressWarnings("unchecked")
     public List<Model_Sales_Registration> getSalesRegistrationsList() {
+        computeTransaction();
         return (List<Model_Sales_Registration>) (List<?>) paSalesRegistration;
     }
 
     @SuppressWarnings("unchecked")
     public List<Model_Sales_Insurance> getSalesInsurancesList() {
+        computeTransaction();
         return (List<Model_Sales_Insurance>) (List<?>) paSalesInsurance;
-    }
-
-    public int getCount() {
-        return paSalesGiveaways.size();
     }
 
     public int getCountSalesGiveAway() {
@@ -171,6 +173,7 @@ public class MCSales extends Transaction {
             loDetail = (Model_Sales_Detail) paDetail.get(lnCtr);
 
             if (loDetail.getEntryNo() == fnEntryNo) {
+                computeTransaction();
                 return loDetail;
             }
         }
@@ -203,6 +206,7 @@ public class MCSales extends Transaction {
         for (int lnCtr = 0; lnCtr <= paSalesGiveaways.size() - 1; lnCtr++) {
             loDetail = (Model_Sales_Giveaways) paSalesGiveaways.get(lnCtr);
             if (loDetail.getEntryNo() == fnEntryNo) {
+                computeTransaction();
                 return loDetail;
             }
         }
@@ -229,6 +233,7 @@ public class MCSales extends Transaction {
             loDetail = (Model_Sales_Insurance) paSalesInsurance.get(lnCtr);
 
             if (loDetail.getEntryNo() == fnEntryNo) {
+                computeTransaction();
                 return loDetail;
             }
         }
@@ -256,6 +261,7 @@ public class MCSales extends Transaction {
             loDetail = (Model_Sales_Registration) paSalesRegistration.get(lnCtr);
 
             if (loDetail.getEntryNo() == fnEntryNo) {
+                computeTransaction();
                 return loDetail;
             }
         }
@@ -738,7 +744,7 @@ public class MCSales extends Transaction {
         }
 
         for (int lnCtr = 0; lnCtr < paSalesRegistration.size(); lnCtr++) {
-            Model_Sales_Insurance loDetail = (Model_Sales_Insurance) paSalesRegistration.get(lnCtr);
+            Model_Sales_Registration loDetail = (Model_Sales_Registration) paSalesRegistration.get(lnCtr);
             lnDetailCount++;
             loDetail.setTransNo(getMaster().getTransactionNo());
             loDetail.setEntryNo(lnDetailCount);
@@ -2229,7 +2235,7 @@ public class MCSales extends Transaction {
 
         // add a new registration row for this serial
         Model_Sales_Registration loNew
-                = getSalesRegistration(getCountSalesRegistration() + 1);  
+                = getSalesRegistration(getCountSalesRegistration() + 1);
         loNew.setInsuranceTypeID(lsTypeID);
         loNew.setRegistrationType(loBrowse.getModel().getRegistrationType());
         loNew.setSerialID(lsSerialID);
@@ -3117,4 +3123,99 @@ public class MCSales extends Transaction {
         return true;
 
     }
+    // imports: java.math.BigDecimal, java.math.RoundingMode
+    private static final double VAT_RATE = 0.12;   // PH VAT
+
+    private static double round2(double fnValue) {
+        return BigDecimal.valueOf(fnValue).setScale(2, RoundingMode.HALF_UP).doubleValue();
+    }
+
+    public void computeTransaction() {
+        double lnTranTotal = 0, lnDiscount = 0, lnAddDisc = 0, lnFreight = 0;
+        double lnInsAdd = 0, lnRegIns = 0;
+        double lnVatableBase = 0, lnNonVatBase = 0;
+
+        for (int lnCtr = 0; lnCtr < paDetail.size(); lnCtr++) {
+            Model_Sales_Detail loDetail = (Model_Sales_Detail) paDetail.get(lnCtr);
+
+            // ---- line amounts ----
+            double lnGross = round2(loDetail.getUnitPrice() * loDetail.getQuantity());
+            double lnDiscAmt = round2(lnGross * loDetail.getDiscount() / 100.0); // nDiscount is a rate (%)
+            double lnAddAmt = loDetail.getAddDiscount();
+            double lnFrtAmt = loDetail.getFreight();
+
+            // ---- charged registration + insurance for this serial ----
+            double lnCharge = 0;
+            String lsSerial = loDetail.getSerialID();
+            if (lsSerial != null && !lsSerial.isEmpty()) {
+                for (int lnIns = 0; lnIns < paSalesInsurance.size(); lnIns++) {
+                    Model_Sales_Insurance loIns = (Model_Sales_Insurance) paSalesInsurance.get(lnIns);
+                    if (lsSerial.equals(loIns.getSerialID()) && loIns.isChargeTo()) {
+                        lnCharge += loIns.getInsuranceAmount();
+                    }
+                }
+                for (int lnReg = 0; lnReg < paSalesRegistration.size(); lnReg++) {
+                    Model_Sales_Registration loReg = (Model_Sales_Registration) paSalesRegistration.get(lnReg);
+                    if (lsSerial.equals(loReg.getSerialID()) && loReg.isChargeTo()) {
+                        lnCharge += loReg.getInsuranceAmount();
+                    }
+                }
+            }
+            loDetail.setInsuranceAmount(round2(lnCharge));
+
+            // ---- master accumulators ----
+            lnTranTotal += lnGross;
+            lnDiscount += lnDiscAmt;
+            lnAddDisc += lnAddAmt;
+            lnFreight += lnFrtAmt;
+            lnInsAdd += loDetail.getInsuranceAdd();
+            lnRegIns += loDetail.getInsuranceAmount();
+
+            // net selling amount of the line (basis for VAT / net sales)
+            double lnLineNet = lnGross - lnDiscAmt - lnAddAmt + lnFrtAmt;
+            if ("1".equals(loDetail.getWithVAT())) {
+                lnVatableBase += lnLineNet;
+            } else {
+                lnNonVatBase += lnLineNet;
+            }
+        }
+
+        lnTranTotal = round2(lnTranTotal);
+        lnDiscount = round2(lnDiscount);
+        lnAddDisc = round2(lnAddDisc);
+        lnFreight = round2(lnFreight);
+        lnInsAdd = round2(lnInsAdd);
+        lnRegIns = round2(lnRegIns);
+
+        Model_Sales_Master loMaster = getMaster();
+        loMaster.setTransactionTotal(lnTranTotal);   // no discount
+        loMaster.setDiscount(lnDiscount);            // amount, from rate x line gross
+        loMaster.setAddDiscount(lnAddDisc);
+        loMaster.setFreight(lnFreight);
+        loMaster.setInsuranceAdd(lnInsAdd);
+        loMaster.setRegistrationAmount(lnRegIns);
+        loMaster.setZeroVATSales(0.00);              // not applicable to MC sales
+
+        // ---- VAT ----
+        double lnVatSales, lnVatAmount, lnNonVat;
+        if (loMaster.getCWTAmount() > 0) {
+            // CWT: no VAT, everything goes to non-VAT sales
+            lnVatSales = 0.00;
+            lnVatAmount = 0.00;
+            lnNonVat = round2(lnVatableBase + lnNonVatBase);
+        } else {
+            lnVatSales = round2(lnVatableBase / (1 + VAT_RATE));
+            lnVatAmount = round2(round2(lnVatableBase) - lnVatSales);   // tallies to the gross
+            lnNonVat = round2(lnNonVatBase);
+        }
+        loMaster.setVATSales(lnVatSales);
+        loMaster.setVATAmount(lnVatAmount);
+        loMaster.setNonVATSales(lnNonVat);
+
+        // nAmtPaidx stays 0, nAdvances is set by the reservation source
+        double lnAmountDue = lnTranTotal - lnDiscount - lnAddDisc + lnFreight
+                + lnInsAdd + lnRegIns - loMaster.getAdvances();
+        loMaster.setAmountDue(round2(lnAmountDue));
+    }
+
 }
