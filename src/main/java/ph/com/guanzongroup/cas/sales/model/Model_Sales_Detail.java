@@ -12,7 +12,9 @@ import org.guanzon.cas.inv.model.Model_Inv_Serial;
 import org.guanzon.cas.inv.model.Model_Inventory;
 import org.guanzon.cas.inv.services.InvModels;
 import org.json.simple.JSONObject;
+import ph.com.guanzongroup.cas.sales.mcpromo.model.Model_Sales_Promotion_Brand;
 import ph.com.guanzongroup.cas.sales.mcpromo.model.Model_Sales_Promotion_Master;
+import ph.com.guanzongroup.cas.sales.mcpromo.model.Model_Sales_Promotion_Model;
 
 public class Model_Sales_Detail extends Model {
 
@@ -20,6 +22,8 @@ public class Model_Sales_Detail extends Model {
     private Model_Inv_Serial poInventorySerial;
     private Model_Inv_Master poInventoryMaster;
     private Model_Sales_Promotion_Master poSalesPromo;
+    private Model_Sales_Promotion_Model poPromoModel;
+    private Model_Sales_Promotion_Brand poPromoBrand;
 
     @Override
     public void initialize() {
@@ -71,7 +75,7 @@ public class Model_Sales_Detail extends Model {
 
     public JSONObject setEntryNo(int value) {
         return setValue("nEntryNox", value);
-    }   
+    }
 
     public int getEntryNo() {
         return Integer.valueOf(getValue("nEntryNox").toString());
@@ -348,6 +352,90 @@ public class Model_Sales_Detail extends Model {
             poInventoryMaster.initialize();
             return poInventoryMaster;
         }
+    }
+
+    public Model_Sales_Promotion_Model PromotionModel()
+            throws SQLException, GuanzonException {
+
+        if (poPromoModel == null) {
+            poPromoModel = new Model_Sales_Promotion_Model();
+            poPromoModel.setApplicationDriver(poGRider);
+            poPromoModel.setXML("Model_Sales_Promotion_Model");
+            poPromoModel.setTableName("Sales_Promotion_Model");
+            poPromoModel.initialize();
+        }
+
+        String lsPromoID = getValue("sPromoIDx") == null ? "" : (String) getValue("sPromoIDx");
+        String lsModelID = Inventory().getModelId() == null ? "" : Inventory().getModelId();
+
+        if (lsPromoID.isEmpty() || lsModelID.isEmpty()) {
+            poPromoModel.initialize();
+            return poPromoModel;
+        }
+
+        if (poPromoModel.getEditMode() == EditMode.READY
+                && lsPromoID.equals(poPromoModel.getPromoID())
+                && lsModelID.equals(poPromoModel.getModelID())) {
+            return poPromoModel;
+        }
+
+        String lsKey = lsPromoID + lsModelID;   // composite cache key
+        if (ReferenceCache.tryLoad("Sales_Promotion_Model", lsKey, poPromoModel)) {
+            return poPromoModel;
+        }
+
+        poJSON = poPromoModel.openRecord(lsPromoID, lsModelID);
+        if ("success".equals((String) poJSON.get("result"))) {
+            ReferenceCache.store("Sales_Promotion_Model", lsKey, poPromoModel);
+        } else {
+            poPromoModel.initialize();
+        }
+        return poPromoModel;
+    }
+
+    public Model_Sales_Promotion_Brand PromotionBrand()
+            throws SQLException, GuanzonException {
+
+        if (poPromoBrand == null) {
+            poPromoBrand = new Model_Sales_Promotion_Brand();
+            poPromoBrand.setApplicationDriver(poGRider);
+            poPromoBrand.setXML("Model_Sales_Promotion_Brand");
+            poPromoBrand.setTableName("Sales_Promotion_Brand");
+            poPromoBrand.initialize();
+        }
+
+        String lsPromoID = getValue("sPromoIDx") == null ? "" : (String) getValue("sPromoIDx");
+        String lsBrandID = Inventory().getBrandId() == null ? "" : Inventory().getBrandId();
+
+        if (lsPromoID.isEmpty() || lsBrandID.isEmpty()) {
+            poPromoBrand.initialize();
+            return poPromoBrand;
+        }
+
+        if (poPromoBrand.getEditMode() == EditMode.READY
+                && lsPromoID.equals(poPromoBrand.getPromoID())
+                && lsBrandID.equals(poPromoBrand.getBrandID())) {
+            return poPromoBrand;
+        }
+
+        String lsKey = lsPromoID + lsBrandID;
+        if (ReferenceCache.tryLoad("Sales_Promotion_Brand", lsKey, poPromoBrand)) {
+            return poPromoBrand;
+        }
+
+        poJSON = poPromoBrand.openRecord(lsPromoID, lsBrandID);
+        if ("success".equals((String) poJSON.get("result"))) {
+            ReferenceCache.store("Sales_Promotion_Brand", lsKey, poPromoBrand);
+        } else {
+            poPromoBrand.initialize();
+        }
+        return poPromoBrand;
+    }
+
+    public boolean HasPromo() throws SQLException, GuanzonException {
+        String lsPromoID = getValue("sPromoIDx") == null ? "" : (String) getValue("sPromoIDx");
+        return !lsPromoID.isEmpty();
+
     }
 
 }

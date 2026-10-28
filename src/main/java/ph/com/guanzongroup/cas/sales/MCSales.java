@@ -837,7 +837,7 @@ public class MCSales extends Transaction {
                         continue;
                     }
                     paSalesInsurance.get(lnCtr).setValue("sTransNox", String.valueOf(poMaster.getValue(1)));
-                    
+
                     poJSON = paSalesInsurance.get(lnCtr).saveRecord();
                     System.out.println(poJSON.get("message"));
                     if ("error".equals((String) poJSON.get("result"))) {
@@ -2067,7 +2067,7 @@ public class MCSales extends Transaction {
         return getMaster().getSourceNo() != null && !getMaster().getSourceNo().isEmpty();
     }
 
-    public JSONObject searchSalesGiveAway(int fsRow, String value, boolean byCode)
+    public JSONObject searchSalesGiveAway(int fnRowDetail, int fsRow, String value, boolean byCode)
             throws SQLException, GuanzonException, CloneNotSupportedException {
 
         InventoryBrowse loBrowse = new InventoryBrowse(poGRider, logwrapr);
@@ -2128,46 +2128,48 @@ public class MCSales extends Transaction {
 
     }
 
-    public JSONObject searchInsuranceTypeInsurance(int fnRow, String value, boolean byCode)
+    public JSONObject searchInsuranceTypeInsurance(int fnRowDetail, String value, boolean byCode)
             throws SQLException, GuanzonException, CloneNotSupportedException {
 
-        if (getSalesInsurance(fnRow).getSerialID().isEmpty()) {
-
-            poJSON.put("result", "error");
-            poJSON.put("message", "Unable to load Insurance Type. Please select a Serial.");
-            return poJSON;
+        JSONObject loJSON = new JSONObject();
+        String lsSerialID = getDetail(fnRowDetail).getSerialID();
+        if (lsSerialID == null || lsSerialID.isEmpty()) {
+            loJSON.put("result", "error");
+            loJSON.put("message", "Unable to load Insurance Type. Please select a Serial.");
+            return loJSON;
         }
+
         InsuranceType loBrowse = new ParamControllers(poGRider, logwrapr).InsuranceType();
         loBrowse.initialize();
         loBrowse.setRecordStatus(RecordStatus.ACTIVE);
         loBrowse.setWithParentClass(true);
 
-        poJSON = loBrowse.searchRecord(value, byCode);
-        System.out.println("result " + (String) poJSON.get("result"));
-        if ("success".equals((String) poJSON.get("result"))) {
-            for (int lnExisting = 0; lnExisting <= paSalesInsurance.size() - 1; lnExisting++) {
-                Model_Sales_Insurance loExisting = (Model_Sales_Insurance) paSalesInsurance.get(lnExisting);
-                if (loExisting.getSerialID() != null && getSalesInsurance(fnRow).getSerialID().equals(loExisting.getSerialID())) {
-                    if (loExisting.getInsuranceTypeID().equals(loBrowse.getModel().getInsuranceTypeID())) {
-                        poJSON = new JSONObject();
-                        poJSON.put("result", "error");
-                        poJSON.put("message", "Selected Insurance Type is already exist for Serial #");
-                        return poJSON;
-
-                    }
-                }
-            }
-
-            // keep adding into detail
-            getSalesInsurance(
-                    getCountSalesInsurance() + 1)
-                    .setInsuranceTypeID(
-                            loBrowse.getModel().getInsuranceTypeID());
-
-            poJSON = new JSONObject();
-            poJSON.put("result", "success");
+        loJSON = loBrowse.searchRecord(value, byCode);
+        if (!"success".equals((String) loJSON.get("result"))) {
+            return loJSON;
         }
-        return poJSON;
+
+        String lsTypeID = loBrowse.getModel().getInsuranceTypeID();
+
+        for (int lnExisting = 0; lnExisting < paSalesInsurance.size(); lnExisting++) {
+            Model_Sales_Insurance loExisting = (Model_Sales_Insurance) paSalesInsurance.get(lnExisting);
+            if (lsSerialID.equals(loExisting.getSerialID())
+                    && lsTypeID.equals(loExisting.getInsuranceTypeID())) {
+                loJSON = new JSONObject();
+                loJSON.put("result", "error");
+                loJSON.put("message", "Selected Insurance Type already exists for this Serial.");
+                return loJSON;
+            }
+        }
+
+        // add a new insurance row for this serial
+        Model_Sales_Insurance loNew = getSalesInsurance(getCountSalesInsurance() + 1); // adjust to your index base
+        loNew.setInsuranceTypeID(lsTypeID);
+        loNew.setSerialID(lsSerialID);
+
+        loJSON = new JSONObject();
+        loJSON.put("result", "success");
+        return loJSON;
     }
 
     public JSONObject removeSalesInsurance(int entryNo) {
@@ -2191,46 +2193,50 @@ public class MCSales extends Transaction {
 
     }
 
-    public JSONObject searchInsuranceTypeRegistration(int fnRow, String value, boolean byCode)
+    public JSONObject searchInsuranceTypeRegistration(int fnRowDetail, String value, boolean byCode)
             throws SQLException, GuanzonException, CloneNotSupportedException {
 
-        if (getSalesRegistration(fnRow).getSerialID().isEmpty()) {
-
-            poJSON.put("result", "error");
-            poJSON.put("message", "Unable to load Insurance Type. Please select a Serial.");
-            return poJSON;
+        JSONObject loJSON = new JSONObject();
+        String lsSerialID = getDetail(fnRowDetail).getSerialID();
+        if (lsSerialID == null || lsSerialID.isEmpty()) {
+            loJSON.put("result", "error");
+            loJSON.put("message", "Unable to load Insurance Type. Please select a Serial.");
+            return loJSON;
         }
+
         InsuranceType loBrowse = new ParamControllers(poGRider, logwrapr).InsuranceType();
         loBrowse.initialize();
         loBrowse.setRecordStatus(RecordStatus.ACTIVE);
         loBrowse.setWithParentClass(true);
 
-        poJSON = loBrowse.searchRecord(value, byCode);
-        System.out.println("result " + (String) poJSON.get("result"));
-        if ("success".equals((String) poJSON.get("result"))) {
-            for (int lnExisting = 0; lnExisting <= paSalesInsurance.size() - 1; lnExisting++) {
-                Model_Sales_Insurance loExisting = (Model_Sales_Insurance) paSalesInsurance.get(lnExisting);
-                if (loExisting.getSerialID() != null && getSalesInsurance(fnRow).getSerialID().equals(loExisting.getSerialID())) {
-                    if (loExisting.getInsuranceTypeID().equals(loBrowse.getModel().getInsuranceTypeID())) {
-                        poJSON = new JSONObject();
-                        poJSON.put("result", "error");
-                        poJSON.put("message", "Selected Insurance Type is already exist for Serial #");
-                        return poJSON;
-
-                    }
-                }
-            }
-
-            // keep adding into detail
-            getSalesRegistration(
-                    getCountSalesRegistration() + 1)
-                    .setInsuranceTypeID(
-                            loBrowse.getModel().getInsuranceTypeID());
-
-            poJSON = new JSONObject();
-            poJSON.put("result", "success");
+        loJSON = loBrowse.searchRecord(value, byCode);
+        if (!"success".equals((String) loJSON.get("result"))) {
+            return loJSON;
         }
-        return poJSON;
+
+        String lsTypeID = loBrowse.getModel().getInsuranceTypeID();
+
+        for (int lnExisting = 0; lnExisting < paSalesRegistration.size(); lnExisting++) {
+            Model_Sales_Registration loExisting
+                    = (Model_Sales_Registration) paSalesRegistration.get(lnExisting);
+            if (lsSerialID.equals(loExisting.getSerialID())
+                    && lsTypeID.equals(loExisting.getInsuranceTypeID())) {
+                loJSON = new JSONObject();
+                loJSON.put("result", "error");
+                loJSON.put("message", "Selected Insurance Type already exists for this Serial.");
+                return loJSON;
+            }
+        }
+
+        // add a new registration row for this serial
+        Model_Sales_Registration loNew
+                = getSalesRegistration(getCountSalesRegistration() + 1);  // adjust to your index base
+        loNew.setInsuranceTypeID(lsTypeID);
+        loNew.setSerialID(lsSerialID);
+
+        loJSON = new JSONObject();
+        loJSON.put("result", "success");
+        return loJSON;
     }
 
     public JSONObject removeSalesRegistration(int entryNo) {
