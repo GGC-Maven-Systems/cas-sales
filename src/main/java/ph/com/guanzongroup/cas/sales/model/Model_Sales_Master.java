@@ -9,13 +9,10 @@ import org.guanzon.appdriver.base.GuanzonException;
 import org.guanzon.appdriver.base.MiscUtil;
 import org.guanzon.appdriver.base.SQLUtil;
 import org.guanzon.appdriver.constant.EditMode;
-import org.guanzon.cas.client.ClientInfo;
 import org.guanzon.cas.client.model.Model_Client_Address;
 import org.guanzon.cas.client.model.Model_Client_Mail;
 import org.guanzon.cas.client.model.Model_Client_Master;
 import org.guanzon.cas.client.model.Model_Client_Mobile;
-import org.guanzon.cas.client.model.Model_Client_Social_Media;
-import org.guanzon.cas.client.services.ClientControllers;
 import org.guanzon.cas.parameter.model.Model_Branch;
 import org.guanzon.cas.parameter.model.Model_Category;
 import org.guanzon.cas.parameter.model.Model_Company;
@@ -40,6 +37,15 @@ public class Model_Sales_Master extends Model {
     private Model_Client_Mail poClientMail;
     private Model_Client_Mail poCoClientMail;
     private Model_xxxTransactionSource poTransactionSource;
+    private double AmountDue = 0;
+
+    public double getAmountDue() {
+        return AmountDue;
+    }
+
+    public void setAmountDue(double AmountDue) {
+        this.AmountDue = AmountDue;
+    }
 
     @Override
     public void initialize() {
