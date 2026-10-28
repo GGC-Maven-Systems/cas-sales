@@ -7,11 +7,14 @@ import org.guanzon.appdriver.base.GuanzonException;
 import org.guanzon.appdriver.base.MiscUtil;
 import org.guanzon.appdriver.constant.EditMode;
 import org.guanzon.cas.client.model.Model_Client_Master;
+import org.guanzon.cas.inv.model.Model_Inv_Serial;
+import org.guanzon.cas.inv.services.InvModels;
 import org.guanzon.cas.parameter.model.Model_Insurance_Type;
 import org.json.simple.JSONObject;
 
 public class Model_Sales_Insurance extends Model {
 
+    private Model_Inv_Serial poInventorySerial;
     private Model_Insurance_Type poInsuranceType;
     private Model_Client_Master poClient;
 
@@ -220,6 +223,31 @@ public class Model_Sales_Insurance extends Model {
         } else {
             poClient.initialize();
             return poClient;
+        }
+    }
+
+    public Model_Inv_Serial InventorySerial() throws SQLException, GuanzonException {
+        if (poInventorySerial == null) {
+            poInventorySerial = new InvModels(poGRider).InventorySerial();
+        }
+
+        if (!"".equals((String) getValue("sSerialID"))) {
+            if (poInventorySerial.getEditMode() == EditMode.READY
+                    && poInventorySerial.getStockId().equals((String) getValue("sSerialID"))) {
+                return poInventorySerial;
+            } else {
+                poJSON = poInventorySerial.openRecord((String) getValue("sSerialID"));
+
+                if ("success".equals((String) poJSON.get("result"))) {
+                    return poInventorySerial;
+                } else {
+                    poInventorySerial.initialize();
+                    return poInventorySerial;
+                }
+            }
+        } else {
+            poInventorySerial.initialize();
+            return poInventorySerial;
         }
     }
 }

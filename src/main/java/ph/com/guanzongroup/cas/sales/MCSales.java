@@ -125,7 +125,6 @@ public class MCSales extends Transaction {
 
     @SuppressWarnings("unchecked")
     public List<Model_Sales_Giveaways> getSalesGiveawaysList() {
-
         return (List<Model_Sales_Giveaways>) (List<?>) paSalesGiveaways;
     }
 
@@ -445,7 +444,7 @@ public class MCSales extends Transaction {
                 }
                 loDetail.updateRecord();
 
-                paSalesRegistration.add(loDetail);
+                paSalesInsurance.add(loDetail);
             }
         }
 
@@ -3162,6 +3161,9 @@ public class MCSales extends Transaction {
     }
 
     public void computeTransaction() {
+        if (getEditMode() != EditMode.ADDNEW && getEditMode() != EditMode.UPDATE) {
+            return;
+        }
         double lnTranTotal = 0, lnDiscount = 0, lnAddDisc = 0, lnFreight = 0;
         double lnInsAdd = 0, lnRegIns = 0;
         double lnVatableBase = 0, lnNonVatBase = 0;
