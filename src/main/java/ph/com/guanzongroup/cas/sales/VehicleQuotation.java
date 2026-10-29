@@ -21,7 +21,6 @@ import org.guanzon.appdriver.base.SQLUtil;
 import org.guanzon.appdriver.constant.EditMode;
 import org.guanzon.appdriver.constant.RecordStatus;
 import org.guanzon.appdriver.constant.UserRight;
-import org.guanzon.appdriver.iface.GValidator;
 import org.guanzon.cas.parameter.Brand;
 import org.guanzon.cas.parameter.model.Model_Branch;
 import org.guanzon.cas.parameter.services.ParamControllers;
@@ -32,7 +31,6 @@ import ph.com.guanzongroup.cas.sales.model.*;
 import ph.com.guanzongroup.cas.sales.services.SalesControllers;
 import ph.com.guanzongroup.cas.sales.services.SalesModels;
 import ph.com.guanzongroup.cas.sales.status.VehicleQuotationStatus;
-import ph.com.guanzongroup.cas.sales.validator.ValidityMasterValidator;
 
 import javax.script.ScriptException;
 import javax.sql.rowset.CachedRowSet;
@@ -56,11 +54,8 @@ import java.util.*;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.guanzon.appdriver.base.CommonUtils;
-import org.guanzon.appdriver.constant.ClientType;
 import org.guanzon.appdriver.constant.Logical;
 import org.guanzon.cas.client.Client;
-import org.guanzon.cas.client.ClientGUI;
 import org.guanzon.cas.client.model.Model_Client_Address;
 import org.guanzon.cas.client.model.Model_Client_Mail;
 import org.guanzon.cas.client.model.Model_Client_Mobile;
@@ -1717,7 +1712,7 @@ public class VehicleQuotation extends Transaction {
                                                     " cRecdStat = " + SQLUtil.toSQL(FinancingRateStatus.ACTIVE)
                                                     + " AND nDuration = " + SQLUtil.toSQL(Detail(0).getDuration())
                                                     + " AND nRateValx = " + SQLUtil.toSQL(Detail(0).getRateValue())
-                                                    + SQLUtil.toSQL(xsDateShort(Master().getTransactionDate())) +  " BETWEEN dFromDate AND dThruDate " 
+                                                    + " AND " + SQLUtil.toSQL(xsDateShort(Master().getTransactionDate())) +  " BETWEEN dFromDate AND dThruDate " 
                                                     );
             System.out.println("Validate Standard Financing Rate SQL: " + lsSQL);
             ResultSet loRS = poGRider.executeQuery(lsSQL);
