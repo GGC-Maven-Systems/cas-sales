@@ -679,6 +679,11 @@ public class MCSales extends Transaction {
                     paAttachments.get(lnCtr).getModel().setModifyingId(poGRider.Encrypt(poGRider.getUserID()));
                     paAttachments.get(lnCtr).getModel().setModifiedDate(poGRider.getServerDate());
                     paAttachments.get(lnCtr).setWithParentClass(true);
+                    // ADD THIS: only default it if the UI hasn't already chosen one
+//                    if (TransactionAttachmentList(lnCtr).getModel().getDocumentType() == null
+//                            || TransactionAttachmentList(lnCtr).getModel().getDocumentType().isEmpty()) {
+//                        TransactionAttachmentList(lnCtr).getModel().setDocumentType(<your default doc type code>);
+//                    }
                     poJSON = paAttachments.get(lnCtr).saveRecord();
                     if (!isJSONSuccess(poJSON)) {
                         return poJSON;
@@ -908,6 +913,11 @@ public class MCSales extends Transaction {
             }
 
             return poJSON;
+        }
+        poJSON = saveOthers();
+        if ("error".equals((String) poJSON.get("result"))) {
+            poGRider.rollbackTrans();
+            return  poJSON;
         }
 
         if (!pbWthParent) {
@@ -2941,6 +2951,10 @@ public class MCSales extends Transaction {
         return loJSON;
     }
 
+    /**
+     * Adds an empty attachment row. FIX: the second and later rows were created WITHOUT newRecord(), so they stayed
+     * in an unusable edit mode and were never saved. Both branches now call newRecord().
+     */
     public JSONObject addAttachment()
             throws SQLException,
             GuanzonException {
@@ -2952,6 +2966,7 @@ public class MCSales extends Transaction {
         } else {
             if (!paAttachments.get(paAttachments.size() - 1).getModel().getTransactionNo().isEmpty()) {
                 paAttachments.add(TransactionAttachment());
+                poJSON = paAttachments.get(getTransactionAttachmentCount() - 1).newRecord();
             } else {
                 poJSON = setJSON("error", "Unable to add transaction attachment.");
                 return poJSON;
