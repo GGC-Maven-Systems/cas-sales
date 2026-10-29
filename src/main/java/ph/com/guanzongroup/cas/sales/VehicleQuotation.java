@@ -830,6 +830,10 @@ public class VehicleQuotation extends Transaction {
             return setJSON("error", "Inquiry cannot be empty.");
         }
         
+        if(checkEmpty(Detail(row).getVariantId())){
+            return setJSON("error", "Unit cannot be empty.");
+        }
+        
         if("0".equals(Detail(row).getPaymentForm())){
             return setJSON("error", "Mode of payment must be Financing or PO.");
         }
@@ -1559,99 +1563,98 @@ public class VehicleQuotation extends Transaction {
         Double ldblTotalAddOn = 0.0000;
         Double ldblTranTotal = 0.0000;
         Double ldblTotalDisc = 0.0000;
-        Double ldblDownpaymentPercentage = (Detail(0).getDownPayment() / Detail(0).getSRPAmount()) * 100;
+        Double ldblDownpaymentPercentage = 0.0000;
         
         if(Detail(0).getSRPAmount() > 0.0000){
             ldblDownpaymentPercentage = (Detail(0).getDownPayment() / Detail(0).getSRPAmount()) * 100;
             ldblDownpaymentPercentage = Double.parseDouble(format.format(ldblDownpaymentPercentage));
-        }
-        Detail(0).setDownPaymentPercent(ldblDownpaymentPercentage);
-        
-        for(int lnCtr = 0;lnCtr < getAddOnListCount();lnCtr++){
-            if(checkNotEmpty(AddOnList(lnCtr).getAddOnId())
-                || checkNotEmpty(AddOnList(lnCtr).getStockId())){
-                if(AddOnList(lnCtr).getRecordStatus()){
-                    if(AddOnList(lnCtr).getQuantity() <= 0.00){
-                        if(pnEditMode == EditMode.ADDNEW || pnEditMode == EditMode.UPDATE){
-                            AddOnList(lnCtr).setQuantity(1);
+       
+            for(int lnCtr = 0;lnCtr < getAddOnListCount();lnCtr++){
+                if(checkNotEmpty(AddOnList(lnCtr).getAddOnId())
+                    || checkNotEmpty(AddOnList(lnCtr).getStockId())){
+                    if(AddOnList(lnCtr).getRecordStatus()){
+                        if(AddOnList(lnCtr).getQuantity() <= 0.00){
+                            if(pnEditMode == EditMode.ADDNEW || pnEditMode == EditMode.UPDATE){
+                                AddOnList(lnCtr).setQuantity(1);
+                            }
                         }
                     }
                 }
-            }
-            //Set Amount
-            AddOnList(lnCtr).setTotalAmount(AddOnList(lnCtr).getAmount() * AddOnList(lnCtr).getQuantity());
-            
-            if(checkNotEmpty(AddOnList(lnCtr).AddOnMaster().AddOnType().getAddTypeName())){
-                if(AddOnList(lnCtr).AddOnMaster().AddOnType().getAddTypeName().toUpperCase().contains("LTO")
-                    || AddOnList(lnCtr).AddOnMaster().AddOnType().getAddTypeName().toUpperCase().contains("TPL")
-                    || AddOnList(lnCtr).AddOnMaster().AddOnType().getAddTypeName().toUpperCase().contains("Comprehensive")
-                ){
-                    
-                    if(AddOnList(lnCtr).AddOnMaster().AddOnType().getAddTypeName().toUpperCase().contains("TPL")){
-                        if(AddOnList(lnCtr).getQuantity() <= 0.00){
-                            Detail(0).setTPLAmount(0.0000);
-                        } else {
-                            if(Detail(0).getTPLAmount() <= 0.0000){
-                                Detail(0).setTPLAmount(AddOnList(lnCtr).AddOnMaster().getAmount());
+                //Set Amount
+                AddOnList(lnCtr).setTotalAmount(AddOnList(lnCtr).getAmount() * AddOnList(lnCtr).getQuantity());
+
+                if(checkNotEmpty(AddOnList(lnCtr).AddOnMaster().AddOnType().getAddTypeName())){
+                    if(AddOnList(lnCtr).AddOnMaster().AddOnType().getAddTypeName().toUpperCase().contains("LTO")
+                        || AddOnList(lnCtr).AddOnMaster().AddOnType().getAddTypeName().toUpperCase().contains("TPL")
+                        || AddOnList(lnCtr).AddOnMaster().AddOnType().getAddTypeName().toUpperCase().contains("Comprehensive")
+                    ){
+
+                        if(AddOnList(lnCtr).AddOnMaster().AddOnType().getAddTypeName().toUpperCase().contains("TPL")){
+                            if(AddOnList(lnCtr).getQuantity() <= 0.00){
+                                Detail(0).setTPLAmount(0.0000);
+                            } else {
+                                if(Detail(0).getTPLAmount() <= 0.0000){
+                                    Detail(0).setTPLAmount(AddOnList(lnCtr).AddOnMaster().getAmount());
+                                }
                             }
                         }
-                    }
-                    
-                    if(AddOnList(lnCtr).AddOnMaster().AddOnType().getAddTypeName().toUpperCase().contains("LTO")){
-                        if(AddOnList(lnCtr).getQuantity() <= 0.00){
-                            Detail(0).setLTOAmount(0.0000);
-                        } else {
-                            if(Detail(0).getLTOAmount() <= 0.0000){
-                                Detail(0).setLTOAmount(AddOnList(lnCtr).AddOnMaster().getAmount());
+
+                        if(AddOnList(lnCtr).AddOnMaster().AddOnType().getAddTypeName().toUpperCase().contains("LTO")){
+                            if(AddOnList(lnCtr).getQuantity() <= 0.00){
+                                Detail(0).setLTOAmount(0.0000);
+                            } else {
+                                if(Detail(0).getLTOAmount() <= 0.0000){
+                                    Detail(0).setLTOAmount(AddOnList(lnCtr).AddOnMaster().getAmount());
+                                }
                             }
                         }
-                    }
-                    
-                    if(AddOnList(lnCtr).AddOnMaster().AddOnType().getAddTypeName().toUpperCase().contains("Comprehensive")){
-                        if(AddOnList(lnCtr).getQuantity() <= 0.00){
-                            Detail(0).setComprehensiveAmount(0.0000);
-                        } else {
-                            if(Detail(0).getComprehensiveAmount() <= 0.0000){
-                                Detail(0).setComprehensiveAmount(AddOnList(lnCtr).AddOnMaster().getAmount());
+
+                        if(AddOnList(lnCtr).AddOnMaster().AddOnType().getAddTypeName().toUpperCase().contains("Comprehensive")){
+                            if(AddOnList(lnCtr).getQuantity() <= 0.00){
+                                Detail(0).setComprehensiveAmount(0.0000);
+                            } else {
+                                if(Detail(0).getComprehensiveAmount() <= 0.0000){
+                                    Detail(0).setComprehensiveAmount(AddOnList(lnCtr).AddOnMaster().getAmount());
+                                }
                             }
                         }
+
+                        continue;
                     }
-                    
-                    continue;
+
+                    ldblTotalAddOn = ldblTotalAddOn + AddOnList(lnCtr).getTotalAmount();
                 }
-                
-                ldblTotalAddOn = ldblTotalAddOn + AddOnList(lnCtr).getTotalAmount();
             }
-        }
-        
-        ldblTranTotal = ldblDPAmt + ldblRSVAmt + ldblTPLAmt + ldblCompAmt + ldblLTOAmt + ldblCHMOAmt + ldblTotalAddOn;
-        if("0".equals(Detail(0).getPaymentForm())){
-            ldblTranTotal = ldblTranTotal + ldblSRPAmt;
-        }
-        ldblTotalDisc = Detail(0).getDiscountAmount() + Detail(0).getAdditionalDiscountAmount();
-        
-        //Financing Computation
-        /**
-         * SRP x Downpayment Rate = Downpayment Amount
-         * SRP - Downpayment Amount = Balance
-         * Balance x Interest Rate / Duration = Monthly Amortization Amount
-         */
-        if(ldblInterestRate > 0 && lnDuration > 0 && checkNotEmpty(Detail(0).getQuotationRate())){
-            ldblDownpaymentAmount = Detail(0).getSRPAmount() * (Detail(0).getDownPaymentPercent()/100);
-            ldblBalance = Detail(0).getSRPAmount() - ldblDownpaymentAmount;
-            ldblInterestRate = ((ldblInterestRate/100)+1);
-            ldblMontlyAmortizationAmt = ((ldblBalance * ldblInterestRate) / lnDuration);//((ldblBalance * ldblInterestRate) / lnDuration)+2 = (double) NaN
-            ldblMontlyAmortizationAmt = Double.parseDouble(format.format(ldblMontlyAmortizationAmt));
-            ldblFinancingAmount = ldblSRPAmt-ldblDPAmt;
-            ldblGrossMonthlyInstallment = ldblMontlyAmortizationAmt-Detail(0).getPromptPaymentDiscount();
-            ldblPromissoryNoteAmt = Detail(0).getDuration() * ldblGrossMonthlyInstallment;
-        } else {
-            Detail(0).setDuration(0);
-            Detail(0).setRateValue(0.00);
-            Detail(0).setPromptPaymentDiscount(0.0000);
-        }
-        
+
+            ldblTranTotal = ldblDPAmt + ldblRSVAmt + ldblTPLAmt + ldblCompAmt + ldblLTOAmt + ldblCHMOAmt + ldblTotalAddOn;
+            if("0".equals(Detail(0).getPaymentForm())){
+                ldblTranTotal = ldblTranTotal + ldblSRPAmt;
+            }
+            ldblTotalDisc = Detail(0).getDiscountAmount() + Detail(0).getAdditionalDiscountAmount();
+
+            //Financing Computation
+            /**
+             * SRP x Downpayment Rate = Downpayment Amount
+             * SRP - Downpayment Amount = Balance
+             * Balance x Interest Rate / Duration = Monthly Amortization Amount
+             */
+            if(ldblSRPAmt > 0.0000 && ldblInterestRate > 0 && lnDuration > 0 && checkNotEmpty(Detail(0).getQuotationRate())){
+                ldblDownpaymentAmount = ldblSRPAmt * (Detail(0).getDownPaymentPercent()/100);
+                ldblBalance = Detail(0).getSRPAmount() - ldblDownpaymentAmount;
+                ldblInterestRate = ((ldblInterestRate/100)+1);
+                ldblMontlyAmortizationAmt = ((ldblBalance * ldblInterestRate) / lnDuration);//((ldblBalance * ldblInterestRate) / lnDuration)+2 = (double) NaN
+                ldblMontlyAmortizationAmt = Double.parseDouble(format.format(ldblMontlyAmortizationAmt));
+                ldblFinancingAmount = ldblSRPAmt-ldblDPAmt;
+                ldblGrossMonthlyInstallment = ldblMontlyAmortizationAmt-Detail(0).getPromptPaymentDiscount();
+                ldblPromissoryNoteAmt = Detail(0).getDuration() * ldblGrossMonthlyInstallment;
+            } else {
+                Detail(0).setDuration(0);
+                Detail(0).setRateValue(0.00);
+                Detail(0).setPromptPaymentDiscount(0.0000);
+            }
+         }
         if(pnEditMode == EditMode.ADDNEW || pnEditMode == EditMode.UPDATE){
+            Detail(0).setDownPaymentPercent(ldblDownpaymentPercentage);
             Detail(0).setFinancingAmount(ldblFinancingAmount);
             Detail(0).setMonthlyAmount(ldblMontlyAmortizationAmt);
             Detail(0).setGrossMonthlyInstallment(ldblGrossMonthlyInstallment);
