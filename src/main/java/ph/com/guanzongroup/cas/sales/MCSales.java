@@ -397,6 +397,7 @@ public class MCSales extends Transaction {
         paSalesGiveaways.clear();
         paSalesInsurance.clear();
         paSalesRegistration.clear();
+        paDetail.clear();
         ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         //Open Sales_Giveaways
         String lsSQL = "SELECT * FROM Sales_Giveaways"
