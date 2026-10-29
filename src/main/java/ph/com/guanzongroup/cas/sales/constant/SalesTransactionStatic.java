@@ -45,13 +45,17 @@ public class SalesTransactionStatic {
     public static final String[] INSURANCE_OPTIONS = {"In-house", "Outside"};
     public static final String[] GENDER_TEXT = {"Male", "Female"};
     
-    public static final String[] PAYMENT_TRAN_TYPES = {"Cash",
-                                                        "Term",
-                                                        "Cash Balance",
-                                                        "Financing" };
+    public static final String[] PAYMENT_TRAN_TYPES = {"Sales",
+                                                        "Gift"};
+
+
     public static final int PAYMENT_CREDIT = 1;   // index of "Credit" in PAYMENT_TRAN_TYPES
 
-    public static final String[] PAYMENT_FORMS = {"Cash", "Check", "Bank Transfer", "Credit Card","Cash Balance"};
+    public static final String[] PAYMENT_FORMS = {"Cash",
+                                                    "Term",
+                                                    "Cash Balance",
+                                                    "Financing" };
+
     public static final String[] CWT_RATES = {"None", "1%", "2%"};
     public static final String[] ATTACHMENT_TYPES = {"Others", "Customer ID", "Invoice","BIR 2317"};
 
