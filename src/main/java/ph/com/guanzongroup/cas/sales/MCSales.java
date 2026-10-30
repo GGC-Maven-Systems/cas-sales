@@ -326,6 +326,7 @@ public class MCSales extends Transaction {
         paMaster = new ArrayList<Model>();
         paDetail = new ArrayList<Model>();
         paAttachments = new ArrayList<>();
+        paQuotationNonItemized = new ArrayList<>();
 
         pbWithUI = true; //allow input
 
@@ -1254,10 +1255,11 @@ public class MCSales extends Transaction {
             return poJSON;
         }
         if (getMaster().getSourceCode() != null && !getMaster().getSourceCode().isEmpty()) {
-            if (getMaster().getSourceCode().equalsIgnoreCase("SQVr"));
-            poJSON.put("result", "error");
-            poJSON.put("message", "Unable to load Record. Selected client is not a quotation.");
-            return poJSON;
+            if (getMaster().getSourceCode().equalsIgnoreCase("SQVr")) {
+                poJSON.put("result", "error");
+                poJSON.put("message", "Unable to load Record. Selected client is not a quotation.");
+                return poJSON;
+            }
         }
         if (getMaster().getSourceNo() == null || getMaster().getSourceNo().isEmpty()) {
 
@@ -1365,7 +1367,7 @@ public class MCSales extends Transaction {
                     crs.updateString("cRefrStat", "VOID");
                     break;
                 case SalesTransactionStatic.REPLACED:
-                    crs.updateString("cRefrStat", "VOID");
+                    crs.updateString("cRefrStat", "REPLACED");
                     break;
 
                 default:
@@ -1387,6 +1389,9 @@ public class MCSales extends Transaction {
                             break;
                         case SalesTransactionStatic.VOID:
                             crs.updateString("cRefrStat", "VOID");
+                            break;
+                        case SalesTransactionStatic.REPLACED:
+                            crs.updateString("cRefrStat", "REPLACED");
                             break;
 
                     }
