@@ -1073,17 +1073,6 @@ public class VehicleInsurance extends Transaction {
         }
     }
     
-    private ArrayList<String> groupUniqueVariant() throws SQLException, GuanzonException {
-        ArrayList<String> laVariant = new ArrayList<>();
-
-        for(int lnCtr = 0;lnCtr < getDetailCount(); lnCtr++){
-            if(laVariant.isEmpty() || !laVariant.contains(Detail(lnCtr).ModelVariant().getModelId())){
-                laVariant.add(Detail(lnCtr).ModelVariant().getModelId());
-            }
-        }
-        return laVariant;
-    }
-    
     /**
      * Formats a {@link Date} value into a yyyy-MM-dd string.
      *
@@ -1253,7 +1242,7 @@ public class VehicleInsurance extends Transaction {
             if (MiscUtil.RecordCount(loRS) > 0) {
                 if(loRS.next()){    
                     poJSON.put("result", "error");
-                    poJSON.put("message", "A Vehicle Price Update already exists for the selected validity period.");
+                    poJSON.put("message", "A Vehicle Insurance already exists for the selected validity period.");
                     return poJSON;
                 }
             }
@@ -1487,7 +1476,7 @@ public class VehicleInsurance extends Transaction {
 
         String jrxmlPath =
                 System.getProperty("sys.default.path.config")
-                + "/Reports/VehiclePriceList.jrxml";
+                + "/Reports/VehicleInsurance.jrxml";
 
         JasperReport jasperReport =
                 JasperCompileManager.compileReport(jrxmlPath);
@@ -1579,7 +1568,7 @@ public class VehicleInsurance extends Transaction {
         if(lsLandLine == null) {
             lsLandLine = "";
         } else {
-            if(!lsContact.isEmpty()){
+            if(!lsLandLine.isEmpty()){
                 lsContact = lsContact 
                             + "\nTel No : " + lsLandLine;
             }
@@ -1771,36 +1760,51 @@ public class VehicleInsurance extends Transaction {
             return null;
         }
     }
-    /**
-     * Sample data. Notice Civic RS has FOUR terms (36/48/60/72) while every
-     * other variant only has three - that's deliberate, to demonstrate that the
-     * crosstab prints exactly as many term columns as the data supports, with
-     * no template change required.
-     */
+    
+    private ArrayList<String> groupUniqueVariant() throws SQLException, GuanzonException {
+        ArrayList<String> laVariant = new ArrayList<>();
+
+        for(int lnCtr = 0;lnCtr < getDetailCount(); lnCtr++){
+            if(Detail(lnCtr).getRecordStatus()){
+                if(laVariant.isEmpty() || !laVariant.contains(Detail(lnCtr).getVariantId())){
+                    laVariant.add(Detail(lnCtr).getVariantId());
+                }
+            }
+        }
+        return laVariant;
+    }
+    
     private List<Map<String, Object>> buildSampleData() {
         List<Map<String, Object>> rows = new ArrayList<>();
         
         sortDetail();
         try{
-            //Group by dp rate 
-            int lnRow = 0;
-            for(int lnCtr = 0;lnCtr < getDetailCount();lnCtr++){
-                if(Detail(lnCtr).getRecordStatus()){
-                    lnRow++;
-                    String lsVariant = Detail(lnCtr).ModelVariant().getDescription();
-                        if(Detail(lnCtr).ModelVariant().Color().getDescription() != null && !"".equals(Detail(lnCtr).ModelVariant().Color().getDescription())){
-                            lsVariant = lsVariant + " " +  Detail(lnCtr).ModelVariant().VariantInsurance().getTransmission() + " " + Detail(lnCtr).ModelVariant().Color().getDescription() ; 
-                        }
-                        addRow(rows
-                                , Detail(lnCtr).ModelVariant().Model().Brand().getDescription()
-                                , Detail(lnCtr).ModelVariant().Model().getDescription()
-                                , lsVariant
-                                , Detail(lnCtr).getAmount()
-                                ,lnRow
-                                , Detail(lnCtr).getYearNo()
-                        );
+            //Group by variant 
+            Model_Model_Variant loObj = new ParamModels(poGRider).ModelVariant();
+            ArrayList<String> laArray = groupUniqueVariant();
+            for(String lsVariantId : laArray){
+                loObj.initialize();
+                poJSON = loObj.openRecord(lsVariantId);
+                if(isJSONSuccess(poJSON)){
+                    String lsVariant = loObj.getDescription();
+                    if(loObj.Color().getDescription() != null && !"".equals(loObj.Color().getDescription())){
+                        lsVariant = lsVariant + " " +  loObj.VariantInsurance().getTransmission() + " " + loObj.Color().getDescription() ; 
+                    }
+                    
+                    addRow(rows
+                            , loObj.Model().Brand().getDescription()
+                            , loObj.Model().getDescription()
+                            , lsVariant
+                            , loObj.getSellingPrice()
+                            , getAmount(lsVariantId, 1)
+                            , getAmount(lsVariantId, 2)
+                            , getAmount(lsVariantId, 3)
+                            , getAmount(lsVariantId, 4)
+                            , getAmount(lsVariantId, 5)
+                    );
                 }
             }
+            
         } catch (SQLException | GuanzonException ex) {
             Logger.getLogger(VehicleInsurance.class.getName()).log(Level.SEVERE, MiscUtil.getException(ex), ex);
         }
@@ -1809,8 +1813,15 @@ public class VehicleInsurance extends Transaction {
  
     // Keys here MUST match the <field name="..."> values in the .jrxml exactly.
     private void addRow(List<Map<String, Object>> rows,
-                                String brand, String model, String variant,
-                                double amount,int nRow,int nYear) {
+                                String brand, 
+                                String model, 
+                                String variant,
+                                Double nSRPAmount,
+                                Double n1stYear,
+                                Double n2ndYear,
+                                Double n3rdYear,
+                                Double n4thYear,
+                                Double n5thYear) {
         Map<String, Object> row = new LinkedHashMap<>();
         if(brand == null){ brand = "";}
         if(model == null){ model = "";}
@@ -1818,9 +1829,12 @@ public class VehicleInsurance extends Transaction {
         row.put("sBrand", brand.toUpperCase());
         row.put("sModel", model.toUpperCase());
         row.put("sVariant", variant.toUpperCase());
-        row.put("nAmount", amount);
-        row.put("nRow", nRow);
-        row.put("nYear", nYear);
+        row.put("nSRPAmount", nSRPAmount);
+        row.put("n1stYear", n1stYear);
+        row.put("n2ndYear", n2ndYear);
+        row.put("n3rdYear", n3rdYear);
+        row.put("n4thYear", n4thYear);
+        row.put("n5thYear", n5thYear);
         rows.add(row);
     }
     
@@ -1983,7 +1997,7 @@ public class VehicleInsurance extends Transaction {
         }
 
         if(pbWithUI){
-            showStatusHistoryUI("Vehicle Price", (String) poMaster.getValue("sValidIDx"), entryBy, entryDate, crs);
+            showStatusHistoryUI("Vehicle Insurance", (String) poMaster.getValue("sValidIDx"), entryBy, entryDate, crs);
         }
     }
     /**

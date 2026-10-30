@@ -1768,7 +1768,7 @@ public class VehiclePriceList extends Transaction {
         if(lsLandLine == null) {
             lsLandLine = "";
         } else {
-            if(!lsContact.isEmpty()){
+            if(!lsLandLine.isEmpty()){
                 lsContact = lsContact 
                             + "\nTel No : " + lsLandLine;
             }
