@@ -1291,8 +1291,6 @@ public class VehicleInsurance extends Transaction {
         if(getEditMode() == EditMode.ADDNEW){
             Master().setValidityId(Master().getNextCode());
         }
-        
-        Master().setValidityDescription("Vehicle Price List");
             
         poJSON = isEntryOkay(Master().getRecordStatus());
         if (!isJSONSuccess(poJSON)) {
