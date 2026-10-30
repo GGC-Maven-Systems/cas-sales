@@ -420,7 +420,7 @@ public class Model_Sales_Detail extends Model {
             return poPromoBrand;
         }
 
-        String getModelEntryNo = PromoModelEntryNo(lsPromoID, lsBrandID);
+        String getModelEntryNo = PromoBrandEntryNo(lsPromoID, lsBrandID);
         String lsKey = lsPromoID + getModelEntryNo;   // composite cache key
         if (ReferenceCache.tryLoad("Sales_Promotion_Brand", lsKey, poPromoBrand)) {
             return poPromoBrand;

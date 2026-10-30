@@ -2,6 +2,7 @@ package ph.com.guanzongroup.cas.sales.model;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Calendar;
 import java.util.Date;
 import org.guanzon.appdriver.agent.services.Model;
 import org.guanzon.appdriver.agent.services.ReferenceCache;
@@ -912,6 +913,11 @@ public class Model_Sales_Master extends Model {
 
             if (poTerm.getEditMode() == EditMode.READY
                     && poTerm.getTermId().equals(modelPrimary)) {
+                Calendar loCal = Calendar.getInstance();
+                loCal.setTime(poGRider.getServerDate());
+                loCal.add(Calendar.DAY_OF_MONTH, Integer.valueOf(poTerm.getTermValue().toString()));
+                setDueDate(loCal.getTime());
+
                 return poTerm;
             }
 
@@ -919,6 +925,11 @@ public class Model_Sales_Master extends Model {
                     "Term",
                     modelPrimary,
                     poTerm)) {
+                Calendar loCal = Calendar.getInstance();
+                loCal.setTime(poGRider.getServerDate());
+                loCal.add(Calendar.DAY_OF_MONTH, Integer.valueOf(poTerm.getTermValue().toString()));
+                setDueDate(loCal.getTime());
+
                 return poTerm;
             }
 
@@ -929,6 +940,11 @@ public class Model_Sales_Master extends Model {
                         "Term",
                         modelPrimary,
                         poTerm);
+                Calendar loCal = Calendar.getInstance();
+                loCal.setTime(poGRider.getServerDate());
+                loCal.add(Calendar.DAY_OF_MONTH, Integer.valueOf(poTerm.getTermValue().toString()));
+                setDueDate(loCal.getTime());
+
                 return poTerm;
             } else {
                 poTerm.initialize();

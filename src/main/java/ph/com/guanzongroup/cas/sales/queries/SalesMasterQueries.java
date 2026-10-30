@@ -171,4 +171,14 @@ public class SalesMasterQueries {
                 + "\n      AND (a.sSourceNo IS NULL OR a.sSourceNo = '')"
                 + "\n ) x";
     }
+
+    public static String getQuotationGiveAwayNonItem() {
+        return "   SELECT sTransNox\n"
+                + "  ,nEntryNox\n"
+                + "  ,sStockIDx\n"
+                + "  ,nQuantity\n"
+                + "  ,sRemarksx \n"
+                + "  FROM Sales_Quotation_Version_GiveAways\n"
+                + "   WHERE (sStockIDx IS NULL OR sStockIDx = '')";
+    }
 }
