@@ -978,16 +978,18 @@ public class VehicleInsurance extends Transaction {
                         Detail(getDetailCount() - 1).setVariantId(lsVariantId);
                         Detail(getDetailCount() - 1).setYearNo(lnYear);
                         
-                        ldblAmount = ldblSelPrice * 0.20;
+                        ldblDepreciatedAmount = (ldblSelPrice * 0.10);
+                        ldblSelPrice = ldblSelPrice - ldblDepreciatedAmount;
+                        ldblSelPrice = Double.parseDouble(format.format(ldblSelPrice));
+                        ldblSelPrice = Double.parseDouble(String.valueOf(Math.round(ldblSelPrice)));
+                        
+                        ldblAmount = ldblDepreciatedAmount * 0.20;
                         ldblAmount = Double.parseDouble(format.format(Math.round(ldblAmount / 100.0) * 100));
                         Detail(getDetailCount() - 1).setAmount(ldblAmount);
                         
                         ReloadDetail();
                     
-                        ldblDepreciatedAmount = (ldblSelPrice * 0.10);
-                        ldblSelPrice = ldblSelPrice - ldblDepreciatedAmount;
-                        ldblSelPrice = Double.parseDouble(format.format(ldblSelPrice));
-                        ldblSelPrice = Double.parseDouble(String.valueOf(Math.round(ldblSelPrice)));
+                        
                         
                         lnYear++;
                     }
