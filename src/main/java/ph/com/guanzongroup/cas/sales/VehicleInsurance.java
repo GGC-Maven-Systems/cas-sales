@@ -176,7 +176,18 @@ public class VehicleInsurance extends Transaction {
      */
     public JSONObject NewTransaction()
             throws CloneNotSupportedException, SQLException, GuanzonException {
-        return newTransaction();
+        
+        poJSON = newTransaction();
+        if(!isJSONSuccess(poJSON)){
+            return poJSON;
+        }
+        
+        poJSON = populateVehicleList();
+        if(!isJSONSuccess(poJSON)){
+            return poJSON;
+        }
+        
+        return poJSON;
     }
     
     /**
@@ -262,6 +273,11 @@ public class VehicleInsurance extends Transaction {
         poJSON = new JSONObject();
         
         poJSON = updateTransaction();
+        if(!isJSONSuccess(poJSON)){
+            return poJSON;
+        }
+        
+        poJSON = populateVehicleList();
         if(!isJSONSuccess(poJSON)){
             return poJSON;
         }
@@ -972,7 +988,7 @@ public class VehicleInsurance extends Transaction {
                     }
                 }
 
-                if(!lbExist || lnYear <= 5){
+                if(!lbExist || lnYear < 5){
                     while(lnYear <= 5){
                         Detail(getDetailCount() - 1).setInsuranceId(Detail(getDetailCount() - 1).getNextCode());
                         Detail(getDetailCount() - 1).setVariantId(lsVariantId);
