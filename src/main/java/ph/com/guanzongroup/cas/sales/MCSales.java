@@ -1251,20 +1251,18 @@ public class MCSales extends Transaction {
 
         if (getMaster().getSourceCode() == null || getMaster().getSourceCode().isEmpty()) {
             poJSON.put("result", "error");
-            poJSON.put("message", "Unable to load Record. Selected client is not a quotation.");
+            poJSON.put("message", "Unable to load Record. Selected client has no source");
             return poJSON;
-        }
-        if (getMaster().getSourceCode() != null && !getMaster().getSourceCode().isEmpty()) {
-            if (getMaster().getSourceCode().equalsIgnoreCase("SQVr")) {
-                poJSON.put("result", "error");
-                poJSON.put("message", "Unable to load Record. Selected client is not a quotation.");
-                return poJSON;
-            }
         }
         if (getMaster().getSourceNo() == null || getMaster().getSourceNo().isEmpty()) {
 
             poJSON.put("result", "error");
             poJSON.put("message", "Unable to load Record. Selected client has no source");
+            return poJSON;
+        }
+        if (!getMaster().getSourceCode().equalsIgnoreCase("SQVr")) {
+            poJSON.put("result", "error");
+            poJSON.put("message", "Unable to load Record. Selected client is not a quotation.");
             return poJSON;
         }
 
