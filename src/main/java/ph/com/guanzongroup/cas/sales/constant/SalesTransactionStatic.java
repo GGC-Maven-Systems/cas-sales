@@ -36,28 +36,26 @@ public class SalesTransactionStatic {
     public static final String[] CLIENT_TYPES = {"Individual", "Company"};
     public static final String[] VEHICLE_TYPES = {"Brand New", "Pre-Owned"};
     public static final String[] REGISTRATION_TYPES = {"New Registration",
-                                                        "Transfer of Ownership",
-                                                        "Registration Renewal",
-                                                        "Transfer of Ownership and Renewal"};
-
+        "Transfer of Ownership",
+        "Registration Renewal",
+        "Transfer of Ownership and Renewal"};
 
     public static final String[] INSURANCE_TYPES = {"CTPL", "Comprehensive"};
     public static final String[] INSURANCE_OPTIONS = {"In-house", "Outside"};
     public static final String[] GENDER_TEXT = {"Male", "Female"};
-    
-    public static final String[] PAYMENT_TRAN_TYPES = {"Sales",
-                                                        "Gift"};
 
+    public static final String[] PAYMENT_TRAN_TYPES = {"Sales",
+        "Gift"};
 
     public static final int PAYMENT_CREDIT = 1;   // index of "Credit" in PAYMENT_TRAN_TYPES
 
     public static final String[] PAYMENT_FORMS = {"Cash",
-                                                    "Term",
-                                                    "Cash Balance",
-                                                    "Financing" };
+        "Term",
+        "Cash Balance",
+        "Financing"};
 
     public static final String[] CWT_RATES = {"None", "1%", "2%"};
-    public static final String[] ATTACHMENT_TYPES = {"Others", "Customer ID", "Invoice","BIR 2317"};
+    public static final String[] ATTACHMENT_TYPES = {"Others", "Customer ID", "Invoice", "BIR 2317"};
 
     // ---------------------------------------------------------------------
     // Form status text
@@ -121,13 +119,15 @@ public class SalesTransactionStatic {
     public static final String CANCELLED = "3";
     public static final String VOID = "4";
     public static final String REPLACED = "5";
+    public static final String RELEASED = "6";
     public static final String[] STATUS = {
         "OPEN",
         "CONFIRMED",
         "PAID",
         "CANCELLED",
         "VOID",
-        "REPLACED"};
+        "REPLACED",
+        "RELEASED"};
 
     public static final String[] TRANSACTION_TYPE = {
         "SALES",

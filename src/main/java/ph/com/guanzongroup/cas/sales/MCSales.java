@@ -46,6 +46,7 @@ import org.guanzon.cas.client.ClientInfo;
 import org.guanzon.cas.client.services.ClientControllers;
 import org.guanzon.cas.inv.InventoryBrowse;
 import org.guanzon.cas.parameter.InsuranceType;
+import org.guanzon.cas.parameter.Term;
 import org.guanzon.cas.parameter.services.ParamControllers;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -54,12 +55,13 @@ import ph.com.guanzongroup.cas.sales.constant.SalesTransactionStatic;
 import ph.com.guanzongroup.cas.sales.constant.Sales_Reservation_Static;
 import ph.com.guanzongroup.cas.sales.mcpromo.MCPromoSales;
 import ph.com.guanzongroup.cas.sales.mcpromo.services.PromoControllers;
-import ph.com.guanzongroup.cas.sales.mcpromo.validator.MCPromoSalesValidatorFactory;
 import ph.com.guanzongroup.cas.sales.model.Model_Sales_Detail;
 import ph.com.guanzongroup.cas.sales.model.Model_Sales_Giveaways;
 import ph.com.guanzongroup.cas.sales.model.Model_Sales_Insurance;
 import ph.com.guanzongroup.cas.sales.model.Model_Sales_Master;
+import ph.com.guanzongroup.cas.sales.model.Model_Sales_Quotation_Version_Giveaways;
 import ph.com.guanzongroup.cas.sales.model.Model_Sales_Registration;
+import ph.com.guanzongroup.cas.sales.queries.SalesMasterQueries;
 import static ph.com.guanzongroup.cas.sales.queries.SalesMasterQueries.getSalesClientBrowse;
 import static ph.com.guanzongroup.cas.sales.queries.SalesMasterQueries.getSalesClientSource;
 import static ph.com.guanzongroup.cas.sales.queries.SalesMasterQueries.getSalesMasterWithSource;
@@ -78,6 +80,7 @@ public class MCSales extends Transaction {
     private List<Model> paSalesGiveaways;
     private List<Model> paSalesInsurance;
     private List<Model> paSalesRegistration;
+    private List<Model> paQuotationNonItemized;
     private MCPromoSales poPromo;
     private String psApprovalUser = "";
 
@@ -139,6 +142,12 @@ public class MCSales extends Transaction {
         return (List<Model_Sales_Insurance>) (List<?>) paSalesInsurance;
     }
 
+    @SuppressWarnings("unchecked")
+    public List<Model_Sales_Quotation_Version_Giveaways> getSalesQuotationNonItemizedList() {
+        computeTransaction();
+        return (List<Model_Sales_Quotation_Version_Giveaways>) (List<?>) paQuotationNonItemized;
+    }
+
     public int getCountSalesGiveAway() {
         return paSalesGiveaways.size();
     }
@@ -149,6 +158,10 @@ public class MCSales extends Transaction {
 
     public int getCountSalesRegistration() {
         return paSalesRegistration.size();
+    }
+
+    public int getCountSalesQuotationNoneItem() {
+        return paQuotationNonItemized.size();
     }
 
     public Model_Sales_Detail getDetail(int fnEntryNo) {
@@ -397,6 +410,7 @@ public class MCSales extends Transaction {
         paSalesGiveaways.clear();
         paSalesInsurance.clear();
         paSalesRegistration.clear();
+        paQuotationNonItemized.clear();
         paDetail.clear();
         ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         //Open Sales_Giveaways
@@ -527,7 +541,8 @@ public class MCSales extends Transaction {
         paSalesGiveaways.clear();
         paSalesInsurance.clear();
         paSalesRegistration.clear();
-
+        paQuotationNonItemized.clear();
+        paDetail.clear();
         poJSON = initFields();
         if ("error".equals((String) poJSON.get("result"))) {
             return poJSON;
@@ -918,7 +933,7 @@ public class MCSales extends Transaction {
         poJSON = saveOthers();
         if ("error".equals((String) poJSON.get("result"))) {
             poGRider.rollbackTrans();
-            return  poJSON;
+            return poJSON;
         }
 
         if (!pbWthParent) {
@@ -1216,6 +1231,70 @@ public class MCSales extends Transaction {
         return poJSON;
     }
 
+    public JSONObject SearchTerm(String value, boolean byCode) throws ExceptionInInitializerError, SQLException, GuanzonException {
+        Term object = new ParamControllers(poGRider, logwrapr).Term();
+        object.setRecordStatus("1");
+
+        poJSON = object.searchRecord(value, byCode);
+
+        if ("success".equals((String) poJSON.get("result"))) {
+            getMaster().setTermCode(object.getModel().getTermId());
+        }
+
+        return poJSON;
+    }
+
+    public JSONObject loadSalesQuotationNonItemizedList()
+            throws SQLException, GuanzonException, CloneNotSupportedException {
+        poJSON = new JSONObject();
+
+        if (getMaster().getSourceCode() == null || getMaster().getSourceCode().isEmpty()) {
+            poJSON.put("result", "error");
+            poJSON.put("message", "Unable to load Record. Selected client is not a quotation.");
+            return poJSON;
+        }
+        if (getMaster().getSourceCode() != null && !getMaster().getSourceCode().isEmpty()) {
+            if (getMaster().getSourceCode().equalsIgnoreCase("SQVr"));
+            poJSON.put("result", "error");
+            poJSON.put("message", "Unable to load Record. Selected client is not a quotation.");
+            return poJSON;
+        }
+        if (getMaster().getSourceNo() == null || getMaster().getSourceNo().isEmpty()) {
+
+            poJSON.put("result", "error");
+            poJSON.put("message", "Unable to load Record. Selected client has no source");
+            return poJSON;
+        }
+
+        paQuotationNonItemized.clear();
+        String lsSQL = SalesMasterQueries.getQuotationGiveAwayNonItem();
+        lsSQL = MiscUtil.addCondition(lsSQL, "sTransNox = " + SQLUtil.toSQL(getMaster().getSourceNo()));
+        ResultSet loRS = poGRider.executeQuery(lsSQL);
+
+        if (MiscUtil.RecordCount(loRS)
+                <= 0) {
+            poJSON.put("result", "error");
+            poJSON.put("message", "No record found.");
+            return poJSON;
+        }
+
+        while (loRS.next()) {
+            Model_Sales_Quotation_Version_Giveaways loSales = new SalesModels(poGRider).SalesQuotationVersionGiveaways();
+
+            poJSON = loSales.openRecord(loRS.getString("sTransNox"), loRS.getString("nEntryNox"));
+
+            if ("success".equals((String) poJSON.get("result"))) {
+                paQuotationNonItemized.add((Model) loSales);
+            } else {
+                return poJSON;
+            }
+        }
+
+        poJSON = new JSONObject();
+        poJSON.put("result", "success");
+        return poJSON;
+    }
+
     public JSONObject PostTransaction() throws SQLException, GuanzonException, CloneNotSupportedException {
         poJSON = new JSONObject();
 
@@ -1285,6 +1364,9 @@ public class MCSales extends Transaction {
                 case SalesTransactionStatic.VOID:
                     crs.updateString("cRefrStat", "VOID");
                     break;
+                case SalesTransactionStatic.REPLACED:
+                    crs.updateString("cRefrStat", "VOID");
+                    break;
 
                 default:
                     char ch = crs.getString("cRefrStat").charAt(0);
@@ -1329,7 +1411,7 @@ public class MCSales extends Transaction {
         String lsEntry = "";
         String lsEntryDate = "";
         String lsSQL = " SELECT b.sModified, b.dModified "
-                + " FROM Sales_Promotion_Master a "
+                + " FROM Sales_Master a "
                 + " LEFT JOIN xxxAuditLogMaster b ON"
                 + " b.sSourceNo = a.sTransNox AND b.sEventNme LIKE 'ADD%NEW' AND b.sRemarksx = " + SQLUtil.toSQL(getMaster().getTable());
         lsSQL = MiscUtil.addCondition(lsSQL, " a.sTransNox =  " + SQLUtil.toSQL(getMaster().getTransactionNo()));
@@ -2953,8 +3035,9 @@ public class MCSales extends Transaction {
     }
 
     /**
-     * Adds an empty attachment row. FIX: the second and later rows were created WITHOUT newRecord(), so they stayed
-     * in an unusable edit mode and were never saved. Both branches now call newRecord().
+     * Adds an empty attachment row. FIX: the second and later rows were created
+     * WITHOUT newRecord(), so they stayed in an unusable edit mode and were
+     * never saved. Both branches now call newRecord().
      */
     public JSONObject addAttachment()
             throws SQLException,
