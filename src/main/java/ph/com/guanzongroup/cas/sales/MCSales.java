@@ -1269,6 +1269,8 @@ public class MCSales extends Transaction {
         paQuotationNonItemized.clear();
         String lsSQL = SalesMasterQueries.getQuotationGiveAwayNonItem();
         lsSQL = MiscUtil.addCondition(lsSQL, "sTransNox = " + SQLUtil.toSQL(getMaster().getSourceNo()));
+        System.err.println("Search Query of Other GiveAway" + lsSQL);
+
         ResultSet loRS = poGRider.executeQuery(lsSQL);
 
         if (MiscUtil.RecordCount(loRS)
@@ -1697,7 +1699,7 @@ public class MCSales extends Transaction {
                 getMaster().setVATAmount(loSalesSource.Version().Master().getVatAmount());
                 getMaster().setNonVATSales(loSalesSource.Version().Master().getNonVatSales());
                 getMaster().setSourceCode(loSalesSource.Version().getSourceCode());
-                getMaster().setSourceNo(loSalesSource.Version().Master().getParentId());
+                getMaster().setSourceNo(loSalesSource.Version().Master().getTransactionNo());
 
                 //clear existing detail
                 paDetail.clear();
