@@ -701,7 +701,7 @@ public class VehicleQuotation extends Transaction {
             Master().setContactId(lsMobileId);
             Detail(0).setSourceCode(object.getSourceCode());
             Detail(0).setSourceNo(object.Master().getTransactionNo());
-            Detail(0).setPaymentForm(object.Master().getPurchaseType());
+//            Detail(0).setPaymentForm(object.Master().getPurchaseType());
         }
         
         return poJSON;
