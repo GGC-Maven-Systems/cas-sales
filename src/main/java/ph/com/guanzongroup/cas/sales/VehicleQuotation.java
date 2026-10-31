@@ -43,6 +43,8 @@ import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.DecimalFormat;
@@ -54,6 +56,9 @@ import java.util.*;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.guanzon.appdriver.agent.systables.SysTableContollers;
+import org.guanzon.appdriver.agent.systables.TransactionAttachment;
+import org.guanzon.appdriver.base.WebFile;
 import org.guanzon.appdriver.constant.Logical;
 import org.guanzon.cas.client.Client;
 import org.guanzon.cas.client.model.Model_Client_Address;
@@ -82,6 +87,7 @@ public class VehicleQuotation extends Transaction {
     Model_Company poCompany;
     public List<Model_Quotation_AddOn> paAddOn;
     public List<Model_Quotation_AddOn> paFreebies;
+    List<TransactionAttachment> paAttachments;
     public List<Model> paMaster;
     
     public JSONObject InitTransaction() throws SQLException, GuanzonException {
@@ -93,6 +99,7 @@ public class VehicleQuotation extends Transaction {
         paAddOn = new ArrayList<>();
         paFreebies = new ArrayList<>();
         paMaster = new ArrayList<>();
+        paAttachments = new ArrayList<>();
         psApprover = "";
         setApproving("");
         return initialize();
@@ -2122,6 +2129,79 @@ public class VehicleQuotation extends Transaction {
         
         return lsDesc;
     }
+    
+    private TransactionAttachment TransactionAttachment() throws SQLException, GuanzonException {
+        return new SysTableContollers(poGRider, null).TransactionAttachment();
+    }
+
+    public TransactionAttachment TransactionAttachmentList(int row) {
+        return (TransactionAttachment) paAttachments.get(row);
+    }
+
+    public int getTransactionAttachmentCount() {
+        if (paAttachments == null) {
+            paAttachments = new ArrayList<>();
+        }
+
+        return paAttachments.size();
+    }
+    
+    /**
+     * Loads and downloads existing attachments of the vehicle description
+     *
+     * @return JSON result containing status and message.
+     * @throws SQLException If a database access error occurs.
+     * @throws GuanzonException If attachment model operations fail.
+     */
+    public JSONObject loadAttachments()
+            throws SQLException,
+            GuanzonException {
+        poJSON = new JSONObject();
+        paAttachments = new ArrayList<>();
+        String lsSourceCode = "Vrnt"; 
+        TransactionAttachment loAttachment = new SysTableContollers(poGRider, null).TransactionAttachment();
+        List loList = loAttachment.getAttachments(lsSourceCode, Detail(0).getVariantId());
+        for (int lnCtr = 0; lnCtr <= loList.size() - 1; lnCtr++) {
+            paAttachments.add(TransactionAttachment());
+            poJSON = paAttachments.get(getTransactionAttachmentCount() - 1).openRecord((String) loList.get(lnCtr));
+            if ("success".equals((String) poJSON.get("result"))) {
+                System.out.println(paAttachments.get(getTransactionAttachmentCount() - 1).getModel().getTransactionNo());
+                System.out.println(paAttachments.get(getTransactionAttachmentCount() - 1).getModel().getSourceNo());
+                System.out.println(paAttachments.get(getTransactionAttachmentCount() - 1).getModel().getSourceCode());
+                System.out.println(paAttachments.get(getTransactionAttachmentCount() - 1).getModel().getFileName());
+            }
+            
+            //Download Attachments
+            poJSON = WebFile.DownloadFile(WebFile.getAccessToken(System.getProperty("sys.default.access.token"))
+                    , "0032" //Constant
+                    , "" //Empty
+                    , paAttachments.get(getTransactionAttachmentCount() - 1).getModel().getFileName()
+                    , lsSourceCode
+                    , paAttachments.get(getTransactionAttachmentCount() - 1).getModel().getSourceNo()
+                    , "");
+            if ("success".equals((String) poJSON.get("result"))) {
+                
+                poJSON = (JSONObject) poJSON.get("payload");
+                if(WebFile.Base64ToFile((String) poJSON.get("data")
+                        , (String) poJSON.get("hash")
+                        , System.getProperty("sys.default.path.temp.attachments") + "/"
+                        , (String) poJSON.get("filename"))){
+                    System.out.println("poJSON success: " +  poJSON.toJSONString());
+                    System.out.println("File downloaded succesfully.");
+                } else {
+                    poJSON = (JSONObject) poJSON.get("error");
+                    poJSON.put("result", "error");
+                    System.out.println("ERROR WebFile.DownloadFile: " + poJSON.get("message"));
+                    System.out.println("poJSON error WebFile.DownloadFile: " + poJSON.toJSONString());
+                }
+                
+            } else {
+                System.out.println("poJSON error WebFile.DownloadFile: " + poJSON.toJSONString());
+            }
+        }
+        return poJSON;
+    }
+    
     public JSONObject printTransaction()
         throws CloneNotSupportedException, SQLException, GuanzonException {
 
@@ -2168,6 +2248,26 @@ public class VehicleQuotation extends Transaction {
 
             return poJSON;
         }
+        
+        
+        //get CAR Image
+        String lsCarImage = "";
+        poJSON = loadAttachments();
+        if(!isJSONSuccess(poJSON)){
+            return poJSON;
+        }
+        
+        for(int lnCtr = 0;lnCtr < getTransactionAttachmentCount(); lnCtr++){
+            if(RecordStatus.ACTIVE.equals(TransactionAttachmentList(lnCtr).getModel().getRecordStatus())){
+                lsCarImage = TransactionAttachmentList(lnCtr).getModel().getImagePath() + "/" + TransactionAttachmentList(lnCtr).getModel().getFileName();
+            }
+        }
+        
+        file = new File(lsCarImage);
+        if(!file.exists() || checkEmpty(lsCarImage)){
+            lsCarImage = System.getProperty("sys.default.path.config") + "/Reports/images/none.png";
+        }
+        
         /*
          * Create the final JasperPrint.
          * The first rate will initialize it.
@@ -2179,7 +2279,7 @@ public class VehicleQuotation extends Transaction {
         // ---------------------------------------------
         Map<String, Object> parameters = new HashMap<>();
 
-
+        parameters.put("sCarImage", lsCarImage);
         parameters.put("watermarkImagePath", lsWatermarkPath);
         parameters.put("sValidity",Master().getTransactionNo()+ "-"+ poGRider.getServerDate());
         parameters.put("sCompany",Company().getCompanyName().toUpperCase());
@@ -2318,7 +2418,7 @@ public class VehicleQuotation extends Transaction {
 //            }
 //        }
 //        parameters.put("nOtherAddOnsTotal",ldblOtherAddOnsTotal);
-    
+
         Double ldblTotalAccessories = 0.0000;
         Double ldblTotalAddOns = 0.0000;
         for(int lnCtr = 0;lnCtr < getAddOnListCount();lnCtr++){
@@ -2336,8 +2436,25 @@ public class VehicleQuotation extends Transaction {
 //            }
         }
         
-        parameters.put("nInclusionTotal",0.00);
+        Double ldblTotalDiscount = 0.0000;
+//        for(int lnCtr = 0;lnCtr < getAddOnListCount();lnCtr++){
+//            ldblTotalAddOns = ldblTotalAddOns + AddOnList(lnCtr).getTotalAmount();
+////            if(checkNotEmpty(AddOnList(lnCtr).getStockId())){
+//            if(checkNotEmpty(AddOnList(lnCtr).AddOnMaster().AddOnType().getAddTypeName())){
+//                if(AddOnList(lnCtr).AddOnMaster().AddOnType().getAddTypeName().toUpperCase().contains("LTO")
+//                        || AddOnList(lnCtr).AddOnMaster().AddOnType().getAddTypeName().toUpperCase().contains("TPL")
+//                        || AddOnList(lnCtr).AddOnMaster().AddOnType().getAddTypeName().toUpperCase().contains("Comprehensive")
+//                    ){
+//                    continue;
+//                }
+//            }
+//            ldblTotalAccessories = ldblTotalAccessories + AddOnList(lnCtr).getTotalAmount();
+////            }
+//        }
         
+        parameters.put("nTotalDiscount",     ldblTotalDiscount);       // TODO
+        parameters.put("bShowTotalDiscount", ldblTotalDiscount > 0.00);   // TODO
+        parameters.put("nInclusionTotal",0.00);
         parameters.put("nVehiclePrice",Detail(0).getSRPAmount());
         parameters.put("nAddOnTotal",ldblTotalAddOns);
         parameters.put("nAccessories",ldblTotalAccessories);
@@ -2364,8 +2481,13 @@ public class VehicleQuotation extends Transaction {
         parameters.put("nIHUMonthly",0.00);
         parameters.put("nIHBankRate",0.00);
         parameters.put("nIHYears",0.00);
+        parameters.put("bShowInHouse",       false);
+        parameters.put("bShowCash",          false);
+        parameters.put("bShowPurchaseOrder", false);
+        
         switch(Detail(0).getPaymentForm()){
             case "1": //Financing 
+                parameters.put("bShowInHouse",       true);
                 parameters.put("sMOP","Financing");
                 parameters.put("nIHUnitPrice",Detail(0).getSRPAmount());
                 parameters.put("nIHDownpayment",Detail(0).getDownPayment());
@@ -2374,6 +2496,7 @@ public class VehicleQuotation extends Transaction {
                 parameters.put("nIHBankRate",Detail(0).getRateValue());
             break;
             case "2": //PO
+                parameters.put("bShowPurchaseOrder", true);
                 parameters.put("sMOP","PO");
                 parameters.put("nPOUnitPrice",Detail(0).getSRPAmount());
                 parameters.put("nPOPromoDiscount",0.00);
@@ -2384,6 +2507,7 @@ public class VehicleQuotation extends Transaction {
                 parameters.put("nPOTotal",Detail(0).getTotalAmount());
             break;
             default: //Cash
+                parameters.put("bShowCash",          true);
                 parameters.put("sMOP","Cash");
                 parameters.put("nCashUnitPrice",Detail(0).getSRPAmount());
                 parameters.put("nCashInsurance",Detail(0).getComprehensiveAmount()); //TODO
@@ -2393,10 +2517,9 @@ public class VehicleQuotation extends Transaction {
             break;
         
         }
-        
-        
+       
         // ---------------------------------------------
-        // Build data for current DP rate
+        // Build data
         // ---------------------------------------------
         List<Map<String, Object>> laVehicleInfo = buildQuotationVehicleInfo();
         List<Map<String, ?>> vehicleInfo = new ArrayList<>(laVehicleInfo);
@@ -2404,11 +2527,14 @@ public class VehicleQuotation extends Transaction {
         List<Map<String, ?>> addons = new ArrayList<>(lAddOnList);
         List<Map<String, Object>> lFreebiesList = buildQuotationFreebies();
         List<Map<String, ?>> freebies = new ArrayList<>(lFreebiesList);
+        List<Map<String, Object>> lLockInInsuranceList = buildQuotationLockInInsurance();
+        List<Map<String, ?>> lockIn = new ArrayList<>(lLockInInsuranceList);
         
         // --- hand the rows to the report ---
         parameters.put("VehicleDataSource",    new JRMapCollectionDataSource((Collection) vehicleInfo));
         parameters.put("AddOnDataSource",    new JRMapCollectionDataSource((Collection) addons));
         parameters.put("InclusionDataSource", new JRMapCollectionDataSource((Collection) freebies));
+        parameters.put("LockInDataSource", new JRMapCollectionDataSource((Collection) lockIn));
         
         // ---------------------------------------------
         // Generate JasperPrint
@@ -2704,6 +2830,106 @@ public class VehicleQuotation extends Transaction {
         if(description == null){ description = "";}
         row.put("sDescription", description.toUpperCase());
         row.put("nQuantity", quantity);
+        rows.add(row);
+    }
+    
+    private List<Map<String, Object>> buildQuotationLockInInsurance() {
+        List<Map<String, Object>> rows = new ArrayList<>();
+        Double ldblFirstYear = 0.00;
+        Double ldblSecondYear = 0.00;
+        Double ldblThirdYear = 0.00;
+        Double ldblFourthYear = 0.00;
+        Double ldblFifthYear = 0.00;
+        try{
+            String lsSQL = "SELECT " +
+                    "  a.sValidIDx, " +
+                    "  a.sCompnyID, " +
+                    "  a.dFromDate, " +
+                    "  a.dThruDate, " +
+                    "  b.sVrntIDxx, " +
+                    "  b.sInsureID, " +
+                    "  b.nYearNoxx, " +
+                    "  b.nAmountxx " +
+                    "FROM Validity_Period_Master a " +
+                    "INNER JOIN Vehicle_Insurance_Master b ON b.sValidIDx = a.sValidIDx";
+            
+            lsSQL = MiscUtil.addCondition(lsSQL, 
+                                            " a.cRecdStat = " + SQLUtil.toSQL(ValidityPeriodStatus.APPROVED)
+                                            + " AND a.sCompnyID = " + SQLUtil.toSQL(psCompanyId)
+                                            + " AND b.sVrntIDxx = " + SQLUtil.toSQL(Detail(0).getVariantId())
+                                            );
+            lsSQL = lsSQL + " ORDER BY b.nYearNoxx ASC";
+            System.out.println("buildQuotationLockInInsurance : " + lsSQL);
+            ResultSet loRS = poGRider.executeQuery(lsSQL);
+            if (MiscUtil.RecordCount(loRS) > 0L) {
+                while (loRS.next()) {
+                    switch(loRS.getInt("nYearNoxx")){
+                        case 1:
+                            ldblFirstYear = loRS.getDouble("nAmountxx");
+                        break;
+                        case 2:
+                            ldblSecondYear = loRS.getDouble("nAmountxx");
+                        break;
+                        case 3:
+                            ldblThirdYear = loRS.getDouble("nAmountxx");
+                        break;
+                        case 4:
+                            ldblFourthYear = loRS.getDouble("nAmountxx");
+                        break;
+                        case 5:
+                            ldblFifthYear = loRS.getDouble("nAmountxx");
+                        break;
+                    }
+                } 
+            }
+            
+            MiscUtil.close(loRS);
+             
+            addLockInInsurance(rows
+                       , Detail(0).ModelVariant().Model().Brand().getDescription() + " " + Detail(0).ModelVariant().Model().getDescription()
+                       , Detail(0).ModelVariant().getDescription()
+                       , Detail(0).ModelVariant().Color().getDescription()
+                       , Detail(0).ModelVariant().VariantInsurance().getTransmission()
+                       , Detail(0).ModelVariant().getYearModel()
+                       ,ldblFirstYear
+                       ,ldblSecondYear
+                       ,ldblThirdYear
+                       ,ldblFourthYear
+                       ,ldblFifthYear
+               );
+            
+        } catch (SQLException | GuanzonException ex) {
+            Logger.getLogger(VehicleQuotation.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return rows;
+    }  
+  
+    // Keys here MUST match the <field name="..."> values in the .jrxml exactly.
+    private void addLockInInsurance(List<Map<String, Object>> rows
+                                , String sModel
+                                , String sVariant
+                                , String sColor
+                                , String sTransmission
+                                , int nYearModel
+                                , Double nFirstYear
+                                , Double nSecondYear
+                                , Double nThirdYear
+                                , Double nFourthYear
+                                , Double nFifthYear
+                        ) {
+        Map<String, Object> row = new LinkedHashMap<>();
+        if(sModel == null){ sModel = "";}
+        if(sVariant == null){ sVariant = "";}
+        if(sColor == null){ sColor = "";}
+        if(sTransmission == null){ sTransmission = "";}
+        String sDescription = sModel + " " + sVariant + " " + sTransmission + " " + sColor + " " + String.valueOf(nYearModel)  ;
+        
+        row.put("sDescription", sDescription.toUpperCase());
+        row.put("nFirstYear", nFirstYear);
+        row.put("nSecondYear", nSecondYear);
+        row.put("nThirdYear", nThirdYear);
+        row.put("nFourthYear", nFourthYear);
+        row.put("nFifthYear", nFifthYear);
         rows.add(row);
     }
     
