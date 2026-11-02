@@ -1402,6 +1402,37 @@ public class VehicleInsurance extends Transaction {
         }
     }
     
+    public JSONObject LoadVehicleInsurance()
+            throws ExceptionInInitializerError,
+            SQLException,
+            GuanzonException,
+            CloneNotSupportedException,
+            ScriptException {
+        poJSON = new JSONObject();
+        paDetail = new ArrayList<>();
+        initSQL();
+        String lsSQL = MiscUtil.addCondition(SQL_BROWSE, SQLUtil.toSQL(xsDateShort(poGRider.getServerDate())) + " BETWEEN a.dFromDate AND a.dThruDate "
+                                                + " AND a.cRecdStat = " + SQLUtil.toSQL(ValidityPeriodStatus.APPROVED)
+                                                + " AND a.sCompnyID = " + SQLUtil.toSQL(psCompanyId)
+                                                );
+        System.out.println("Executing SQL: " + lsSQL);
+        ResultSet loRS = poGRider.executeQuery(lsSQL);
+        if (MiscUtil.RecordCount(loRS) > 0) {
+            if(loRS.next()){
+                String lsID = loRS.getString("sValidIDx");
+                if(lsID != null && !"".equals(lsID)){
+                    poJSON = OpenTransaction(lsID);
+                    if(!isJSONSuccess(poJSON)){
+                        return poJSON;
+                    }
+                }
+            }
+        }
+        
+        poJSON = setJSON("success", "success");
+        return poJSON;
+    }
+    
      public Model_Branch Branch() throws SQLException, GuanzonException {
         Model_Branch loModel = new ParamModels(poGRider).Branch();
         loModel.initialize();
