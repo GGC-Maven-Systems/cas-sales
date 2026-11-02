@@ -17,8 +17,6 @@ DROP TABLE IF EXISTS `vehicle_inclusion_master`;
 
 CREATE TABLE `vehicle_inclusion_master` (
   `sInclIDxx` varchar(12) NOT NULL,
-  `sModelIDx` varchar(9) NOT NULL,
-  `sVrntIDxx` varchar(5) DEFAULT NULL,
   `sInclDesc` varchar(128) NOT NULL,
   `cRecdStat` char(1) NOT NULL DEFAULT '1',
   `sModified` varchar(32) DEFAULT NULL,
