@@ -22,6 +22,7 @@ import java.util.logging.Logger;
 import javafx.application.Platform;
 import javax.sql.rowset.CachedRowSet;
 import org.apache.commons.codec.binary.Base64;
+import org.guanzon.appdriver.agent.MatrixAuthChecker;
 import org.guanzon.appdriver.agent.ShowDialogFX;
 import org.guanzon.appdriver.agent.ShowMessageFX;
 import org.guanzon.appdriver.agent.services.Model;
@@ -48,9 +49,11 @@ import org.guanzon.cas.inv.InventoryBrowse;
 import org.guanzon.cas.parameter.InsuranceType;
 import org.guanzon.cas.parameter.Term;
 import org.guanzon.cas.parameter.services.ParamControllers;
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
+import ph.com.guanzongroup.cas.sales.authmatrix.AuthorizationMatrixOverride;
 import ph.com.guanzongroup.cas.sales.constant.SalesTransactionStatic;
 import ph.com.guanzongroup.cas.sales.constant.Sales_Reservation_Static;
 import ph.com.guanzongroup.cas.sales.mcpromo.MCPromoSales;
@@ -85,6 +88,9 @@ public class MCSales extends Transaction {
     private String psApprovalUser = "";
 
     private List<TransactionAttachment> paAttachments;
+    private static final String MATRIX_GROUP = "MC SALES MATRIX";
+
+    private MatrixAuthChecker poMatrixCheck = null;
 
     public void setIndustryID(String industryId) {
         psIndustryCode = industryId;
@@ -991,6 +997,10 @@ public class MCSales extends Transaction {
         loValidator.setTransactionStatus(status);
         loValidator.setMaster(poMaster);
 
+        ArrayList<Object> laOthers = new ArrayList<>();
+        laOthers.add(getTotalDiscount());
+        loValidator.setOthers(laOthers);
+
         poJSON = loValidator.validate();
         if (poJSON.containsKey("isRequiredApproval") && Boolean.TRUE.equals(poJSON.get("isRequiredApproval"))) {
             if (poGRider.getUserLevel() <= UserRight.ENCODER) {
@@ -1076,6 +1086,11 @@ public class MCSales extends Transaction {
             return poJSON;
         }
 
+        // authorization matrix
+        poJSON = confirmMatrixAuth(poJSON);
+        if ("error".equals((String) poJSON.get("result"))) {
+            return poJSON;
+        }
         poGRider.beginTrans("UPDATE STATUS", "ConfirmTransaction", SOURCE_CODE, getMaster().getTransactionNo());
 
         poJSON = statusChange(poMaster.getTable(),
@@ -1088,6 +1103,15 @@ public class MCSales extends Transaction {
             return poJSON;
         }
 
+        // mark the matrix request as used, inside the same transaction
+        if (poMatrixCheck != null) {
+            poJSON = poMatrixCheck.postAuth();
+            if ("error".equals((String) poJSON.get("result"))) {
+                poGRider.rollbackTrans();
+                return poJSON;
+            }
+        }
+
         poGRider.commitTrans();
 
         JSONObject loJSON = new JSONObject();
@@ -1096,6 +1120,21 @@ public class MCSales extends Transaction {
 
         openTransaction(getMaster().getTransactionNo());
         return loJSON;
+    }
+
+    private double getTotalDiscount() {
+        double lnDiscount = 0;
+        double lnAddDisc = 0;
+
+        for (int lnCtr = 0; lnCtr < paDetail.size(); lnCtr++) {
+            Model_Sales_Detail loDetail = (Model_Sales_Detail) paDetail.get(lnCtr);
+
+            double lnGross = round2(loDetail.getUnitPrice() * loDetail.getQuantity());
+            lnDiscount += round2(lnGross * loDetail.getDiscount() / 100.0);   // detail discount is a rate (%)
+            lnAddDisc += loDetail.getAddDiscount();                           // additional discount is an amount
+        }
+
+        return round2(lnDiscount + lnAddDisc);
     }
 
     public JSONObject CancelTransaction() throws SQLException, GuanzonException, CloneNotSupportedException {
@@ -1118,7 +1157,6 @@ public class MCSales extends Transaction {
         if ("error".equals((String) poJSON.get("result"))) {
             return poJSON;
         }
-
         poGRider.beginTrans("UPDATE STATUS", "CancelTransaction", SOURCE_CODE, getMaster().getTransactionNo());
 
         poJSON = statusChange(poMaster.getTable(),
@@ -1515,6 +1553,11 @@ public class MCSales extends Transaction {
             }
             return addClient();
         }
+        paSalesGiveaways.clear();
+        paSalesInsurance.clear();
+        paSalesRegistration.clear();
+        paQuotationNonItemized.clear();
+        paDetail.clear();
 
         // ----- existing client -----
         String lsClientID = poJSON.get("sClientID").toString();
@@ -1603,6 +1646,11 @@ public class MCSales extends Transaction {
 
         //load if button
         if (!loClient.isCancelled()) {
+            paSalesGiveaways.clear();
+            paSalesInsurance.clear();
+            paSalesRegistration.clear();
+            paQuotationNonItemized.clear();
+            paDetail.clear();
             lsClientId = loClient.getClient().getModel().getClientId();
 
             getMaster().setClientID(loClient.getClientId());
@@ -3354,4 +3402,131 @@ public class MCSales extends Transaction {
         loMaster.setAmountDue(round2(lnAmountDue));
     }
 
+    private JSONObject confirmMatrixAuth(JSONObject matrix) throws SQLException, GuanzonException {
+        poMatrixCheck = null;
+
+        // the validator found no matrix tier (no discount, or no tier covers it)
+        JSONArray loMatrix = (JSONArray) matrix.get("matrix");
+        if (loMatrix == null || loMatrix.isEmpty()) {
+            return setJSON("success", "No matrix approval required.");
+        }
+
+        String lsAuthType = (String) ((JSONObject) loMatrix.get(0)).get("sAuthType");
+
+        // load the request the validator just created / refreshed
+        MatrixAuthChecker loCheck = new MatrixAuthChecker(poGRider, SOURCE_CODE, getMaster().getTransactionNo());
+        JSONObject loJSON = loCheck.loadAuth();
+        if (!"success".equals((String) loJSON.get("result"))) {
+            return loJSON;
+        }
+
+        // not yet approved by enough approvers
+        if (!loCheck.isAuthOkay()) {
+
+            // system approval not allowed: someone has to approve
+            if (!loCheck.isAllowSys()) {
+
+                // 1. the current user may be one of the approvers
+                loJSON = loCheck.authTrans(lsAuthType, poGRider.getUserID());
+
+                if ("success".equals((String) loJSON.get("result"))) {
+                    setApproving(poGRider.getUserID());
+                    psApprovalUser = poGRider.getUserID();
+                } else {
+                    // 2. otherwise an approving officer logs in on the spot
+                    //comment if no needed
+                    loJSON = ShowDialogFX.getUserApproval(poGRider);
+                    if ("error".equals((String) loJSON.get("result"))) {
+                        return loJSON;
+                    }
+                    String lsUserIDxx = loJSON.get("sUserIDxx").toString();
+
+                    loJSON = loCheck.authTrans(lsAuthType, lsUserIDxx);
+                    if (!"success".equals((String) loJSON.get("result"))) {
+                        return loJSON;                 // not an approver of this request
+                    }
+                    setApproving(lsUserIDxx);
+                    psApprovalUser = lsUserIDxx;
+                }
+            }
+
+            // other approvers may still be outstanding
+            if (!loCheck.isAuthOkay()) {
+                return setJSON("error", "Approval request sent to the authorized approver(s). "
+                        + "Confirm again once the transaction is approved in the matrix.");
+            }
+        }
+
+        poMatrixCheck = loCheck;                       // fully approved, used in CloseTransaction
+        return setJSON("success", "Matrix approval completed.");
+    }
+
+    /**
+     * Recipients of the approval-matrix request of the loaded transaction, with
+     * their status. View only: it reads, it never changes anything.
+     */
+    public JSONObject getMatrixRecipients() throws SQLException {
+        String lsTransNo = getMaster().getTransactionNo();
+        if (lsTransNo == null || lsTransNo.isEmpty()) {
+            return setJSON("error", "No transaction loaded.");
+        }
+        if (getEditMode() == EditMode.ADDNEW) {
+            return setJSON("error", "");
+        }
+
+        String lsSQL = "SELECT a.cTranStat cMastStat"
+                + ", b.sAuthType, IFNULL(m.sAuthDesc, b.sAuthType) sAuthDesc, b.nAuthRqrd"
+                + ", (SELECT IFNULL(SUM(x.nAuthLevl), 0) FROM Transaction_Authorization_Recipient x"
+                + "     WHERE x.sSourceNo = b.sTransNox AND x.cTranStat = '1') nApproved"
+                + ", IFNULL(c.nAuthLevl, 0) nAuthLevl"
+                + ", IFNULL(c.cSentStat, '') cSentStat, IFNULL(c.cTranStat, '') cApprStat"
+                + ", IFNULL(e.sCompnyNm, IFNULL(c.sEmployID, '')) sName"
+                + " FROM Transaction_Authorization_Master a"
+                + " INNER JOIN Transaction_Authorization_Detail b ON b.sSourceNo = a.sTransNox"
+                + " LEFT JOIN xxxSysAuth_Matrix_Master m ON m.sAuthType = b.sAuthType"
+                + " LEFT JOIN Transaction_Authorization_Recipient c ON c.sSourceNo = b.sTransNox"
+                + " LEFT JOIN Client_Master e ON e.sClientID = c.sEmployID"
+                + " WHERE a.sSourceCD = " + SQLUtil.toSQL(SOURCE_CODE)
+                + " AND a.sSourceNo = " + SQLUtil.toSQL(lsTransNo)
+                + " ORDER BY b.sAuthType, c.nAuthLevl DESC, e.sCompnyNm";
+        System.out.println("Matrix recipients SQL =\n" + lsSQL);
+        ResultSet loRS = poGRider.executeQuery(lsSQL);
+
+        JSONArray loArray = new JSONArray();
+        boolean lbAllApproved = true;
+        String lsMastStat = "";
+
+        while (loRS.next()) {
+            lsMastStat = loRS.getString("cMastStat");
+            if (loRS.getInt("nApproved") < loRS.getInt("nAuthRqrd")) {
+                lbAllApproved = false;
+            }
+
+            String lsSent = loRS.getString("cSentStat");
+            String lsAppr = loRS.getString("cApprStat");
+
+            JSONObject loRow = new JSONObject();
+            loRow.put("sAuthType", loRS.getString("sAuthType"));
+            loRow.put("sAuthDesc", loRS.getString("sAuthDesc"));
+            loRow.put("nAuthRqrd", loRS.getInt("nAuthRqrd"));
+            loRow.put("nApproved", loRS.getInt("nApproved"));
+            loRow.put("sName", loRS.getString("sName"));
+            loRow.put("nAuthLevl", loRS.getInt("nAuthLevl"));
+            loRow.put("sSentStat", "1".equals(lsSent) ? "Sent" : "0".equals(lsSent) ? "Not Sent" : "-");
+            loRow.put("sApprStat", "1".equals(lsAppr) ? "Approved" : "0".equals(lsAppr) ? "Pending" : "-");
+            loArray.add(loRow);
+        }
+        MiscUtil.close(loRS);
+
+        if (loArray.isEmpty()) {
+            return setJSON("error", "No approval request found for this transaction.");
+        }
+
+        JSONObject loJSON = new JSONObject();
+        loJSON.put("result", "success");
+        loJSON.put("sRequestStatus",
+                "2".equals(lsMastStat) ? "Used" : lbAllApproved ? "Approved" : "Pending approval");
+        loJSON.put("recipients", loArray);
+        return loJSON;
+    }
 }

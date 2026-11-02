@@ -1148,9 +1148,9 @@ public class Model_Sales_Master extends Model {
             poCoClientEmployment.initialize();
         }
 
-        String modelPrimary = (String) (getValue("sClientID") == null
+        String modelPrimary = (String) (getValue("sCoCltID1") == null
                 ? ""
-                : getValue("sClientID"));
+                : getValue("sCoCltID1"));
 
         if (!"".equals(modelPrimary)) {
 

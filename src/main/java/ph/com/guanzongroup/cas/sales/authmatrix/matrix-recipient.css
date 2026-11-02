@@ -1,0 +1,135 @@
+/* Approval status dialog - matches the main screen (orange accent, dark grey headers).
+   Put this file next to MatrixRecipientDialog in the resources folder:
+   src/main/resources/ph/com/guanzongroup/cas/sales/authmatrix/matrix-recipient.css
+   Colors were estimated from the main screen, tweak the four values below to match exactly. */
+
+.matrix-dialog {
+    -accent: #ff8200;          /* orange used by OPEN badge, balance due, borders */
+    -dark: #4a4a4a;            /* table headers, title bar */
+    -panel: #f4f4f4;           /* screen background */
+    -bar: #d9d9d9;             /* section header bars (PAYMENT DETAILS, ...) */
+
+    -fx-background-color: -panel;
+    -fx-font-family: "Segoe UI", Tahoma, Arial, sans-serif;
+    -fx-font-size: 12px;
+    -fx-border-color: -accent;
+    -fx-border-width: 1;
+}
+
+/* header: grey bar with orange underline, like the section headers */
+.matrix-dialog .header-panel {
+    -fx-background-color: -bar;
+    -fx-border-color: -accent;
+    -fx-border-width: 0 0 2 0;
+    -fx-padding: 10 14 10 14;
+}
+
+.matrix-dialog .header-panel .label {
+    -fx-text-fill: #222222;
+    -fx-font-weight: bold;
+    -fx-font-size: 12px;
+}
+
+.matrix-dialog .caption {
+    -fx-text-fill: #222222;
+    -fx-font-weight: bold;
+}
+
+/* request status badge (same look as the OPEN badge) */
+.matrix-dialog .status-badge {
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-font-size: 13px;
+    -fx-padding: 4 22 4 22;
+    -fx-background-radius: 2;
+}
+
+.matrix-dialog .status-pending {
+    -fx-background-color: -accent;
+}
+
+.matrix-dialog .status-approved {
+    -fx-background-color: #2e7d32;
+}
+
+.matrix-dialog .status-used {
+    -fx-background-color: #757575;
+}
+
+/* table */
+.matrix-dialog .table-view {
+    -fx-background-color: white;
+    -fx-border-color: -accent;
+    -fx-border-width: 1;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}
+
+.matrix-dialog .table-view .column-header-background {
+    -fx-background-color: -dark;
+}
+
+.matrix-dialog .table-view .column-header-background .filler {
+    -fx-background-color: -dark;
+}
+
+.matrix-dialog .table-view .column-header {
+    -fx-background-color: -dark;
+    -fx-size: 30;
+    -fx-border-color: #5f5f5f;
+    -fx-border-width: 0 1 0 0;
+}
+
+.matrix-dialog .table-view .column-header .label {
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-alignment: CENTER;
+}
+
+.matrix-dialog .table-row-cell {
+    -fx-background-color: white;
+    -fx-table-cell-border-color: #e3e3e3;
+}
+
+.matrix-dialog .table-row-cell:odd {
+    -fx-background-color: -panel;
+}
+
+.matrix-dialog .table-row-cell:filled:selected {
+    -fx-background-color: #ffe3c2;
+}
+
+.matrix-dialog .table-cell {
+    -fx-text-fill: #222222;
+    -fx-padding: 0 8 0 8;
+}
+
+.matrix-dialog .table-row-cell:filled:selected .table-cell {
+    -fx-text-fill: #222222;
+}
+
+.matrix-dialog .table-cell.cell-approved {
+    -fx-text-fill: #2e7d32;
+    -fx-font-weight: bold;
+}
+
+.matrix-dialog .table-cell.cell-pending {
+    -fx-text-fill: #d96c00;
+    -fx-font-weight: bold;
+}
+
+/* close button: grey like Save / Cancel, orange on hover */
+.matrix-dialog .button-bar {
+    -fx-background-color: -panel;
+}
+
+.matrix-dialog .button-bar .button {
+    -fx-background-color: #7a7a7a;
+    -fx-background-radius: 2;
+    -fx-text-fill: white;
+    -fx-padding: 6 26 6 26;
+}
+
+.matrix-dialog .button-bar .button:hover {
+    -fx-background-color: -accent;
+}
