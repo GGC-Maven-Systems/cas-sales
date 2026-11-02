@@ -508,7 +508,7 @@ public class MCPromoSales extends Transaction {
     }
 
     public JSONObject openTransaction(String promoID) throws CloneNotSupportedException, SQLException, GuanzonException {
-        if (promoID.isEmpty()) {
+        if (promoID == null && promoID.isEmpty()) {
             poJSON = new JSONObject();
             poJSON.put("result", "error");
             poJSON.put("message", "Transaction must not empty.");

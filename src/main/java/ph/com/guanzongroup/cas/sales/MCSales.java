@@ -180,9 +180,9 @@ public class MCSales extends Transaction {
 
         // keep the last detail's keys in sync (only when there is one)
         if (!paDetail.isEmpty() && (getEditMode() == EditMode.ADDNEW || getEditMode() == EditMode.UPDATE)) {
-            Model_Sales_Giveaways lastDetail = (Model_Sales_Giveaways) paSalesGiveaways.get(paSalesGiveaways.size() - 1);
+            Model_Sales_Detail lastDetail = (Model_Sales_Detail) paDetail.get(paDetail.size() - 1);
             lastDetail.setTransNo(getMaster().getTransactionNo());
-            lastDetail.setEntryNo(getCountSalesGiveAway());
+            lastDetail.setEntryNo(getDetailCount());
         }
 
         //find the detail record
@@ -355,13 +355,9 @@ public class MCSales extends Transaction {
                 lsSQL = MiscUtil.addCondition(lsSQL, lsCondition);
             }
 
-            if (!psCategorCD.isEmpty()) {
-                lsSQL = MiscUtil.addCondition(lsSQL, "sCategrCd = " + SQLUtil.toSQL(psCategorCD));
-            }
-
-            lsSQL = lsSQL + " WHERE 1=1";
+            lsSQL = lsSQL + " WHERE sTransNox LIKE " + SQLUtil.toSQL(poGRider.getBranchCode() + "%");
+            lsSQL = lsSQL + " AND sCategrCd =" + SQLUtil.toSQL(psCategorCD);
             lsSQL = lsSQL + " GROUP BY sTransNox ";
-
             System.out.println("search Transaction Query =\n" + lsSQL);
             poJSON = ShowDialogFX.Search(poGRider,
                     lsSQL,
@@ -1760,7 +1756,7 @@ public class MCSales extends Transaction {
                     }
 
                     //Entry No Sales
-                    lnRowSale = lnRowSale++;
+                    lnRowSale++;
                     //initialize detail to set
                     getDetail(lnRowSale);
                     //Sync Detail to Sales Source's
@@ -1783,7 +1779,7 @@ public class MCSales extends Transaction {
                     }
 
                     //Entry No Sales
-                    lnRowSale = lnRowSale++;
+                    lnRowSale++;
                     //initialize detail to set
                     getDetail(lnRowSale);
                     //Sync Detail to Sales Source's
@@ -1956,6 +1952,8 @@ public class MCSales extends Transaction {
         String lsSQL = getSalesPromotion(
                 getDetail(fnRow).Inventory().getModelId(),
                 getDetail(fnRow).Inventory().getBrandId());
+
+        System.out.println("PROMOTION DETAIL QUERY =\n" + lsSQL);
         poJSON = ShowDialogFX.Search(poGRider,
                 lsSQL,
                 value,
@@ -1963,7 +1961,11 @@ public class MCSales extends Transaction {
                 "a.sPromIDxx»a.sPromDesc»a.dTransact»a.dFromDate»a.dThruDate",
                 "a.sPromIDxx»a.sPromDesc»a.dTransact»a.dFromDate»a.dThruDate",
                 byCode ? 0 : 1);
+
         if (poJSON != null) {
+            if ("error".equals(poJSON.get("result"))) {
+                return poJSON;
+            }
             getDetail(fnRow).setPromoID((String) poJSON.get("sPromIDxx"));
             //load Promotion Data
 
