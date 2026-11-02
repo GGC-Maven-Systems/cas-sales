@@ -297,6 +297,16 @@ public class MCSales extends Transaction {
         return paAttachments;
     }
 
+    @SuppressWarnings("unchecked")
+    public List<Model_Sales_Detail> getDetailList() {
+        return (List<Model_Sales_Detail>) (List<?>) paDetail;
+    }
+
+    @SuppressWarnings("unchecked")
+    public List<Model_Sales_Giveaways> getSaleGiveAwayList() {
+        return (List<Model_Sales_Giveaways>) (List<?>) paSalesGiveaways;
+    }
+
     public TransactionAttachment TransactionAttachmentList(int row) {
         return (TransactionAttachment) paAttachments.get(row);
     }
@@ -993,6 +1003,12 @@ public class MCSales extends Transaction {
         loValidator.setTransactionStatus(status);
         loValidator.setMaster(poMaster);
 
+        ArrayList laDetailList = new ArrayList<>(getDetailList());
+        loValidator.setDetail(laDetailList);
+
+        ArrayList laOther = new ArrayList<>(getSaleGiveAwayList());
+        loValidator.setOthers(laOther);
+
         ArrayList<Object> laOthers = new ArrayList<>();
         laOthers.add(getTotalDiscount());
         loValidator.setOthers(laOthers);
@@ -1520,6 +1536,7 @@ public class MCSales extends Transaction {
         loClient.setLogWrapper(null);
 
         loClient.setClientType(getClientType());
+        loClient.setCategoryCode(psCategorCD);
 
         String lsSQL = getSalesClientBrowse(poGRider.getIndustry());
         lsSQL = lsSQL + " WHERE cClientTp = " + SQLUtil.toSQL(getClientType());
@@ -1681,7 +1698,7 @@ public class MCSales extends Transaction {
             getMaster().setAddress(loSalesSource.Master().getAddressID());
             getMaster().setMobileNo(loSalesSource.Master().getContactID());
             getMaster().setAdvances(loSalesSource.Master().getAmountPaid());
-            getMaster().setSalesman(loSalesSource.Master().getEntryBy());
+//            getMaster().setSalesman(loSalesSource.Master().getEntryBy());
             getMaster().setSourceNo(loSalesSource.Master().getTransactionNo());
             getMaster().setSourceCode(loSalesSource.getSourceCode());
 
