@@ -339,6 +339,7 @@ public class Freebie extends Parameter {
         poJSON = new JSONObject();
         String lsSQL = MiscUtil.addCondition(getSQ_Browse(), " a.sFreebIDx != " +  SQLUtil.toSQL(poModel.getFreebieId())
                         + " AND a.sFreebDsc = " +  SQLUtil.toSQL(poModel.getDescription())
+                        + " AND a.cRecdStat != " +  SQLUtil.toSQL(FreebieStatus.VOID)
                         );
 
         System.out.println("checkExistingFreebie SQL : " + lsSQL);
