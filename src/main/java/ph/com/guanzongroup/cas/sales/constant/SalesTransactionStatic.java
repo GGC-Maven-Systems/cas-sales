@@ -54,7 +54,7 @@ public class SalesTransactionStatic {
         "Cash Balance",
         "Financing"};
 
-    public static final String[] CWT_RATES = {"None", "1%", "2%"};
+    public static final String[] CWT_RATES = {"Yes", "No"};
     public static final String[] ATTACHMENT_TYPES = {"Others", "Customer ID", "Invoice", "BIR 2317"};
 
     // ---------------------------------------------------------------------
