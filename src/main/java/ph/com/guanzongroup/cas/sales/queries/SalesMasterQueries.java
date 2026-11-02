@@ -148,7 +148,7 @@ public class SalesMasterQueries {
                 + ",\n          s.dTransact AS dSourceDt"
                 + ",\n          " + lsName + " AS xClientNm"
                 + "\n     FROM Sales_Master a"
-                + "\n     JOIN Sales_Quotation_Master s ON a.sSourceNo = s.sTransNox"
+                + "\n     JOIN Sales_Quotation_Version_Master s ON a.sSourceNo = s.sTransNox"
                 + "\n     LEFT JOIN Client_Master c ON a.sClientID = c.sClientID"
                 + "\n    WHERE a.sIndstCdx = " + SQLUtil.toSQL(industrycode)
                 + "\n   UNION ALL"

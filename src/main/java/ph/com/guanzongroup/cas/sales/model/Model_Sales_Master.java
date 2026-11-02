@@ -1098,61 +1098,45 @@ public class Model_Sales_Master extends Model {
             poClientEmployment.setTableName("Client_Employment");
             poClientEmployment.initialize();
         }
-        String modelClient = (String) (getValue("sClientID") == null
-                ? "" : getValue("sClientID"));
 
-        if ("".equals(modelClient)) {
-            poClientEmployment.initialize();
-            return poClientEmployment;
-        }
+        String modelPrimary = (String) (getValue("sClientID") == null
+                ? ""
+                : getValue("sClientID"));
 
-        //load email addresses
-        String lsSQL = "SELECT * FROM Client_Employment"
-                + " WHERE sClientID = " + SQLUtil.toSQL(modelClient)
-                + " ORDER BY sClientID";
+        if (!"".equals(modelPrimary)) {
 
-        ResultSet loRS = poGRider.executeQuery(lsSQL);
-        if (MiscUtil.RecordCount(loRS) > 0L) {
+            if (poClientEmployment.getEditMode() == EditMode.READY
+                    && poClientEmployment.getClientId().equals(modelPrimary)) {
+                return poClientEmployment;
+            }
 
-            String modelPrimary = loRS.getString("sClientID") == null
-                    ? "" : loRS.getString("sClientID");
+            if (ReferenceCache.tryLoad(
+                    "Client_Employment",
+                    modelPrimary,
+                    poClientEmployment)) {
+                return poClientEmployment;
+            }
 
-            if (!"".equals(modelPrimary)) {
+            poJSON = poClientEmployment.openRecord(modelPrimary);
 
-                if (poClientEmployment.getEditMode() == EditMode.READY
-                        && poClientEmployment.getClientId().equals(modelPrimary)) {
-                    return poClientEmployment;
-                }
-
-                if (ReferenceCache.tryLoad(
+            if ("success".equals((String) poJSON.get("result"))) {
+                ReferenceCache.store(
                         "Client_Employment",
                         modelPrimary,
-                        poClientEmployment)) {
-                    return poClientEmployment;
-                }
-
-                poJSON = poClientEmployment.openRecord(modelPrimary);
-
-                if ("success".equals((String) poJSON.get("result"))) {
-                    ReferenceCache.store(
-                            "Client_Employment",
-                            modelPrimary,
-                            poClientEmployment);
-                    return poClientEmployment;
-                } else {
-                    poClientEmployment.initialize();
-                    return poClientEmployment;
-                }
-
+                        poClientEmployment
+                );
+                return poClientEmployment;
             } else {
                 poClientEmployment.initialize();
                 return poClientEmployment;
             }
+
         } else {
             poClientEmployment.initialize();
             return poClientEmployment;
         }
     }
+
     public Model_Client_Employment CoClientEmployment()
             throws SQLException, GuanzonException {
 
@@ -1163,56 +1147,39 @@ public class Model_Sales_Master extends Model {
             poCoClientEmployment.setTableName("Client_Employment");
             poCoClientEmployment.initialize();
         }
-        String modelClient = (String) (getValue("sClientID") == null
-                ? "" : getValue("sClientID"));
 
-        if ("".equals(modelClient)) {
-            poCoClientEmployment.initialize();
-            return poCoClientEmployment;
-        }
+        String modelPrimary = (String) (getValue("sClientID") == null
+                ? ""
+                : getValue("sClientID"));
 
-        //load email addresses
-        String lsSQL = "SELECT * FROM Client_Employment"
-                + " WHERE sClientID = " + SQLUtil.toSQL(modelClient)
-                + " ORDER BY sClientID";
+        if (!"".equals(modelPrimary)) {
 
-        ResultSet loRS = poGRider.executeQuery(lsSQL);
-        if (MiscUtil.RecordCount(loRS) > 0L) {
+            if (poCoClientEmployment.getEditMode() == EditMode.READY
+                    && poCoClientEmployment.getClientId().equals(modelPrimary)) {
+                return poCoClientEmployment;
+            }
 
-            String modelPrimary = loRS.getString("sClientID") == null
-                    ? "" : loRS.getString("sClientID");
+            if (ReferenceCache.tryLoad(
+                    "Client_Employment",
+                    modelPrimary,
+                    poCoClientEmployment)) {
+                return poCoClientEmployment;
+            }
 
-            if (!"".equals(modelPrimary)) {
+            poJSON = poCoClientEmployment.openRecord(modelPrimary);
 
-                if (poCoClientEmployment.getEditMode() == EditMode.READY
-                        && poCoClientEmployment.getClientId().equals(modelPrimary)) {
-                    return poCoClientEmployment;
-                }
-
-                if (ReferenceCache.tryLoad(
+            if ("success".equals((String) poJSON.get("result"))) {
+                ReferenceCache.store(
                         "Client_Employment",
                         modelPrimary,
-                        poCoClientEmployment)) {
-                    return poCoClientEmployment;
-                }
-
-                poJSON = poCoClientEmployment.openRecord(modelPrimary);
-
-                if ("success".equals((String) poJSON.get("result"))) {
-                    ReferenceCache.store(
-                            "Client_Employment",
-                            modelPrimary,
-                            poCoClientEmployment);
-                    return poCoClientEmployment;
-                } else {
-                    poCoClientEmployment.initialize();
-                    return poCoClientEmployment;
-                }
-
+                        poCoClientEmployment
+                );
+                return poCoClientEmployment;
             } else {
                 poCoClientEmployment.initialize();
                 return poCoClientEmployment;
             }
+
         } else {
             poCoClientEmployment.initialize();
             return poCoClientEmployment;
