@@ -57,6 +57,11 @@
         <exec.mainClass>ph.com.guanzongroup.cas.sales.t1.CasSalesT1</exec.mainClass>
     </properties>
     <build>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+            </resource>
+        </resources>
         <plugins>
             <!-- JaCoCo plugin -->
             <plugin>
@@ -86,6 +91,7 @@
                         </goals>
                     </execution>
                 </executions>
+                
             </plugin>
 
             <!-- Surefire plugin -->

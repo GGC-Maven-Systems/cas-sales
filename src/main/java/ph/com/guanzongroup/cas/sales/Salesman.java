@@ -351,7 +351,7 @@ public class Salesman extends Parameter {
                 + "  , a.sFrstName "
                 + "  , a.sMiddName "
                 + "  , a.cRecdStat "
-                + "  , concat(a.sLastName,', ',a.sFrstName, ' ',a.sMiddName) as sFullName "
+                + "  , CONCAT(a.sLastName,', ',a.sFrstName, ' ',a.sMiddName) as sFullName "
                 + " FROM salesman a ";
 //                + " LEFT JOIN ggc_isysdbf.client_master b on b.sClientID = a.sEmployID ";
     }
@@ -367,11 +367,11 @@ public class Salesman extends Parameter {
                 + " , b.sFrstName "
                 + " , b.sMiddName "
                 + " , c.sBranchNm "
-                + " FROM ggc_isysdbf.Employee_Master001 a "
-                + " LEFT JOIN ggc_isysdbf.Client_Master b ON b.sClientID = a.sEmployID "
-                + " LEFT JOIN ggc_isysdbf.Branch c ON c.sBranchCd = a.sBranchCd "
-                + " LEFT JOIN ggc_isysdbf.Department d ON a.sDeptIDxx = d.sDeptIDxx "
-                + " LEFT JOIN ggc_isysdbf.Position e ON a.sPositnID = e.sPositnID ";
+                + " FROM Employee_Master001 a "
+                + " LEFT JOIN Client_Master b ON b.sClientID = a.sEmployID "
+                + " LEFT JOIN Branch c ON c.sBranchCd = a.sBranchCd "
+                + " LEFT JOIN Department d ON a.sDeptIDxx = d.sDeptIDxx "
+                + " LEFT JOIN Position e ON a.sPositnID = e.sPositnID ";
 
     }
     public String getSalesman() {
@@ -386,15 +386,15 @@ public class Salesman extends Parameter {
                 + "  , d.sBranchNm "
                 + "  , f.sPositnNm "
                 + " FROM Salesman a "
-                + " LEFT JOIN ggc_isysdbf.Employee_Master001 b "
+                + " LEFT JOIN Employee_Master001 b "
                 + "        ON a.sEmployID = b.sEmployID "
-                + " LEFT JOIN ggc_isysdbf.Client_Master c "
+                + " LEFT JOIN Client_Master c "
                 + "        ON a.sEmployID = c.sClientID "
-                + " LEFT JOIN ggc_isysdbf.Branch d "
+                + " LEFT JOIN Branch d "
                 + "        ON d.sBranchCd = a.sBranchCd "
-                + " LEFT JOIN ggc_isysdbf.Department e "
+                + " LEFT JOIN Department e "
                 + "        ON b.sDeptIDxx = e.sDeptIDxx "
-                + " LEFT JOIN ggc_isysdbf.Position f "
+                + " LEFT JOIN Position f "
                 + "        ON b.sPositnID = f.sPositnID ";
     }
 
@@ -448,11 +448,11 @@ public class Salesman extends Parameter {
                 + " , c.sBranchNm "
                 + " , d.sDeptName "
                 + " , e.sPositnNm "
-                + " FROM ggc_isysdbf.Employee_Master001 a "
-                + " LEFT JOIN ggc_isysdbf.Client_Master b ON b.sClientID = a.sEmployID "
-                + " LEFT JOIN ggc_isysdbf.Branch c ON c.sBranchCd = a.sBranchCd "
-                + " LEFT JOIN ggc_isysdbf.Department d ON a.sDeptIDxx = d.sDeptIDxx "
-                + " LEFT JOIN ggc_isysdbf.Position e ON a.sPositnID = e.sPositnID ";
+                + " FROM Employee_Master001 a "
+                + " LEFT JOIN Client_Master b ON b.sClientID = a.sEmployID "
+                + " LEFT JOIN Branch c ON c.sBranchCd = a.sBranchCd "
+                + " LEFT JOIN Department d ON a.sDeptIDxx = d.sDeptIDxx "
+                + " LEFT JOIN Position e ON a.sPositnID = e.sPositnID ";
 
         lsSQL = MiscUtil.addCondition(lsSQL,
                 " a.sEmployID = " + SQLUtil.toSQL(fsEmployID));

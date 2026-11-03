@@ -1103,7 +1103,12 @@ public class MCSales extends Transaction {
         if ("error".equals((String) poJSON.get("result"))) {
             return poJSON;
         }
-        poGRider.beginTrans("UPDATE STATUS", "ConfirmTransaction", SOURCE_CODE, getMaster().getTransactionNo());
+
+        //blocker incase 
+        if (!poGRider.getGConnection().getConnection().getAutoCommit()) {
+            poGRider.commitTrans();
+        }
+        poGRider.beginTrans("UPDATE STATUS", "", SOURCE_CODE, getMaster().getTransactionNo());
 
         poJSON = statusChange(poMaster.getTable(),
                 (String) poMaster.getValue("sTransNox"),
@@ -1910,7 +1915,7 @@ public class MCSales extends Transaction {
             throws SQLException, GuanzonException, CloneNotSupportedException, Exception {
         poJSON = new JSONObject();
 
-        ClientInfo loClient = new ClientControllers(poGRider, logwrapr).ClientInfo();
+        Salesman loClient = new SalesControllers(poGRider, logwrapr).Salesman();
         loClient.initialize();
         loClient.setWithParentClass(true);
         loClient.setWithUI(false);
@@ -1920,7 +1925,7 @@ public class MCSales extends Transaction {
         if (poJSON != null) {
             if ("success".equals((String) poJSON.get("result"))) {
 
-                getMaster().setSalesman(loClient.getModel().getClientId());
+                getMaster().setSalesman(loClient.getModel().getEmployeeId());
 
                 poJSON = new JSONObject();
                 poJSON.put("result", "success");
@@ -3452,8 +3457,10 @@ public class MCSales extends Transaction {
                     setApproving(poGRider.getUserID());
                     psApprovalUser = poGRider.getUserID();
                 } else {
-                    // 2. otherwise an approving officer logs in on the spot
-                    //comment if no needed
+                    if (!ShowMessageFX.YesNo("Do you want to use System Code Approval?", "System Code Approval", null)) {
+                        return setJSON("error", "Approval request sent to the authorized approver(s). "
+                                + "Confirm again once the transaction is approved in the matrix.");
+                    }
                     loJSON = ShowDialogFX.getUserApproval(poGRider);
                     if ("error".equals((String) loJSON.get("result"))) {
                         return loJSON;
@@ -3493,58 +3500,50 @@ public class MCSales extends Transaction {
             return setJSON("error", "");
         }
 
-        String lsSQL = "SELECT a.cTranStat cMastStat"
-                + ", b.sAuthType, IFNULL(m.sAuthDesc, b.sAuthType) sAuthDesc, b.nAuthRqrd"
-                + ", (SELECT IFNULL(SUM(x.nAuthLevl), 0) FROM Transaction_Authorization_Recipient x"
-                + "     WHERE x.sSourceNo = b.sTransNox AND x.cTranStat = '1') nApproved"
-                + ", IFNULL(c.nAuthLevl, 0) nAuthLevl"
-                + ", IFNULL(c.cSentStat, '') cSentStat, IFNULL(c.cTranStat, '') cApprStat"
-                + ", IFNULL(e.sCompnyNm, IFNULL(c.sEmployID, '')) sName"
+        String lsSQL = "SELECT IFNULL(d.sCompnyNm, IFNULL(c.sEmployID, '')) sName"
+                + ", IFNULL(c.cSentStat, '') cSentStat"
+                + ", IFNULL(c.cTranStat, '') cApprStat"
+                + ", c.dApproved"
                 + " FROM Transaction_Authorization_Master a"
                 + " INNER JOIN Transaction_Authorization_Detail b ON b.sSourceNo = a.sTransNox"
-                + " LEFT JOIN xxxSysAuth_Matrix_Master m ON m.sAuthType = b.sAuthType"
-                + " LEFT JOIN Transaction_Authorization_Recipient c ON c.sSourceNo = b.sTransNox"
-                + " LEFT JOIN Client_Master e ON e.sClientID = c.sEmployID"
+                + " INNER JOIN Transaction_Authorization_Recipient c ON c.sSourceNo = b.sTransNox"
+                + " LEFT JOIN Client_Master d ON d.sClientID = c.sEmployID"
                 + " WHERE a.sSourceCD = " + SQLUtil.toSQL(SOURCE_CODE)
                 + " AND a.sSourceNo = " + SQLUtil.toSQL(lsTransNo)
-                + " ORDER BY b.sAuthType, c.nAuthLevl DESC, e.sCompnyNm";
+                + " ORDER BY b.sAuthType, c.nAuthLevl DESC, d.sCompnyNm";
         System.out.println("Matrix recipients SQL =\n" + lsSQL);
         ResultSet loRS = poGRider.executeQuery(lsSQL);
 
         JSONArray loArray = new JSONArray();
         boolean lbAllApproved = true;
-        String lsMastStat = "";
 
-        while (loRS.next()) {
-            lsMastStat = loRS.getString("cMastStat");
-            if (loRS.getInt("nApproved") < loRS.getInt("nAuthRqrd")) {
-                lbAllApproved = false;
+        try {
+            while (loRS.next()) {
+                String lsSent = loRS.getString("cSentStat");
+                String lsAppr = loRS.getString("cApprStat");
+
+                if (!"1".equals(lsAppr)) {
+                    lbAllApproved = false;   // any recipient not approved = still pending
+                }
+
+                JSONObject loRow = new JSONObject();
+                loRow.put("sName", loRS.getString("sName"));
+                loRow.put("dApproved", loRS.getObject("dApproved") == null ? "" : loRS.getObject("dApproved").toString());
+                loRow.put("sSentStat", "1".equals(lsSent) ? "Sent" : "0".equals(lsSent) ? "Not Sent" : "-");
+                loRow.put("sApprStat", "1".equals(lsAppr) ? "Approved" : "0".equals(lsAppr) ? "Pending" : "-");
+                loArray.add(loRow);
             }
-
-            String lsSent = loRS.getString("cSentStat");
-            String lsAppr = loRS.getString("cApprStat");
-
-            JSONObject loRow = new JSONObject();
-            loRow.put("sAuthType", loRS.getString("sAuthType"));
-            loRow.put("sAuthDesc", loRS.getString("sAuthDesc"));
-            loRow.put("nAuthRqrd", loRS.getInt("nAuthRqrd"));
-            loRow.put("nApproved", loRS.getInt("nApproved"));
-            loRow.put("sName", loRS.getString("sName"));
-            loRow.put("nAuthLevl", loRS.getInt("nAuthLevl"));
-            loRow.put("sSentStat", "1".equals(lsSent) ? "Sent" : "0".equals(lsSent) ? "Not Sent" : "-");
-            loRow.put("sApprStat", "1".equals(lsAppr) ? "Approved" : "0".equals(lsAppr) ? "Pending" : "-");
-            loArray.add(loRow);
+        } finally {
+            MiscUtil.close(loRS);
         }
-        MiscUtil.close(loRS);
 
         if (loArray.isEmpty()) {
-            return setJSON("error", "No approval request found for this transaction.");
+            return setJSON("error", "No approval found for this transaction.");
         }
 
         JSONObject loJSON = new JSONObject();
         loJSON.put("result", "success");
-        loJSON.put("sRequestStatus",
-                "2".equals(lsMastStat) ? "Used" : lbAllApproved ? "Approved" : "Pending approval");
+        loJSON.put("sRequestStatus", lbAllApproved ? "Approved" : "Pending approval");
         loJSON.put("recipients", loArray);
         return loJSON;
     }
