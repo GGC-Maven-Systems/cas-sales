@@ -74,87 +74,87 @@ public class Inclusion extends Parameter {
         return poModel;
     }
     
-    private Model_Vehicle_Inclusion_Master Detail()
-            throws SQLException,
-            GuanzonException {
-        return new SalesModels(poGRider).VehicleInclusionMaster();
-    }
+//    private Model_Vehicle_Inclusion_Master Detail()
+//            throws SQLException,
+//            GuanzonException {
+//        return new SalesModels(poGRider).VehicleInclusionMaster();
+//    }
+//    
+//    public Model_Vehicle_Inclusion_Master Detail(int row) {
+//        return (Model_Vehicle_Inclusion_Master) paModel.get(row); 
+//    }
+//
+//    public int getDetailCount() {
+//        if (paModel == null) {
+//            paModel = new ArrayList<>();
+//        }
+//
+//        return paModel.size();
+//    }
+//    
+//    public JSONObject AddDetail() throws CloneNotSupportedException, SQLException, GuanzonException {
+//        poJSON = new JSONObject();
+//        if (getDetailCount() > 0) {
+//            if ((Detail(getDetailCount() - 1).getModelId() == null || "".equals(Detail(getDetailCount() - 1).getModelId()))){
+//                poJSON = new JSONObject();
+//                poJSON = setJSON("error", "Last row has empty item.");
+//                return poJSON;
+//            }
+//        }
+//        
+//        paModel.add(Detail());
+//        poJSON = paModel.get(getDetailCount() - 1).newRecord();
+//        paModel.get(getDetailCount() - 1).setDescription(getModel().getDescription());
+//        return poJSON;
+//    }
+//    
+//    public void ReloadDetail() throws CloneNotSupportedException, SQLException, GuanzonException{
+//        int lnCtr = getDetailCount() - 1;
+//        while (lnCtr >= 0) {
+//            if (Detail(lnCtr).getModelId() == null || "".equals(Detail(lnCtr).getModelId())
+//                ) {
+//                paModel.remove(lnCtr);
+//            } 
+//            lnCtr--;
+//        }
+//        
+//        if ((getDetailCount() - 1) >= 0) {
+//            if (
+//                (Detail(getDetailCount() - 1).getModelId() != null && !"".equals(Detail(getDetailCount() - 1).getModelId()))
+//                && (Detail(getDetailCount() - 1).getDescription() != null && !"".equals(Detail(getDetailCount() - 1).getDescription()))
+//                ) {
+//                AddDetail();
+//            }
+//        }
+//
+//        if ((getDetailCount() - 1) < 0) {
+//            AddDetail();
+//        }
+//    }
     
-    public Model_Vehicle_Inclusion_Master Detail(int row) {
-        return (Model_Vehicle_Inclusion_Master) paModel.get(row); 
-    }
-
-    public int getDetailCount() {
-        if (paModel == null) {
-            paModel = new ArrayList<>();
-        }
-
-        return paModel.size();
-    }
-    
-    public JSONObject AddDetail() throws CloneNotSupportedException, SQLException, GuanzonException {
-        poJSON = new JSONObject();
-        if (getDetailCount() > 0) {
-            if ((Detail(getDetailCount() - 1).getModelId() == null || "".equals(Detail(getDetailCount() - 1).getModelId()))){
-                poJSON = new JSONObject();
-                poJSON = setJSON("error", "Last row has empty item.");
-                return poJSON;
-            }
-        }
-        
-        paModel.add(Detail());
-        poJSON = paModel.get(getDetailCount() - 1).newRecord();
-        paModel.get(getDetailCount() - 1).setDescription(getModel().getDescription());
-        return poJSON;
-    }
-    
-    public void ReloadDetail() throws CloneNotSupportedException, SQLException, GuanzonException{
-        int lnCtr = getDetailCount() - 1;
-        while (lnCtr >= 0) {
-            if (Detail(lnCtr).getModelId() == null || "".equals(Detail(lnCtr).getModelId())
-                ) {
-                paModel.remove(lnCtr);
-            } 
-            lnCtr--;
-        }
-        
-        if ((getDetailCount() - 1) >= 0) {
-            if (
-                (Detail(getDetailCount() - 1).getModelId() != null && !"".equals(Detail(getDetailCount() - 1).getModelId()))
-                && (Detail(getDetailCount() - 1).getDescription() != null && !"".equals(Detail(getDetailCount() - 1).getDescription()))
-                ) {
-                AddDetail();
-            }
-        }
-
-        if ((getDetailCount() - 1) < 0) {
-            AddDetail();
-        }
-    }
-    
-    private JSONObject loadVehicleInclusions(String fsInclusion) throws SQLException, GuanzonException{
-        poJSON = new JSONObject();
-        paModel = new ArrayList<>();
-        String lsSQL = MiscUtil.addCondition(getSQ_Browse(), " a.sInclDesc = " +  SQLUtil.toSQL(fsInclusion)
-                        );
-
-        System.out.println("loadVehicleInclusions SQL : " + lsSQL);
-        ResultSet loRS = poGRider.executeQuery(lsSQL);
-        if (MiscUtil.RecordCount(loRS) >= 0) {
-            while (loRS.next()) {
-                // Print the result set
-                System.out.println("sInclIDxx: " + loRS.getString("sInclIDxx"));
-                System.out.println("------------------------------------------------------------------------------");
-                paModel.add(Detail());
-                paModel.get(getDetailCount() - 1).openRecord(loRS.getString("sInclIDxx"));
-            }
-        }
-        MiscUtil.close(loRS);
-        
-        poJSON = setJSON("success", "success.");
-        poJSON.put("continue", true);
-        return poJSON;
-    }
+//    private JSONObject loadVehicleInclusions(String fsInclusion) throws SQLException, GuanzonException{
+//        poJSON = new JSONObject();
+//        paModel = new ArrayList<>();
+//        String lsSQL = MiscUtil.addCondition(getSQ_Browse(), " a.sInclDesc = " +  SQLUtil.toSQL(fsInclusion)
+//                        );
+//
+//        System.out.println("loadVehicleInclusions SQL : " + lsSQL);
+//        ResultSet loRS = poGRider.executeQuery(lsSQL);
+//        if (MiscUtil.RecordCount(loRS) >= 0) {
+//            while (loRS.next()) {
+//                // Print the result set
+//                System.out.println("sInclIDxx: " + loRS.getString("sInclIDxx"));
+//                System.out.println("------------------------------------------------------------------------------");
+//                paModel.add(Detail());
+//                paModel.get(getDetailCount() - 1).openRecord(loRS.getString("sInclIDxx"));
+//            }
+//        }
+//        MiscUtil.close(loRS);
+//        
+//        poJSON = setJSON("success", "success.");
+//        poJSON.put("continue", true);
+//        return poJSON;
+//    }
     
     /**
     * Requests user approval for the current transaction.
@@ -202,17 +202,17 @@ public class Inclusion extends Parameter {
             return poJSON;
         }
         
-        String lsSQL = MiscUtil.addCondition(getSQ_Browse(), " sInclDesc = " + SQLUtil.toSQL(getModel().getDescription()));
-        ResultSet loRS = poGRider.executeQuery(lsSQL);
-        poJSON = new JSONObject();
-        if (MiscUtil.RecordCount(loRS) >= 0) {
-            AddDetail();
-            while(loRS.next()){
-                Detail(getDetailCount() - 1).openRecord(loRS.getString("sInclIDxx"));
-                ReloadDetail();
-            }
-        }
-        MiscUtil.close(loRS);
+//        String lsSQL = MiscUtil.addCondition(getSQ_Browse(), " sInclDesc = " + SQLUtil.toSQL(getModel().getDescription()));
+//        ResultSet loRS = poGRider.executeQuery(lsSQL);
+//        poJSON = new JSONObject();
+//        if (MiscUtil.RecordCount(loRS) >= 0) {
+//            AddDetail();
+//            while(loRS.next()){
+//                Detail(getDetailCount() - 1).openRecord(loRS.getString("sInclIDxx"));
+//                ReloadDetail();
+//            }
+//        }
+//        MiscUtil.close(loRS);
          
         poJSON = setJSON("success","success");
         return poJSON;

@@ -209,8 +209,8 @@ public class InclusionTest {
             
             loJSON = poController.getModel().setDescription("Umbrella");
             Assert.assertEquals("success", loJSON.get("result"));
-            loJSON = poController.getModel().setModelId("W00525028");
-            Assert.assertEquals("success", loJSON.get("result"));
+//            loJSON = poController.getModel().setModelId("W00525028");
+//            Assert.assertEquals("success", loJSON.get("result"));
             
             loJSON = poController.saveRecord();
             System.out.println("MESSAGE : " + loJSON.get("message"));
@@ -248,8 +248,8 @@ public class InclusionTest {
             
             loJSON = poController.getModel().setDescription("Mattings");
             Assert.assertEquals("success", loJSON.get("result"));
-            loJSON = poController.getModel().setModelId("W00525028");
-            Assert.assertEquals("success", loJSON.get("result"));
+//            loJSON = poController.getModel().setModelId("W00525028");
+//            Assert.assertEquals("success", loJSON.get("result"));
             
             loJSON = poController.saveRecord();
             System.out.println("MESSAGE : " + loJSON.get("message"));

@@ -55,21 +55,21 @@ public class Model_Vehicle_Inclusion_Master extends Model {
         return (String) getValue("sInclIDxx");
     }
 
-    public JSONObject setModelId(String modelId) {
-        return setValue("sModelIDx", modelId);
-    }
-
-    public String getModelId() {
-        return (String) getValue("sModelIDx");
-    }
-
-    public JSONObject setVariantId(String variantId) {
-        return setValue("sVrntIDxx", variantId);
-    }
-
-    public String getVariantId() {
-        return (String) getValue("sVrntIDxx");
-    }
+//    public JSONObject setModelId(String modelId) {
+//        return setValue("sModelIDx", modelId);
+//    }
+//
+//    public String getModelId() {
+//        return (String) getValue("sModelIDx");
+//    }
+//
+//    public JSONObject setVariantId(String variantId) {
+//        return setValue("sVrntIDxx", variantId);
+//    }
+//
+//    public String getVariantId() {
+//        return (String) getValue("sVrntIDxx");
+//    }
 
     public JSONObject setDescription(String description) {
         return setValue("sInclDesc", description);
