@@ -57,6 +57,7 @@ import java.util.*;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.json.simple.JSONArray;
 
 /**
  * Manages vehicle financing price transactions including approval, voiding, and cancellation.
@@ -74,6 +75,7 @@ public class VehiclePromotion extends Transaction {
     public List<Model_Promotion_AddOn> paAddOn;
     public List<Model_Promotion_Freebie> paFreebie;
     public List<Model_Promotion_Inclusion> paInclusion;
+    public List<Model_Validity_Period_Master> paTransactionList;
 
     /**
      * Initializes and exposes the promotion model family used by the promotion workflow.
@@ -95,6 +97,7 @@ public class VehiclePromotion extends Transaction {
         paAddOn = new ArrayList<Model_Promotion_AddOn>();
         paFreebie = new ArrayList<Model_Promotion_Freebie>();
         paInclusion = new ArrayList<Model_Promotion_Inclusion>();
+        paTransactionList = new ArrayList<Model_Validity_Period_Master>();
         psApprover = "";
         setApproving("");
         return initialize();
@@ -702,6 +705,56 @@ public class VehiclePromotion extends Transaction {
         }
     }
     
+    public JSONObject loadTransactionList() {
+        poJSON = new JSONObject();
+        paTransactionList = new ArrayList<>();
+        try {
+            initSQL();
+            String lsSQL = MiscUtil.addCondition(SQL_BROWSE,
+                                    " a.sCompnyID = " + SQLUtil.toSQL(psCompanyId));
+
+            lsSQL = lsSQL + " ORDER BY a.dFromDate DESC ";
+            System.out.println("Executing SQL: " + lsSQL);
+            ResultSet loRS = poGRider.executeQuery(lsSQL);
+            if (loRS == null) {
+                poJSON.put("result", "error");
+                poJSON.put("message", "Query execution failed.");
+                return poJSON;
+            }
+
+            int lnctr = 0;
+            while (loRS.next()) {
+                String lsId = loRS.getString("sValidIDx");
+                if(checkNotEmpty(lsId)){
+                    paTransactionList.add(new SalesModels(poGRider).ValidityPeriodMaster());
+                    poJSON = paTransactionList.get(paTransactionList.size() - 1).openRecord(lsId);
+                    if(!isJSONSuccess(poJSON)){
+                        poJSON = setJSON("errpr", "Error while loading promotion list.\n"
+                                                 + (String) poJSON.get("message"));
+                        return poJSON;
+                    }
+                }
+                lnctr++;
+            }
+            MiscUtil.close(loRS);
+
+            if (lnctr > 0) {
+                poJSON.put("result", "success");
+                poJSON.put("message", "Record(s) loaded successfully.");
+            } else {
+                poJSON.put("result", "error");
+                poJSON.put("message", "No records found.");
+            }
+        } catch (SQLException e) {
+            poJSON.put("result", "error");
+            poJSON.put("message", e.getMessage());
+        } catch (GuanzonException ex) {
+            Logger.getLogger(VehiclePriceList.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
+        return poJSON;
+    }
+    
     /**
      * Searches for and opens a transaction based on criteria.
      * Displays browse dialog with filtered validity records or loads record by code directly.
@@ -1022,6 +1075,18 @@ public class VehiclePromotion extends Transaction {
         return addDetail();
     }
 
+    public Model_Validity_Period_Master TransactionList(int row) {
+        return (Model_Validity_Period_Master) paTransactionList.get(row);
+    }
+
+    public int getTransactionListCount() {
+        if (paTransactionList == null) {
+            paTransactionList = new ArrayList<>();
+        }
+
+        return paTransactionList.size();
+    }
+    
     public Model_Promotion_Master PromotionMaster() {
         return (Model_Promotion_Master) Detail(0);
     }
@@ -1413,7 +1478,7 @@ public class VehiclePromotion extends Transaction {
             Master().setValidityId(Master().getNextCode());
         }
         
-        Master().setValidityDescription("Vehicle Promotion");
+        Master().setValidityDescription(PromotionMaster().getDescription());
             
         poJSON = isEntryOkay(Master().getRecordStatus());
         if (!isJSONSuccess(poJSON)) {
