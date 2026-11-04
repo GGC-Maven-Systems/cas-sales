@@ -14,6 +14,7 @@ import org.json.simple.JSONObject;
 import java.sql.SQLException;
 import java.util.Date;
 import org.guanzon.appdriver.base.GuanzonException;
+import org.guanzon.appdriver.constant.Logical;
 import ph.com.guanzongroup.cas.sales.services.SalesModels;
 
 /**
@@ -36,6 +37,7 @@ public class Model_Promotion_AddOn extends Model {
             // assign default values
             poEntity.updateNull("dModified");
             poEntity.updateObject("cRecdStat", RecordStatus.ACTIVE);
+            poEntity.updateObject("sPromoTyp",Logical.NO);
             poEntity.updateObject("nDiscAmnt", 0.00);
             // end - assign default values
 
