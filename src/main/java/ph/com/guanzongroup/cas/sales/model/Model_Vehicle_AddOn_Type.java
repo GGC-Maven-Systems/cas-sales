@@ -34,6 +34,7 @@ public class Model_Vehicle_AddOn_Type extends Model {
             poEntity.updateNull("dModified");
             poEntity.updateObject("cSourceTx", Logical.NO);
             poEntity.updateString("cRecdStat", Logical.NO);
+            poEntity.updateObject("nAmountxx", 0.00);
             // end - assign default values
 
             poEntity.insertRow();
@@ -70,6 +71,17 @@ public class Model_Vehicle_AddOn_Type extends Model {
 
     public String getSource() {
         return (String) getValue("cSourceTx");
+    }
+
+    public JSONObject setAmount(Double amount) {
+        return setValue("nAmountxx", amount);
+    }
+
+    public Double getAmount() {
+        if (getValue("nAmountxx") == null || "".equals(getValue("nAmountxx"))) {
+            return 0.00;
+        }
+        return Double.valueOf(getValue("nAmountxx").toString());
     }
     
     public JSONObject setRecordStatus(boolean recordStatus) {

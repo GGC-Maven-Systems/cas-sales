@@ -196,7 +196,7 @@ public class AddOnTypeTest {
             startNewTransaction();
             poController.setWithUI(false);
             
-            loJSON = poController.getModel().setAddTypeName("LTO");
+            loJSON = poController.getModel().setAddTypeName("UNIT TEST");
             Assert.assertEquals("success", loJSON.get("result"));
             
             loJSON = poController.saveRecord();
@@ -212,7 +212,7 @@ public class AddOnTypeTest {
             System.out.println("MESSAGE : " + String.valueOf(loJSON.get("message")));
             Assert.assertEquals("success", loJSON.get("result"));
             
-            loJSON = poController.getModel().setAddTypeName("LTO 2");
+            loJSON = poController.getModel().setAddTypeName("UNIT TEST 2");
             Assert.assertEquals("success", loJSON.get("result"));
             
             loJSON = poController.saveRecord();
@@ -232,7 +232,7 @@ public class AddOnTypeTest {
             startNewTransaction();
             poController.setWithUI(false);
             
-            loJSON = poController.getModel().setAddTypeName("RUSTPROOF");
+            loJSON = poController.getModel().setAddTypeName("UNIT TEST");
             Assert.assertEquals("success", loJSON.get("result"));
             
             loJSON = poController.saveRecord();

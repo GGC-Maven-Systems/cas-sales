@@ -207,7 +207,7 @@ public class InclusionTest {
             startNewTransaction();
             poController.setWithUI(false);
             
-            loJSON = poController.getModel().setDescription("Umbrella");
+            loJSON = poController.getModel().setDescription("UNIT TEST");
             Assert.assertEquals("success", loJSON.get("result"));
 //            loJSON = poController.getModel().setModelId("W00525028");
 //            Assert.assertEquals("success", loJSON.get("result"));
@@ -225,7 +225,7 @@ public class InclusionTest {
             System.out.println("MESSAGE : " + String.valueOf(loJSON.get("message")));
             Assert.assertEquals("success", loJSON.get("result"));
             
-            poController.getModel().setDescription("Umbrella Update");
+            poController.getModel().setDescription("UNIT TEST Update");
             System.out.println("MESSAGE : " + String.valueOf(loJSON.get("message")));
             Assert.assertEquals("success", loJSON.get("result"));
             
@@ -246,7 +246,7 @@ public class InclusionTest {
             startNewTransaction();
             poController.setWithUI(false);
             
-            loJSON = poController.getModel().setDescription("Mattings");
+            loJSON = poController.getModel().setDescription("UNIT TEST");
             Assert.assertEquals("success", loJSON.get("result"));
 //            loJSON = poController.getModel().setModelId("W00525028");
 //            Assert.assertEquals("success", loJSON.get("result"));

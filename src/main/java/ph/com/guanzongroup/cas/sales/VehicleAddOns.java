@@ -1004,6 +1004,7 @@ public class VehicleAddOns extends Transaction {
             
             for(int lnCtr = 0;lnCtr < getDetailCount();lnCtr++){
                 Detail(lnCtr).setAddOnType(object.getModel().getAddTypeCode());
+                Detail(lnCtr).setAmount(object.getModel().getAmount());
                 System.out.println("Variant : " + Detail(lnCtr).getVariantId());
                 System.out.println("Add On Type: " + Detail(lnCtr).getAddOnType());
             }

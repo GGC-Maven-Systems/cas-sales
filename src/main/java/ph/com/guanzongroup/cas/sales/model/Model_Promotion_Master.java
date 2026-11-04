@@ -41,6 +41,7 @@ public class Model_Promotion_Master extends Model {
             poEntity.absolute(1);
 
             ID = "sPromCode";
+            ID2 = "sValidIDx";
             pnEditMode = EditMode.UNKNOWN;
         } catch (SQLException e) {
             logwrapr.severe(e.getMessage());

@@ -765,7 +765,8 @@ public class VehiclePromotion extends Transaction {
         
         AddOnType object = new SalesControllers(poGRider, logwrapr).AddOnType();
         object.setRecordStatus(RecordStatus.ACTIVE);
-
+        object.setWithUI(pbWithUI);
+        
         poJSON = object.searchRecord(value, byCode);
         if (isJSONSuccess(poJSON)) {
             PromotionAddOnList(row).setAddOnId(object.getModel().getAddTypeCode());
@@ -782,6 +783,7 @@ public class VehiclePromotion extends Transaction {
         
         Freebie object = new SalesControllers(poGRider, logwrapr).Freebie();
         object.setRecordStatus(RecordStatus.ACTIVE);
+        object.setWithUI(pbWithUI);
 
         poJSON = object.searchRecord(value, byCode);
         if (isJSONSuccess(poJSON)) {
@@ -799,6 +801,7 @@ public class VehiclePromotion extends Transaction {
         
         Inclusion object = new SalesControllers(poGRider, logwrapr).Inclusion();
         object.setRecordStatus(RecordStatus.ACTIVE);
+        object.setWithUI(pbWithUI);
 
         poJSON = object.searchRecord(value, byCode);
         if (isJSONSuccess(poJSON)) {
@@ -816,8 +819,11 @@ public class VehiclePromotion extends Transaction {
         
         Brand object = new ParamControllers(poGRider, logwrapr).Brand();
         object.setRecordStatus(RecordStatus.ACTIVE);
-
-        poJSON = object.searchRecord(value, byCode, psIndustryId);
+        if(pbWithUI){
+            poJSON = object.searchRecord(value, byCode, psIndustryId);
+        } else {
+            poJSON = object.openRecord(value);
+        }
         if (isJSONSuccess(poJSON)) {
             PromotionApplicabilityList(row).setBrandId(object.getModel().getBrandId());
         }
@@ -838,8 +844,11 @@ public class VehiclePromotion extends Transaction {
         
         org.guanzon.cas.parameter.Model object = new ParamControllers(poGRider, logwrapr).Model();
         object.setRecordStatus(RecordStatus.ACTIVE);
-
-        poJSON = object.searchRecord(value, byCode, PromotionApplicabilityList(row).getBrandId());
+        if(pbWithUI){
+            poJSON = object.searchRecord(value, byCode, PromotionApplicabilityList(row).getBrandId());
+        } else {
+            poJSON = object.openRecord(value);
+        }
         if (isJSONSuccess(poJSON)) {
             PromotionApplicabilityList(row).setModelId(object.getModel().getModelId());
         }
@@ -864,7 +873,11 @@ public class VehiclePromotion extends Transaction {
         VehicleDescription object = new SalesControllers(poGRider, logwrapr).VehicleDescription();
         object.setRecordStatus(RecordStatus.ACTIVE);
         object.setIndustryId(psIndustryId);
-        poJSON = object.searchRecordByModel(value, byCode, PromotionApplicabilityList(row).getModelId());
+        if(pbWithUI){
+            poJSON = object.searchRecordByModel(value, byCode, PromotionApplicabilityList(row).getModelId());
+        } else {
+            poJSON = object.openRecord(value);
+        }
         if (isJSONSuccess(poJSON)) {
             //Check existing variant in detail
             lsVariantId = object.getModel().getVariantId();
@@ -1316,6 +1329,7 @@ public class VehiclePromotion extends Transaction {
 
             Master().setFromDate(SQLUtil.toDate(xsDateShort(loFromDate.getTime()),SQLUtil.FORMAT_SHORT_DATE));
             Master().setThruDate(SQLUtil.toDate(xsDateShort(loToDate.getTime()),SQLUtil.FORMAT_SHORT_DATE));
+            Master().setRecordStatus(ValidityPeriodStatus.APPROVED); //Set to approve
             
         } catch (SQLException ex) {
             Logger.getLogger(getClass().getName()).log(Level.SEVERE, null, ex);

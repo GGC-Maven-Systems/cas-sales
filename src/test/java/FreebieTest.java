@@ -196,7 +196,7 @@ public class FreebieTest {
             startNewTransaction();
             poController.setWithUI(false);
             
-            loJSON = poController.getModel().setDescription("Umbrella");
+            loJSON = poController.getModel().setDescription("UNIT TEST");
             Assert.assertEquals("success", loJSON.get("result"));
             
             loJSON = poController.saveRecord();
@@ -212,7 +212,7 @@ public class FreebieTest {
             System.out.println("MESSAGE : " + String.valueOf(loJSON.get("message")));
             Assert.assertEquals("success", loJSON.get("result"));
             
-            loJSON = poController.getModel().setDescription("Mattings");
+            loJSON = poController.getModel().setDescription("UNIT TEST");
             Assert.assertEquals("success", loJSON.get("result"));
             
             loJSON = poController.saveRecord();
@@ -232,7 +232,7 @@ public class FreebieTest {
             startNewTransaction();
             poController.setWithUI(false);
             
-            loJSON = poController.getModel().setDescription("RUSTPROOF");
+            loJSON = poController.getModel().setDescription("UNIT TEST");
             Assert.assertEquals("success", loJSON.get("result"));
             
             loJSON = poController.saveRecord();
