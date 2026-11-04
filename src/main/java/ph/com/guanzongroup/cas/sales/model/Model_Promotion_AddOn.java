@@ -13,12 +13,15 @@ import org.json.simple.JSONObject;
 
 import java.sql.SQLException;
 import java.util.Date;
+import org.guanzon.appdriver.base.GuanzonException;
+import ph.com.guanzongroup.cas.sales.services.SalesModels;
 
 /**
  *
  * @author Arsiela
  */
 public class Model_Promotion_AddOn extends Model {
+    Model_Vehicle_AddOn_Type poAddOnType;
 
     @Override
     public void initialize() {
@@ -119,5 +122,33 @@ public class Model_Promotion_AddOn extends Model {
     @Override
     public String getNextCode() {
         return MiscUtil.getNextCode(this.getTable(), ID, true, poGRider.getGConnection().getConnection(), poGRider.getBranchCode());
+    }
+    
+    public Model_Vehicle_AddOn_Type AddOnType()
+            throws SQLException,
+            GuanzonException {
+        
+            //initialize reference objects
+            SalesModels model = new SalesModels(poGRider);
+            poAddOnType = model.VehicleAddOnType();
+        
+        if (!"".equals((String) getValue("sAddOnIDx"))) {
+            if (poAddOnType.getEditMode() == EditMode.READY
+                    && poAddOnType.getAddTypeCode().equals((String) getValue("sAddOnIDx"))) {
+                return poAddOnType;
+            } else {
+                poJSON = poAddOnType.openRecord((String) getValue("sAddOnIDx"));
+
+                if ("success".equals((String) poJSON.get("result"))) {
+                    return poAddOnType;
+                } else {
+                    poAddOnType.initialize();
+                    return poAddOnType;
+                }
+            }
+        } else {
+            poAddOnType.initialize();
+            return poAddOnType;
+        }
     }
 }

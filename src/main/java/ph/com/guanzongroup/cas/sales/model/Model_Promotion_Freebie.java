@@ -13,12 +13,15 @@ import org.json.simple.JSONObject;
 
 import java.sql.SQLException;
 import java.util.Date;
+import org.guanzon.appdriver.base.GuanzonException;
+import ph.com.guanzongroup.cas.sales.services.SalesModels;
 
 /**
  *
  * @author Arsiela
  */
 public class Model_Promotion_Freebie extends Model {
+    Model_Freebie_Master poFreebie;
 
     @Override
     public void initialize() {
@@ -108,5 +111,34 @@ public class Model_Promotion_Freebie extends Model {
     @Override
     public String getNextCode() {
         return MiscUtil.getNextCode(this.getTable(), ID, true, poGRider.getGConnection().getConnection(), poGRider.getBranchCode());
+    }
+    
+    
+    public Model_Freebie_Master Freebie()
+            throws SQLException,
+            GuanzonException {
+        
+            //initialize reference objects
+            SalesModels model = new SalesModels(poGRider);
+            poFreebie = model.FreebieMaster();
+        
+        if (!"".equals((String) getValue("sFreebIDx"))) {
+            if (poFreebie.getEditMode() == EditMode.READY
+                    && poFreebie.getFreebieId().equals((String) getValue("sFreebIDx"))) {
+                return poFreebie;
+            } else {
+                poJSON = poFreebie.openRecord((String) getValue("sFreebIDx"));
+
+                if ("success".equals((String) poJSON.get("result"))) {
+                    return poFreebie;
+                } else {
+                    poFreebie.initialize();
+                    return poFreebie;
+                }
+            }
+        } else {
+            poFreebie.initialize();
+            return poFreebie;
+        }
     }
 }

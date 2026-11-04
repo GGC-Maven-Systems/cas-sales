@@ -13,6 +13,8 @@ import org.json.simple.JSONObject;
 
 import java.sql.SQLException;
 import java.util.Date;
+import org.guanzon.appdriver.base.GuanzonException;
+import ph.com.guanzongroup.cas.sales.services.SalesModels;
 
 /**
  *
@@ -20,6 +22,8 @@ import java.util.Date;
  */
 public class Model_Promotion_Inclusion extends Model {
 
+    Model_Vehicle_Inclusion_Master poInclusion;
+    
     @Override
     public void initialize() {
         try {
@@ -108,5 +112,33 @@ public class Model_Promotion_Inclusion extends Model {
     @Override
     public String getNextCode() {
         return MiscUtil.getNextCode(this.getTable(), ID, true, poGRider.getGConnection().getConnection(), poGRider.getBranchCode());
+    }
+    
+    public Model_Vehicle_Inclusion_Master Inclusion()
+            throws SQLException,
+            GuanzonException {
+        
+            //initialize reference objects
+            SalesModels model = new SalesModels(poGRider);
+            poInclusion = model.VehicleInclusionMaster();
+        
+        if (!"".equals((String) getValue("sInclIDxx"))) {
+            if (poInclusion.getEditMode() == EditMode.READY
+                    && poInclusion.getInclusionId().equals((String) getValue("sInclIDxx"))) {
+                return poInclusion;
+            } else {
+                poJSON = poInclusion.openRecord((String) getValue("sInclIDxx"));
+
+                if ("success".equals((String) poJSON.get("result"))) {
+                    return poInclusion;
+                } else {
+                    poInclusion.initialize();
+                    return poInclusion;
+                }
+            }
+        } else {
+            poInclusion.initialize();
+            return poInclusion;
+        }
     }
 }
