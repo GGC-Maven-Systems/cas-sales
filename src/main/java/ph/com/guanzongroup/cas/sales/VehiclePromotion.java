@@ -1891,12 +1891,45 @@ public class VehiclePromotion extends Transaction {
             lsToDate = SQLUtil.dateFormat(Master().getThruDate(),SQLUtil.FORMAT_LONG_DATE);
         }
         parameters.put("validTo",lsToDate);
+        
+        parameters.put("nDiscount",PromotionMaster().getDiscountAmount());
+        String lsPayForm = "";
+        switch(PromotionMaster().getPaymentForm()){
+            case "0": //Cash 
+                lsPayForm = "Cash";
+            break;
+            case "1": //Financing 
+                lsPayForm = "Financing";
+            break;
+            case "2": //PO
+                lsPayForm = "PO";
+            break;
+            default: //Applicable to all
+                lsPayForm = "Applicable to all";
+            break;
+        
+        }
+        parameters.put("nPayForm",lsPayForm);
+        
         // ---------------------------------------------
-        // Build data for current DP rate
+        // Build data
         // ---------------------------------------------
-        List<Map<String, Object>> rows = buildSampleData();
-        List<Map<String, ?>> data = new ArrayList<>(rows);
-        JRMapCollectionDataSource dataSource = new JRMapCollectionDataSource(data);
+        List<Map<String, Object>> rows = buildPromotionAddOn();
+        List<Map<String, ?>> addons = new ArrayList<>(rows);
+        List<Map<String, Object>> freebieRow = buildPromotionFreebie();
+        List<Map<String, ?>> freebies = new ArrayList<>(freebieRow);
+        List<Map<String, Object>> inclusionRow = buildPromotionInclusion();
+        List<Map<String, ?>> inclusions = new ArrayList<>(inclusionRow);
+        List<Map<String, Object>> applicabilityRow = buildPromotionApplicability();
+        List<Map<String, ?>> applicabilities = new ArrayList<>(applicabilityRow);
+        
+        
+        // --- hand the rows to the report ---
+        parameters.put("AddOnDataSource",    new JRMapCollectionDataSource((Collection) addons));
+        parameters.put("FreebieDataSource",    new JRMapCollectionDataSource((Collection) freebies));
+        parameters.put("InclusionDataSource", new JRMapCollectionDataSource((Collection) inclusions));
+        parameters.put("ApplicabilityDataSource", new JRMapCollectionDataSource((Collection) applicabilities));
+        
 
         // ---------------------------------------------
         // Generate JasperPrint
@@ -1906,7 +1939,7 @@ public class VehiclePromotion extends Transaction {
                 JasperFillManager.fillReport(
                         jasperReport,
                         parameters,
-                        dataSource
+                        new JREmptyDataSource(1)
                 );
 
         // ---------------------------------------------
@@ -2058,56 +2091,147 @@ public class VehiclePromotion extends Transaction {
             return null;
         }
     }
-    /**
-     * Sample data. Notice Civic RS has FOUR terms (36/48/60/72) while every
-     * other variant only has three - that's deliberate, to demonstrate that the
-     * crosstab prints exactly as many term columns as the data supports, with
-     * no template change required.
-     */
-    private List<Map<String, Object>> buildSampleData() {
+    
+    private List<Map<String, Object>> buildPromotionAddOn() {
         List<Map<String, Object>> rows = new ArrayList<>();
-//        
-//        sortDetail();
-//        try{
-//            //Group by dp rate 
-//            int lnRow = 0;
-//            for(int lnCtr = 0;lnCtr < getDetailCount();lnCtr++){
-//                if(Detail(lnCtr).getRecordStatus()){
-//                    lnRow++;
-//                    String lsVariant = Detail(lnCtr).ModelVariant().getDescription();
-//                        if(Detail(lnCtr).ModelVariant().Color().getDescription() != null && !"".equals(Detail(lnCtr).ModelVariant().Color().getDescription())){
-//                            lsVariant = lsVariant + " " +  Detail(lnCtr).ModelVariantInsurance().getTransmission() + " " + Detail(lnCtr).ModelVariant().Color().getDescription() ; 
-//                        }
-//                        addRow(rows
-//                                , Detail(lnCtr).ModelVariant().Model().Brand().getDescription()
-//                                , Detail(lnCtr).ModelVariant().Model().getDescription()
-//                                , lsVariant
-//                                , Detail(lnCtr).getSRPAmount()
-//                                ,lnRow
-//                                , Detail(lnCtr).getPriceYear()
-//                        );
-//                }
-//            }
-//        } catch (SQLException | GuanzonException ex) {
-//            Logger.getLogger(VehiclePromotion.class.getName()).log(Level.SEVERE, null, ex);
-//        }
+        
+        try{
+            //Group by dp rate 
+            int lnRow = 0;
+            for(int lnCtr = 0;lnCtr < getPromotionAddOnCount();lnCtr++){
+                if(PromotionAddOnList(lnCtr).getRecordStatus()){
+                    lnRow++;
+                    String lsType = PromotionAddOnList(lnCtr).getPromoType();
+                        addAddOn(rows
+                                , PromotionAddOnList(lnCtr).AddOnType().getAddTypeName()
+                                , lsType
+                                , PromotionAddOnList(lnCtr).AddOnType().getAmount()
+                                , PromotionAddOnList(lnCtr).getDiscountAmount()
+                        );
+                }
+            }
+        } catch (SQLException | GuanzonException ex) {
+            Logger.getLogger(VehiclePromotion.class.getName()).log(Level.SEVERE, null, ex);
+        }
         return rows;
     }
  
     // Keys here MUST match the <field name="..."> values in the .jrxml exactly.
-    private void addRow(List<Map<String, Object>> rows,
-                                String brand, String model, String variant,
-                                double srpAmt,int nRow,int priceYr) {
+    private void addAddOn(List<Map<String, Object>> rows,
+                                String sAddOnTypeName,
+                                String sPromoType,
+                                double nAmount,
+                                double nDiscountAmount) {
         Map<String, Object> row = new LinkedHashMap<>();
-        if(brand == null){ brand = "";}
-        if(model == null){ model = "";}
-        if(variant == null){ variant = "";}
-        row.put("sBrand", brand.toUpperCase());
-        row.put("sModel", model.toUpperCase());
-        row.put("sVariant", variant.toUpperCase());
-        row.put("nSRPAmount", srpAmt);
-        row.put("nRow", nRow);
-        row.put("npriceYr", priceYr);
+        if(sAddOnTypeName == null){ sAddOnTypeName = "";}
+        if(sPromoType == null){ sPromoType = "";}
+        row.put("sAddOnTypeName", sAddOnTypeName.toUpperCase());
+        row.put("sPromoType", sPromoType.toUpperCase());
+        row.put("nAmount", nAmount);
+        row.put("nDiscountAmount", nDiscountAmount);
+        rows.add(row);
+    }
+    
+    private List<Map<String, Object>> buildPromotionFreebie() {
+        List<Map<String, Object>> rows = new ArrayList<>();
+        
+        try{
+            //Group by dp rate 
+            int lnRow = 0;
+            for(int lnCtr = 0;lnCtr < getPromotionFreebieCount();lnCtr++){
+                if(PromotionFreebieList(lnCtr).getRecordStatus()){
+                    lnRow++;
+                        addFreebie(rows
+                                , PromotionFreebieList(lnCtr).Freebie().getDescription()
+                                , PromotionFreebieList(lnCtr).getQuantity()
+                        );
+                }
+            }
+        } catch (SQLException | GuanzonException ex) {
+            Logger.getLogger(VehiclePromotion.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return rows;
+    }
+ 
+    // Keys here MUST match the <field name="..."> values in the .jrxml exactly.
+    private void addFreebie(List<Map<String, Object>> rows,
+                                String sFreebie,
+                                int nFreebieQty) {
+        Map<String, Object> row = new LinkedHashMap<>();
+        if(sFreebie == null){ sFreebie = "";}
+        row.put("sFreebie", sFreebie.toUpperCase());
+        row.put("nFreebieQty", nFreebieQty);
+        rows.add(row);
+    }
+    
+    private List<Map<String, Object>> buildPromotionInclusion() {
+        List<Map<String, Object>> rows = new ArrayList<>();
+        
+        try{
+            //Group by dp rate 
+            int lnRow = 0;
+            for(int lnCtr = 0;lnCtr < getPromotionInclusionCount();lnCtr++){
+                if(PromotionInclusionList(lnCtr).getRecordStatus()){
+                    lnRow++;
+                        addInclusion(rows
+                                , PromotionInclusionList(lnCtr).Inclusion().getDescription()
+                                , PromotionInclusionList(lnCtr).getQuantity()
+                        );
+                }
+            }
+        } catch (SQLException | GuanzonException ex) {
+            Logger.getLogger(VehiclePromotion.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return rows;
+    }
+ 
+    // Keys here MUST match the <field name="..."> values in the .jrxml exactly.
+    private void addInclusion(List<Map<String, Object>> rows,
+                                String sInclusion,
+                                int nInclusionQty) {
+        Map<String, Object> row = new LinkedHashMap<>();
+        if(sInclusion == null){ sInclusion = "";}
+        row.put("sInclusion", sInclusion.toUpperCase());
+        row.put("nInclusionQty", nInclusionQty);
+        rows.add(row);
+    }
+    
+    private List<Map<String, Object>> buildPromotionApplicability() {
+        List<Map<String, Object>> rows = new ArrayList<>();
+        
+        try{
+            //Group by dp rate 
+            int lnRow = 0;
+            for(int lnCtr = 0;lnCtr < getPromotionApplicabilityCount();lnCtr++){
+                if(PromotionApplicabilityList(lnCtr).getRecordStatus()){
+                    lnRow++;
+                    String lsDescription = PromotionApplicabilityList(lnCtr).Brand().getDescription();
+                    if(checkNotEmpty(PromotionApplicabilityList(lnCtr).getModelId())){
+                        lsDescription = lsDescription + " " + PromotionApplicabilityList(lnCtr).Model().getDescription();
+                    }   
+                    if(checkNotEmpty(PromotionApplicabilityList(lnCtr).getVariantId())){
+                        lsDescription = lsDescription + " " + PromotionApplicabilityList(lnCtr).ModelVariant().getDescription();
+                    }   
+                    addApplicability(rows
+                            , lsDescription
+                            , PromotionApplicabilityList(lnCtr).getExcludeFlag()
+                    );
+                }
+            }
+        } catch (SQLException | GuanzonException ex) {
+            Logger.getLogger(VehiclePromotion.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return rows;
+    }
+ 
+    // Keys here MUST match the <field name="..."> values in the .jrxml exactly.
+    private void addApplicability(List<Map<String, Object>> rows,
+                                String sDescription,
+                                String sExlude) {
+        Map<String, Object> row = new LinkedHashMap<>();
+        if(sDescription == null){ sDescription = "";}
+        row.put("sDescription", sDescription.toUpperCase());
+        row.put("sExlude", sExlude);
         rows.add(row);
     }
     
