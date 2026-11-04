@@ -103,6 +103,15 @@ public class VehiclePromotion extends Transaction {
         return initialize();
     }
 
+    public void resetTransaction(){
+        paDetail = new ArrayList<>();
+        paApplicability = new ArrayList<Model_Promotion_Applicability>();
+        paAddOn = new ArrayList<Model_Promotion_AddOn>();
+        paFreebie = new ArrayList<Model_Promotion_Freebie>();
+        paInclusion = new ArrayList<Model_Promotion_Inclusion>();
+        psApprover = "";
+        setApproving("");
+    }
 
     /**
      * Returns the transaction source code.
@@ -1892,7 +1901,7 @@ public class VehiclePromotion extends Transaction {
         }
         parameters.put("validTo",lsToDate);
         
-        parameters.put("nDiscount",PromotionMaster().getDiscountAmount());
+        parameters.put("nPromoDiscount",PromotionMaster().getDiscountAmount());
         String lsPayForm = "";
         switch(PromotionMaster().getPaymentForm()){
             case "0": //Cash 
