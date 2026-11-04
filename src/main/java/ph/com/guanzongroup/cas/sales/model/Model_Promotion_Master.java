@@ -33,6 +33,7 @@ public class Model_Promotion_Master extends Model {
             // assign default values
             poEntity.updateNull("dModified");
             poEntity.updateObject("cRecdStat", RecordStatus.ACTIVE);
+            poEntity.updateObject("nDiscAmnt", 0.00);
             // end - assign default values
 
             poEntity.insertRow();
@@ -77,6 +78,17 @@ public class Model_Promotion_Master extends Model {
 
     public String getPaymentForm() {
         return (String) getValue("cPaymForm");
+    }
+
+    public JSONObject setDiscountAmount(Double discountAmount) {
+        return setValue("nDiscAmnt", discountAmount);
+    }
+
+    public Double getDiscountAmount() {
+        if (getValue("nDiscAmnt") == null || "".equals(getValue("nDiscAmnt"))) {
+            return 0.00;
+        }
+        return Double.valueOf(getValue("nDiscAmnt").toString());
     }
 
     public JSONObject setRecordStatus(boolean recordStatus) {
