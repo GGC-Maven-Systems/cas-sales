@@ -57,6 +57,7 @@ import java.util.*;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.guanzon.appdriver.constant.Logical;
 import org.json.simple.JSONArray;
 
 /**
@@ -887,6 +888,7 @@ public class VehiclePromotion extends Transaction {
             PromotionFreebieList(row).setFreebieId(object.getModel().getFreebieId());
         }
         
+        poJSON.put("row", row);
         return poJSON;
     }
 
@@ -923,6 +925,7 @@ public class VehiclePromotion extends Transaction {
             PromotionInclusionList(row).setInclusionId(object.getModel().getInclusionId());
         }
         
+        poJSON.put("row", row);
         return poJSON;
     }
     
@@ -933,10 +936,77 @@ public class VehiclePromotion extends Transaction {
      * @param type
      * @return 
      */
-//    private JSONObject validateApplicability(String value, int row, String type){
-//    
-//    
-//    }
+    private JSONObject validateApplicability(String value, int row, int fnType){
+        poJSON = new JSONObject();
+        
+        //Validate
+        for(int lnCtr = 0;lnCtr < getPromotionApplicabilityCount(); lnCtr++){
+            if(row != lnCtr ){
+                switch(fnType){
+                    case 0: //Check Brand
+                        //Check for excluded brand without model and variant 
+                        //NOTE: Do not allow to insert brand that has been excluded
+                        if(PromotionApplicabilityList(lnCtr).getBrandId().equals(value)
+                            && checkEmpty(PromotionApplicabilityList(lnCtr).getModelId())
+                            && checkEmpty(PromotionApplicabilityList(lnCtr).getVariantId())
+                            ){
+                            if(PromotionApplicabilityList(lnCtr).getRecordStatus()){
+                                row = lnCtr;
+                                if(Logical.YES.equals(PromotionApplicabilityList(lnCtr).getExcludeFlag())){
+                                    poJSON = setJSON("error", "Selected Brand already excluded at row "+ (lnCtr+1));
+                                    poJSON.put("row", row);
+                                    return poJSON;
+                                }
+                            } else {
+                                row = lnCtr;
+                                break;
+                            }
+                        }
+                    break;
+                    case 1: //Check Model
+                        
+                    break;
+                    case 2: //Check Variant
+                        
+                    break;
+                }
+            }
+        }
+    
+        poJSON.put("row", row);
+        return poJSON;
+    }
+    
+    //Validate
+    //Check for excluded brand without model and variant 
+    //NOTE: Do not allow to insert brand that has been excluded
+    private JSONObject checkExcludedBrand(String value, int row){
+        poJSON = new JSONObject();
+        for(int lnCtr = 0;lnCtr < getPromotionApplicabilityCount(); lnCtr++){
+            if(row != lnCtr ){
+                if(PromotionApplicabilityList(lnCtr).getBrandId().equals(value)
+                    && checkEmpty(PromotionApplicabilityList(lnCtr).getModelId())
+                    && checkEmpty(PromotionApplicabilityList(lnCtr).getVariantId())
+                    ){
+                    if(PromotionApplicabilityList(lnCtr).getRecordStatus()){
+                        row = lnCtr;
+                        if(Logical.YES.equals(PromotionApplicabilityList(lnCtr).getExcludeFlag())){
+                            poJSON = setJSON("error", "Selected Brand already excluded at row "+ (lnCtr+1));
+                            poJSON.put("row", row);
+                            return poJSON;
+                        }
+                    } else {
+                        row = lnCtr;
+                        break;
+                    }
+                }
+            }
+        }
+    
+        poJSON.put("row", row);
+        return poJSON;
+    }
+    
 
     public JSONObject SearchBrand(String value, boolean byCode, int row)
             throws ExceptionInInitializerError,
@@ -952,6 +1022,12 @@ public class VehiclePromotion extends Transaction {
             poJSON = object.openRecord(value);
         }
         if (isJSONSuccess(poJSON)) {
+            poJSON = checkExcludedBrand(object.getModel().getBrandId(), row);
+            row = (Integer) poJSON.get("row");
+            if(!isJSONSuccess(poJSON)){
+                return poJSON;
+            }
+            
             PromotionApplicabilityList(row).setBrandId(object.getModel().getBrandId());
         }
         
@@ -1196,6 +1272,7 @@ public class VehiclePromotion extends Transaction {
         } else {
             if (!paAddOn.get(paAddOn.size() - 1).getAddOnId().isEmpty()) {
                 paAddOn.add(PromotionAddOn());
+                paAddOn.get(getPromotionAddOnCount() - 1).newRecord();
             } else {
                 poJSON.put("result", "error");
                 poJSON.put("message", "Unable to add promotion add-on.");
@@ -1237,6 +1314,7 @@ public class VehiclePromotion extends Transaction {
         } else {
             if (!paFreebie.get(paFreebie.size() - 1).getFreebieId().isEmpty()) {
                 paFreebie.add(PromotionFreebie());
+                paFreebie.get(getPromotionFreebieCount() - 1).newRecord();
             } else {
                 poJSON.put("result", "error");
                 poJSON.put("message", "Unable to add promotion freebie.");
@@ -1278,6 +1356,7 @@ public class VehiclePromotion extends Transaction {
         } else {
             if (!paInclusion.get(paInclusion.size() - 1).getInclusionId().isEmpty()) {
                 paInclusion.add(PromotionInclusion());
+                paInclusion.get(getPromotionInclusionCount() - 1).newRecord();
             } else {
                 poJSON.put("result", "error");
                 poJSON.put("message", "Unable to add promotion inclusion.");
@@ -1319,6 +1398,7 @@ public class VehiclePromotion extends Transaction {
         } else {
             if (!paApplicability.get(paApplicability.size() - 1).getBrandId().isEmpty()) {
                 paApplicability.add(PromotionApplicability());
+                paApplicability.get(getPromotionApplicabilityCount() - 1).newRecord();
             } else {
                 poJSON.put("result", "error");
                 poJSON.put("message", "Unable to add promotion applicability.");
