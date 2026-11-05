@@ -824,6 +824,7 @@ public class VehiclePromotion extends Transaction {
             SQLException,
             GuanzonException {
         poJSON = new JSONObject();
+        poJSON.put("row", row);
         
         AddOnType object = new SalesControllers(poGRider, logwrapr).AddOnType();
         object.setRecordStatus(RecordStatus.ACTIVE);
@@ -831,9 +832,26 @@ public class VehiclePromotion extends Transaction {
         
         poJSON = object.searchRecord(value, byCode);
         if (isJSONSuccess(poJSON)) {
+            for(int lnCtr = 0;lnCtr < getPromotionAddOnCount(); lnCtr++){
+                if(row != lnCtr && checkNotEmpty(PromotionAddOnList(lnCtr).getAddOnId())){
+                    if(PromotionAddOnList(lnCtr).getAddOnId().equals(object.getModel().getAddTypeCode())){
+                        row = lnCtr;
+                        if(!PromotionAddOnList(lnCtr).getRecordStatus()){
+                            PromotionAddOnList(lnCtr).setRecordStatus(true);
+                            break;
+                        } else {
+                            poJSON = setJSON("error", "Selected Add-On already exists at row "+ (lnCtr+1));
+                            poJSON.put("row", row);
+                            return poJSON;
+                        }
+                    }
+                }
+            }
+            
             PromotionAddOnList(row).setAddOnId(object.getModel().getAddTypeCode());
         }
         
+        poJSON.put("row", row);
         return poJSON;
     }
 
@@ -849,6 +867,23 @@ public class VehiclePromotion extends Transaction {
 
         poJSON = object.searchRecord(value, byCode);
         if (isJSONSuccess(poJSON)) {
+            //Validate
+            for(int lnCtr = 0;lnCtr < getPromotionFreebieCount(); lnCtr++){
+                if(row != lnCtr && checkNotEmpty(PromotionFreebieList(lnCtr).getFreebieId())){
+                    if(PromotionFreebieList(lnCtr).getFreebieId().equals(object.getModel().getFreebieId())){
+                        row = lnCtr;
+                        if(!PromotionFreebieList(lnCtr).getRecordStatus()){
+                            PromotionFreebieList(lnCtr).setRecordStatus(true);
+                            break;
+                        } else {
+                            poJSON = setJSON("error", "Selected Freebie already exists at row "+ (lnCtr+1));
+                            poJSON.put("row", row);
+                            return poJSON;
+                        }
+                    }
+                }
+            }
+            
             PromotionFreebieList(row).setFreebieId(object.getModel().getFreebieId());
         }
         
@@ -867,11 +902,41 @@ public class VehiclePromotion extends Transaction {
 
         poJSON = object.searchRecord(value, byCode);
         if (isJSONSuccess(poJSON)) {
+            
+            //Validate
+            for(int lnCtr = 0;lnCtr < getPromotionInclusionCount(); lnCtr++){
+                if(row != lnCtr && checkNotEmpty(PromotionInclusionList(lnCtr).getInclusionId())){
+                    if(PromotionInclusionList(lnCtr).getInclusionId().equals(object.getModel().getInclusionId())){
+                        row = lnCtr;
+                        if(!PromotionInclusionList(lnCtr).getRecordStatus()){
+                            PromotionInclusionList(lnCtr).setRecordStatus(true);
+                            break;
+                        } else {
+                            poJSON = setJSON("error", "Selected Inclusion already exists at row "+ (lnCtr+1));
+                            poJSON.put("row", row);
+                            return poJSON;
+                        }
+                    }
+                }
+            }
+            
             PromotionInclusionList(row).setInclusionId(object.getModel().getInclusionId());
         }
         
         return poJSON;
     }
+    
+    /**
+     * Validate Applicability
+     * @param value
+     * @param row
+     * @param type
+     * @return 
+     */
+//    private JSONObject validateApplicability(String value, int row, String type){
+//    
+//    
+//    }
 
     public JSONObject SearchBrand(String value, boolean byCode, int row)
             throws ExceptionInInitializerError,
@@ -1103,6 +1168,10 @@ public class VehiclePromotion extends Transaction {
     private Model_Promotion_AddOn PromotionAddOn() throws SQLException, GuanzonException {
         return new SalesModels(poGRider).PromotionAddOn();
     }
+    
+    public List<Model_Promotion_AddOn> PromotionAddOnList() {
+        return paAddOn;
+    }
 
     public Model_Promotion_AddOn PromotionAddOnList(int row) {
         return (Model_Promotion_AddOn) paAddOn.get(row);
@@ -1139,6 +1208,10 @@ public class VehiclePromotion extends Transaction {
 
     private Model_Promotion_Freebie PromotionFreebie() throws SQLException, GuanzonException {
         return new SalesModels(poGRider).PromotionFreebie();
+    }
+    
+    public List<Model_Promotion_Freebie> PromotionFreebieList() {
+        return paFreebie;
     }
 
     public Model_Promotion_Freebie PromotionFreebieList(int row) {
@@ -1177,6 +1250,10 @@ public class VehiclePromotion extends Transaction {
     private Model_Promotion_Inclusion PromotionInclusion() throws SQLException, GuanzonException {
         return new SalesModels(poGRider).PromotionInclusion();
     }
+    
+    public List<Model_Promotion_Inclusion> PromotionInclusionList() {
+        return paInclusion;
+    }
 
     public Model_Promotion_Inclusion PromotionInclusionList(int row) {
         return (Model_Promotion_Inclusion) paInclusion.get(row);
@@ -1213,6 +1290,10 @@ public class VehiclePromotion extends Transaction {
 
     private Model_Promotion_Applicability PromotionApplicability() throws SQLException, GuanzonException {
         return new SalesModels(poGRider).PromotionApplicability();
+    }
+    
+    public List<Model_Promotion_Applicability> PromotionApplicabilityList() {
+        return paApplicability;
     }
 
     public Model_Promotion_Applicability PromotionApplicabilityList(int row) {
