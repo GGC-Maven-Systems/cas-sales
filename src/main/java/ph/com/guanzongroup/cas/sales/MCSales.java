@@ -16,10 +16,18 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javafx.application.Platform;
+import net.sf.jasperreports.engine.JREmptyDataSource;
+import net.sf.jasperreports.engine.JasperCompileManager;
+import net.sf.jasperreports.engine.JasperExportManager;
+import net.sf.jasperreports.engine.JasperFillManager;
+import net.sf.jasperreports.engine.JasperPrint;
+import net.sf.jasperreports.engine.JasperReport;
 import javax.sql.rowset.CachedRowSet;
 import org.apache.commons.codec.binary.Base64;
 import org.guanzon.appdriver.agent.MatrixAuthChecker;
@@ -44,6 +52,7 @@ import org.guanzon.appdriver.iface.GValidator;
 import org.guanzon.appdriver.token.RequestAccess;
 import org.guanzon.cas.client.ClientGUI;
 import org.guanzon.cas.client.ClientInfo;
+import org.guanzon.cas.client.model.Model_Client_Master;
 import org.guanzon.cas.client.services.ClientControllers;
 import org.guanzon.cas.inv.InventoryBrowse;
 import org.guanzon.cas.parameter.InsuranceType;
@@ -1104,7 +1113,11 @@ public class MCSales extends Transaction {
             return poJSON;
         }
 
-        //blocker incase 
+        // Buyer Information Sheet: the PDF is built BEFORE the database transaction starts, so a
+        // report problem (null here) never blocks the confirmation; it is only attached when it exists.
+        List<File> laBuyerSheets = buildBuyerSheetPdfs();
+
+        //blocker incase
         if (!poGRider.getGConnection().getConnection().getAutoCommit()) {
             poGRider.commitTrans();
         }
@@ -1123,6 +1136,17 @@ public class MCSales extends Transaction {
         // mark the matrix request as used, inside the same transaction
         if (poMatrixCheck != null) {
             poJSON = poMatrixCheck.postAuth();
+            if ("error".equals((String) poJSON.get("result"))) {
+                poGRider.rollbackTrans();
+                return poJSON;
+            }
+        }
+
+        // auto-attach the Buyer Information Sheet, inside the same transaction: if it cannot be
+        // uploaded / saved the confirmation is rolled back, so a confirmed sale always has its sheet
+        // inside the same transaction: if any sheet cannot be uploaded / saved, the confirmation rolls back
+        for (File loSheet : laBuyerSheets) {
+            poJSON = attachFileToTransaction(loSheet);
             if ("error".equals((String) poJSON.get("result"))) {
                 poGRider.rollbackTrans();
                 return poJSON;
@@ -1718,7 +1742,7 @@ public class MCSales extends Transaction {
                 }
 
                 //Entry No Sales
-                lnRowSale = lnRowSale++;
+                lnRowSale++;
                 //initialize detail to set
                 getDetail(lnRowSale);
                 //Sync Detail to Sales Source's
@@ -2009,7 +2033,7 @@ public class MCSales extends Transaction {
                             continue;
                         }
                         //Entry No Sales
-                        lnRowSale = lnRowSale++;
+                        lnRowSale++;
                         //initialize detail to set
                         getSalesGiveaways(lnRowSale);
                         //Sync Detail to Sales Promo's
@@ -3424,6 +3448,270 @@ public class MCSales extends Transaction {
         double lnAmountDue = lnTranTotal - lnDiscount - lnAddDisc + lnFreight
                 + lnInsAdd + lnRegIns - loMaster.getAdvances();
         loMaster.setAmountDue(round2(lnAmountDue));
+    }
+
+    // =====================================================================================
+    // AUTO-ATTACH: BUYER INFORMATION SHEET (built and attached when the transaction is confirmed)
+    // Template: BUYER_SHEET_JRXML on the classpath. Every value goes through sv() / reflect(), so a getter
+    // that is missing or empty leaves its field blank instead of stopping the confirmation.
+    // ASSUMED getters (read by reflect(), nothing to compile): getLastName, getFirstName, getMiddleName,
+    // getSuffixName / getSuffix, getEmailAddress / getEmail on the client; getCoClientID on the master.
+    // =====================================================================================
+    private static final String BUYER_SHEET_JRXML = "D:\\GGC_Maven_Systems\\Reports\\BuyerInformationSheet.jrxml";
+
+    private interface SheetGetter {
+
+        Object get() throws Exception;
+    }
+
+    /**
+     * Getter result as trimmed text; "" when null or when the getter throws.
+     */
+    private static String sv(SheetGetter fg) {
+        try {
+            Object loVal = fg.get();
+            return loVal == null ? "" : String.valueOf(loVal).trim();
+        } catch (Exception ex) {
+            return "";
+        }
+    }
+
+    /**
+     * Value of the first of the named public getters that exists and is not
+     * blank ("" when none).
+     */
+    private static String reflect(Object foObj, String... fasGetters) {
+        if (foObj == null) {
+            return "";
+        }
+        for (String lsGetter : fasGetters) {
+            try {
+                Object loVal = foObj.getClass().getMethod(lsGetter).invoke(foObj);
+                if (loVal != null && !String.valueOf(loVal).trim().isEmpty()) {
+                    return String.valueOf(loVal).trim();
+                }
+            } catch (Exception ex) {
+                // no such getter: try the next one
+            }
+        }
+        return "";
+    }
+
+    private static String genderLabel(String fsCode) {
+        if (fsCode == null || fsCode.isEmpty()) {
+            return "";
+        }
+        try {
+            int lnCode = Integer.parseInt(fsCode);
+            return (lnCode >= 0 && lnCode < SalesTransactionStatic.GENDER_TEXT.length)
+                    ? SalesTransactionStatic.GENDER_TEXT[lnCode] : fsCode;
+        } catch (NumberFormatException ex) {
+            return fsCode;   // already text
+        }
+    }
+
+    /**
+     * Fills the person part of the sheet (name, gender ... email, LTO id) for
+     * the buyer or the co-buyer.
+     */
+    private void fillSheetPerson(Map<String, Object> foParams, String fsPrefix, final Model_Client_Master foClient,
+            String fsOccupation, String fsMobile, String fsAddress) {
+        String lsLast = reflect(foClient, "getLastName");
+        String lsFirst = reflect(foClient, "getFirstName");
+        String lsMiddle = reflect(foClient, "getMiddleName");
+        if (lsLast.isEmpty() && lsFirst.isEmpty() && lsMiddle.isEmpty()) {
+            lsLast = sv(() -> foClient.getCompanyName());   // only the full name is known
+        }
+        foParams.put(fsPrefix + "Last", lsLast);
+        foParams.put(fsPrefix + "First", lsFirst);
+        foParams.put(fsPrefix + "Middle", lsMiddle);
+        foParams.put(fsPrefix + "Suffix", reflect(foClient, "getSuffixName", "getSuffix"));
+        foParams.put(fsPrefix + "Gender", genderLabel(sv(() -> foClient.getGender())));
+        foParams.put(fsPrefix + "BirthDate", sv(() -> foClient.getBirthDate() == null ? ""
+                : SQLUtil.dateFormat(foClient.getBirthDate(), SQLUtil.FORMAT_LONG_DATE)));
+        foParams.put(fsPrefix + "BirthPlace", sv(() -> {
+            String lsId = foClient.getBirthPlaceId();
+            if (lsId == null || lsId.isEmpty()) {
+                return "";
+            }
+            if (!"success".equals(foClient.BirthTown().openRecord(lsId).get("result"))) {
+                return "";
+            }
+            return foClient.BirthTown().getDescription() + ", " + foClient.BirthTown().Province().getDescription();
+        }));
+        foParams.put(fsPrefix + "Citizenship", sv(() -> {
+            String lsId = foClient.getCitizenshipId();
+            if (lsId == null || lsId.isEmpty()) {
+                return "";
+            }
+            if (!"success".equals(foClient.Citizenship().openRecord(lsId).get("result"))) {
+                return "";
+            }
+            return foClient.Citizenship().getNationality();
+        }));
+        foParams.put(fsPrefix + "Tin", sv(() -> foClient.getTaxIdNumber()));
+        foParams.put(fsPrefix + "Father", sv(() -> foClient.getFatherName()));
+        foParams.put(fsPrefix + "Mother", sv(() -> foClient.getMotherName()));
+        foParams.put(fsPrefix + "Occupation", fsOccupation);
+        foParams.put(fsPrefix + "Address", fsAddress);
+        foParams.put(fsPrefix + "Mobile", fsMobile);
+        foParams.put(fsPrefix + "Email", reflect(foClient, "getEmailAddress", "getEmail"));
+        foParams.put(fsPrefix + "LtoId", sv(() -> foClient.getLTOClientId()));
+        foParams.put(fsPrefix + "LtoAddress", "");   // same as the form: the LTO address is not kept on the client
+    }
+
+    private Map<String, Object> buyerSheetParams(final Model_Sales_Detail foUnit) throws GuanzonException, SQLException {
+        final Model_Sales_Master loMas = getMaster();
+        Map<String, Object> loParams = new HashMap<String, Object>();
+
+        // ---- buyer ---- (unchanged)
+        fillSheetPerson(loParams, "pBuyer", loMas.Client(),
+                sv(() -> loMas.ClientEmployment().getPosition()),
+                sv(() -> loMas.ClientMobile().getMobileNo()),
+                sv(() -> loMas.ClientAddress().getAddress() + ","
+                + loMas.ClientAddress().Barangay().getBarangayName() + ","
+                + loMas.ClientAddress().Town().getDescription() + ","
+                + loMas.ClientAddress().Town().Province().getDescription() + ","
+                + loMas.ClientAddress().Town().getZipCode()));
+
+        // ---- co-buyer ---- (unchanged)
+        boolean lbHasCo = !reflect(loMas, "getCoClientID").isEmpty();
+        if (lbHasCo) {
+            fillSheetPerson(loParams, "pCoBuyer", loMas.CoClient(),
+                    sv(() -> loMas.CoClientEmployment().getPosition()),
+                    "",
+                    sv(() -> loMas.CoClientAddress().getAddress() + ","
+                    + loMas.CoClientAddress().Barangay().getBarangayName() + ","
+                    + loMas.CoClientAddress().Town().getDescription() + ","
+                    + loMas.CoClientAddress().Town().Province().getDescription() + ","
+                    + loMas.CoClientAddress().Town().getZipCode()));
+        } else {
+            for (String lsKey : new String[]{"Last", "First", "Middle", "Suffix", "Gender", "BirthDate", "BirthPlace",
+                "Citizenship", "Tin", "Father", "Mother", "Occupation", "Address", "Mobile", "Email", "LtoId", "LtoAddress"}) {
+                loParams.put("pCoBuyer" + lsKey, "");
+            }
+        }
+
+        // ---- engine / frame of THIS unit only ----
+        String lsEngine = foUnit == null ? "" : sv(() -> foUnit.InventorySerial().getSerial01());
+        String lsFrame = foUnit == null ? "" : sv(() -> foUnit.InventorySerial().getSerial02());
+        loParams.put("pBuyerEngine", lsEngine);
+        loParams.put("pBuyerFrame", lsFrame);
+        loParams.put("pCoBuyerEngine", lsEngine);
+        loParams.put("pCoBuyerFrame", lsFrame);
+        return loParams;
+    }
+
+    /**
+     * One Buyer Information Sheet PDF per unit sold (each serial), named
+     * BuyerSheet_<TransNo>_<EntryNo>.pdf. A unit whose sheet fails is logged
+     * and skipped; it never blocks the confirmation.
+     */
+    private List<File> buildBuyerSheetPdfs() {
+        List<File> laFiles = new ArrayList<File>();
+        try {
+            String lsDir = System.getProperty("sys.default.path.temp.attachments");
+            if (lsDir == null || lsDir.isEmpty()) {
+                System.out.println("[BUYER SHEET] sys.default.path.temp.attachments is not set: sheets not attached.");
+                return laFiles;
+            }
+            Files.createDirectories(Paths.get(lsDir));
+
+            File loTemplate = new File(BUYER_SHEET_JRXML);
+            if (!loTemplate.exists() || !loTemplate.isFile()) {
+                throw new IOException("Buyer Information Sheet template not found: " + loTemplate.getAbsolutePath());
+            }
+
+            // compile once, fill once per unit
+            JasperReport loReport = JasperCompileManager.compileReport(loTemplate.getAbsolutePath());
+
+            // units to print: every real detail row (serial first, stock id as fallback)
+            List<Model_Sales_Detail> laUnits = new ArrayList<Model_Sales_Detail>();
+            for (Model loRow : paDetail) {
+                Model_Sales_Detail loUnit = (Model_Sales_Detail) loRow;
+                boolean lbSerial = loUnit.getSerialID() != null && !loUnit.getSerialID().isEmpty();
+                boolean lbStock = loUnit.getStockID() != null && !loUnit.getStockID().isEmpty();
+                if (lbSerial || lbStock) {
+                    laUnits.add(loUnit);
+                }
+            }
+            if (laUnits.isEmpty()) {
+                laUnits.add(null);   // no units: still one sheet with blank engine / frame
+            }
+
+            for (Model_Sales_Detail loUnit : laUnits) {
+                try {
+                    int lnEntry = loUnit == null ? 1 : loUnit.getEntryNo();
+                    File loFile = new File(lsDir, "BuyerSheet_" + getMaster().getTransactionNo() + "_" + lnEntry + ".pdf");
+
+                    JasperPrint loPrint = JasperFillManager.fillReport(
+                            loReport, buyerSheetParams(loUnit), new JREmptyDataSource(1));
+                    JasperExportManager.exportReportToPdfFile(loPrint, loFile.getAbsolutePath());
+
+                    if (!loFile.exists() || loFile.length() == 0) {
+                        throw new IOException("Buyer Information Sheet PDF was not generated.");
+                    }
+                    System.out.println("[BUYER SHEET] Generated: " + loFile.getAbsolutePath());
+                    laFiles.add(loFile);
+                } catch (Exception ex) {
+                    Logger.getLogger(getClass().getName()).log(Level.SEVERE,
+                            "Buyer Information Sheet failed for entry " + (loUnit == null ? 1 : loUnit.getEntryNo()), ex);
+                }
+            }
+        } catch (Exception ex) {
+            Logger.getLogger(getClass().getName()).log(Level.SEVERE, "Buyer Information Sheet generation failed.", ex);
+        }
+        return laFiles;
+    }
+
+    /**
+     * Registers a file that is already in the temp attachment folder as a NEW
+     * attachment of this transaction, uploads it and saves its row. Runs inside
+     * the caller's database transaction. Does nothing (success) when a file
+     * with that name is already attached, so confirming never duplicates the
+     * sheet.
+     */
+    private JSONObject attachFileToTransaction(File foFile) {
+        try {
+            String lsName = foFile.getName();
+
+            for (int lnCtr = 0; lnCtr < getTransactionAttachmentCount(); lnCtr++) {
+                if (lsName.equalsIgnoreCase(paAttachments.get(lnCtr).getModel().getFileName())) {
+                    return setJSON("success", "Buyer Information Sheet is already attached.");
+                }
+            }
+            if ("error".equals((String) checkExistingFileName(lsName).get("result"))) {
+                return setJSON("success", "Buyer Information Sheet is already attached.");
+            }
+
+            int lnRow = addAttachment(lsName);   // new row (edit mode ADDNEW), send status "0"
+            TransactionAttachment loAttachment = paAttachments.get(lnRow);
+            Model_Transaction_Attachment loModel = loAttachment.getModel();
+            loModel.setSourceNo(getMaster().getTransactionNo());
+            loModel.setSourceCode(getSourceCode());
+            loModel.setDocumentType("0");
+            loModel.setBranchCode(getMaster().getBranchCode());
+            loModel.setImagePath(System.getProperty("sys.default.path.temp.attachments"));
+
+            if ("0".equals(loModel.getSendStatus())) {
+                JSONObject loUpload = uploadCASAttachments(poGRider, System.getProperty("sys.default.access.token"), lnRow, lsName);
+                if ("error".equals((String) loUpload.get("result"))) {
+                    return loUpload;
+                }
+            }
+
+            loModel.setModifyingId(poGRider.Encrypt(poGRider.getUserID()));
+            loModel.setModifiedDate(poGRider.getServerDate());
+            loAttachment.setWithParentClass(true);
+            JSONObject loSave = loAttachment.saveRecord();
+            if ("error".equals((String) loSave.get("result"))) {
+                return loSave;
+            }
+            return setJSON("success", "Buyer Information Sheet attached.");
+        } catch (Exception ex) {
+            Logger.getLogger(getClass().getName()).log(Level.SEVERE, MiscUtil.getException(ex), ex);
+            return setJSON("error", "Unable to attach the Buyer Information Sheet.\n" + MiscUtil.getException(ex));
+        }
     }
 
     private JSONObject confirmMatrixAuth(JSONObject matrix) throws SQLException, GuanzonException {

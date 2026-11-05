@@ -105,7 +105,7 @@ public class SalesTransactionStatic {
     // ---------------------------------------------------------------------
     public static final String ATTACH_CHOOSER_TITLE = "Select Attachment";
     public static final String ATTACH_FILTER_NAME = "Images";
-    public static final String[] ATTACH_FILTER_EXTENSIONS = {"*.png", "*.jpg", "*.jpeg", "*.gif", "*.bmp"};
+    public static final String[] ATTACH_FILTER_EXTENSIONS = {"*.png", "*.jpg", "*.jpeg", "*.gif", "*.bmp", "*.pdf"};
 
     // ---------------------------------------------------------------------
     // UI internals (column reorder lock)
