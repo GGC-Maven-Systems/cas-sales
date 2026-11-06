@@ -800,13 +800,16 @@ public class VehiclePromotion extends Transaction {
         }
     }
     
-    public JSONObject loadTransactionList() {
+    public JSONObject loadTransactionList(String fsDescription, String fsStatus) {
         poJSON = new JSONObject();
         paTransactionList = new ArrayList<>();
         try {
+            setTransactionStatus(fsStatus);
             initSQL();
             String lsSQL = MiscUtil.addCondition(SQL_BROWSE,
-                                    " a.sCompnyID = " + SQLUtil.toSQL(psCompanyId));
+                                    " a.sCompnyID = " + SQLUtil.toSQL(psCompanyId)
+                                    + " AND a.sValidDsc LIKE " + SQLUtil.toSQL("%"+fsDescription+"%")
+                                    );
 
             lsSQL = lsSQL + " ORDER BY a.dFromDate DESC ";
             System.out.println("Executing SQL: " + lsSQL);
@@ -1848,6 +1851,7 @@ public class VehiclePromotion extends Transaction {
                                                     + " AND a.cRecdStat != " + SQLUtil.toSQL(ValidityPeriodStatus.CANCELLED)
                                                     + " AND a.sValidIDx != " + SQLUtil.toSQL(Master().getValidityId())
                                                     + " AND a.sCompnyID = " + SQLUtil.toSQL(Master().getCompanyId())
+                                                    + " AND a.sValidDsc = " + SQLUtil.toSQL(Master().getValidityDescription())
                                                     );
           lsSQL = lsSQL 
                     + " AND ((a.dFromDate between "+ SQLUtil.toSQL(xsDateShort(Master().getFromDate()))+" AND "+  SQLUtil.toSQL(xsDateShort(Master().getThruDate())) +") OR a.dFromDate <= "+ SQLUtil.toSQL(xsDateShort(Master().getFromDate()))+")"
