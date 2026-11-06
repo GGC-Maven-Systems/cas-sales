@@ -2420,6 +2420,7 @@ public class VehiclePromotion extends Transaction {
             Master().setFromDate(SQLUtil.toDate(xsDateShort(loFromDate.getTime()),SQLUtil.FORMAT_SHORT_DATE));
             Master().setThruDate(SQLUtil.toDate(xsDateShort(loToDate.getTime()),SQLUtil.FORMAT_SHORT_DATE));
             Master().setRecordStatus(ValidityPeriodStatus.APPROVED); //Set to approve
+            Master().setValidityId(Master().getNextCode());
             
         } catch (SQLException ex) {
             Logger.getLogger(getClass().getName()).log(Level.SEVERE, null, ex);
@@ -2464,6 +2465,7 @@ public class VehiclePromotion extends Transaction {
                                                     + " AND a.sValidIDx != " + SQLUtil.toSQL(Master().getValidityId())
                                                     + " AND a.sCompnyID = " + SQLUtil.toSQL(Master().getCompanyId())
                                                     + " AND a.sValidDsc = " + SQLUtil.toSQL(Master().getValidityDescription())
+                                                    + " AND b.cPaymForm = " + SQLUtil.toSQL(PromotionMaster().getPaymentForm())
                                                     );
           lsSQL = lsSQL 
                     + " AND ((a.dFromDate between "+ SQLUtil.toSQL(xsDateShort(Master().getFromDate()))+" AND "+  SQLUtil.toSQL(xsDateShort(Master().getThruDate())) +") OR a.dFromDate <= "+ SQLUtil.toSQL(xsDateShort(Master().getFromDate()))+")"
