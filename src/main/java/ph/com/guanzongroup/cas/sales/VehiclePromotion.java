@@ -131,37 +131,23 @@ public class VehiclePromotion extends Transaction {
     public void setIndustryId(String industryId) { psIndustryId = industryId; }
     public void setCategoryId(String categoryId) { psCategoryId = categoryId; }
     
-    /**
-    * Creates a JSONObject with "result" and "message" fields.
-    *
-    * @param fsResult  The result value (e.g., "success", "error")
-    * @param fsMessage The message describing the result
-    * @return JSONObject containing the result and message
-    */
     private JSONObject setJSON(String fsResult, String fsMessage) {
         JSONObject loJSON = new JSONObject();
         loJSON.put("result", fsResult);
         loJSON.put("message", fsMessage);
         return loJSON;
     }
-
-    /**
-     * Checks whether a JSONObject indicates a successful result.
-     *
-     * Returns true if the "result" field equals "success" or is not "error".
-     *
-     * @param foJSON The JSONObject to check
-     * @return true if successful, false otherwise
-     */
     public boolean isJSONSuccess(JSONObject foJSON) {
         return ("success".equals((String) foJSON.get("result")) || !"error".equals((String) foJSON.get("result")));
     }
-
     private boolean checkEmpty(String fsValue){
         return fsValue == null || "".equals(fsValue);
     }
     private boolean checkNotEmpty(String fsValue){
         return fsValue != null && !"".equals(fsValue);
+    }
+    private String clean(String value) {
+        return value == null ? "" : value.trim();
     }
     
     /**
@@ -204,13 +190,13 @@ public class VehiclePromotion extends Transaction {
         ResultSet rs = poGRider.executeQuery(lsSQL);
         String lsId = "";
         while(rs.next()) {
+            ReloadAddOn();
             lsId = rs.getString("sPrmAddID");
-            poJSON = PromotionAddOnList(getPromotionAddOnCount()-1).openRecord(lsId ,transactionNo);
+            poJSON = PromotionAddOnList(getPromotionAddOnCount()-1).openRecord(lsId ,PromotionMaster().getPromotionCode());
             if (!isJSONSuccess(poJSON)) {
                 poJSON.put("message", "Unable to open promotion add-on.");
                 return poJSON;
             }
-            ReloadAddOn();
         }
         
         ReloadFreebie();
@@ -219,13 +205,13 @@ public class VehiclePromotion extends Transaction {
         rs = poGRider.executeQuery(lsSQL);
         lsId = "";
         while(rs.next()) {
+            ReloadFreebie();
             lsId = rs.getString("sPrmFreID");
-            poJSON = PromotionFreebieList(getPromotionFreebieCount()-1).openRecord(lsId ,transactionNo);
+            poJSON = PromotionFreebieList(getPromotionFreebieCount()-1).openRecord(lsId ,PromotionMaster().getPromotionCode());
             if (!isJSONSuccess(poJSON)) {
                 poJSON.put("message", "Unable to open promotion freebie.");
                 return poJSON;
             }
-            ReloadFreebie();
         }
         
         ReloadInclusion();
@@ -234,13 +220,13 @@ public class VehiclePromotion extends Transaction {
         rs = poGRider.executeQuery(lsSQL);
         lsId = "";
         while(rs.next()) {
+            ReloadInclusion();
             lsId = rs.getString("sPrmIncID");
-            poJSON = PromotionInclusionList(getPromotionInclusionCount()-1).openRecord(lsId ,transactionNo);
+            poJSON = PromotionInclusionList(getPromotionInclusionCount()-1).openRecord(lsId ,PromotionMaster().getPromotionCode());
             if (!isJSONSuccess(poJSON)) {
                 poJSON.put("message", "Unable to open promotion inclusion.");
                 return poJSON;
             }
-            ReloadInclusion();
         }
         
         ReloadApplicability();
@@ -249,13 +235,13 @@ public class VehiclePromotion extends Transaction {
         rs = poGRider.executeQuery(lsSQL);
         lsId = "";
         while(rs.next()) {
+            ReloadApplicability();
             lsId = rs.getString("sPrmAppID");
-            poJSON = PromotionApplicabilityList(getPromotionApplicabilityCount()-1).openRecord(lsId ,transactionNo);
+            poJSON = PromotionApplicabilityList(getPromotionApplicabilityCount()-1).openRecord(lsId ,PromotionMaster().getPromotionCode());
             if (!isJSONSuccess(poJSON)) {
                 poJSON.put("message", "Unable to open promotion applicability.");
                 return poJSON;
             }
-            ReloadApplicability();
         }
         
         sortDetail();
@@ -324,6 +310,44 @@ public class VehiclePromotion extends Transaction {
         poJSON = updateTransaction();
         if(!isJSONSuccess(poJSON)){
             return poJSON;
+        }
+        //Set value for promotion addon
+        for (int lnCtr = 0; lnCtr <= getPromotionAddOnCount() - 1; lnCtr++) {
+            if(PromotionAddOnList(lnCtr).getEditMode() == EditMode.READY){
+                poJSON = PromotionAddOnList(lnCtr).updateRecord();
+                if(!isJSONSuccess(poJSON)){
+                    return poJSON;
+                }
+            }
+        }
+
+        //Set value for promotion freebie
+        for (int lnCtr = 0; lnCtr <= getPromotionFreebieCount() - 1; lnCtr++) {
+            if(PromotionFreebieList(lnCtr).getEditMode() == EditMode.READY){
+                poJSON = PromotionFreebieList(lnCtr).updateRecord();
+                if(!isJSONSuccess(poJSON)){
+                    return poJSON;
+                }
+            }
+        }
+        //Set value for promotion inclusion
+        for (int lnCtr = 0; lnCtr <= getPromotionInclusionCount() - 1; lnCtr++) {
+            if(PromotionInclusionList(lnCtr).getEditMode() == EditMode.READY){
+                poJSON = PromotionInclusionList(lnCtr).updateRecord();
+                if(!isJSONSuccess(poJSON)){
+                    return poJSON;
+                }
+            }
+        }
+
+        //Set value for promotion applicability
+        for (int lnCtr = 0; lnCtr <= getPromotionApplicabilityCount() - 1; lnCtr++) {
+            if(PromotionApplicabilityList(lnCtr).getEditMode() == EditMode.READY){
+                poJSON = PromotionApplicabilityList(lnCtr).updateRecord();
+                if(!isJSONSuccess(poJSON)){
+                    return poJSON;
+                }
+            }
         }
         
         return poJSON;
@@ -1034,8 +1058,8 @@ public class VehiclePromotion extends Transaction {
                             }
                             
                             if(Logical.YES.equals(PromotionApplicabilityList(lnCtr).getExcludeFlag()) == lbIsExclude){
-                                poJSON = setJSON("error", "Selected row with the same model without variant already exist"
-                                                                + ".\nExclude value cannot be the same with the model without variant.");
+                               poJSON = setJSON("error", "A row with the same brand and model (without variant) already exists."
+                                                            + "\nPlease select a different model or specify a variant.");
                                 return poJSON;
                             }
                         }
@@ -1047,17 +1071,17 @@ public class VehiclePromotion extends Transaction {
             }
         }
         
-        if(lbBrandExclude && lbIsExclude){
-            poJSON = setJSON("error", "Brand of the selected row is already excluded"
-                                            + ".\nExcluding of the row with the same brand is not allowed"
-                                            + ".\nRemove the selected row instead.");
+        if (lbBrandExclude && lbIsExclude) {
+            poJSON = setJSON("error", "This brand is already excluded."
+                    + "\nAnother exclusion for the same brand is not allowed."
+                    + "\nPlease remove the selected row instead.");
             return poJSON;
         }
-        
-        if(lbModelExclude && lbIsExclude){
-            poJSON = setJSON("error", "Model of the selected row is already excluded"
-                                            + ".\nExcluding of the row with the same model is not allowed."
-                                            + ".\nRemove the selected row instead.");
+
+        if (lbModelExclude && lbIsExclude) {
+            poJSON = setJSON("error", "This model is already excluded."
+                    + "\nAnother exclusion for the same model is not allowed."
+                    + "\nPlease remove the selected row instead.");
             return poJSON;
         }
         
@@ -1152,7 +1176,7 @@ public class VehiclePromotion extends Transaction {
             }
         }
         
-        sortDetail();
+//        sortDetail();
         return poJSON;
     }
     
@@ -1177,32 +1201,74 @@ public class VehiclePromotion extends Transaction {
         }
         if (isJSONSuccess(poJSON)) {
             //Validate
-            boolean lbModelOnly = false;
+            String lsModelId = object.getModel().getModelId();
+            int lnActiveCount = 0;   // active rows with the same model and no variant
+            int lnInactiveRow = -1;  // first removed row with the same model and no variant
             boolean lbExclude = false;
-            for(int lnCtr = 0;lnCtr < getPromotionApplicabilityCount(); lnCtr++){
-                if(row != lnCtr && checkNotEmpty(PromotionApplicabilityList(lnCtr).getModelId())){
-                    if(PromotionApplicabilityList(lnCtr).getModelId().equals(object.getModel().getModelId())
-                        && checkEmpty(PromotionApplicabilityList(lnCtr).getVariantId())
-                        ){
-                        lbModelOnly = true;
-                        lbExclude = Logical.YES.equals(PromotionApplicabilityList(lnCtr).getExcludeFlag());
-                        if(!PromotionApplicabilityList(lnCtr).getRecordStatus()){
-                            row = lnCtr;
-                        } 
-                        break;
-                    }
+
+            for (int lnCtr = 0; lnCtr < getPromotionApplicabilityCount(); lnCtr++) {
+                if (lnCtr == row
+                        || !lsModelId.equals(PromotionApplicabilityList(lnCtr).getModelId())
+                        || checkNotEmpty(PromotionApplicabilityList(lnCtr).getVariantId())) {
+                    continue;
+                }
+
+                if (PromotionApplicabilityList(lnCtr).getRecordStatus()) {
+                    lnActiveCount++;
+                    lbExclude = Logical.YES.equals(PromotionApplicabilityList(lnCtr).getExcludeFlag());
+                } else if (lnInactiveRow < 0) {
+                    lnInactiveRow = lnCtr;
                 }
             }
-            
-            PromotionApplicabilityList(row).setModelId(object.getModel().getModelId());
+
+            // Only two rows are allowed for the same model without variant: one included and one excluded
+            if (lnActiveCount >= 2) {
+                poJSON = setJSON("error", "The selected model without variant already exists twice."
+                        + "\nPlease select a different model or specify a variant.");
+                poJSON.put("row", row);
+                return poJSON;
+            }
+
+            // Reactivate the previously removed row with the same model
+            if (lnInactiveRow >= 0) {
+                row = lnInactiveRow;
+            }
+
+            PromotionApplicabilityList(row).setModelId(lsModelId);
             PromotionApplicabilityList(row).setVariantId("");
             PromotionApplicabilityList(row).setRecordStatus(true);
-            if(lbModelOnly){
+
+            // The exclude flag must be the opposite of the active row with the same model
+            if (lnActiveCount == 1) {
                 PromotionApplicabilityList(row).setExcludeFlag(!lbExclude);
             }
+            //Validate
+//            boolean lbModelOnly = false;
+//            boolean lbExclude = false;
+//            for(int lnCtr = 0;lnCtr < getPromotionApplicabilityCount(); lnCtr++){
+//                if(row != lnCtr && checkNotEmpty(PromotionApplicabilityList(lnCtr).getModelId())){
+//                    if(PromotionApplicabilityList(lnCtr).getModelId().equals(object.getModel().getModelId())
+//                        && checkEmpty(PromotionApplicabilityList(lnCtr).getVariantId())
+//                        ){
+//                        lbModelOnly = true;
+//                        lbExclude = Logical.YES.equals(PromotionApplicabilityList(lnCtr).getExcludeFlag());
+//                        if(!PromotionApplicabilityList(lnCtr).getRecordStatus()){
+//                            row = lnCtr;
+//                        } 
+//                        break;
+//                    }
+//                }
+//            }
+//            
+//            PromotionApplicabilityList(row).setModelId(object.getModel().getModelId());
+//            PromotionApplicabilityList(row).setVariantId("");
+//            PromotionApplicabilityList(row).setRecordStatus(true);
+//            if(lbModelOnly){
+//                PromotionApplicabilityList(row).setExcludeFlag(!lbExclude);
+//            }
         }
         
-        sortDetail();
+//        sortDetail();
         return poJSON;
     }
     
@@ -1228,90 +1294,93 @@ public class VehiclePromotion extends Transaction {
             poJSON = object.openRecord(value);
         }
         if (isJSONSuccess(poJSON)) {
-            
             //Validate
-            boolean lbModelOnly = false;
-            boolean lbExclude = false;
-            for(int lnCtr = 0;lnCtr < getPromotionApplicabilityCount(); lnCtr++){
-                if(checkNotEmpty(PromotionApplicabilityList(lnCtr).getModelId())){
-                    if(row != lnCtr 
-                        && PromotionApplicabilityList(lnCtr).getModelId().equals(PromotionApplicabilityList(row).getModelId())
-                        && checkEmpty(PromotionApplicabilityList(lnCtr).getVariantId())
-                            ){
-                        lbModelOnly = true;
-                        lbExclude = Logical.YES.equals(PromotionApplicabilityList(lnCtr).getExcludeFlag());
-                    }
+            String lsModelId   = PromotionApplicabilityList(row).getModelId();
+            String lsVariantId = object.getModel().getVariantId();
+
+            // 1. Check if the selected variant already exists
+            for (int lnCtr = 0; lnCtr < getPromotionApplicabilityCount(); lnCtr++) {
+                if (lnCtr == row || !lsVariantId.equals(PromotionApplicabilityList(lnCtr).getVariantId())) {
+                    continue;
                 }
-                
-                if(row != lnCtr && checkNotEmpty(PromotionApplicabilityList(lnCtr).getVariantId())){
-                    if(PromotionApplicabilityList(lnCtr).getVariantId().equals(object.getModel().getVariantId())){
-                        row = lnCtr;
-                        if(!PromotionApplicabilityList(lnCtr).getRecordStatus()){
-                            PromotionApplicabilityList(lnCtr).setRecordStatus(true);
-                            break;
-                        } else {
-                            poJSON = setJSON("error", "Selected Variant already exists at row "+ (lnCtr+1));
-                            poJSON.put("row", row);
-                            return poJSON;
-                        }
+
+                if (PromotionApplicabilityList(lnCtr).getRecordStatus()) {
+                    poJSON = setJSON("error", "Selected variant already exists at row " + (lnCtr + 1) + ".");
+                    poJSON.put("row", lnCtr);
+                    return poJSON;
+                }
+
+                // Reactivate the previously removed row with the same variant
+                PromotionApplicabilityList(lnCtr).setRecordStatus(true);
+                row = lnCtr;
+                break;
+            }
+
+            // 2. Find an active row with the same model and no variant
+            boolean lbModelOnly = false;
+            boolean lbExclude   = false;
+            if (checkNotEmpty(lsModelId)) {
+                for (int lnCtr = 0; lnCtr < getPromotionApplicabilityCount(); lnCtr++) {
+                    if (lnCtr != row
+                            && PromotionApplicabilityList(lnCtr).getRecordStatus()
+                            && lsModelId.equals(PromotionApplicabilityList(lnCtr).getModelId())
+                            && checkEmpty(PromotionApplicabilityList(lnCtr).getVariantId())) {
+                        lbModelOnly = true;
+                        lbExclude   = Logical.YES.equals(PromotionApplicabilityList(lnCtr).getExcludeFlag());
+                        break;
                     }
                 }
             }
-            
-            PromotionApplicabilityList(row).setVariantId(object.getModel().getVariantId());
-            
-            if(lbModelOnly){ //if found existing row with a model only
-                PromotionApplicabilityList(row).setExcludeFlag(!lbExclude); //set exclude opposite to its exclude status
+
+            PromotionApplicabilityList(row).setVariantId(lsVariantId);
+
+            // The variant's exclude flag must be the opposite of the active model-only row's flag
+            if (lbModelOnly) {
+                PromotionApplicabilityList(row).setExcludeFlag(!lbExclude);
             }
         }
         
-        sortDetail();
+//        sortDetail();
         
         return poJSON;
     }
     
-    public void sortDetail(){
-        //Sort paDetail by brand, model, variant;
-        Detail().sort(
-            Comparator.comparing(
-                o -> getBrandDescription((Model_Vehicle_Price_Master) o),
-                Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)
-            ).thenComparing(
-                o -> getModelDescription((Model_Vehicle_Price_Master) o),
-                Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)
-            ).thenComparing(
-                o -> getModelVariantDescription((Model_Vehicle_Price_Master) o),
-                Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)
-            )
+    public void sortDetail() {
+    Comparator<String> blankFirst = Comparator.nullsFirst(String.CASE_INSENSITIVE_ORDER);
+
+    PromotionApplicabilityList().sort(
+        Comparator.comparing((Model_Promotion_Applicability o) -> getBrandDescription(o), blankFirst)
+                  .thenComparing(o -> getModelDescription(o), blankFirst)
+                  .thenComparing(o -> getModelVariantDescription(o), blankFirst)
         );
     }
-    
-    private String getBrandDescription(Model_Vehicle_Price_Master poDetail) {
+
+    private String normalize(String value) {
+        if (value == null) return null;
+        value = value.trim();
+        return value.isEmpty() ? null : value;
+    }
+
+    private String getBrandDescription(Model_Promotion_Applicability poDetail) {
         try {
-            return poDetail.ModelVariant()
-                    .Model()
-                    .Brand()
-                    .getDescription();
-        } catch (SQLException | GuanzonException e) {
+            return normalize(poDetail.Brand().getDescription());   // not via ModelVariant()
+        } catch (SQLException | GuanzonException | NullPointerException e) {
             return null;
         }
     }
 
-    private String getModelDescription(Model_Vehicle_Price_Master poDetail) {
+    private String getModelDescription(Model_Promotion_Applicability poDetail) {
         try {
-            return poDetail.ModelVariant()
-                    .Model()
-                    .getDescription();
-        } catch (SQLException | GuanzonException e) {
+            return normalize(poDetail.Model().getDescription());   // not via ModelVariant()
+        } catch (SQLException | GuanzonException | NullPointerException e) {
             return null;
         }
     }
 
-    private String getModelVariantDescription(Model_Vehicle_Price_Master poDetail) {
+    private String getModelVariantDescription(Model_Promotion_Applicability poDetail) {
         try {
-            return poDetail.ModelVariant()
-                    .getDescription();
-        } catch (SQLException | GuanzonException e) {
+            return normalize(poDetail.ModelVariant().getDescription());
+        } catch (SQLException | GuanzonException | NullPointerException e) {
             return null;
         }
     }
@@ -1658,29 +1727,54 @@ public class VehiclePromotion extends Transaction {
      *
      * @throws CloneNotSupportedException If an error occurs while adding a new detail row.
      */
-    public void ReloadApplicability() throws CloneNotSupportedException, SQLException, GuanzonException{
+    public void ReloadApplicability() throws CloneNotSupportedException, SQLException, GuanzonException {
+        // Remove rows with no brand
         int lnCtr = getPromotionApplicabilityCount() - 1;
         while (lnCtr >= 0) {
-            if (PromotionApplicabilityList(lnCtr).getBrandId() == null || "".equals(PromotionApplicabilityList(lnCtr).getBrandId())){
+            if (checkEmpty(PromotionApplicabilityList(lnCtr).getBrandId())) {
                 paApplicability.remove(lnCtr);
             }
             lnCtr--;
         }
 
-        if ((getPromotionApplicabilityCount() - 1) >= 0) {
-            if (
-                    (PromotionApplicabilityList(getPromotionApplicabilityCount() - 1).getBrandId() != null && !"".equals(PromotionApplicabilityList(getPromotionApplicabilityCount() - 1).getBrandId()))
-            ) {
-                addPromotionApplicability();
-            }
+        int lnLast = getPromotionApplicabilityCount() - 1;
 
+        // No rows: always add one
+        if (lnLast < 0) {
+            addPromotionApplicability();
+            return;
         }
 
-        if ((getPromotionApplicabilityCount() - 1) < 0) {
+        // Add a row only if the last row is not a duplicate without a variant
+        if (!isDuplicateWithoutVariant(lnLast)) {
             addPromotionApplicability();
         }
     }
-    
+
+    /**
+     * Returns true if the row has no variant and another row has the same
+     * brand and model (empty or not), also without a variant.
+     */
+    private boolean isDuplicateWithoutVariant(int fnRow) {
+        String lsBrand   = clean(PromotionApplicabilityList(fnRow).getBrandId());
+        String lsModel   = clean(PromotionApplicabilityList(fnRow).getModelId());
+        String lsVariant = clean(PromotionApplicabilityList(fnRow).getVariantId());
+
+        // A row with a variant always allows a new row
+        if (!lsVariant.isEmpty()) {
+            return false;
+        }
+
+        int lnCount = 0;
+        for (int lnRow = 0; lnRow < getPromotionApplicabilityCount(); lnRow++) {
+            if (lsBrand.equals(clean(PromotionApplicabilityList(lnRow).getBrandId()))
+                    && lsModel.equals(clean(PromotionApplicabilityList(lnRow).getModelId()))
+                    && clean(PromotionApplicabilityList(lnRow).getVariantId()).isEmpty()) {
+                lnCount++;
+            }
+        }
+        return lnCount > 1;
+    }
     
     /**
      * Sets default master record values for a new transaction.
@@ -1734,6 +1828,15 @@ public class VehiclePromotion extends Transaction {
         loValidator.setTransactionStatus(status);
         loValidator.setMaster(Master());
         poJSON = loValidator.validate();
+        if(!isJSONSuccess(poJSON)){
+            return poJSON;
+        }
+        
+        if(checkEmpty(PromotionMaster().getDescription())){
+            poJSON = setJSON("error", "Promotion description cannot be empty.");
+            return poJSON;
+        }
+        
         return poJSON;
     }
     
@@ -1771,6 +1874,49 @@ public class VehiclePromotion extends Transaction {
         return poJSON;
     }
     
+    public JSONObject validateApplicability() {
+        int lnCount = getPromotionApplicabilityCount();
+
+        for (int lnRow = 0; lnRow < lnCount; lnRow++) {
+            String lsBrand   = clean(PromotionApplicabilityList(lnRow).getBrandId());
+            String lsModel   = clean(PromotionApplicabilityList(lnRow).getModelId());
+            String lsVariant = clean(PromotionApplicabilityList(lnRow).getVariantId());
+
+            // Skip blank rows and rows with a variant
+            if (lsBrand.isEmpty() || !lsVariant.isEmpty()) {
+                continue;
+            }
+
+            for (int lnNext = lnRow + 1; lnNext < lnCount; lnNext++) {
+                String lsBrand2   = clean(PromotionApplicabilityList(lnNext).getBrandId());
+                String lsModel2   = clean(PromotionApplicabilityList(lnNext).getModelId());
+                String lsVariant2 = clean(PromotionApplicabilityList(lnNext).getVariantId());
+
+                if (!lsVariant2.isEmpty()
+                        || !lsBrand.equals(lsBrand2)
+                        || !lsModel.equals(lsModel2)) {
+                    continue;
+                }
+
+                if (lsModel.isEmpty()) {
+                    // Same brand, no model, no variant
+                    poJSON = setJSON("error", "Duplicate brand found in rows " + (lnRow + 1) + " and " + (lnNext + 1) + "."
+                            + "\nThe same brand without model and variant cannot be added more than once."
+                            + "\nPlease remove one of the rows.");
+                } else {
+                    // Same brand and model, no variant
+                    poJSON = setJSON("error", "Duplicate model found in rows " + (lnRow + 1) + " and " + (lnNext + 1) + "."
+                            + "\nThe same brand and model without variant cannot be added more than once."
+                            + "\nPlease remove one of the rows or specify a variant.");
+                }
+                return poJSON;
+            }
+        }
+
+        poJSON = setJSON("success", "Applicability is valid.");
+        return poJSON;
+    }
+    
     /**
      * Performs pre-save validation and assignments.
      * Generates new IDs for new records, validates all entries, removes invalid detail rows,
@@ -1797,6 +1943,11 @@ public class VehiclePromotion extends Transaction {
         Master().setValidityDescription(PromotionMaster().getDescription());
             
         poJSON = isEntryOkay(Master().getRecordStatus());
+        if (!isJSONSuccess(poJSON)) {
+            return poJSON;
+        }
+        
+        poJSON = validateApplicability();
         if (!isJSONSuccess(poJSON)) {
             return poJSON;
         }
@@ -1947,6 +2098,8 @@ public class VehiclePromotion extends Transaction {
             PromotionApplicabilityList(lnCtr).setModifiedDate(poGRider.getServerDate());
         }
         
+        //sort applicability
+        sortDetail();
         Master().setModifiedBy(poGRider.Encrypt(poGRider.getUserID()));
         Master().setModifiedDate(poGRider.getServerDate());
         poJSON = setJSON("success", "success");
@@ -2195,7 +2348,7 @@ public class VehiclePromotion extends Transaction {
 
         String jrxmlPath =
                 System.getProperty("sys.default.path.config")
-                + "/Reports/Promotion.jrxml";
+                + "/Reports/VehiclePromotion.jrxml";
 
         JasperReport jasperReport =
                 JasperCompileManager.compileReport(jrxmlPath);
@@ -2309,7 +2462,6 @@ public class VehiclePromotion extends Transaction {
         }
         parameters.put("validTo",lsToDate);
         
-        parameters.put("nPromoDiscount",PromotionMaster().getDiscountAmount());
         String lsPayForm = "";
         switch(PromotionMaster().getPaymentForm()){
             case "0": //Cash 
@@ -2327,6 +2479,7 @@ public class VehiclePromotion extends Transaction {
         
         }
         parameters.put("nPayForm",lsPayForm);
+        parameters.put("nPromoDiscount",PromotionMaster().getDiscountAmount());
         
         // ---------------------------------------------
         // Build data
@@ -2347,7 +2500,11 @@ public class VehiclePromotion extends Transaction {
         parameters.put("InclusionDataSource", new JRMapCollectionDataSource((Collection) inclusions));
         parameters.put("ApplicabilityDataSource", new JRMapCollectionDataSource((Collection) applicabilities));
         
-
+        // Section visibility
+        parameters.put("ShowAddOnSection",addons != null && !addons.isEmpty());
+        parameters.put("ShowFreebieSection",freebies != null && !freebies.isEmpty());
+        parameters.put("ShowInclusionSection",inclusions != null && !inclusions.isEmpty());
+        parameters.put("ShowApplicabilitySection", applicabilities != null && !applicabilities.isEmpty());
         // ---------------------------------------------
         // Generate JasperPrint
         // ---------------------------------------------
@@ -2518,13 +2675,25 @@ public class VehiclePromotion extends Transaction {
             for(int lnCtr = 0;lnCtr < getPromotionAddOnCount();lnCtr++){
                 if(PromotionAddOnList(lnCtr).getRecordStatus()){
                     lnRow++;
-                    String lsType = PromotionAddOnList(lnCtr).getPromoType();
-                        addAddOn(rows
-                                , PromotionAddOnList(lnCtr).AddOnType().getAddTypeName()
-                                , lsType
-                                , PromotionAddOnList(lnCtr).AddOnType().getAmount()
-                                , PromotionAddOnList(lnCtr).getDiscountAmount()
-                        );
+                    String lsType = "";
+                    //Included/Free/Discounted
+                    switch(PromotionAddOnList(lnCtr).getPromoType()){
+                        case "0":
+                            lsType = "Included";
+                        break;
+                        case "1":
+                            lsType = "Free";
+                        break;
+                        case "2":
+                            lsType = "Discounted";
+                        break;
+                    }
+                    addAddOn(rows
+                            , PromotionAddOnList(lnCtr).AddOnType().getAddTypeName()
+                            , lsType
+                            , PromotionAddOnList(lnCtr).AddOnType().getAmount()
+                            , PromotionAddOnList(lnCtr).getDiscountAmount()
+                    );
                 }
             }
         } catch (SQLException | GuanzonException ex) {
@@ -2631,7 +2800,7 @@ public class VehiclePromotion extends Transaction {
                     }   
                     addApplicability(rows
                             , lsDescription
-                            , PromotionApplicabilityList(lnCtr).getExcludeFlag()
+                            , Logical.YES.equals(PromotionApplicabilityList(lnCtr).getExcludeFlag()) ? "YES" : "NO"
                     );
                 }
             }
@@ -2811,7 +2980,7 @@ public class VehiclePromotion extends Transaction {
         }
 
         if(pbWithUI){
-            showStatusHistoryUI("Vehicle Price", (String) poMaster.getValue("sValidIDx"), entryBy, entryDate, crs);
+            showStatusHistoryUI("Vehicle Promotion", (String) poMaster.getValue("sValidIDx"), entryBy, entryDate, crs);
         }
     }
     /**
