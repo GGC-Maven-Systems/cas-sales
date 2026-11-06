@@ -1018,124 +1018,646 @@ public class VehiclePromotion extends Transaction {
     }
     
     //Validate
-    public JSONObject validateExclude(int row, boolean lbIsExclude){
-        poJSON = new JSONObject();
-        String lsBrandId = PromotionApplicabilityList(row).getBrandId();
-        String lsModelId = PromotionApplicabilityList(row).getModelId();
-        String lsVariantId = PromotionApplicabilityList(row).getVariantId();
-        
-        //Check for excluded brand
-        //NOTE: Do not allow to exclude the row if the brand is already excluded
-        boolean lbBrandOnly = false;
-        boolean lbModelOnly = false;
-        boolean lbBrandExclude = false;
-        boolean lbModelExclude = false;
-        for(int lnCtr = 0;lnCtr < getPromotionApplicabilityCount(); lnCtr++){
-            if(PromotionApplicabilityList(lnCtr).getRecordStatus() && row != lnCtr){
-                if(checkNotEmpty(PromotionApplicabilityList(lnCtr).getBrandId())){
-                    if(PromotionApplicabilityList(lnCtr).getBrandId().equals(lsBrandId)
-                        && checkEmpty(PromotionApplicabilityList(lnCtr).getModelId())
-                        && checkEmpty(PromotionApplicabilityList(lnCtr).getVariantId())
-                        ){
-                        if(row != lnCtr){
-                            if(checkEmpty(lsModelId)
-                                && checkEmpty(lsVariantId)){
-                                poJSON = setJSON("error", "Brand without model and variant already exist at row "+(lnCtr+1));
-                                return poJSON;
-                            }
-                        }
-                        if(!lbBrandExclude){
-                            lbBrandExclude = Logical.YES.equals(PromotionApplicabilityList(lnCtr).getExcludeFlag());
-                        }
-                    }
+//    public JSONObject validateExclude(int row, boolean lbIsExclude){
+//        poJSON = new JSONObject();
+//        String lsBrandId = PromotionApplicabilityList(row).getBrandId();
+//        String lsModelId = PromotionApplicabilityList(row).getModelId();
+//        String lsVariantId = PromotionApplicabilityList(row).getVariantId();
+//        
+//        //Check for excluded brand
+//        //NOTE: Do not allow to exclude the row if the brand is already excluded
+//        boolean lbBrandOnly = false;
+//        boolean lbModelOnly = false;
+//        boolean lbBrandExclude = false;
+//        boolean lbModelExclude = false;
+//        for(int lnCtr = 0;lnCtr < getPromotionApplicabilityCount(); lnCtr++){
+//            if(PromotionApplicabilityList(lnCtr).getRecordStatus() && row != lnCtr){
+//                if(checkNotEmpty(PromotionApplicabilityList(lnCtr).getBrandId())){
+//                    if(PromotionApplicabilityList(lnCtr).getBrandId().equals(lsBrandId)
+//                        && checkEmpty(PromotionApplicabilityList(lnCtr).getModelId())
+//                        && checkEmpty(PromotionApplicabilityList(lnCtr).getVariantId())
+//                        ){
+//                        if(row != lnCtr){
+//                            if(checkEmpty(lsModelId)
+//                                && checkEmpty(lsVariantId)){
+//                                poJSON = setJSON("error", "Brand without model and variant already exist at row "+(lnCtr+1));
+//                                return poJSON;
+//                            }
+//                            
+//                            if(Logical.YES.equals(PromotionApplicabilityList(lnCtr).getExcludeFlag()) 
+//                                && lbIsExclude){
+//                                poJSON = setJSON("error", "Model without variant cannot be the save exclude value with the brand without model and variant.");
+//                                return poJSON;
+//                            }
+//                        }
+//                        if(!lbBrandExclude){
+//                            lbBrandExclude = Logical.YES.equals(PromotionApplicabilityList(lnCtr).getExcludeFlag());
+//                        }
+//                    }
+//                }
+//                
+//                if(checkNotEmpty(PromotionApplicabilityList(lnCtr).getModelId())){
+//                    if(PromotionApplicabilityList(lnCtr).getModelId().equals(lsModelId)
+//                        && checkEmpty(PromotionApplicabilityList(lnCtr).getVariantId())
+//                        ){
+//                        if(row != lnCtr){
+//                            if(checkEmpty(lsVariantId)){
+//                                poJSON = setJSON("error", "Model without variant already exist at row "+(lnCtr+1));
+//                                return poJSON;
+//                            }
+//                            
+//                            if(Logical.YES.equals(PromotionApplicabilityList(lnCtr).getExcludeFlag()) == lbIsExclude){
+//                               poJSON = setJSON("error", "A row with the same brand and model (without variant) already exists."
+//                                                            + "\nPlease select a different model or specify a variant.");
+//                                return poJSON;
+//                            }
+//                        }
+//                        if(!lbModelExclude){
+//                            lbModelExclude = Logical.YES.equals(PromotionApplicabilityList(lnCtr).getExcludeFlag());
+//                        }
+//                    }
+//                }
+//            }
+//        }
+//        
+//        if (lbBrandExclude && lbIsExclude) {
+//            poJSON = setJSON("error", "This brand is already excluded."
+//                    + "\nAnother exclusion for the same brand is not allowed."
+//                    + "\nPlease remove the selected row instead.");
+//            return poJSON;
+//        }
+//
+//        if (lbModelExclude && lbIsExclude) {
+//            poJSON = setJSON("error", "This model is already excluded."
+//                    + "\nAnother exclusion for the same model is not allowed."
+//                    + "\nPlease remove the selected row instead.");
+//            return poJSON;
+//        }
+//        
+//        updateExclude(lsBrandId, lsModelId, lsVariantId, lbIsExclude, row);
+//        
+//        poJSON = setJSON("success", "success");
+//        poJSON.put("row", row);
+//        return poJSON;
+//    }
+//    
+//    private void updateExclude(String fsBrandId, String fsModelId, String fsVariantId, boolean fbIsExclude, int row){
+//        if(checkEmpty(fsModelId) && checkEmpty(fsVariantId)){
+//            for(int lnCtr = 0;lnCtr < getPromotionApplicabilityCount(); lnCtr++){
+//                if(checkNotEmpty(PromotionApplicabilityList(lnCtr).getBrandId()) 
+//                    && row != lnCtr){
+//                    if(PromotionApplicabilityList(lnCtr).getBrandId().equals(fsBrandId)){
+//                        if(checkNotEmpty(PromotionApplicabilityList(lnCtr).getModelId())
+//                            && checkEmpty(PromotionApplicabilityList(lnCtr).getVariantId())
+//                                ){
+//                                //set exclude value opposite from the model
+//                            PromotionApplicabilityList(lnCtr).setExcludeFlag(!fbIsExclude);
+//                            
+//                            for(int lnRow = 0;lnRow < getPromotionApplicabilityCount(); lnRow++){
+//                                if (checkNotEmpty(PromotionApplicabilityList(lnRow).getModelId())
+//                                    || checkNotEmpty(PromotionApplicabilityList(lnRow).getVariantId())
+//                                    ){
+//                                    if(PromotionApplicabilityList(lnRow).getModelId().equals(PromotionApplicabilityList(lnCtr).getModelId())){
+//                                        PromotionApplicabilityList(lnRow).setExcludeFlag(!Logical.YES.equals(PromotionApplicabilityList(lnCtr).getExcludeFlag()));
+//                                    }
+//                                }
+//                            }
+//                        }
+//                        
+//                    }
+//                }
+//            }
+//        }
+//
+//        //Update row with the same model
+//        if(checkNotEmpty(fsModelId) && checkEmpty(fsVariantId)){
+//            for(int lnCtr = 0;lnCtr < getPromotionApplicabilityCount(); lnCtr++){
+//                if(row != lnCtr){
+//                    if(PromotionApplicabilityList(lnCtr).getModelId().equals(fsModelId)
+//                        && checkNotEmpty(PromotionApplicabilityList(lnCtr).getVariantId())
+//                        ){
+//                        //set exclude value opposite from the model
+//                        PromotionApplicabilityList(lnCtr).setExcludeFlag(!fbIsExclude);
+//                    }
+//                }
+//            }
+//        }
+//    }
+    
+    //==========================================================
+    // Reload rows
+    //==========================================================
+    public void ReloadApplicability() throws CloneNotSupportedException, SQLException, GuanzonException {
+        //Remove rows without brand
+        int lnCtr = getPromotionApplicabilityCount() - 1;
+        while (lnCtr >= 0) {
+            if (checkEmpty(PromotionApplicabilityList(lnCtr).getBrandId())) {
+                paApplicability.remove(lnCtr);
+            }
+            lnCtr--;
+        }
+
+        int lnLast = getPromotionApplicabilityCount() - 1;
+
+        //No rows: always add one
+        if (lnLast < 0) {
+            addPromotionApplicability();
+            return;
+        }
+
+        //Add a new row only if the last row is not a duplicate
+        if (!isDuplicateRow(lnLast)) {
+            addPromotionApplicability();
+        }
+    }
+    
+    //Another active row with the same value
+    //Model without variant: allowed once more only with the opposite exclude value and no brand-only row
+    private boolean isDuplicateRow(int fnRow) {
+        String lsBrandId   = PromotionApplicabilityList(fnRow).getBrandId();
+        String lsModelId   = PromotionApplicabilityList(fnRow).getModelId();
+        String lsVariantId = PromotionApplicabilityList(fnRow).getVariantId();
+
+        if (checkEmpty(lsBrandId)) {
+            return false;
+        }
+
+        boolean lbIsModelOnly = checkNotEmpty(lsModelId) && checkEmpty(lsVariantId);
+        int lnSameModelCount = 0;
+
+        for (int lnCtr = 0; lnCtr < getPromotionApplicabilityCount(); lnCtr++) {
+            if (lnCtr == fnRow || !PromotionApplicabilityList(lnCtr).getRecordStatus()) {
+                continue;
+            }
+
+            if (checkNotEmpty(lsVariantId)) {
+                if (lsVariantId.equals(PromotionApplicabilityList(lnCtr).getVariantId())) {
+                    return true;
                 }
-                
-                if(checkNotEmpty(PromotionApplicabilityList(lnCtr).getModelId())){
-                    if(PromotionApplicabilityList(lnCtr).getModelId().equals(lsModelId)
-                        && checkEmpty(PromotionApplicabilityList(lnCtr).getVariantId())
-                        ){
-                        if(row != lnCtr){
-                            if(checkEmpty(lsVariantId)){
-                                poJSON = setJSON("error", "Model without variant already exist at row "+(lnCtr+1));
-                                return poJSON;
-                            }
-                            
-                            if(Logical.YES.equals(PromotionApplicabilityList(lnCtr).getExcludeFlag()) == lbIsExclude){
-                               poJSON = setJSON("error", "A row with the same brand and model (without variant) already exists."
-                                                            + "\nPlease select a different model or specify a variant.");
-                                return poJSON;
-                            }
-                        }
-                        if(!lbModelExclude){
-                            lbModelExclude = Logical.YES.equals(PromotionApplicabilityList(lnCtr).getExcludeFlag());
-                        }
+            } else if (lbIsModelOnly) {
+                if (isModelOnly(lnCtr, lsModelId)) {
+                    if (isExcluded(lnCtr) == isExcluded(fnRow)) {
+                        return true;
                     }
+                    lnSameModelCount++;
                 }
+            } else if (isBrandOnly(lnCtr, lsBrandId)) {
+                return true;
             }
         }
-        
-        if (lbBrandExclude && lbIsExclude) {
-            poJSON = setJSON("error", "This brand is already excluded."
-                    + "\nAnother exclusion for the same brand is not allowed."
-                    + "\nPlease remove the selected row instead.");
+
+        if (lbIsModelOnly) {
+            if (lnSameModelCount >= 2) {
+                return true;
+            }
+            if (lnSameModelCount == 1 && findBrandOnlyRow(lsBrandId, fnRow) >= 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+
+    //==========================================================
+    // Search model: call this from your model search
+    //==========================================================
+        public JSONObject setApplicabilityModel(int row, String fsBrandId, String fsModelId) {
+        poJSON = new JSONObject();
+
+        if (checkEmpty(fsBrandId) || checkEmpty(fsModelId)) {
+            poJSON = setJSON("error", "Please select a valid model.");
+            poJSON.put("row", row);
             return poJSON;
         }
 
-        if (lbModelExclude && lbIsExclude) {
-            poJSON = setJSON("error", "This model is already excluded."
-                    + "\nAnother exclusion for the same model is not allowed."
-                    + "\nPlease remove the selected row instead.");
+        //Check for existing rows with the same model without variant
+        int lnActiveCount = 0;
+        int lnActiveRow   = -1;
+        int lnInactiveRow = -1;
+        for (int lnCtr = 0; lnCtr < getPromotionApplicabilityCount(); lnCtr++) {
+            if (lnCtr == row || !isModelOnly(lnCtr, fsModelId)) {
+                continue;
+            }
+
+            if (PromotionApplicabilityList(lnCtr).getRecordStatus()) {
+                lnActiveCount++;
+                lnActiveRow = lnCtr;
+            } else if (lnInactiveRow < 0) {
+                lnInactiveRow = lnCtr;
+            }
+        }
+
+        //Only two rows are allowed for the same model without variant: one included and one excluded
+        if (lnActiveCount >= 2) {
+            poJSON = setJSON("error", "Model without variant already exists as both included and excluded."
+                    + "\nPlease select a different model or specify a variant.");
+            poJSON.put("row", lnActiveRow);
             return poJSON;
         }
-        
-        updateExclude(lsBrandId, lsModelId, lsVariantId, lbIsExclude, row);
-        
+
+        //Reactivate the previously removed row with the same model
+        if (lnInactiveRow >= 0 && !isModelOnly(row, fsModelId)) {
+            row = lnInactiveRow;
+        }
+
+        //A second row for the same model is not allowed while the brand without model and variant exists
+        int lnBrandRow = findBrandOnlyRow(fsBrandId, row);
+//        if (lnActiveCount == 1 && lnBrandRow >= 0) {
+//            poJSON = setJSON("error", "Model without variant already exists at row " + (lnActiveRow + 1) + "."
+//                    + "\nA second row for the same model is not allowed while the brand without model and variant exists at row " + (lnBrandRow + 1) + ".");
+//            poJSON.put("row", lnActiveRow);
+//            return poJSON;
+//        }
+
+        //Exclude value:
+        //1. Opposite of the existing row with the same model
+        //2. Else opposite of the brand without model and variant
+        //3. Else keep the current value
+        boolean lbExclude;
+        if (lnActiveCount == 1) {
+            lbExclude = !isExcluded(lnActiveRow);
+        } else if (lnBrandRow >= 0) {
+            lbExclude = !isExcluded(lnBrandRow);
+        } else {
+            lbExclude = isExcluded(row);
+        }
+
+        PromotionApplicabilityList(row).setBrandId(fsBrandId);
+        PromotionApplicabilityList(row).setModelId(fsModelId);
+        PromotionApplicabilityList(row).setVariantId("");
+        PromotionApplicabilityList(row).setRecordStatus(true);
+        PromotionApplicabilityList(row).setExcludeFlag(lbExclude);
+
+        //Variants of this model must be the opposite of the model (only when there is one model row)
+        if (lnActiveCount == 0) {
+            updateExclude(row, lbExclude);
+        }
+
         poJSON = setJSON("success", "success");
         poJSON.put("row", row);
         return poJSON;
     }
-    
-    private void updateExclude(String fsBrandId, String fsModelId, String fsVariantId, boolean fbIsExclude, int row){
-        if(checkEmpty(fsModelId) && checkEmpty(fsVariantId)){
-            for(int lnCtr = 0;lnCtr < getPromotionApplicabilityCount(); lnCtr++){
-                if(checkNotEmpty(PromotionApplicabilityList(lnCtr).getBrandId()) 
-                    && row != lnCtr){
-                    if(PromotionApplicabilityList(lnCtr).getBrandId().equals(fsBrandId)){
-                        if(checkNotEmpty(PromotionApplicabilityList(lnCtr).getModelId())
-                            && checkEmpty(PromotionApplicabilityList(lnCtr).getVariantId())
-                                ){
-                                //set exclude value opposite from the model
-                            PromotionApplicabilityList(lnCtr).setExcludeFlag(!fbIsExclude);
-                            
-                            for(int lnRow = 0;lnRow < getPromotionApplicabilityCount(); lnRow++){
-                                if (checkNotEmpty(PromotionApplicabilityList(lnRow).getModelId())
-                                    || checkNotEmpty(PromotionApplicabilityList(lnRow).getVariantId())
-                                    ){
-                                    if(PromotionApplicabilityList(lnRow).getModelId().equals(PromotionApplicabilityList(lnCtr).getModelId())){
-                                        PromotionApplicabilityList(lnRow).setExcludeFlag(!Logical.YES.equals(PromotionApplicabilityList(lnCtr).getExcludeFlag()));
-                                    }
-                                }
-                            }
-                        }
-                        
-                    }
-                }
+
+    //==========================================================
+    // Search variant: call this from your variant search
+    //==========================================================
+    public JSONObject setApplicabilityVariant(int row, String fsBrandId, String fsModelId, String fsVariantId) {
+        poJSON = new JSONObject();
+
+        if (checkEmpty(fsBrandId) || checkEmpty(fsVariantId)) {
+            poJSON = setJSON("error", "Please select a valid variant.");
+            poJSON.put("row", row);
+            return poJSON;
+        }
+
+        //Check for an existing row with the same variant
+        int lnInactiveRow = -1;
+        for (int lnCtr = 0; lnCtr < getPromotionApplicabilityCount(); lnCtr++) {
+            if (lnCtr == row || !fsVariantId.equals(PromotionApplicabilityList(lnCtr).getVariantId())) {
+                continue;
+            }
+
+            if (PromotionApplicabilityList(lnCtr).getRecordStatus()) {
+                poJSON = setJSON("error", "Selected variant already exists at row " + (lnCtr + 1) + ".");
+                poJSON.put("row", lnCtr);
+                return poJSON;
+            }
+
+            if (lnInactiveRow < 0) {
+                lnInactiveRow = lnCtr;
             }
         }
 
-        //Update row with the same model
-        if(checkNotEmpty(fsModelId) && checkEmpty(fsVariantId)){
-            for(int lnCtr = 0;lnCtr < getPromotionApplicabilityCount(); lnCtr++){
-                if(row != lnCtr){
-                    if(PromotionApplicabilityList(lnCtr).getModelId().equals(fsModelId)
-                        && checkNotEmpty(PromotionApplicabilityList(lnCtr).getVariantId())
-                        ){
-                        //set exclude value opposite from the model
-                        PromotionApplicabilityList(lnCtr).setExcludeFlag(!fbIsExclude);
-                    }
-                }
+        //Reactivate the previously removed row with the same variant
+        if (lnInactiveRow >= 0) {
+            row = lnInactiveRow;
+        }
+
+        PromotionApplicabilityList(row).setBrandId(fsBrandId);
+        PromotionApplicabilityList(row).setModelId(fsModelId);
+        PromotionApplicabilityList(row).setVariantId(fsVariantId);
+        PromotionApplicabilityList(row).setRecordStatus(true);
+
+        //Variant exclude value must be the opposite of its nearest parent:
+        //model without variant, else brand without model and variant
+        int lnParent = findParentRow(row);
+        if (lnParent >= 0) {
+            PromotionApplicabilityList(row).setExcludeFlag(!isExcluded(lnParent));
+        }
+
+        poJSON = setJSON("success", "success");
+        poJSON.put("row", row);
+        return poJSON;
+    }
+
+    //==========================================================
+    // Exclude checkbox
+    //==========================================================
+        public JSONObject validateExclude(int row, boolean lbIsExclude) {
+        poJSON = new JSONObject();
+        String lsBrandId   = PromotionApplicabilityList(row).getBrandId();
+        String lsModelId   = PromotionApplicabilityList(row).getModelId();
+        String lsVariantId = PromotionApplicabilityList(row).getVariantId();
+
+        if (checkEmpty(lsBrandId)) {
+            poJSON = setJSON("error", "Please select a brand first.");
+            poJSON.put("row", row);
+            return poJSON;
+        }
+
+        boolean lbHasModel     = checkNotEmpty(lsModelId);
+        boolean lbHasVariant   = checkNotEmpty(lsVariantId);
+        boolean lbIsBrandOnly  = !lbHasModel && !lbHasVariant;
+        boolean lbIsModelOnly  = lbHasModel && !lbHasVariant;
+        int lnSameModelCount   = 0;
+        int lnSameModelRow     = -1;
+
+        //Check for duplicate rows
+        for (int lnCtr = 0; lnCtr < getPromotionApplicabilityCount(); lnCtr++) {
+            if (lnCtr == row || !PromotionApplicabilityList(lnCtr).getRecordStatus()) {
+                continue;
+            }
+
+            if (lbIsBrandOnly && isBrandOnly(lnCtr, lsBrandId)) {
+                poJSON = setJSON("error", "Brand without model and variant already exists at row " + (lnCtr + 1) + "."
+                        + "\nPlease remove the selected row instead.");
+                poJSON.put("row", row);
+                return poJSON;
+            }
+
+            if (lbIsModelOnly && isModelOnly(lnCtr, lsModelId)) {
+                lnSameModelCount++;
+                lnSameModelRow = lnCtr;
+                continue;
+            }
+
+            if (lbHasVariant && lsVariantId.equals(PromotionApplicabilityList(lnCtr).getVariantId())) {
+                poJSON = setJSON("error", "Selected variant already exists at row " + (lnCtr + 1) + "."
+                        + "\nPlease remove the selected row instead.");
+                poJSON.put("row", row);
+                return poJSON;
             }
         }
+
+        //Model without variant with another row of the same model: one included and one excluded only
+        if (lbIsModelOnly && lnSameModelCount > 0) {
+            if (lnSameModelCount >= 2) {
+                poJSON = setJSON("error", "Model without variant already exists as both included and excluded."
+                        + "\nPlease remove the selected row instead.");
+                poJSON.put("row", row);
+                return poJSON;
+            }
+
+            int lnBrandRow = findBrandOnlyRow(lsBrandId, row);
+            if (lnBrandRow >= 0) {
+                poJSON = setJSON("error", "Model without variant already exists at row " + (lnSameModelRow + 1) + "."
+                        + "\nA second row for the same model is not allowed while the brand without model and variant exists at row " + (lnBrandRow + 1) + "."
+                        + "\nPlease remove the selected row instead.");
+                poJSON.put("row", row);
+                return poJSON;
+            }
+
+            if (isExcluded(lnSameModelRow) == lbIsExclude) {
+                poJSON = setJSON("error", "The same model at row " + (lnSameModelRow + 1) + " is already " + (lbIsExclude ? "excluded" : "included") + "."
+                        + "\nThe selected row must have the opposite exclude value."
+                        + "\nPlease remove the selected row instead.");
+                poJSON.put("row", row);
+                return poJSON;
+            }
+
+            //Included and excluded pair: variants have no parent, no cascade
+            PromotionApplicabilityList(row).setExcludeFlag(lbIsExclude);
+            poJSON = setJSON("success", "success");
+            poJSON.put("row", row);
+            return poJSON;
+        }
+
+        //Brand without model and variant is not allowed while a model has both included and excluded rows
+        if (lbIsBrandOnly) {
+            int lnPairRow = findModelPairRow(lsBrandId, row);
+            if (lnPairRow >= 0) {
+                poJSON = setJSON("error", "The model at row " + (lnPairRow + 1) + " exists as both included and excluded."
+                        + "\nPlease remove one of the model rows first.");
+                poJSON.put("row", row);
+                return poJSON;
+            }
+        }
+
+        //Exclude value must be the opposite of the nearest parent row
+        int lnParent = findParentRow(row);
+        if (lnParent >= 0 && isExcluded(lnParent) == lbIsExclude) {
+            String lsParent = checkNotEmpty(PromotionApplicabilityList(lnParent).getModelId()) ? "model" : "brand";
+            String lsStatus = lbIsExclude ? "excluded" : "included";
+            poJSON = setJSON("error", "The " + lsParent + " at row " + (lnParent + 1) + " is already " + lsStatus + "."
+                    + "\nThe selected row must have the opposite exclude value."
+                    + "\nPlease remove the selected row instead.");
+            poJSON.put("row", row);
+            return poJSON;
+        }
+
+        PromotionApplicabilityList(row).setExcludeFlag(lbIsExclude);
+        updateExclude(row, lbIsExclude);
+
+        poJSON = setJSON("success", "success");
+        poJSON.put("row", row);
+        return poJSON;
+    }
+
+    //==========================================================
+    // Validate all rows before saving
+    //==========================================================
+    public JSONObject validateApplicability() {
+        poJSON = new JSONObject();
+        int lnCount = getPromotionApplicabilityCount();
+
+        for (int lnRow = 0; lnRow < lnCount; lnRow++) {
+            if (!PromotionApplicabilityList(lnRow).getRecordStatus()
+                    || checkEmpty(PromotionApplicabilityList(lnRow).getBrandId())) {
+                continue;
+            }
+
+            //Duplicate check
+            if (isDuplicateRow(lnRow)) {
+                if (checkEmpty(PromotionApplicabilityList(lnRow).getModelId())
+                        && checkEmpty(PromotionApplicabilityList(lnRow).getVariantId())) {
+                    poJSON = setJSON("error", "Duplicate brand without model and variant found at row " + (lnRow + 1) + "."
+                            + "\nPlease remove one of the rows.");
+                } else if (checkEmpty(PromotionApplicabilityList(lnRow).getVariantId())) {
+                    poJSON = setJSON("error", "Invalid model without variant at row " + (lnRow + 1) + "."
+                            + "\nOnly one included and one excluded row are allowed for the same model,"
+                            + "\nand only when the brand without model and variant does not exist.");
+                } else {
+                    poJSON = setJSON("error", "Duplicate variant found at row " + (lnRow + 1) + "."
+                            + "\nPlease remove one of the rows.");
+                }
+                poJSON.put("row", lnRow);
+                return poJSON;
+            }
+
+            //Exclude value must be the opposite of the nearest parent row
+            int lnParent = findParentRow(lnRow);
+            if (lnParent >= 0 && isExcluded(lnParent) == isExcluded(lnRow)) {
+                poJSON = setJSON("error", "Row " + (lnRow + 1) + " has the same exclude value as row " + (lnParent + 1) + "."
+                        + "\nA model or variant must have the opposite exclude value of its parent.");
+                poJSON.put("row", lnRow);
+                return poJSON;
+            }
+        }
+
+        poJSON = setJSON("success", "success");
+        return poJSON;
+    }
+
+    //==========================================================
+    // Update child rows so each one is the opposite of its parent
+    //==========================================================
+    private void updateExclude(int row, boolean fbIsExclude) {
+        String lsBrandId   = PromotionApplicabilityList(row).getBrandId();
+        String lsModelId   = PromotionApplicabilityList(row).getModelId();
+        String lsVariantId = PromotionApplicabilityList(row).getVariantId();
+
+        //Variant has no child rows
+        if (checkEmpty(lsBrandId) || checkNotEmpty(lsVariantId)) {
+            return;
+        }
+
+        //Brand without model and variant
+        if (checkEmpty(lsModelId)) {
+            //1. Models without variant under this brand: opposite of the brand
+            for (int lnCtr = 0; lnCtr < getPromotionApplicabilityCount(); lnCtr++) {
+                if (lnCtr != row
+                        && PromotionApplicabilityList(lnCtr).getRecordStatus()
+                        && lsBrandId.equals(PromotionApplicabilityList(lnCtr).getBrandId())
+                        && checkNotEmpty(PromotionApplicabilityList(lnCtr).getModelId())
+                        && checkEmpty(PromotionApplicabilityList(lnCtr).getVariantId())) {
+                    PromotionApplicabilityList(lnCtr).setExcludeFlag(!fbIsExclude);
+                }
+            }
+
+            //2. Variants under this brand: opposite of their model, or of the brand if there's no model row
+            for (int lnCtr = 0; lnCtr < getPromotionApplicabilityCount(); lnCtr++) {
+                if (lnCtr != row
+                        && PromotionApplicabilityList(lnCtr).getRecordStatus()
+                        && lsBrandId.equals(PromotionApplicabilityList(lnCtr).getBrandId())
+                        && checkNotEmpty(PromotionApplicabilityList(lnCtr).getVariantId())) {
+                    int lnModelRow = findModelOnlyRow(PromotionApplicabilityList(lnCtr).getModelId(), lnCtr);
+                    boolean lbParentExclude = lnModelRow >= 0 ? isExcluded(lnModelRow) : fbIsExclude;
+                    PromotionApplicabilityList(lnCtr).setExcludeFlag(!lbParentExclude);
+                }
+            }
+            return;
+        }
+        
+        //Included and excluded pair: variants have no parent, no cascade
+        if (countModelOnlyRows(lsModelId, row) > 0) {
+            return;
+        }
+        
+        //Model without variant: its variants are the opposite of the model
+        for (int lnCtr = 0; lnCtr < getPromotionApplicabilityCount(); lnCtr++) {
+            if (lnCtr != row
+                    && PromotionApplicabilityList(lnCtr).getRecordStatus()
+                    && lsModelId.equals(PromotionApplicabilityList(lnCtr).getModelId())
+                    && checkNotEmpty(PromotionApplicabilityList(lnCtr).getVariantId())) {
+                PromotionApplicabilityList(lnCtr).setExcludeFlag(!fbIsExclude);
+            }
+        }
+    }
+
+    //==========================================================
+    // Helpers
+    //==========================================================
+
+    //Nearest active parent: variant -> model without variant -> brand without model and variant
+    private int findParentRow(int fnRow) {
+        String lsBrandId   = PromotionApplicabilityList(fnRow).getBrandId();
+        String lsModelId   = PromotionApplicabilityList(fnRow).getModelId();
+        String lsVariantId = PromotionApplicabilityList(fnRow).getVariantId();
+
+        //Brand without model and variant has no parent
+        if (checkEmpty(lsModelId) && checkEmpty(lsVariantId)) {
+            return -1;
+        }
+
+        int lnParent = -1;
+        if (checkNotEmpty(lsVariantId) && checkNotEmpty(lsModelId)) {
+            lnParent = findModelOnlyRow(lsModelId, fnRow);
+        }
+        if (lnParent < 0) {
+            lnParent = findBrandOnlyRow(lsBrandId, fnRow);
+        }
+        return lnParent;
+    }
+
+    //Returns -1 when the model has both included and excluded rows (no single parent)
+    private int findModelOnlyRow(String fsModelId, int fnSkipRow) {
+        int lnFound = -1;
+        for (int lnCtr = 0; lnCtr < getPromotionApplicabilityCount(); lnCtr++) {
+            if (lnCtr != fnSkipRow
+                    && PromotionApplicabilityList(lnCtr).getRecordStatus()
+                    && isModelOnly(lnCtr, fsModelId)) {
+                if (lnFound >= 0) {
+                    return -1;
+                }
+                lnFound = lnCtr;
+            }
+        }
+        return lnFound;
+    }
+
+    private int countModelOnlyRows(String fsModelId, int fnSkipRow) {
+        int lnCount = 0;
+        for (int lnCtr = 0; lnCtr < getPromotionApplicabilityCount(); lnCtr++) {
+            if (lnCtr != fnSkipRow
+                    && PromotionApplicabilityList(lnCtr).getRecordStatus()
+                    && isModelOnly(lnCtr, fsModelId)) {
+                lnCount++;
+            }
+        }
+        return lnCount;
+    }
+
+    //First model row under the brand that has both included and excluded rows
+    private int findModelPairRow(String fsBrandId, int fnSkipRow) {
+        for (int lnCtr = 0; lnCtr < getPromotionApplicabilityCount(); lnCtr++) {
+            if (lnCtr != fnSkipRow
+                    && PromotionApplicabilityList(lnCtr).getRecordStatus()
+                    && fsBrandId.equals(PromotionApplicabilityList(lnCtr).getBrandId())
+                    && checkNotEmpty(PromotionApplicabilityList(lnCtr).getModelId())
+                    && checkEmpty(PromotionApplicabilityList(lnCtr).getVariantId())
+                    && countModelOnlyRows(PromotionApplicabilityList(lnCtr).getModelId(), lnCtr) > 0) {
+                return lnCtr;
+            }
+        }
+        return -1;
+    }
+
+    private boolean isModelOnly(int fnRow, String fsModelId) {
+        return checkNotEmpty(fsModelId)
+                && fsModelId.equals(PromotionApplicabilityList(fnRow).getModelId())
+                && checkEmpty(PromotionApplicabilityList(fnRow).getVariantId());
+    }
+
+    private boolean isBrandOnly(int fnRow, String fsBrandId) {
+        return checkNotEmpty(fsBrandId)
+                && fsBrandId.equals(PromotionApplicabilityList(fnRow).getBrandId())
+                && checkEmpty(PromotionApplicabilityList(fnRow).getModelId())
+                && checkEmpty(PromotionApplicabilityList(fnRow).getVariantId());
+    }
+    
+    private int findBrandOnlyRow(String fsBrandId, int fnSkipRow) {
+        for (int lnCtr = 0; lnCtr < getPromotionApplicabilityCount(); lnCtr++) {
+            if (lnCtr != fnSkipRow
+                    && PromotionApplicabilityList(lnCtr).getRecordStatus()
+                    && isBrandOnly(lnCtr, fsBrandId)) {
+                return lnCtr;
+            }
+        }
+        return -1;
+    }
+
+    private boolean isExcluded(int fnRow) {
+        return Logical.YES.equals(PromotionApplicabilityList(fnRow).getExcludeFlag());
     }
     
     public JSONObject SearchBrand(String value, boolean byCode, int row)
@@ -1204,47 +1726,131 @@ public class VehiclePromotion extends Transaction {
         }
         if (isJSONSuccess(poJSON)) {
             //Validate
-            String lsModelId = object.getModel().getModelId();
-            int lnActiveCount = 0;   // active rows with the same model and no variant
-            int lnInactiveRow = -1;  // first removed row with the same model and no variant
-            boolean lbExclude = false;
-
-            for (int lnCtr = 0; lnCtr < getPromotionApplicabilityCount(); lnCtr++) {
-                if (lnCtr == row
-                        || !lsModelId.equals(PromotionApplicabilityList(lnCtr).getModelId())
-                        || checkNotEmpty(PromotionApplicabilityList(lnCtr).getVariantId())) {
-                    continue;
-                }
-
-                if (PromotionApplicabilityList(lnCtr).getRecordStatus()) {
-                    lnActiveCount++;
-                    lbExclude = Logical.YES.equals(PromotionApplicabilityList(lnCtr).getExcludeFlag());
-                } else if (lnInactiveRow < 0) {
-                    lnInactiveRow = lnCtr;
-                }
-            }
-
-            // Only two rows are allowed for the same model without variant: one included and one excluded
-            if (lnActiveCount >= 2) {
-                poJSON = setJSON("error", "The selected model without variant already exists twice."
-                        + "\nPlease select a different model or specify a variant.");
-                poJSON.put("row", row);
+//            String lsBrandId = object.getModel().getBrandId();
+//            String lsModelId = object.getModel().getModelId();
+//
+//            boolean lbBrandOnly    = false; // active row with the same brand, no model, no variant
+//            boolean lbBrandExclude = false;
+//            int lnActiveCount      = 0;     // active rows with the same model and no variant
+//            int lnInactiveRow      = -1;    // first removed row with the same model and no variant
+//            boolean lbModelExclude = false;
+//
+//            for (int lnCtr = 0; lnCtr < getPromotionApplicabilityCount(); lnCtr++) {
+//                if (lnCtr == row) {
+//                    continue;
+//                }
+//
+//                // Brand-only row
+//                if (PromotionApplicabilityList(lnCtr).getRecordStatus()
+//                        && lsBrandId.equals(PromotionApplicabilityList(lnCtr).getBrandId())
+//                        && checkEmpty(PromotionApplicabilityList(lnCtr).getModelId())
+//                        && checkEmpty(PromotionApplicabilityList(lnCtr).getVariantId())) {
+//                    lbBrandOnly    = true;
+//                    lbBrandExclude = Logical.YES.equals(PromotionApplicabilityList(lnCtr).getExcludeFlag());
+//                    continue;
+//                }
+//
+//                // Same model without variant
+//                if (!lsModelId.equals(PromotionApplicabilityList(lnCtr).getModelId())
+//                        || checkNotEmpty(PromotionApplicabilityList(lnCtr).getVariantId())) {
+//                    continue;
+//                }
+//
+//                if (PromotionApplicabilityList(lnCtr).getRecordStatus()) {
+//                    lnActiveCount++;
+//                    lbModelExclude = Logical.YES.equals(PromotionApplicabilityList(lnCtr).getExcludeFlag());
+//                } else if (lnInactiveRow < 0) {
+//                    lnInactiveRow = lnCtr;
+//                }
+//            }
+//
+//            // Only two rows are allowed for the same model without variant: one included and one excluded
+//            if (lnActiveCount >= 2) {
+//                poJSON = setJSON("error", "The selected model without variant already exists twice."
+//                        + "\nPlease select a different model or specify a variant.");
+//                poJSON.put("row", row);
+//                return poJSON;
+//            }
+//
+//            // The model's exclude flag must be the opposite of the brand-only row's flag
+//            boolean lbNewExclude;
+//            if (lbBrandOnly) {
+//                lbNewExclude = !lbBrandExclude;
+//
+//                // An active model row already has the required flag
+//                if (lnActiveCount == 1 && lbModelExclude == lbNewExclude) {
+//                    poJSON = setJSON("error", "The selected model is already " + (lbNewExclude ? "excluded" : "included") + "."
+//                            + "\nPlease select a different model or specify a variant.");
+//                    poJSON.put("row", row);
+//                    return poJSON;
+//                }
+//            } else if (lnActiveCount == 1) {
+//                lbNewExclude = !lbModelExclude;
+//            } else {
+//                lbNewExclude = Logical.YES.equals(PromotionApplicabilityList(row).getExcludeFlag());
+//            }
+//
+//            // Reactivate the previously removed row with the same model
+//            if (lnInactiveRow >= 0) {
+//                row = lnInactiveRow;
+//            }
+            
+            poJSON = setApplicabilityModel(row, object.getModel().getBrandId(), object.getModel().getModelId());
+            if (!isJSONSuccess(poJSON)) {
                 return poJSON;
             }
+            row = (int) poJSON.get("row");
 
-            // Reactivate the previously removed row with the same model
-            if (lnInactiveRow >= 0) {
-                row = lnInactiveRow;
-            }
+//            PromotionApplicabilityList(row).setBrandId(lsBrandId);
+//            PromotionApplicabilityList(row).setModelId(lsModelId);
+//            PromotionApplicabilityList(row).setVariantId("");
+//            PromotionApplicabilityList(row).setRecordStatus(true);
+//            PromotionApplicabilityList(row).setExcludeFlag(lbNewExclude);
 
-            PromotionApplicabilityList(row).setModelId(lsModelId);
-            PromotionApplicabilityList(row).setVariantId("");
-            PromotionApplicabilityList(row).setRecordStatus(true);
 
-            // The exclude flag must be the opposite of the active row with the same model
-            if (lnActiveCount == 1) {
-                PromotionApplicabilityList(row).setExcludeFlag(!lbExclude);
-            }
+//////////////////////////////////////////////////////////////////////////
+//            //Validate
+//            String lsModelId = object.getModel().getModelId();
+//            int lnActiveCount = 0;   // active rows with the same model and no variant
+//            int lnInactiveRow = -1;  // first removed row with the same model and no variant
+//            boolean lbExclude = false;
+//
+//            for (int lnCtr = 0; lnCtr < getPromotionApplicabilityCount(); lnCtr++) {
+//                if (lnCtr == row
+//                        || !lsModelId.equals(PromotionApplicabilityList(lnCtr).getModelId())
+//                        || checkNotEmpty(PromotionApplicabilityList(lnCtr).getVariantId())) {
+//                    continue;
+//                }
+//
+//                if (PromotionApplicabilityList(lnCtr).getRecordStatus()) {
+//                    lnActiveCount++;
+//                    lbExclude = Logical.YES.equals(PromotionApplicabilityList(lnCtr).getExcludeFlag());
+//                } else if (lnInactiveRow < 0) {
+//                    lnInactiveRow = lnCtr;
+//                }
+//            }
+//
+//            // Only two rows are allowed for the same model without variant: one included and one excluded
+//            if (lnActiveCount >= 2) {
+//                poJSON = setJSON("error", "The selected model without variant already exists twice."
+//                        + "\nPlease select a different model or specify a variant.");
+//                poJSON.put("row", row);
+//                return poJSON;
+//            }
+//
+//            // Reactivate the previously removed row with the same model
+//            if (lnInactiveRow >= 0) {
+//                row = lnInactiveRow;
+//            }
+//
+//            PromotionApplicabilityList(row).setModelId(lsModelId);
+//            PromotionApplicabilityList(row).setVariantId("");
+//            PromotionApplicabilityList(row).setRecordStatus(true);
+//
+//            // The exclude flag must be the opposite of the active row with the same model
+//            if (lnActiveCount == 1) {
+//                PromotionApplicabilityList(row).setExcludeFlag(!lbExclude);
+//            }
             //Validate
 //            boolean lbModelOnly = false;
 //            boolean lbExclude = false;
@@ -1297,50 +1903,56 @@ public class VehiclePromotion extends Transaction {
             poJSON = object.openRecord(value);
         }
         if (isJSONSuccess(poJSON)) {
-            //Validate
-            String lsModelId   = PromotionApplicabilityList(row).getModelId();
-            String lsVariantId = object.getModel().getVariantId();
-
-            // 1. Check if the selected variant already exists
-            for (int lnCtr = 0; lnCtr < getPromotionApplicabilityCount(); lnCtr++) {
-                if (lnCtr == row || !lsVariantId.equals(PromotionApplicabilityList(lnCtr).getVariantId())) {
-                    continue;
-                }
-
-                if (PromotionApplicabilityList(lnCtr).getRecordStatus()) {
-                    poJSON = setJSON("error", "Selected variant already exists at row " + (lnCtr + 1) + ".");
-                    poJSON.put("row", lnCtr);
-                    return poJSON;
-                }
-
-                // Reactivate the previously removed row with the same variant
-                PromotionApplicabilityList(lnCtr).setRecordStatus(true);
-                row = lnCtr;
-                break;
+            poJSON = setApplicabilityVariant(row, object.getModel().Model().getBrandId(),
+                    object.getModel().getModelId(), object.getModel().getVariantId());
+            if ("error".equals((String) poJSON.get("result"))) {
+                return poJSON;
             }
-
-            // 2. Find an active row with the same model and no variant
-            boolean lbModelOnly = false;
-            boolean lbExclude   = false;
-            if (checkNotEmpty(lsModelId)) {
-                for (int lnCtr = 0; lnCtr < getPromotionApplicabilityCount(); lnCtr++) {
-                    if (lnCtr != row
-                            && PromotionApplicabilityList(lnCtr).getRecordStatus()
-                            && lsModelId.equals(PromotionApplicabilityList(lnCtr).getModelId())
-                            && checkEmpty(PromotionApplicabilityList(lnCtr).getVariantId())) {
-                        lbModelOnly = true;
-                        lbExclude   = Logical.YES.equals(PromotionApplicabilityList(lnCtr).getExcludeFlag());
-                        break;
-                    }
-                }
-            }
-
-            PromotionApplicabilityList(row).setVariantId(lsVariantId);
-
-            // The variant's exclude flag must be the opposite of the active model-only row's flag
-            if (lbModelOnly) {
-                PromotionApplicabilityList(row).setExcludeFlag(!lbExclude);
-            }
+            row = (int) poJSON.get("row");
+//            //Validate
+//            String lsModelId   = PromotionApplicabilityList(row).getModelId();
+//            String lsVariantId = object.getModel().getVariantId();
+//
+//            // 1. Check if the selected variant already exists
+//            for (int lnCtr = 0; lnCtr < getPromotionApplicabilityCount(); lnCtr++) {
+//                if (lnCtr == row || !lsVariantId.equals(PromotionApplicabilityList(lnCtr).getVariantId())) {
+//                    continue;
+//                }
+//
+//                if (PromotionApplicabilityList(lnCtr).getRecordStatus()) {
+//                    poJSON = setJSON("error", "Selected variant already exists at row " + (lnCtr + 1) + ".");
+//                    poJSON.put("row", lnCtr);
+//                    return poJSON;
+//                }
+//
+//                // Reactivate the previously removed row with the same variant
+//                PromotionApplicabilityList(lnCtr).setRecordStatus(true);
+//                row = lnCtr;
+//                break;
+//            }
+//
+//            // 2. Find an active row with the same model and no variant
+//            boolean lbModelOnly = false;
+//            boolean lbExclude   = false;
+//            if (checkNotEmpty(lsModelId)) {
+//                for (int lnCtr = 0; lnCtr < getPromotionApplicabilityCount(); lnCtr++) {
+//                    if (lnCtr != row
+//                            && PromotionApplicabilityList(lnCtr).getRecordStatus()
+//                            && lsModelId.equals(PromotionApplicabilityList(lnCtr).getModelId())
+//                            && checkEmpty(PromotionApplicabilityList(lnCtr).getVariantId())) {
+//                        lbModelOnly = true;
+//                        lbExclude   = Logical.YES.equals(PromotionApplicabilityList(lnCtr).getExcludeFlag());
+//                        break;
+//                    }
+//                }
+//            }
+//
+//            PromotionApplicabilityList(row).setVariantId(lsVariantId);
+//
+//            // The variant's exclude flag must be the opposite of the active model-only row's flag
+//            if (lbModelOnly) {
+//                PromotionApplicabilityList(row).setExcludeFlag(!lbExclude);
+//            }
         }
         
 //        sortDetail();
@@ -1730,29 +2342,29 @@ public class VehiclePromotion extends Transaction {
      *
      * @throws CloneNotSupportedException If an error occurs while adding a new detail row.
      */
-    public void ReloadApplicability() throws CloneNotSupportedException, SQLException, GuanzonException {
-        // Remove rows with no brand
-        int lnCtr = getPromotionApplicabilityCount() - 1;
-        while (lnCtr >= 0) {
-            if (checkEmpty(PromotionApplicabilityList(lnCtr).getBrandId())) {
-                paApplicability.remove(lnCtr);
-            }
-            lnCtr--;
-        }
-
-        int lnLast = getPromotionApplicabilityCount() - 1;
-
-        // No rows: always add one
-        if (lnLast < 0) {
-            addPromotionApplicability();
-            return;
-        }
-
-        // Add a row only if the last row is not a duplicate without a variant
-        if (!isDuplicateWithoutVariant(lnLast)) {
-            addPromotionApplicability();
-        }
-    }
+//    public void ReloadApplicability() throws CloneNotSupportedException, SQLException, GuanzonException {
+//        // Remove rows with no brand
+//        int lnCtr = getPromotionApplicabilityCount() - 1;
+//        while (lnCtr >= 0) {
+//            if (checkEmpty(PromotionApplicabilityList(lnCtr).getBrandId())) {
+//                paApplicability.remove(lnCtr);
+//            }
+//            lnCtr--;
+//        }
+//
+//        int lnLast = getPromotionApplicabilityCount() - 1;
+//
+//        // No rows: always add one
+//        if (lnLast < 0) {
+//            addPromotionApplicability();
+//            return;
+//        }
+//
+//        // Add a row only if the last row is not a duplicate without a variant
+//        if (!isDuplicateWithoutVariant(lnLast)) {
+//            addPromotionApplicability();
+//        }
+//    }
 
     /**
      * Returns true if the row has no variant and another row has the same
@@ -1878,48 +2490,48 @@ public class VehiclePromotion extends Transaction {
         return poJSON;
     }
     
-    public JSONObject validateApplicability() {
-        int lnCount = getPromotionApplicabilityCount();
-
-        for (int lnRow = 0; lnRow < lnCount; lnRow++) {
-            String lsBrand   = clean(PromotionApplicabilityList(lnRow).getBrandId());
-            String lsModel   = clean(PromotionApplicabilityList(lnRow).getModelId());
-            String lsVariant = clean(PromotionApplicabilityList(lnRow).getVariantId());
-
-            // Skip blank rows and rows with a variant
-            if (lsBrand.isEmpty() || !lsVariant.isEmpty()) {
-                continue;
-            }
-
-            for (int lnNext = lnRow + 1; lnNext < lnCount; lnNext++) {
-                String lsBrand2   = clean(PromotionApplicabilityList(lnNext).getBrandId());
-                String lsModel2   = clean(PromotionApplicabilityList(lnNext).getModelId());
-                String lsVariant2 = clean(PromotionApplicabilityList(lnNext).getVariantId());
-
-                if (!lsVariant2.isEmpty()
-                        || !lsBrand.equals(lsBrand2)
-                        || !lsModel.equals(lsModel2)) {
-                    continue;
-                }
-
-                if (lsModel.isEmpty()) {
-                    // Same brand, no model, no variant
-                    poJSON = setJSON("error", "Duplicate brand found in rows " + (lnRow + 1) + " and " + (lnNext + 1) + "."
-                            + "\nThe same brand without model and variant cannot be added more than once."
-                            + "\nPlease remove one of the rows.");
-                } else {
-                    // Same brand and model, no variant
-                    poJSON = setJSON("error", "Duplicate model found in rows " + (lnRow + 1) + " and " + (lnNext + 1) + "."
-                            + "\nThe same brand and model without variant cannot be added more than once."
-                            + "\nPlease remove one of the rows or specify a variant.");
-                }
-                return poJSON;
-            }
-        }
-
-        poJSON = setJSON("success", "Applicability is valid.");
-        return poJSON;
-    }
+//    public JSONObject validateApplicability() {
+//        int lnCount = getPromotionApplicabilityCount();
+//
+//        for (int lnRow = 0; lnRow < lnCount; lnRow++) {
+//            String lsBrand   = clean(PromotionApplicabilityList(lnRow).getBrandId());
+//            String lsModel   = clean(PromotionApplicabilityList(lnRow).getModelId());
+//            String lsVariant = clean(PromotionApplicabilityList(lnRow).getVariantId());
+//
+//            // Skip blank rows and rows with a variant
+//            if (lsBrand.isEmpty() || !lsVariant.isEmpty()) {
+//                continue;
+//            }
+//
+//            for (int lnNext = lnRow + 1; lnNext < lnCount; lnNext++) {
+//                String lsBrand2   = clean(PromotionApplicabilityList(lnNext).getBrandId());
+//                String lsModel2   = clean(PromotionApplicabilityList(lnNext).getModelId());
+//                String lsVariant2 = clean(PromotionApplicabilityList(lnNext).getVariantId());
+//
+//                if (!lsVariant2.isEmpty()
+//                        || !lsBrand.equals(lsBrand2)
+//                        || !lsModel.equals(lsModel2)) {
+//                    continue;
+//                }
+//
+//                if (lsModel.isEmpty()) {
+//                    // Same brand, no model, no variant
+//                    poJSON = setJSON("error", "Duplicate brand found in rows " + (lnRow + 1) + " and " + (lnNext + 1) + "."
+//                            + "\nThe same brand without model and variant cannot be added more than once."
+//                            + "\nPlease remove one of the rows.");
+//                } else {
+//                    // Same brand and model, no variant
+//                    poJSON = setJSON("error", "Duplicate model found in rows " + (lnRow + 1) + " and " + (lnNext + 1) + "."
+//                            + "\nThe same brand and model without variant cannot be added more than once."
+//                            + "\nPlease remove one of the rows or specify a variant.");
+//                }
+//                return poJSON;
+//            }
+//        }
+//
+//        poJSON = setJSON("success", "Applicability is valid.");
+//        return poJSON;
+//    }
     
     /**
      * Performs pre-save validation and assignments.
