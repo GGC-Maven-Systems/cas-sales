@@ -1724,11 +1724,7 @@ public class VehicleQuotation extends Transaction {
             }
             
             //Compute Discount Total
-            for(int lnCtr = 0;lnCtr < getDiscountListCount();lnCtr++){
-                if(DiscountList(lnCtr).getRecordStatus()){
-                    ldblTotalDisc = ldblTotalDisc + DiscountList(lnCtr).getDiscountAmount();
-                }
-            }
+            ldblTotalDisc = getTotalDiscount();
 
             //Financing Computation
             /**
@@ -1768,6 +1764,17 @@ public class VehicleQuotation extends Transaction {
     private Double pdblOtherAddOnTotal = 0.0000;
     public Double getOtherAddOnTotal(){
         return pdblOtherAddOnTotal;
+    }
+    
+    public Double getTotalDiscount(){
+        Double ldblTotalDisc = 0.00;
+        for(int lnCtr = 0;lnCtr < getDiscountListCount();lnCtr++){
+            if(DiscountList(lnCtr).getRecordStatus()){
+                ldblTotalDisc = ldblTotalDisc + DiscountList(lnCtr).getDiscountAmount();
+            }
+        }
+        
+        return ldblTotalDisc;
     }
     
     @Override
@@ -2573,21 +2580,7 @@ public class VehicleQuotation extends Transaction {
 //            }
         }
         
-        Double ldblTotalDiscount = 0.0000;
-//        for(int lnCtr = 0;lnCtr < getAddOnListCount();lnCtr++){
-//            ldblTotalAddOns = ldblTotalAddOns + AddOnList(lnCtr).getTotalAmount();
-////            if(checkNotEmpty(AddOnList(lnCtr).getStockId())){
-//            if(checkNotEmpty(AddOnList(lnCtr).AddOnMaster().AddOnType().getAddTypeName())){
-//                if(AddOnList(lnCtr).AddOnMaster().AddOnType().getAddTypeName().toUpperCase().contains("LTO")
-//                        || AddOnList(lnCtr).AddOnMaster().AddOnType().getAddTypeName().toUpperCase().contains("TPL")
-//                        || AddOnList(lnCtr).AddOnMaster().AddOnType().getAddTypeName().toUpperCase().contains("Comprehensive")
-//                    ){
-//                    continue;
-//                }
-//            }
-//            ldblTotalAccessories = ldblTotalAccessories + AddOnList(lnCtr).getTotalAmount();
-////            }
-//        }
+        Double ldblTotalDiscount = getTotalDiscount();
         
         parameters.put("nTotalDiscount",     ldblTotalDiscount);       // TODO
         parameters.put("bShowTotalDiscount", ldblTotalDiscount > 0.00);   // TODO
