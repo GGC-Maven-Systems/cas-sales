@@ -1627,6 +1627,74 @@ public class MCSales extends Transaction {
         return lsEntry;
     }
 
+    public JSONObject searchClientSource(String value, boolean byCode)
+            throws SQLException, GuanzonException, CloneNotSupportedException {
+
+//        if (getEditMode() != EditMode.ADDNEW) {
+//            return setJSON("error", "The source can only be selected on a new transaction.");
+//        }
+
+        String lsClientID = getMaster().getClientID();
+        if (lsClientID == null || lsClientID.isEmpty()) {
+            return setJSON("error", "Please select a Client first.");
+        }
+
+        String lsSQL = getSalesClientSource(poGRider.getIndustry());
+        lsSQL = lsSQL + " WHERE sClientID = " + SQLUtil.toSQL(lsClientID);
+        System.out.println("SQL Source: " + lsSQL);
+
+        // columns: 0 Source, 1 Source No, 2 Date, 3 Name, 4 Client ID
+        JSONObject loSelected = ShowDialogFX.Search(poGRider,
+                lsSQL,
+                value,
+                "Source»Source No»Date»Name»Client ID",
+                "sSource»sTransNox»dTransact»xClientNm»sClientID",
+                "sSource»sTransNox»dTransact»xClientNm»sClientID",
+                byCode ? 1 : 0);
+
+        if (loSelected == null) {
+            return setJSON("error", "No record loaded.");
+        }
+        if ("error".equals((String) loSelected.get("result"))) {
+            return loSelected;
+        }
+        if (loSelected.get("sSource") == null || loSelected.get("sTransNox") == null) {
+            return setJSON("error", "No record loaded.");
+        }
+
+        return loadSourceTransaction(loSelected.get("sSource").toString(),
+                loSelected.get("sTransNox").toString());
+    }
+
+// Clears what the previous source filled in, then loads the chosen one.
+// searchClient() can call this too, so both use the same code.
+    private JSONObject loadSourceTransaction(String fsSource, String fsTransNo)
+            throws SQLException, GuanzonException, CloneNotSupportedException {
+
+        paSalesGiveaways.clear();
+        paSalesInsurance.clear();
+        paSalesRegistration.clear();
+        paQuotationNonItemized.clear();
+        paDetail.clear();
+
+        JSONObject loValidate;
+        switch (fsSource) {
+            case "Sales Reservation":
+                loValidate = validateReservation(fsTransNo);
+                break;
+            case "Sales Quotation":
+                loValidate = validateQuotation(fsTransNo);
+                break;
+            default:
+                loValidate = setJSON("error", "Sales Commitment is not yet supported.");
+        }
+
+        if (!"success".equals((String) loValidate.get("result"))) {
+            return setJSON("error", "Unable to load Source Sales.\n\t " + loValidate.get("message"));
+        }
+        return loValidate;   // may carry "Quotation is already Expired" in its message
+    }
+
     //Searching of Master
     public JSONObject searchClient(String value, boolean byCode)
             throws SQLException, GuanzonException, CloneNotSupportedException, Exception {
