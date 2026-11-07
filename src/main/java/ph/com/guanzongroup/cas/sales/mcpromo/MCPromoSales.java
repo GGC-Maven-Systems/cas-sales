@@ -689,7 +689,7 @@ public class MCPromoSales extends Transaction {
         poJSON = new JSONObject();
 
         poJSON.put("result", "success");
-        poJSON.put("result", "Transaction loaded successfully");
+        poJSON.put("message", "Transaction loaded successfully");
         return poJSON;
     }
 

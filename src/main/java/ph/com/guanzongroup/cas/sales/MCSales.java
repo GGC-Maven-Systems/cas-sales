@@ -3399,12 +3399,12 @@ public class MCSales extends Transaction {
             lnTranTotal += lnGross;
             lnDiscount += lnDiscAmt;
             lnAddDisc += lnAddAmt;
-            lnFreight += lnFrtAmt;
+//            lnFreight += lnFrtAmt;
             lnInsAdd += loDetail.getInsuranceAdd();
             lnRegIns += loDetail.getInsuranceAmount();
 
             // net selling amount of the line (basis for VAT / net sales)
-            double lnLineNet = lnGross - lnDiscAmt - lnAddAmt + lnFrtAmt;
+            double lnLineNet = lnGross - lnDiscAmt - lnAddAmt;
             if ("1".equals(loDetail.getWithVAT())) {
                 lnVatableBase += lnLineNet;
             } else {
