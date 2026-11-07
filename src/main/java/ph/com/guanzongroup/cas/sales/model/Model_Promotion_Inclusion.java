@@ -37,6 +37,7 @@ public class Model_Promotion_Inclusion extends Model {
             // assign default values
             poEntity.updateNull("dModified");
             poEntity.updateObject("cRecdStat", RecordStatus.ACTIVE);
+            poEntity.updateObject("nQuantity", 1);
             // end - assign default values
 
             poEntity.insertRow();

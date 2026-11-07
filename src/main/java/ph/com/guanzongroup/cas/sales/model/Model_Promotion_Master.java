@@ -34,6 +34,7 @@ public class Model_Promotion_Master extends Model {
             poEntity.updateNull("dModified");
             poEntity.updateObject("cRecdStat", RecordStatus.ACTIVE);
             poEntity.updateObject("nDiscAmnt", 0.00);
+            poEntity.updateObject("cPaymForm", "0");
             // end - assign default values
 
             poEntity.insertRow();
