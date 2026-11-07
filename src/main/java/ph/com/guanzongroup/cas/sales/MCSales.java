@@ -2026,27 +2026,48 @@ public class MCSales extends Transaction {
             if ("success".equals((String) loResult.get("result"))) {
                 //set Promo object for valadtion usage;
                 poPromo = loObject;
-                if (loObject.getCountSalesPromotionGiveAwayItem() > 0) {
-                    int lnRowSale = 0;
+                String lsPromoID = loObject.getMaster().getPromoID();
+                String lsOldPromoID = getDetail(fnRow).getPromoID();   // add this line BEFORE setPromoID
+                getDetail(fnRow).setPromoID((String) poJSON.get("sPromIDxx"));
+                // Only add giveaways if this MC row is newly assigned to this promo
+                // (re-selecting the same promo on the same row must not double again)
+                if (!lsPromoID.equals(lsOldPromoID) && loObject.getCountSalesPromotionGiveAwayItem() > 0) {
                     for (int lnCtr = 1; lnCtr <= loObject.getCountSalesPromotionGiveAwayItem(); lnCtr++) {
                         if (!loObject.getSalesPromotionGiveAway(lnCtr).isWithActive()) {
                             continue;
                         }
-                        //Entry No Sales
-                        lnRowSale++;
-                        //initialize detail to set
-                        getSalesGiveaways(lnRowSale);
-                        //Sync Detail to Sales Promo's
-                        getSalesGiveaways(lnRowSale).setStockID(loObject.getSalesPromotionGiveAway(lnCtr).getStockID());
-                        getSalesGiveaways(lnRowSale).setQuantity(loObject.getSalesPromotionGiveAway(lnCtr).getQuantity());
-                        getSalesGiveaways(lnRowSale).setUnitCost(Double.parseDouble(loObject.getSalesPromotionGiveAway(lnCtr).Inventory().getCost().toString()));
-                        getSalesGiveaways(lnRowSale).setUnitPrice(Double.parseDouble(loObject.getSalesPromotionGiveAway(lnCtr).Inventory().getSellingPrice().toString()));
-                        getSalesGiveaways(lnRowSale).setQuantity(loObject.getSalesPromotionGiveAway(lnCtr).getQuantity());
-                        getSalesGiveaways(lnRowSale).setSourceNo(loObject.getMaster().getPromoID());
-                        getSalesGiveaways(lnRowSale).setSourceCode(loObject.getSourceCode());
 
+                        String lsStockID = loObject.getSalesPromotionGiveAway(lnCtr).getStockID();
+                        int lnPromoQty = loObject.getSalesPromotionGiveAway(lnCtr).getQuantity();
+
+                        // look for the same promo + same giveaway item already in the sales giveaways
+                        int lnExisting = -1;
+                        for (int lnRow = 1; lnRow <= getCountSalesGiveAway(); lnRow++) {
+                            if (lsStockID.equals(getSalesGiveaways(lnRow).getStockID())
+                                    && lsPromoID.equals(getSalesGiveaways(lnRow).getSourceNo())) {
+                                lnExisting = lnRow;
+                                break;
+                            }
+                        }
+
+                        if (lnExisting > 0) {
+                            // same promo selected by another MC: add to the quantity
+                            getSalesGiveaways(lnExisting).setQuantity(
+                                    getSalesGiveaways(lnExisting).getQuantity() + lnPromoQty);
+                        } else {
+                            // first MC with this promo: append a new giveaway row
+                            int lnRowSale = getCountSalesGiveAway() + 1;
+                            getSalesGiveaways(lnRowSale);   // initialize the row
+                            getSalesGiveaways(lnRowSale).setStockID(lsStockID);
+                            getSalesGiveaways(lnRowSale).setQuantity(lnPromoQty);
+                            getSalesGiveaways(lnRowSale).setUnitCost(Double.parseDouble(
+                                    loObject.getSalesPromotionGiveAway(lnCtr).Inventory().getCost().toString()));
+                            getSalesGiveaways(lnRowSale).setUnitPrice(Double.parseDouble(
+                                    loObject.getSalesPromotionGiveAway(lnCtr).Inventory().getSellingPrice().toString()));
+                            getSalesGiveaways(lnRowSale).setSourceNo(lsPromoID);
+                            getSalesGiveaways(lnRowSale).setSourceCode(loObject.getSourceCode());
+                        }
                     }
-
                 }
 
                 int lnRowSale = 0;
@@ -2056,20 +2077,17 @@ public class MCSales extends Transaction {
                         if (loObject.getSalesPromotionBrand(lnCtr).getBrandID().equals(getDetail(fnRow).Inventory().getBrandId())) {
 
                             //Entry No Sales
-                            lnRowSale = getCountSalesInsurance() + 1;
-                            lnRowSaleR = getCountSalesRegistration() + 1;
+//                            lnRowSale = getCountSalesInsurance() + 1;
+//                            lnRowSaleR = getCountSalesRegistration() + 1;
 
-                            //initialize detail to set
-                            getSalesInsurance(lnRowSale);
-
-                            //Sync Detail to Sales Insurance's
-                            getSalesInsurance(lnRowSale).setSerialID(getDetail(fnRow).getSerialID());
-                            getSalesInsurance(lnRowSale).isChargeTo(!loObject.getSalesPromotionBrand(lnCtr).isInsuranceFree());
-
-                            //Sync Detail to Sales Registration's
-                            getSalesRegistration(lnRowSaleR).setSerialID(getDetail(fnRow).getSerialID());
-                            getSalesRegistration(lnRowSaleR).isChargeTo(!loObject.getSalesPromotionBrand(lnCtr).isRegistrationFree());
-
+//                            //initialize detail to set
+//                            getSalesInsurance(lnRowSale);
+//                            //Sync Detail to Sales Insurance's
+//                            getSalesInsurance(lnRowSale).setSerialID(getDetail(fnRow).getSerialID());
+//                            getSalesInsurance(lnRowSale).isChargeTo(!loObject.getSalesPromotionBrand(lnCtr).isInsuranceFree());
+//                            //Sync Detail to Sales Registration's
+//                            getSalesRegistration(lnRowSaleR).setSerialID(getDetail(fnRow).getSerialID());
+//                            getSalesRegistration(lnRowSaleR).isChargeTo(!loObject.getSalesPromotionBrand(lnCtr).isRegistrationFree());
                             //Sync Detail to Sales Detail's
                             getDetail(fnRow).setDiscount(loObject.getSalesPromotionBrand(lnCtr).getDiscountRate());
                             getDetail(fnRow).setAddDiscount(loObject.getSalesPromotionBrand(lnCtr).getDiscAmount());
@@ -2083,17 +2101,17 @@ public class MCSales extends Transaction {
                         if (loObject.getSalesPromotionModel(lnCtr).getModelID().equals(getDetail(fnRow).Inventory().getModelId())) {
 
                             //Entry No Sales
-                            lnRowSale = getCountSalesRegistration() + 1;
+//                            lnRowSale = getCountSalesRegistration() + 1;
                             //initialize detail to set
-                            getSalesRegistration(lnRowSale);
-
-                            //Sync Detail to Sales Insurance's
-                            getSalesInsurance(lnRowSale).setSerialID(getDetail(fnRow).getSerialID());
-                            getSalesInsurance(lnRowSale).isChargeTo(!loObject.getSalesPromotionModel(lnCtr).isInsuranceFree());
-
-                            //Sync Detail to Sales Registration's
-                            getSalesRegistration(lnRowSaleR).setSerialID(getDetail(fnRow).getSerialID());
-                            getSalesRegistration(lnRowSaleR).isChargeTo(!loObject.getSalesPromotionModel(lnCtr).isRegistrationFree());
+//                            getSalesRegistration(lnRowSale);
+//
+//                            //Sync Detail to Sales Insurance's
+//                            getSalesInsurance(lnRowSale).setSerialID(getDetail(fnRow).getSerialID());
+//                            getSalesInsurance(lnRowSale).isChargeTo(!loObject.getSalesPromotionModel(lnCtr).isInsuranceFree());
+//
+//                            //Sync Detail to Sales Registration's
+//                            getSalesRegistration(lnRowSaleR).setSerialID(getDetail(fnRow).getSerialID());
+//                            getSalesRegistration(lnRowSaleR).isChargeTo(!loObject.getSalesPromotionModel(lnCtr).isRegistrationFree());
 
                             //Sync Detail to Sales Detail's
                             getDetail(fnRow).setDiscount(loObject.getSalesPromotionModel(lnCtr).getDiscountRate());
@@ -3374,6 +3392,7 @@ public class MCSales extends Transaction {
             double lnGross = round2(loDetail.getUnitPrice() * loDetail.getQuantity());
             double lnDiscAmt = round2(lnGross * loDetail.getDiscount() / 100.0); // nDiscount is a rate (%)
             double lnAddAmt = loDetail.getAddDiscount();
+            // freight is not included as taxable
             double lnFrtAmt = loDetail.getFreight();
 
             // ---- charged registration + insurance for this serial ----
@@ -3399,7 +3418,7 @@ public class MCSales extends Transaction {
             lnTranTotal += lnGross;
             lnDiscount += lnDiscAmt;
             lnAddDisc += lnAddAmt;
-//            lnFreight += lnFrtAmt;
+            // lnFreight += lnFrtAmt;   // uncomment if freight should count toward amount due
             lnInsAdd += loDetail.getInsuranceAdd();
             lnRegIns += loDetail.getInsuranceAmount();
 
@@ -3428,25 +3447,24 @@ public class MCSales extends Transaction {
         loMaster.setRegistrationAmount(lnRegIns);
         loMaster.setZeroVATSales(0.00);              // not applicable to MC sales
 
-        // ---- VAT ----
-        double lnVatSales, lnVatAmount, lnNonVat;
-        if (loMaster.getCWTAmount() > 0) {
-            // CWT: no VAT, everything goes to non-VAT sales
-            lnVatSales = 0.00;
-            lnVatAmount = 0.00;
-            lnNonVat = round2(lnVatableBase + lnNonVatBase);
-        } else {
-            lnVatSales = round2(lnVatableBase / (1 + VAT_RATE));
-            lnVatAmount = round2(round2(lnVatableBase) - lnVatSales);   // tallies to the gross
-            lnNonVat = round2(lnNonVatBase);
-        }
+        // ---- VAT (always computed; CWT does not change it) ----
+        double lnVatSales = round2(lnVatableBase / (1 + VAT_RATE));
+        double lnVatAmount = round2(round2(lnVatableBase) - lnVatSales);   // tallies to the gross
+        double lnNonVat = round2(lnNonVatBase);
+
         loMaster.setVATSales(lnVatSales);
         loMaster.setVATAmount(lnVatAmount);
         loMaster.setNonVATSales(lnNonVat);
 
+        // ---- CWT: percentage of the VAT-exclusive base ----
+        double lnCWTRate = loMaster.getCWTAmount();    // e.g. 1 for 1%, 2 for 2% (adjust to your field name)
+        double lnCWTAmount = round2((lnVatSales + lnNonVat) * lnCWTRate / 100.0);
+        loMaster.setCWTAmount(lnCWTAmount);
+
         // nAmtPaidx stays 0, nAdvances is set by the reservation source
         double lnAmountDue = lnTranTotal - lnDiscount - lnAddDisc + lnFreight
-                + lnInsAdd + lnRegIns - loMaster.getAdvances();
+                + lnInsAdd + lnRegIns - loMaster.getAdvances()
+                - lnCWTAmount;                       // customer pays net of withholding
         loMaster.setAmountDue(round2(lnAmountDue));
     }
 
