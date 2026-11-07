@@ -143,12 +143,12 @@ public class Model_Quotation_Inclusion extends Model {
         return MiscUtil.getNextCode(this.getTable(), ID, false, poGRider.getGConnection().getConnection(), poGRider.getBranchCode());
     }
 
-    public Model_Vehicle_Inclusion_Master AddOnMaster() throws SQLException, GuanzonException {
+    public Model_Vehicle_Inclusion_Master Inclusion() throws SQLException, GuanzonException {
         if (poInclusion == null) {
             poInclusion = new SalesModels(poGRider).VehicleInclusionMaster();
         }
 
-        String id = (String) (getValue("sInclusionIDx") == null ? "" : getValue("sInclusionIDx"));
+        String id = (String) (getValue("sInclIDxx") == null ? "" : getValue("sInclIDxx"));
 
         if (!"".equals(id)) {
             if (poInclusion.getEditMode() == EditMode.READY

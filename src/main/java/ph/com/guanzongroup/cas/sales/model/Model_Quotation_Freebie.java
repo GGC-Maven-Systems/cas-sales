@@ -143,7 +143,7 @@ public class Model_Quotation_Freebie extends Model {
         return MiscUtil.getNextCode(this.getTable(), ID, false, poGRider.getGConnection().getConnection(), poGRider.getBranchCode());
     }
 
-    public Model_Freebie_Master AddOnMaster() throws SQLException, GuanzonException {
+    public Model_Freebie_Master Freebie() throws SQLException, GuanzonException {
         if (poFreebie == null) {
             poFreebie = new SalesModels(poGRider).FreebieMaster();
         }

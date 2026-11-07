@@ -42,7 +42,6 @@ public class Model_Quotation_AddOn extends Model {
             poEntity.updateObject("nQtyxxxxx", 0);
             poEntity.updateObject("nTotAmntx", 0.00);
             poEntity.updateObject("nDiscAmnt", 0.00);
-            poEntity.updateObject("nDiscPctx", 0.00);
             poEntity.updateString("cRecdStat", RecordStatus.ACTIVE);
             poEntity.updateNull("sModified");
             poEntity.updateNull("dModified");
@@ -77,28 +76,12 @@ public class Model_Quotation_AddOn extends Model {
         return (String) getValue("sQotAddID");
     }
 
-//    public JSONObject setQuotationPaymentId(String quotationPaymentId) {
-//        return setValue("sQotPayID", quotationPaymentId);
-//    }
-//
-//    public String getQuotationPaymentId() {
-//        return (String) getValue("sQotPayID");
-//    }
-
     public JSONObject setAddOnId(String addOnId) {
         return setValue("sAddOnIDx", addOnId);
     }
 
     public String getAddOnId() {
         return (String) getValue("sAddOnIDx");
-    }
-
-    public JSONObject setStockId(String stockId) {
-        return setValue("sStockIDx", stockId);
-    }
-
-    public String getStockId() {
-        return (String) getValue("sStockIDx");
     }
 
     public JSONObject setAmount(Double amount) {
@@ -144,17 +127,6 @@ public class Model_Quotation_AddOn extends Model {
         }
         return Double.valueOf(getValue("nDiscAmnt").toString());
     }
-
-    public JSONObject setDiscountPercent(Double discountPercent) {
-        return setValue("nDiscPctx", discountPercent);
-    }
-
-    public Double getDiscountPercent() {
-        if (getValue("nDiscPctx") == null || "".equals(getValue("nDiscPctx"))) {
-            return 0.0000;
-        }
-        return Double.valueOf(getValue("nDiscPctx").toString());
-    }
     
     public JSONObject setRecordStatus(boolean recordStatus) {
         return setValue("cRecdStat", recordStatus ? "1" : "0");
@@ -180,47 +152,12 @@ public class Model_Quotation_AddOn extends Model {
         return (Date) getValue("dModified");
     }
 
-    public Date getTimeStamp() {
-        return (Date) getValue("dTimeStmp");
-    }
-
     @Override
     public String getNextCode() {
         return MiscUtil.getNextCode(this.getTable(), ID, false, poGRider.getGConnection().getConnection(), poGRider.getBranchCode());
     }
 
     // reference object models
-//    public Model_Quotation_Payment QuotationPayment() throws SQLException, GuanzonException {
-//        if (poQuotationPayment == null) {
-//            poQuotationPayment = new Model_Quotation_Payment();
-//            poQuotationPayment.setApplicationDriver(poGRider);
-//            poQuotationPayment.setXML("Model_Quotation_Payment");
-//            poQuotationPayment.setTableName("Quotation_Payment");
-//            poQuotationPayment.initialize();
-//        }
-//
-//        String id = (String) (getValue("sQotPayID") == null ? "" : getValue("sQotPayID"));
-//
-//        if (!"".equals(id)) {
-//            if (poQuotationPayment.getEditMode() == EditMode.READY
-//                    && poQuotationPayment.getQuotationPaymentId().equals(id)) {
-//                return poQuotationPayment;
-//            } else {
-//                poJSON = poQuotationPayment.openRecord(id);
-//
-//                if ("success".equals(poJSON.get("result"))) {
-//                    return poQuotationPayment;
-//                } else {
-//                    poQuotationPayment.initialize();
-//                    return poQuotationPayment;
-//                }
-//            }
-//        } else {
-//            poQuotationPayment.initialize();
-//            return poQuotationPayment;
-//        }
-//    }
-
     public Model_Vehicle_AddOn_Master AddOnMaster() throws SQLException, GuanzonException {
         if (poAddOnMaster == null) {
             poAddOnMaster = new SalesModels(poGRider).VehicleAddOnMaster();
@@ -245,33 +182,6 @@ public class Model_Quotation_AddOn extends Model {
         } else {
             poAddOnMaster.initialize();
             return poAddOnMaster;
-        }
-    }
-
-    public Model_Inventory Inventory() throws SQLException, GuanzonException {
-        if (poInventory == null) {
-            poInventory = new InvModels(poGRider).Inventory();
-        }
-
-        String id = (String) (getValue("sStockIDx") == null ? "" : getValue("sStockIDx"));
-
-        if (!"".equals(id)) {
-            if (poInventory.getEditMode() == EditMode.READY
-                    && poInventory.getStockId().equals(id)) {
-                return poInventory;
-            } else {
-                poJSON = poInventory.openRecord(id);
-
-                if ("success".equals(poJSON.get("result"))) {
-                    return poInventory;
-                } else {
-                    poInventory.initialize();
-                    return poInventory;
-                }
-            }
-        } else {
-            poInventory.initialize();
-            return poInventory;
         }
     }
     // end - reference object models
