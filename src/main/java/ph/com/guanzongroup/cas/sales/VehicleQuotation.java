@@ -1278,7 +1278,7 @@ public class VehicleQuotation extends Transaction {
                 return poJSON;
             }
         } else {
-            poJSON = SearchFreebies(value, byCode, row);
+            poJSON = SearchFreebies(value, byCode, row, false);
         }
         
         return poJSON;
@@ -1313,14 +1313,14 @@ public class VehicleQuotation extends Transaction {
         return poJSON;
     }
     
-    public JSONObject SearchFreebies(String value, boolean byCode, int row)
+    public JSONObject SearchFreebies(String value, boolean byCode, int row, boolean includeAddOn)
             throws ExceptionInInitializerError,
             SQLException,
             GuanzonException,
             CloneNotSupportedException {
         poJSON = new JSONObject();
         
-        String lsSQL = VehicleFreebieInclusion_SQL();
+        String lsSQL = VehicleFreebieInclusion_SQL(includeAddOn);
         lsSQL = MiscUtil.addCondition(lsSQL, " x.cRecdStat = " + SQLUtil.toSQL(FreebieStatus.ACTIVE));
         System.out.println("Executing SQL: " + lsSQL);
 
@@ -1342,14 +1342,21 @@ public class VehicleQuotation extends Transaction {
             
             row = (int) poJSON.get("row");
             switch(lnType){
-                case 0: //freebie
+                case 0: //add on
+                    if(row > (getAddOnListCount()-1)){
+                        ReloadAddOnList();
+                        row = getAddOnListCount()-1;
+                    }
+                    AddOnList(row).setAddOnId(lsId);
+                break;
+                case 1: //freebie
                     if(row > (getFreebiesListCount()-1)){
                         ReloadFreebiesList();
                         row = getFreebiesListCount()-1;
                     }
                     FreebiesList(row).setFreebieId(lsId);
                 break;
-                case 1: //inclusion
+                case 2: //inclusion
                     if(row > (getInclusionListCount()-1)){
                         ReloadInclusionList();
                         row = getInclusionListCount()-1;
@@ -1369,7 +1376,7 @@ public class VehicleQuotation extends Transaction {
     private JSONObject checkExistingFreebies(String fsId, int fnType, int row) throws SQLException, GuanzonException{
         poJSON.put("row", row);
         switch(fnType){
-            case 0: //freebie
+            case 1: //freebie
                 for(int lnCtr = 0;lnCtr < getFreebiesListCount(); lnCtr++){
                     if(fsId.equals(FreebiesList(lnCtr).getFreebieId())
                         && row != lnCtr){
@@ -1385,7 +1392,7 @@ public class VehicleQuotation extends Transaction {
                     }
                 }
             break;
-            case 1: //inclusion
+            case 2: //inclusion
                 for(int lnCtr = 0;lnCtr < getInclusionListCount(); lnCtr++){
                     if(fsId.equals(InclusionList(lnCtr).getInclusionId())
                         && row != lnCtr){
@@ -2263,13 +2270,13 @@ public class VehicleQuotation extends Transaction {
                 + " LEFT JOIN Vehicle_AddOn_Type c ON c.sAddTypex = b.sAddTypex    ";
     }
     
-    private String VehicleFreebieInclusion_SQL(){
+    private String VehicleFreebieInclusion_SQL(boolean includeAddOn){
         return  "SELECT * " +
                     "FROM ( " +
                     "    SELECT " +
                     "        a.sFreebIDx AS sIDxxxxxx, " +
                     "        a.sFreebDsc AS sDescxxxx, " +
-                    "        0 AS sTypexxxx, " + //0 = freebie
+                    "        1 AS sTypexxxx, " + //0 = freebie
                     "        a.cRecdStat AS cRecdStat " +
                     "    FROM Freebie_Master a " +
                     " " +
@@ -2278,9 +2285,19 @@ public class VehicleQuotation extends Transaction {
                     "    SELECT " +
                     "        b.sInclIDxx AS sIDxxxxxx, " +
                     "        b.sInclDesc AS sDescxxxx, " +
-                    "        1 AS sTypexxxx, " + //1 = inclusion
+                    "        2 AS sTypexxxx, " + //1 = inclusion
                     "        b.cRecdStat AS cRecdStat " +
                     "    FROM Vehicle_Inclusion_Master b " +
+                    (includeAddOn ? 
+                    " " +
+                    "    SELECT " +
+                    "        c.sAddTypex AS sIDxxxxxx, " +
+                    "        c.sAddTypNm AS sDescxxxx, " +
+                    "        0 AS sTypexxxx, " + //1 = inclusion
+                    "        c.cRecdStat AS cRecdStat " +
+                    "    FROM Vehicle_AddOn_Type c " 
+                    : "") +
+                
                 ") AS x";
     }
     
@@ -2907,7 +2924,6 @@ public class VehicleQuotation extends Transaction {
         List<Map<String, Object>> rows = new ArrayList<>();
 
         try{
-            //Group by dp rate 
             for(int lnCtr = 0;lnCtr < getAddOnListCount();lnCtr++){
                 if(checkEmpty(AddOnList(lnCtr).getAddOnId())
                     || AddOnList(lnCtr).getAmount() <= 0.00
