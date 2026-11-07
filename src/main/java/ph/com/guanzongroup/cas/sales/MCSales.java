@@ -1019,7 +1019,7 @@ public class MCSales extends Transaction {
         loValidator.setOthers(laOther);
 
         ArrayList<Object> laOthers = new ArrayList<>();
-        laOthers.add(getTotalDiscount());
+        laOthers.add(getDiscountForApproval());
         loValidator.setOthers(laOthers);
 
         poJSON = loValidator.validate();
@@ -1176,6 +1176,80 @@ public class MCSales extends Transaction {
         }
 
         return round2(lnDiscount + lnAddDisc);
+    }
+
+    // Discount amount the promo on this detail row already allows (0 if no promo).
+    // Same matching as searchSalesDetailPromotion: brand first, model overrides it.
+    private double getPromoDiscount(Model_Sales_Detail foDetail, double fnGross,
+            Map<String, MCPromoSales> foCache) throws SQLException, GuanzonException {
+
+        String lsPromoID = foDetail.getPromoID();
+        if (lsPromoID == null || lsPromoID.isEmpty()) {
+            return 0.00;
+        }
+
+        MCPromoSales loPromo = foCache.get(lsPromoID);
+        if (loPromo == null) {
+            try {
+                MCPromoSales loObject = new PromoControllers(poGRider, null).MCPromoSales();
+                loObject.initTransaction();
+                loObject.setTransactionStatus("1");
+                loObject.setIndustryID(psIndustryCode);
+                loObject.setCompanyID(psCompanyID);
+                loObject.setCategoryID(psCategorCD);
+
+                JSONObject loResult = loObject.OpenTransaction(lsPromoID);
+                if (!"success".equals((String) loResult.get("result"))) {
+                    return 0.00;    // promo cannot be loaded: nothing is pre-approved
+                }
+                foCache.put(lsPromoID, loObject);
+                loPromo = loObject;
+            } catch (Exception ex) {
+                return 0.00;        // same: nothing pre-approved, the full discount is checked
+            }
+        }
+
+        String lsBrandID = foDetail.Inventory().getBrandId();
+        String lsModelID = foDetail.Inventory().getModelId();
+
+        double lnRate = 0.00;
+        double lnAmount = 0.00;
+
+        for (int lnCtr = 1; lnCtr <= loPromo.getCountSalesPromotionBrand(); lnCtr++) {
+            if (loPromo.getSalesPromotionBrand(lnCtr).getBrandID().equals(lsBrandID)) {
+                lnRate = loPromo.getSalesPromotionBrand(lnCtr).getDiscountRate();
+                lnAmount = loPromo.getSalesPromotionBrand(lnCtr).getDiscAmount();
+                break;
+            }
+        }
+        for (int lnCtr = 1; lnCtr <= loPromo.getCountSalesPromotionModel(); lnCtr++) {
+            if (loPromo.getSalesPromotionModel(lnCtr).getModelID().equals(lsModelID)) {
+                lnRate = loPromo.getSalesPromotionModel(lnCtr).getDiscountRate();
+                lnAmount = loPromo.getSalesPromotionModel(lnCtr).getDiscAmount();
+                break;
+            }
+        }
+
+        return round2(round2(fnGross * lnRate / 100.0) + lnAmount);
+    }
+
+    private double getDiscountForApproval() throws SQLException, GuanzonException {
+        double lnExcess = 0.00;
+        Map<String, MCPromoSales> loPromoCache = new HashMap<>();
+
+        for (int lnCtr = 0; lnCtr < paDetail.size(); lnCtr++) {
+            Model_Sales_Detail loDetail = (Model_Sales_Detail) paDetail.get(lnCtr);
+
+            double lnGross = round2(loDetail.getUnitPrice() * loDetail.getQuantity());
+            double lnGiven = round2(round2(lnGross * loDetail.getDiscount() / 100.0)
+                    + loDetail.getAddDiscount());
+            double lnAllowed = getPromoDiscount(loDetail, lnGross, loPromoCache);
+
+            if (lnGiven > lnAllowed) {
+                lnExcess += (lnGiven - lnAllowed);
+            }
+        }
+        return round2(lnExcess);
     }
 
     public JSONObject CancelTransaction() throws SQLException, GuanzonException, CloneNotSupportedException {
@@ -1973,34 +2047,25 @@ public class MCSales extends Transaction {
             throws SQLException, GuanzonException, CloneNotSupportedException, Exception {
         poJSON = new JSONObject();
 
-        JSONObject loResult = new JSONObject();
-
         //validate every required before selection
-        if (getDetail(fnRow).getSerialID().isEmpty()) {
-            poJSON = new JSONObject();
-            poJSON.put("result", "error");
-            poJSON.put("message", "Please select a Inventory Serial First.");
-            return poJSON;
+        String lsSerialID = getDetail(fnRow).getSerialID();
+        if (lsSerialID == null || lsSerialID.isEmpty()) {
+            return setJSON("error", "Please select a Inventory Serial First.");
         }
-        if (getDetail(fnRow).getStockID().isEmpty()) {
-            poJSON = new JSONObject();
-            poJSON.put("result", "error");
-            poJSON.put("message", "Please select a Inventory First.");
-            return poJSON;
+        String lsStockID = getDetail(fnRow).getStockID();
+        if (lsStockID == null || lsStockID.isEmpty()) {
+            return setJSON("error", "Please select a Inventory First.");
         }
-        if (getDetail(fnRow).Inventory().getModelId() == null && getDetail(fnRow).Inventory().getModelId().isEmpty()) {
-            poJSON = new JSONObject();
-            poJSON.put("result", "error");
-            poJSON.put("message", "Invalid Model to proceed with Promo Selection");
-            return poJSON;
+        String lsModelID = getDetail(fnRow).Inventory().getModelId();
+        if (lsModelID == null || lsModelID.isEmpty()) {
+            return setJSON("error", "Invalid Model to proceed with Promo Selection");
         }
+        String lsBrandID = getDetail(fnRow).Inventory().getBrandId();
 
-        String lsSQL = getSalesPromotion(
-                getDetail(fnRow).Inventory().getModelId(),
-                getDetail(fnRow).Inventory().getBrandId());
+        String lsSQL = getSalesPromotion(lsModelID, lsBrandID);
 
         System.out.println("PROMOTION DETAIL QUERY =\n" + lsSQL);
-        poJSON = ShowDialogFX.Search(poGRider,
+        JSONObject loSelected = ShowDialogFX.Search(poGRider,
                 lsSQL,
                 value,
                 "sPromIDxx»Description»Date»Promo Start»Promo End",
@@ -2008,132 +2073,110 @@ public class MCSales extends Transaction {
                 "a.sPromIDxx»a.sPromDesc»a.dTransact»a.dFromDate»a.dThruDate",
                 byCode ? 0 : 1);
 
-        if (poJSON != null) {
-            if ("error".equals(poJSON.get("result"))) {
-                return poJSON;
-            }
-            getDetail(fnRow).setPromoID((String) poJSON.get("sPromIDxx"));
-            //load Promotion Data
-
-            MCPromoSales loObject = new PromoControllers(poGRider, null).MCPromoSales();
-            loObject.initTransaction();
-            loObject.setTransactionStatus("1");
-            loObject.setIndustryID(psIndustryCode);
-            loObject.setCompanyID(psCompanyID);
-            loObject.setCategoryID(psCategorCD);
-
-            loResult = loObject.OpenTransaction((String) poJSON.get("sPromIDxx"));
-            if ("success".equals((String) loResult.get("result"))) {
-                //set Promo object for valadtion usage;
-                poPromo = loObject;
-                String lsPromoID = loObject.getMaster().getPromoID();
-                String lsOldPromoID = getDetail(fnRow).getPromoID();   // add this line BEFORE setPromoID
-                getDetail(fnRow).setPromoID((String) poJSON.get("sPromIDxx"));
-                // Only add giveaways if this MC row is newly assigned to this promo
-                // (re-selecting the same promo on the same row must not double again)
-                if (!lsPromoID.equals(lsOldPromoID) && loObject.getCountSalesPromotionGiveAwayItem() > 0) {
-                    for (int lnCtr = 1; lnCtr <= loObject.getCountSalesPromotionGiveAwayItem(); lnCtr++) {
-                        if (!loObject.getSalesPromotionGiveAway(lnCtr).isWithActive()) {
-                            continue;
-                        }
-
-                        String lsStockID = loObject.getSalesPromotionGiveAway(lnCtr).getStockID();
-                        int lnPromoQty = loObject.getSalesPromotionGiveAway(lnCtr).getQuantity();
-
-                        // look for the same promo + same giveaway item already in the sales giveaways
-                        int lnExisting = -1;
-                        for (int lnRow = 1; lnRow <= getCountSalesGiveAway(); lnRow++) {
-                            if (lsStockID.equals(getSalesGiveaways(lnRow).getStockID())
-                                    && lsPromoID.equals(getSalesGiveaways(lnRow).getSourceNo())) {
-                                lnExisting = lnRow;
-                                break;
-                            }
-                        }
-
-                        if (lnExisting > 0) {
-                            // same promo selected by another MC: add to the quantity
-                            getSalesGiveaways(lnExisting).setQuantity(
-                                    getSalesGiveaways(lnExisting).getQuantity() + lnPromoQty);
-                        } else {
-                            // first MC with this promo: append a new giveaway row
-                            int lnRowSale = getCountSalesGiveAway() + 1;
-                            getSalesGiveaways(lnRowSale);   // initialize the row
-                            getSalesGiveaways(lnRowSale).setStockID(lsStockID);
-                            getSalesGiveaways(lnRowSale).setQuantity(lnPromoQty);
-                            getSalesGiveaways(lnRowSale).setUnitCost(Double.parseDouble(
-                                    loObject.getSalesPromotionGiveAway(lnCtr).Inventory().getCost().toString()));
-                            getSalesGiveaways(lnRowSale).setUnitPrice(Double.parseDouble(
-                                    loObject.getSalesPromotionGiveAway(lnCtr).Inventory().getSellingPrice().toString()));
-                            getSalesGiveaways(lnRowSale).setSourceNo(lsPromoID);
-                            getSalesGiveaways(lnRowSale).setSourceCode(loObject.getSourceCode());
-                        }
-                    }
-                }
-
-                int lnRowSale = 0;
-                int lnRowSaleR = 0;
-                if (loObject.getCountSalesPromotionBrand() > 0) {
-                    for (int lnCtr = 1; lnCtr <= loObject.getCountSalesPromotionBrand(); lnCtr++) {
-                        if (loObject.getSalesPromotionBrand(lnCtr).getBrandID().equals(getDetail(fnRow).Inventory().getBrandId())) {
-
-                            //Entry No Sales
-//                            lnRowSale = getCountSalesInsurance() + 1;
-//                            lnRowSaleR = getCountSalesRegistration() + 1;
-
-//                            //initialize detail to set
-//                            getSalesInsurance(lnRowSale);
-//                            //Sync Detail to Sales Insurance's
-//                            getSalesInsurance(lnRowSale).setSerialID(getDetail(fnRow).getSerialID());
-//                            getSalesInsurance(lnRowSale).isChargeTo(!loObject.getSalesPromotionBrand(lnCtr).isInsuranceFree());
-//                            //Sync Detail to Sales Registration's
-//                            getSalesRegistration(lnRowSaleR).setSerialID(getDetail(fnRow).getSerialID());
-//                            getSalesRegistration(lnRowSaleR).isChargeTo(!loObject.getSalesPromotionBrand(lnCtr).isRegistrationFree());
-                            //Sync Detail to Sales Detail's
-                            getDetail(fnRow).setDiscount(loObject.getSalesPromotionBrand(lnCtr).getDiscountRate());
-                            getDetail(fnRow).setAddDiscount(loObject.getSalesPromotionBrand(lnCtr).getDiscAmount());
-                            getDetail(fnRow).setFreight(loObject.getSalesPromotionBrand(lnCtr).getFreight());
-                            break;
-                        }
-                    }
-                }
-                if (loObject.getCountSalesPromotionModel() > 0) {
-                    for (int lnCtr = 1; lnCtr <= loObject.getCountSalesPromotionModel(); lnCtr++) {
-                        if (loObject.getSalesPromotionModel(lnCtr).getModelID().equals(getDetail(fnRow).Inventory().getModelId())) {
-
-                            //Entry No Sales
-//                            lnRowSale = getCountSalesRegistration() + 1;
-                            //initialize detail to set
-//                            getSalesRegistration(lnRowSale);
-//
-//                            //Sync Detail to Sales Insurance's
-//                            getSalesInsurance(lnRowSale).setSerialID(getDetail(fnRow).getSerialID());
-//                            getSalesInsurance(lnRowSale).isChargeTo(!loObject.getSalesPromotionModel(lnCtr).isInsuranceFree());
-//
-//                            //Sync Detail to Sales Registration's
-//                            getSalesRegistration(lnRowSaleR).setSerialID(getDetail(fnRow).getSerialID());
-//                            getSalesRegistration(lnRowSaleR).isChargeTo(!loObject.getSalesPromotionModel(lnCtr).isRegistrationFree());
-
-                            //Sync Detail to Sales Detail's
-                            getDetail(fnRow).setDiscount(loObject.getSalesPromotionModel(lnCtr).getDiscountRate());
-                            getDetail(fnRow).setAddDiscount(loObject.getSalesPromotionModel(lnCtr).getDiscAmount());
-                            getDetail(fnRow).setFreight(loObject.getSalesPromotionModel(lnCtr).getFreight());
-                            break;
-                        }
-                    }
-                }
-
-            }
-
-        } else {
-            poJSON = new JSONObject();
-            poJSON.put("result", "error");
-            poJSON.put("message", "No record loaded.");
-            return poJSON;
+        if (loSelected == null) {
+            return setJSON("error", "No record loaded.");
+        }
+        if ("error".equals((String) loSelected.get("result"))) {
+            return loSelected;
         }
 
-        poJSON = new JSONObject();
-        poJSON.put("result", "success");
-        return poJSON;
+        // keep what we need from the dialog now: removeSalesDetailPromotion() replaces the poJSON field
+        String lsNewPromoID = (String) loSelected.get("sPromIDxx");
+        if (lsNewPromoID == null || lsNewPromoID.isEmpty()) {
+            return setJSON("error", "No record loaded.");
+        }
+        String lsOldPromoID = getDetail(fnRow).getPromoID();   // read BEFORE it is overwritten
+
+        // ---- load the new promo first, so a failure leaves the row untouched ----
+        MCPromoSales loObject = new PromoControllers(poGRider, null).MCPromoSales();
+        loObject.initTransaction();
+        loObject.setTransactionStatus("1");
+        loObject.setIndustryID(psIndustryCode);
+        loObject.setCompanyID(psCompanyID);
+        loObject.setCategoryID(psCategorCD);
+
+        JSONObject loResult = loObject.OpenTransaction(lsNewPromoID);
+        if (!"success".equals((String) loResult.get("result"))) {
+            return setJSON("error", "Unable to load promotion " + lsNewPromoID + ".");
+        }
+
+        // ---- switching promo: take the old promo's giveaways back out first ----
+        boolean lbSamePromo = lsNewPromoID.equals(lsOldPromoID);
+        if (lsOldPromoID != null && !lsOldPromoID.isEmpty() && !lbSamePromo) {
+            JSONObject loRemove = removeSalesDetailPromotion(fnRow);
+            if ("error".equals((String) loRemove.get("result"))) {
+                return loRemove;
+            }
+        }
+
+        //set Promo object for validation usage;
+        poPromo = loObject;
+        getDetail(fnRow).setPromoID(lsNewPromoID);
+
+        // ---- giveaways ----
+        // Only add when this MC row is newly assigned to the promo
+        // (re-selecting the same promo on the same row must not double again)
+        if (!lbSamePromo && loObject.getCountSalesPromotionGiveAwayItem() > 0) {
+            for (int lnCtr = 1; lnCtr <= loObject.getCountSalesPromotionGiveAwayItem(); lnCtr++) {
+                if (!loObject.getSalesPromotionGiveAway(lnCtr).isWithActive()) {
+                    continue;
+                }
+
+                String lsGiveAwayStockID = loObject.getSalesPromotionGiveAway(lnCtr).getStockID();
+                int lnPromoQty = loObject.getSalesPromotionGiveAway(lnCtr).getQuantity();
+
+                // look for the same promo + same giveaway item already in the sales giveaways
+                int lnExisting = -1;
+                for (int lnRow = 1; lnRow <= getCountSalesGiveAway(); lnRow++) {
+                    if (lsGiveAwayStockID.equals(getSalesGiveaways(lnRow).getStockID())
+                            && lsNewPromoID.equals(getSalesGiveaways(lnRow).getSourceNo())) {
+                        lnExisting = lnRow;
+                        break;
+                    }
+                }
+
+                if (lnExisting > 0) {
+                    // same promo selected by another MC: add to the quantity
+                    getSalesGiveaways(lnExisting).setQuantity(
+                            getSalesGiveaways(lnExisting).getQuantity() + lnPromoQty);
+                } else {
+                    // first MC with this promo: append a new giveaway row
+                    int lnRowSale = getCountSalesGiveAway() + 1;
+                    getSalesGiveaways(lnRowSale);   // initialize the row
+                    getSalesGiveaways(lnRowSale).setStockID(lsGiveAwayStockID);
+                    getSalesGiveaways(lnRowSale).setQuantity(lnPromoQty);
+                    getSalesGiveaways(lnRowSale).setUnitCost(Double.parseDouble(
+                            loObject.getSalesPromotionGiveAway(lnCtr).Inventory().getCost().toString()));
+                    getSalesGiveaways(lnRowSale).setUnitPrice(Double.parseDouble(
+                            loObject.getSalesPromotionGiveAway(lnCtr).Inventory().getSellingPrice().toString()));
+                    getSalesGiveaways(lnRowSale).setSourceNo(lsNewPromoID);
+                    getSalesGiveaways(lnRowSale).setSourceCode(loObject.getSourceCode());
+                }
+            }
+        }
+
+        // ---- sync the promo discount / freight to the detail row: brand first, model overrides ----
+        // (the insurance / registration sync you commented out stays disabled)
+        for (int lnCtr = 1; lnCtr <= loObject.getCountSalesPromotionBrand(); lnCtr++) {
+            if (loObject.getSalesPromotionBrand(lnCtr).getBrandID().equals(lsBrandID)) {
+                getDetail(fnRow).setDiscount(loObject.getSalesPromotionBrand(lnCtr).getDiscountRate());
+                getDetail(fnRow).setAddDiscount(loObject.getSalesPromotionBrand(lnCtr).getDiscAmount());
+                getDetail(fnRow).setFreight(loObject.getSalesPromotionBrand(lnCtr).getFreight());
+                break;
+            }
+        }
+        for (int lnCtr = 1; lnCtr <= loObject.getCountSalesPromotionModel(); lnCtr++) {
+            if (loObject.getSalesPromotionModel(lnCtr).getModelID().equals(lsModelID)) {
+                getDetail(fnRow).setDiscount(loObject.getSalesPromotionModel(lnCtr).getDiscountRate());
+                getDetail(fnRow).setAddDiscount(loObject.getSalesPromotionModel(lnCtr).getDiscAmount());
+                getDetail(fnRow).setFreight(loObject.getSalesPromotionModel(lnCtr).getFreight());
+                break;
+            }
+        }
+
+        computeTransaction();
+
+        return setJSON("success", "success");
     }
 
     /**
@@ -3457,14 +3500,14 @@ public class MCSales extends Transaction {
         loMaster.setNonVATSales(lnNonVat);
 
         // ---- CWT: percentage of the VAT-exclusive base ----
-        double lnCWTRate = loMaster.getCWTAmount();    // e.g. 1 for 1%, 2 for 2% (adjust to your field name)
-        double lnCWTAmount = round2((lnVatSales + lnNonVat) * lnCWTRate / 100.0);
+        double lnCWTRate = loMaster.getCWTAmount();     // e.g. 1 for 1%, 2 for 2%
+        double lnCWTAmount = round2((lnVatSales + lnVatAmount + lnNonVat) * lnCWTRate / 100.0);
         loMaster.setCWTAmount(lnCWTAmount);
 
         // nAmtPaidx stays 0, nAdvances is set by the reservation source
         double lnAmountDue = lnTranTotal - lnDiscount - lnAddDisc + lnFreight
                 + lnInsAdd + lnRegIns - loMaster.getAdvances()
-                - lnCWTAmount;                       // customer pays net of withholding
+                - lnCWTAmount;                          // customer pays net of withholding
         loMaster.setAmountDue(round2(lnAmountDue));
     }
 
@@ -3852,5 +3895,78 @@ public class MCSales extends Transaction {
         loJSON.put("sRequestStatus", lbAllApproved ? "Approved" : "Pending approval");
         loJSON.put("recipients", loArray);
         return loJSON;
+    }
+
+    public JSONObject removeSalesDetailPromotion(int fnRow)
+            throws SQLException, GuanzonException, CloneNotSupportedException, Exception {
+        poJSON = new JSONObject();
+
+        String lsPromoID = getDetail(fnRow).getPromoID();
+        if (lsPromoID == null || lsPromoID.isEmpty()) {
+            poJSON.put("result", "error");
+            poJSON.put("message", "No promotion to remove on this item.");
+            return poJSON;
+        }
+
+        // ---- get the promo (reuse the loaded one if it is the same promo) ----
+        MCPromoSales loPromo = null;
+        if (poPromo != null && lsPromoID.equals(poPromo.getMaster().getPromoID())) {
+            loPromo = poPromo;
+        } else {
+            MCPromoSales loObject = new PromoControllers(poGRider, null).MCPromoSales();
+            loObject.initTransaction();
+            loObject.setTransactionStatus("1");
+            loObject.setIndustryID(psIndustryCode);
+            loObject.setCompanyID(psCompanyID);
+            loObject.setCategoryID(psCategorCD);
+
+            JSONObject loResult = loObject.OpenTransaction(lsPromoID);
+            if (!"success".equals((String) loResult.get("result"))) {
+                poJSON.put("result", "error");
+                poJSON.put("message", "Unable to load promotion " + lsPromoID + " to remove its giveaways.");
+                return poJSON;
+            }
+            loPromo = loObject;
+        }
+
+        // ---- take the giveaways back out ----
+        for (int lnCtr = 1; lnCtr <= loPromo.getCountSalesPromotionGiveAwayItem(); lnCtr++) {
+            // only active promo giveaways were added when the promo was selected
+            if (!loPromo.getSalesPromotionGiveAway(lnCtr).isWithActive()) {
+                continue;
+            }
+
+            String lsStockID = loPromo.getSalesPromotionGiveAway(lnCtr).getStockID();
+            int lnPromoQty = loPromo.getSalesPromotionGiveAway(lnCtr).getQuantity();
+
+            // find the sales giveaway row for the same promo + same item
+            for (int lnRow = 1; lnRow <= getCountSalesGiveAway(); lnRow++) {
+                if (lsStockID.equals(getSalesGiveaways(lnRow).getStockID())
+                        && lsPromoID.equals(getSalesGiveaways(lnRow).getSourceNo())) {
+
+                    int lnNewQty = getSalesGiveaways(lnRow).getQuantity() - lnPromoQty;
+                    if (lnNewQty > 0) {
+                        // other MCs still use this promo: just reduce the quantity
+                        getSalesGiveaways(lnRow).setQuantity(lnNewQty);
+                    } else {
+                        // nothing left: remove the giveaway row
+                        removeSalesGiveAway(lnRow);
+                    }
+                    break;
+                }
+            }
+        }
+
+        // ---- clear what the promo gave to this detail row ----
+        getDetail(fnRow).setPromoID("");
+        getDetail(fnRow).setDiscount(0.00);
+        getDetail(fnRow).setAddDiscount(0.00);
+        getDetail(fnRow).setFreight(0.00);
+
+        computeTransaction();
+
+        poJSON = new JSONObject();
+        poJSON.put("result", "success");
+        return poJSON;
     }
 }
