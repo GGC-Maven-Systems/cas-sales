@@ -56,7 +56,7 @@ public class SalesTransactionStatic {
 
     public static final String[] CWT_RATES = {"Yes", "No"};
     public static final String[] ATTACHMENT_TYPES = {"Others", "Customer ID", "Invoice", "BIR 2317"};
-
+    public static final String[] GAWAY_SOURCE_GETTERS = {"getSourceNo", "getSourceCode", "getSourceID"};
     // ---------------------------------------------------------------------
     // Form status text
     // ---------------------------------------------------------------------
