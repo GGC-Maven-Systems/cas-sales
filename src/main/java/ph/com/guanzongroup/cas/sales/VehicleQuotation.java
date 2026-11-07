@@ -1927,35 +1927,27 @@ public class VehicleQuotation extends Transaction {
             }
             
             //Check Standard Add Ons
-//            if(!lbValidate){
-//                for(int lnCtr = 0;lnCtr < getAddOnListCount();lnCtr++){
-//                    lsSQL = MiscUtil.addCondition(VehicleAddOn_SQL(), SQLUtil.toSQL(xsDateShort(Master().getTransactionDate())) + " BETWEEN a.dFromDate AND a.dThruDate "
-//                                                            + " AND a.cRecdStat = " + SQLUtil.toSQL(ValidityPeriodStatus.APPROVED)
-//                                                            + " AND a.sCompnyID = " + SQLUtil.toSQL(psCompanyId)
-//                                                            + " AND b.sVrntIDxx = " + SQLUtil.toSQL(Detail(0).getVariantId())
-//                                                            + " AND b.sAddOnIDx = " + SQLUtil.toSQL(AddOnList(lnCtr).getAddOnId())
-//                                                            + " AND b.nAmountxx = " + SQLUtil.toSQL(AddOnList(lnCtr).getAmount())
-//                                                            );
-//                    System.out.println("Validate Standard Vehicle Add Ons SQL: " + lsSQL);
-//                    loRS = poGRider.executeQuery(lsSQL);
-//                    if (MiscUtil.RecordCount(loRS) > 0) {
-//                        if(loRS.next()){
-//                            lbValidate = false;
-//                        }
-//                    } else {
-//                        lbValidate = true;
-//                        break;
-//                    }
-//                    
-//                    if(!lbValidate){
-//                        if(checkNotEmpty(AddOnList(lnCtr).getStockId())){
-//                            lbValidate = true;
-//                            break;
-//                        }
-//                    }
-//                }
-//            }
-            
+            if(!lbValidate){
+                for(int lnCtr = 0;lnCtr < getAddOnListCount();lnCtr++){
+                    lsSQL = MiscUtil.addCondition(VehicleAddOn_SQL(), SQLUtil.toSQL(xsDateShort(Master().getTransactionDate())) + " BETWEEN a.dFromDate AND a.dThruDate "
+                                                            + " AND a.cRecdStat = " + SQLUtil.toSQL(ValidityPeriodStatus.APPROVED)
+                                                            + " AND a.sCompnyID = " + SQLUtil.toSQL(psCompanyId)
+                                                            + " AND b.sVrntIDxx = " + SQLUtil.toSQL(Detail(0).getVariantId())
+                                                            + " AND b.sAddOnIDx = " + SQLUtil.toSQL(AddOnList(lnCtr).getAddOnId())
+                                                            + " AND b.nAmountxx = " + SQLUtil.toSQL(AddOnList(lnCtr).getAmount())
+                                                            );
+                    System.out.println("Validate Standard Vehicle Add Ons SQL: " + lsSQL);
+                    loRS = poGRider.executeQuery(lsSQL);
+                    if (MiscUtil.RecordCount(loRS) > 0) {
+                        if(loRS.next()){
+                            lbValidate = false;
+                        }
+                    } else {
+                        lbValidate = true;
+                        break;
+                    }
+                }
+            }
             //Check Standard Freebies
             
         } catch (SQLException ex) {
