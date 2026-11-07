@@ -1466,8 +1466,7 @@ public class VehicleQuotation extends Transaction {
     
     public JSONObject AddAddOn() throws CloneNotSupportedException {
         if (getAddOnListCount() > 0) {
-            if ((AddOnList(getAddOnListCount() - 1).getAddOnId() == null || "".equals(AddOnList(getAddOnListCount() - 1).getAddOnId()))
-                && (AddOnList(getAddOnListCount() - 1).getStockId() == null || "".equals(AddOnList(getAddOnListCount() - 1).getStockId()))){
+            if ((AddOnList(getAddOnListCount() - 1).getAddOnId() == null || "".equals(AddOnList(getAddOnListCount() - 1).getAddOnId()))){
                 poJSON = new JSONObject();
                 poJSON = setJSON("error", "Last row has empty item.");
                 return poJSON;
@@ -1500,7 +1499,6 @@ public class VehicleQuotation extends Transaction {
         int lnCtr = getAddOnListCount() - 1;
         while (lnCtr >= 0) {
             if ((AddOnList(lnCtr).getAddOnId() == null || "".equals(AddOnList(lnCtr).getAddOnId()))
-                && (AddOnList(lnCtr).getStockId() == null || "".equals(AddOnList(lnCtr).getStockId()))
                 ) {
                 paAddOn.remove(lnCtr);
             } 
@@ -1509,8 +1507,7 @@ public class VehicleQuotation extends Transaction {
 
         if ((getAddOnListCount() - 1) >= 0) {
             if (
-                ((AddOnList(getAddOnListCount() - 1).getAddOnId() != null && !"".equals(AddOnList(getAddOnListCount() - 1).getAddOnId()))
-                    || (AddOnList(getAddOnListCount() - 1).getStockId() != null && !"".equals(AddOnList(getAddOnListCount() - 1).getStockId())))
+                (AddOnList(getAddOnListCount() - 1).getAddOnId() != null && !"".equals(AddOnList(getAddOnListCount() - 1).getAddOnId()))
                 ) {
                 AddAddOn();
             }
@@ -1734,8 +1731,7 @@ public class VehicleQuotation extends Transaction {
             ldblDownpaymentPercentage = Double.parseDouble(format.format(ldblDownpaymentPercentage));
        
             for(int lnCtr = 0;lnCtr < getAddOnListCount();lnCtr++){
-                if(checkNotEmpty(AddOnList(lnCtr).getAddOnId())
-                    || checkNotEmpty(AddOnList(lnCtr).getStockId())){
+                if(checkNotEmpty(AddOnList(lnCtr).getAddOnId())){
                     if(AddOnList(lnCtr).getRecordStatus()){
                         if(AddOnList(lnCtr).getQuantity() <= 0.00){
                             if(pnEditMode == EditMode.ADDNEW || pnEditMode == EditMode.UPDATE){
@@ -1931,34 +1927,34 @@ public class VehicleQuotation extends Transaction {
             }
             
             //Check Standard Add Ons
-            if(!lbValidate){
-                for(int lnCtr = 0;lnCtr < getAddOnListCount();lnCtr++){
-                    lsSQL = MiscUtil.addCondition(VehicleAddOn_SQL(), SQLUtil.toSQL(xsDateShort(Master().getTransactionDate())) + " BETWEEN a.dFromDate AND a.dThruDate "
-                                                            + " AND a.cRecdStat = " + SQLUtil.toSQL(ValidityPeriodStatus.APPROVED)
-                                                            + " AND a.sCompnyID = " + SQLUtil.toSQL(psCompanyId)
-                                                            + " AND b.sVrntIDxx = " + SQLUtil.toSQL(Detail(0).getVariantId())
-                                                            + " AND b.sAddOnIDx = " + SQLUtil.toSQL(AddOnList(lnCtr).getAddOnId())
-                                                            + " AND b.nAmountxx = " + SQLUtil.toSQL(AddOnList(lnCtr).getAmount())
-                                                            );
-                    System.out.println("Validate Standard Vehicle Add Ons SQL: " + lsSQL);
-                    loRS = poGRider.executeQuery(lsSQL);
-                    if (MiscUtil.RecordCount(loRS) > 0) {
-                        if(loRS.next()){
-                            lbValidate = false;
-                        }
-                    } else {
-                        lbValidate = true;
-                        break;
-                    }
-                    
-                    if(!lbValidate){
-                        if(checkNotEmpty(AddOnList(lnCtr).getStockId())){
-                            lbValidate = true;
-                            break;
-                        }
-                    }
-                }
-            }
+//            if(!lbValidate){
+//                for(int lnCtr = 0;lnCtr < getAddOnListCount();lnCtr++){
+//                    lsSQL = MiscUtil.addCondition(VehicleAddOn_SQL(), SQLUtil.toSQL(xsDateShort(Master().getTransactionDate())) + " BETWEEN a.dFromDate AND a.dThruDate "
+//                                                            + " AND a.cRecdStat = " + SQLUtil.toSQL(ValidityPeriodStatus.APPROVED)
+//                                                            + " AND a.sCompnyID = " + SQLUtil.toSQL(psCompanyId)
+//                                                            + " AND b.sVrntIDxx = " + SQLUtil.toSQL(Detail(0).getVariantId())
+//                                                            + " AND b.sAddOnIDx = " + SQLUtil.toSQL(AddOnList(lnCtr).getAddOnId())
+//                                                            + " AND b.nAmountxx = " + SQLUtil.toSQL(AddOnList(lnCtr).getAmount())
+//                                                            );
+//                    System.out.println("Validate Standard Vehicle Add Ons SQL: " + lsSQL);
+//                    loRS = poGRider.executeQuery(lsSQL);
+//                    if (MiscUtil.RecordCount(loRS) > 0) {
+//                        if(loRS.next()){
+//                            lbValidate = false;
+//                        }
+//                    } else {
+//                        lbValidate = true;
+//                        break;
+//                    }
+//                    
+//                    if(!lbValidate){
+//                        if(checkNotEmpty(AddOnList(lnCtr).getStockId())){
+//                            lbValidate = true;
+//                            break;
+//                        }
+//                    }
+//                }
+//            }
             
             //Check Standard Freebies
             
@@ -2106,8 +2102,7 @@ public class VehicleQuotation extends Transaction {
             poJSON = new JSONObject();
             //Save Add Ons
             for (int lnCtr = 0; lnCtr <= getAddOnListCount() - 1; lnCtr++) {
-                if(checkNotEmpty(AddOnList(lnCtr).getStockId())
-                    || checkNotEmpty(AddOnList(lnCtr).getAddOnId())){
+                if(checkNotEmpty(AddOnList(lnCtr).getAddOnId())){
                     if(AddOnList(lnCtr).getEditMode() == EditMode.ADDNEW
                         && !AddOnList(lnCtr).getRecordStatus()){
                         continue;
@@ -2921,32 +2916,61 @@ public class VehicleQuotation extends Transaction {
 
         try{
             //Group by dp rate 
-            int lnRow = 0;
             for(int lnCtr = 0;lnCtr < getAddOnListCount();lnCtr++){
                 if(checkEmpty(AddOnList(lnCtr).getAddOnId())
-                    && checkEmpty(AddOnList(lnCtr).getStockId())){
+                    || AddOnList(lnCtr).getAmount() <= 0.00
+                    || !AddOnList(lnCtr).getRecordStatus()
+                    ){
                     continue;
                 }
-                if(AddOnList(lnCtr).getRecordStatus()){
-                    lnRow++;
-                    String lsType = "Add On";
-                    String lsDescription = "";
-                    if(checkNotEmpty(AddOnList(lnCtr).getAddOnId())){
-                        lsDescription = AddOnList(lnCtr).AddOnMaster().AddOnType().getAddTypeName();
-                    } else {
-                        lsType = "Accessory";
-                        lsDescription = AddOnList(lnCtr).Inventory().getDescription();
-                    }
-                    
-                    addAddOnList(rows
-                            , lsType
-                            , lsDescription
-                            , AddOnList(lnCtr).getAmount()
-                            , AddOnList(lnCtr).getQuantity()
-                            , AddOnList(lnCtr).getTotalAmount()
-                    );
-                }
+                String lsType = "Add On";
+                String lsDescription = AddOnList(lnCtr).AddOnMaster().AddOnType().getAddTypeName();
+                addAddOnList(rows
+                        , lsType
+                        , lsDescription
+                        , AddOnList(lnCtr).getAmount()
+                        , AddOnList(lnCtr).getQuantity()
+                        , AddOnList(lnCtr).getTotalAmount()
+                );
             }
+            
+            for(int lnCtr = 0;lnCtr < getFreebiesListCount();lnCtr++){
+                if(checkEmpty(FreebiesList(lnCtr).getFreebieId())
+                    || FreebiesList(lnCtr).getAmount() <= 0.00
+                    || !FreebiesList(lnCtr).getRecordStatus()    
+                    ){
+                    continue;
+                }
+                String lsType = "Accessory";
+                String lsDescription = FreebiesList(lnCtr).Freebie().getDescription();
+                addAddOnList(rows
+                        , lsType
+                        , lsDescription
+                        , FreebiesList(lnCtr).getAmount()
+                        , FreebiesList(lnCtr).getQuantity()
+                        , FreebiesList(lnCtr).getTotalAmount()
+                );
+            }
+            
+            for(int lnCtr = 0;lnCtr < getInclusionListCount();lnCtr++){
+                if(checkEmpty(InclusionList(lnCtr).getInclusionId())
+                    || InclusionList(lnCtr).getAmount() <= 0.00
+                    || !InclusionList(lnCtr).getRecordStatus()
+                    ){
+                    continue;
+                }
+                String lsType = "Accessory";
+                String lsDescription = InclusionList(lnCtr).Inclusion().getDescription();
+                addAddOnList(rows
+                        , lsType
+                        , lsDescription
+                        , InclusionList(lnCtr).getAmount()
+                        , InclusionList(lnCtr).getQuantity()
+                        , InclusionList(lnCtr).getTotalAmount()
+                );
+            }
+            
+            
         } catch (SQLException | GuanzonException ex) {
             Logger.getLogger(VehicleQuotation.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -3020,19 +3044,42 @@ public class VehicleQuotation extends Transaction {
         List<Map<String, Object>> rows = new ArrayList<>();
 
         try{
-            //Group by dp rate 
-            int lnRow = 0;
-            for(int lnCtr = 0;lnCtr < getFreebiesListCount();lnCtr++){
-                if(checkEmpty(FreebiesList(lnCtr).getFreebieId())){
+            for(int lnCtr = 0;lnCtr < getAddOnListCount();lnCtr++){
+                if(checkEmpty(AddOnList(lnCtr).getAddOnId()) 
+                    || AddOnList(lnCtr).getAmount() > 0.00
+                    || !AddOnList(lnCtr).getRecordStatus()){
                     continue;
                 }
-                if(FreebiesList(lnCtr).getRecordStatus()){
-                    lnRow++;
-                    addQuotationFreebies(rows
-                            , FreebiesList(lnCtr).Freebie().getDescription()
-                            , FreebiesList(lnCtr).getQuantity()
-                    );
+                
+                addQuotationFreebies(rows
+                        , AddOnList(lnCtr).AddOnMaster().getAddOnType()
+                        , AddOnList(lnCtr).getQuantity()
+                );
+            }
+            for(int lnCtr = 0;lnCtr < getFreebiesListCount();lnCtr++){
+                if(checkEmpty(FreebiesList(lnCtr).getFreebieId()) 
+                    || FreebiesList(lnCtr).getAmount() > 0.00
+                    || !FreebiesList(lnCtr).getRecordStatus()){
+                    continue;
                 }
+                
+                addQuotationFreebies(rows
+                        , FreebiesList(lnCtr).Freebie().getDescription()
+                        , FreebiesList(lnCtr).getQuantity()
+                );
+            }
+            for(int lnCtr = 0;lnCtr < getInclusionListCount();lnCtr++){
+                if(checkEmpty(InclusionList(lnCtr).getInclusionId()) 
+                    || InclusionList(lnCtr).getAmount() > 0.00
+                    || !InclusionList(lnCtr).getRecordStatus()    
+                    ){
+                    continue;
+                }
+                
+                addQuotationFreebies(rows
+                        , InclusionList(lnCtr).Inclusion().getDescription()
+                        , InclusionList(lnCtr).getQuantity()
+                );
             }
         } catch (SQLException | GuanzonException ex) {
             Logger.getLogger(VehicleQuotation.class.getName()).log(Level.SEVERE, null, ex);
