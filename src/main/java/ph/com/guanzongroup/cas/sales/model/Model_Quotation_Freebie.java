@@ -1,0 +1,172 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package ph.com.guanzongroup.cas.sales.model;
+
+import org.guanzon.appdriver.agent.services.Model;
+import org.guanzon.appdriver.base.GuanzonException;
+import org.guanzon.appdriver.base.MiscUtil;
+import org.guanzon.appdriver.constant.EditMode;
+import org.guanzon.appdriver.constant.RecordStatus;
+import org.json.simple.JSONObject;
+import ph.com.guanzongroup.cas.sales.services.SalesModels;
+
+import java.sql.SQLException;
+import java.util.Date;
+
+/**
+ *
+ * @author Arsiela
+ */
+public class Model_Quotation_Freebie extends Model {
+
+    Model_Freebie_Master poFreebie;
+    @Override
+    public void initialize() {
+        try {
+            poEntity = MiscUtil.xml2ResultSet(System.getProperty("sys.default.path.metadata") + XML, getTable());
+
+            poEntity.last();
+            poEntity.moveToInsertRow();
+
+            MiscUtil.initRowSet(poEntity);
+
+            // assign default values
+            poEntity.updateObject("nQuantity", 1);
+            poEntity.updateObject("nAmountxx", 0.00);
+            poEntity.updateObject("nTotAmntx", 0.00);
+            poEntity.updateString("cRecdStat", RecordStatus.ACTIVE);
+            poEntity.updateNull("sModified");
+            poEntity.updateNull("dModified");
+            // end - assign default values
+
+            poEntity.insertRow();
+            poEntity.moveToCurrentRow();
+            poEntity.absolute(1);
+
+            ID = "sQotFreID";
+            ID2 = "sTransNox";
+
+            pnEditMode = EditMode.UNKNOWN;
+        } catch (SQLException e) {
+            logwrapr.severe(e.getMessage());
+            System.exit(1);
+        }
+    }
+
+    public JSONObject setTransactionNo(String transactionNo) {
+        return setValue("sTransNox", transactionNo);
+    }
+
+    public String getTransactionNo() {
+        return (String) getValue("sTransNox");
+    }
+
+    public JSONObject setQuotationFreebieId(String quotationFreebieId) {
+        return setValue("sQotFreID", quotationFreebieId);
+    }
+
+    public String getQuotationFreebieId() {
+        return (String) getValue("sQotFreID");
+    }
+
+    public JSONObject setFreebieId(String freebieId) {
+        return setValue("sFreebIDx", freebieId);
+    }
+
+    public String getFreebieId() {
+        return (String) getValue("sFreebIDx");
+    }
+
+    public JSONObject setQuantity(int quantity) {
+        return setValue("nQuantity", quantity);
+    }
+
+    public int getQuantity() {
+        if (getValue("nQuantity") == null || "".equals(getValue("nQuantity"))) {
+            return 1;
+        }
+        return (int) getValue("nQuantity");
+    }
+
+    public JSONObject setAmount(Double amount) {
+        return setValue("nAmountxx", amount);
+    }
+
+    public Double getAmount() {
+        if (getValue("nAmountxx") == null || "".equals(getValue("nAmountxx"))) {
+            return 0.0000;
+        }
+        return Double.valueOf(getValue("nAmountxx").toString());
+    }
+
+    public JSONObject setTotalAmount(Double totalAmount) {
+        return setValue("nTotAmntx", totalAmount);
+    }
+
+    public Double getTotalAmount() {
+        if (getValue("nTotAmntx") == null || "".equals(getValue("nTotAmntx"))) {
+            return 0.0000;
+        }
+        return Double.valueOf(getValue("nTotAmntx").toString());
+    }
+
+    public JSONObject setRecordStatus(boolean recordStatus) {
+        return setValue("cRecdStat", recordStatus ? "1" : "0");
+    }
+
+    public boolean getRecordStatus() {
+        Object loValue = getValue("cRecdStat");
+        return loValue != null && "1".equals(String.valueOf(loValue));
+    }
+
+    public JSONObject setModifiedBy(String modifiedBy) {
+        return setValue("sModified", modifiedBy);
+    }
+
+    public String getModifiedBy() {
+        return (String) getValue("sModified");
+    }
+
+    public JSONObject setModifiedDate(Date modifiedDate) {
+        return setValue("dModified", modifiedDate);
+    }
+
+    public Date getModifiedDate() {
+        return (Date) getValue("dModified");
+    }
+
+    @Override
+    public String getNextCode() {
+        return MiscUtil.getNextCode(this.getTable(), ID, false, poGRider.getGConnection().getConnection(), poGRider.getBranchCode());
+    }
+
+    public Model_Freebie_Master AddOnMaster() throws SQLException, GuanzonException {
+        if (poFreebie == null) {
+            poFreebie = new SalesModels(poGRider).FreebieMaster();
+        }
+
+        String id = (String) (getValue("sFreebIDx") == null ? "" : getValue("sFreebIDx"));
+
+        if (!"".equals(id)) {
+            if (poFreebie.getEditMode() == EditMode.READY
+                    && poFreebie.getFreebieId().equals(id)) {
+                return poFreebie;
+            } else {
+                poJSON = poFreebie.openRecord(id);
+
+                if ("success".equals(poJSON.get("result"))) {
+                    return poFreebie;
+                } else {
+                    poFreebie.initialize();
+                    return poFreebie;
+                }
+            }
+        } else {
+            poFreebie.initialize();
+            return poFreebie;
+        }
+    }
+}

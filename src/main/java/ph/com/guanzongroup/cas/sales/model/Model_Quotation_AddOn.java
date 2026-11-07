@@ -24,7 +24,6 @@ import ph.com.guanzongroup.cas.sales.services.SalesModels;
 public class Model_Quotation_AddOn extends Model {
 
     // reference objects
-    Model_Quotation_Payment poQuotationPayment;
     Model_Vehicle_AddOn_Master poAddOnMaster;
     Model_Inventory poInventory;
 
