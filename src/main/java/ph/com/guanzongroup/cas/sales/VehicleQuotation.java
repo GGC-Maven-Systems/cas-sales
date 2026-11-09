@@ -1092,6 +1092,7 @@ public class VehicleQuotation extends Transaction {
         lsSQL = MiscUtil.addCondition(lsSQL, SQLUtil.toSQL(xsDateShort(Master().getTransactionDate())) + " BETWEEN a.dFromDate AND a.dThruDate "
                                     + " AND b.sVrntIDxx = " + SQLUtil.toSQL(fsVariantId)
                                     + " AND a.cRecdStat = " + SQLUtil.toSQL(ValidityPeriodStatus.APPROVED)
+                                    + " AND a.sCompnyID = " + SQLUtil.toSQL(psCompanyId)
                                     );
         System.out.println("AutoLoadVehicleAddOn SQL: " + lsSQL);
         ResultSet loRS = poGRider.executeQuery(lsSQL);
@@ -1248,6 +1249,7 @@ public class VehicleQuotation extends Transaction {
         lsSQL = MiscUtil.addCondition(lsSQL, SQLUtil.toSQL(xsDateShort(Master().getTransactionDate())) + " BETWEEN a.dFromDate AND a.dThruDate "
                                     + " AND b.sVrntIDxx = " + SQLUtil.toSQL(Detail(0).getVariantId())
                                     + " AND a.cRecdStat = " + SQLUtil.toSQL(ValidityPeriodStatus.APPROVED)
+                                    + " AND a.sCompnyID = " + SQLUtil.toSQL(psCompanyId)
                                     );
         if(isAddOn){
             lsSQL = lsSQL + " GROUP BY c.sAddTypNm ";
@@ -1320,6 +1322,10 @@ public class VehicleQuotation extends Transaction {
             CloneNotSupportedException {
         poJSON = new JSONObject();
         
+        if(checkEmpty(Detail(0).getVariantId())){
+            return setJSON("error", "Unit cannot be empty.");
+        }
+        
         String lsSQL = VehicleFreebieInclusion_SQL(includeAddOn);
         lsSQL = MiscUtil.addCondition(lsSQL, " x.cRecdStat = " + SQLUtil.toSQL(FreebieStatus.ACTIVE));
         System.out.println("Executing SQL: " + lsSQL);
@@ -1327,15 +1333,15 @@ public class VehicleQuotation extends Transaction {
         poJSON = ShowDialogFX.Browse(poGRider,
         lsSQL,
         value,
-        "ID»Description",
-        "sIDxxxxxx»sDescxxxx",
-        "x.sIDxxxxxx»x.sDescxxxx",
-        byCode ? 0 : 1);
+        "Description",
+        "sDescxxxx",
+        "x.sDescxxxx",
+        0);
         if (poJSON != null) {
             String lsId = (String) poJSON.get("sIDxxxxxx");
-            int lnType = (int) poJSON.get("sTypexxxx");
+            int lnType = Integer.valueOf((String) poJSON.get("sTypexxxx"));
             
-            poJSON = checkExistingFreebies(lsId,lnType, row);
+            poJSON = checkExistingFreebies(lsId,lnType, row, !includeAddOn);
             if(!isJSONSuccess(poJSON)){
                 return poJSON;
             }
@@ -1370,22 +1376,52 @@ public class VehicleQuotation extends Transaction {
             poJSON.put("message", "No record loaded.");
             return poJSON;
         }
+        poJSON = setJSON("success", "success");
+        poJSON.put("row", row);
         return poJSON;
     }
 
-    private JSONObject checkExistingFreebies(String fsId, int fnType, int row) throws SQLException, GuanzonException{
+    private JSONObject checkExistingFreebies(String fsId, int fnType, int row, boolean isAddOn) throws SQLException, GuanzonException{
         poJSON.put("row", row);
+        String lsType = "";
         switch(fnType){
+            case 0: //addon
+                for(int lnCtr = 0;lnCtr < getAddOnListCount(); lnCtr++){
+                    if(fsId.equals(AddOnList(lnCtr).getAddOnId())){
+                        if(!AddOnList(lnCtr).getRecordStatus()){
+                            AddOnList(lnCtr).setRecordStatus(true);
+                            AddOnList(lnCtr).setQuantity(1);
+                            AddOnList(lnCtr).setAmount(AddOnList(lnCtr).AddOnMaster().getAmount());
+                            if(!isAddOn){
+                                AddOnList(lnCtr).setDiscountAmount(AddOnList(lnCtr).AddOnMaster().getAmount());
+                            }
+                            poJSON.put("row", lnCtr);
+                            return poJSON;
+                        } else {
+                            lsType = "add on";
+                            if(AddOnList(lnCtr).getTotalAmount() <= 0.00){
+                                lsType = "freebie";
+                            }
+                            poJSON = setJSON("error", "Selected item <"+AddOnList(lnCtr).AddOnMaster().AddOnType().getAddTypeName()+"> already exists in "+lsType+" table.");
+                            poJSON.put("row", lnCtr);
+                            return poJSON;
+                        }
+                    }
+                }
+            break;
             case 1: //freebie
                 for(int lnCtr = 0;lnCtr < getFreebiesListCount(); lnCtr++){
-                    if(fsId.equals(FreebiesList(lnCtr).getFreebieId())
-                        && row != lnCtr){
+                    if(fsId.equals(FreebiesList(lnCtr).getFreebieId())){
                         if(!FreebiesList(lnCtr).getRecordStatus()){
                             FreebiesList(lnCtr).setRecordStatus(true);
                             poJSON.put("row", lnCtr);
                             return poJSON;
                         } else {
-                            poJSON = setJSON("error", "Selected freebie <"+FreebiesList(lnCtr).Freebie().getDescription()+"> already exist.");
+                            lsType = "add on";
+                            if(FreebiesList(lnCtr).getTotalAmount() <= 0.00){
+                                lsType = "freebie";
+                            }
+                            poJSON = setJSON("error", "Selected item <"+FreebiesList(lnCtr).Freebie().getDescription()+"> already exists in "+lsType+" table.");
                             poJSON.put("row", lnCtr);
                             return poJSON;
                         }
@@ -1394,14 +1430,17 @@ public class VehicleQuotation extends Transaction {
             break;
             case 2: //inclusion
                 for(int lnCtr = 0;lnCtr < getInclusionListCount(); lnCtr++){
-                    if(fsId.equals(InclusionList(lnCtr).getInclusionId())
-                        && row != lnCtr){
+                    if(fsId.equals(InclusionList(lnCtr).getInclusionId())){
                         if(!InclusionList(lnCtr).getRecordStatus()){
                             InclusionList(lnCtr).setRecordStatus(true);
                             poJSON.put("row", lnCtr);
                             return poJSON;
                         } else {
-                            poJSON = setJSON("error", "Selected inclusion <"+InclusionList(lnCtr).Inclusion().getDescription()+"> already exist.");
+                            lsType = "add on";
+                            if(InclusionList(lnCtr).getTotalAmount() <= 0.00){
+                                lsType = "freebie";
+                            }
+                            poJSON = setJSON("error", "Selected item <"+InclusionList(lnCtr).Inclusion().getDescription()+"> already exists in "+lsType+" table.");
                             poJSON.put("row", lnCtr);
                             return poJSON;
                         }
@@ -1748,8 +1787,12 @@ public class VehicleQuotation extends Transaction {
                     }
                 }
                 //Set Amount
-                AddOnList(lnCtr).setTotalAmount(AddOnList(lnCtr).getAmount() * AddOnList(lnCtr).getQuantity());
-
+                if(pnEditMode == EditMode.ADDNEW || pnEditMode == EditMode.UPDATE){
+                    if(AddOnList(lnCtr).AddOnMaster().getAmount() > AddOnList(lnCtr).getAmount()){
+                        AddOnList(lnCtr).setDiscountAmount(AddOnList(lnCtr).AddOnMaster().getAmount() - AddOnList(lnCtr).getAmount());
+                    }
+                    AddOnList(lnCtr).setTotalAmount(AddOnList(lnCtr).getAmount() * AddOnList(lnCtr).getQuantity());
+                }
                 if(checkNotEmpty(AddOnList(lnCtr).AddOnMaster().AddOnType().getAddTypeName())){
                     if(AddOnList(lnCtr).AddOnMaster().AddOnType().getAddTypeName().toUpperCase().contains("LTO")
                         || AddOnList(lnCtr).AddOnMaster().AddOnType().getAddTypeName().toUpperCase().contains("TPL")
@@ -2072,7 +2115,7 @@ public class VehicleQuotation extends Transaction {
         while (discount.hasNext()) {
             Model item = discount.next(); // Store the item before checking conditions
             Double ldblDetail = (Double) item.getValue("nDiscAmnt");
-            if (ldblDetail < 0.00){
+            if (ldblDetail <= 0.00){
                 if(item.getEditMode() == EditMode.ADDNEW){
                     discount.remove(); // Correctly remove the item
                 } 
@@ -2080,6 +2123,9 @@ public class VehicleQuotation extends Transaction {
         }
 
         for (int lnCtr = 0; lnCtr < getDiscountListCount(); lnCtr++) {
+            if(checkNotEmpty(DiscountList(lnCtr).getDiscountType())){
+                return setJSON("error", "Discount type at row "+(lnCtr+1)+" cannot be empty.");
+            }
             DiscountList(lnCtr).setEntryNo(lnCtr+1);
             DiscountList(lnCtr).setTransactionNo(Master().getTransactionNo());
             DiscountList(lnCtr).setModifiedBy(poGRider.Encrypt(poGRider.getUserID()));
@@ -2271,34 +2317,41 @@ public class VehicleQuotation extends Transaction {
     }
     
     private String VehicleFreebieInclusion_SQL(boolean includeAddOn){
-        return  "SELECT * " +
-                    "FROM ( " +
-                    "    SELECT " +
-                    "        a.sFreebIDx AS sIDxxxxxx, " +
-                    "        a.sFreebDsc AS sDescxxxx, " +
-                    "        1 AS sTypexxxx, " + //0 = freebie
-                    "        a.cRecdStat AS cRecdStat " +
-                    "    FROM Freebie_Master a " +
-                    " " +
-                    "    UNION ALL " +
-                    " " +
-                    "    SELECT " +
-                    "        b.sInclIDxx AS sIDxxxxxx, " +
-                    "        b.sInclDesc AS sDescxxxx, " +
-                    "        2 AS sTypexxxx, " + //1 = inclusion
-                    "        b.cRecdStat AS cRecdStat " +
-                    "    FROM Vehicle_Inclusion_Master b " +
-                    (includeAddOn ? 
-                    " " +
-                    "    SELECT " +
-                    "        c.sAddTypex AS sIDxxxxxx, " +
-                    "        c.sAddTypNm AS sDescxxxx, " +
-                    "        0 AS sTypexxxx, " + //1 = inclusion
-                    "        c.cRecdStat AS cRecdStat " +
-                    "    FROM Vehicle_AddOn_Type c " 
-                    : "") +
-                
-                ") AS x";
+        return      "SELECT * " 
+                    + "FROM ( " 
+                    + "    SELECT " 
+                    + "        a.sFreebIDx AS sIDxxxxxx, " 
+                    + "        a.sFreebDsc AS sDescxxxx, " 
+                    + "        1 AS sTypexxxx, "  //0 = freebie
+                    + "        a.cRecdStat AS cRecdStat " 
+                    + "    FROM Freebie_Master a " 
+                    + " " 
+                    + "    UNION ALL " 
+                    + " " 
+                    + "    SELECT " 
+                    + "        b.sInclIDxx AS sIDxxxxxx, " 
+                    + "        b.sInclDesc AS sDescxxxx, " 
+                    + "        2 AS sTypexxxx, "  //1 = inclusion
+                    + "        b.cRecdStat AS cRecdStat " 
+                    + "    FROM Vehicle_Inclusion_Master b " 
+                    + (includeAddOn ? 
+                    " " 
+                        + "    UNION ALL " 
+                        + " " 
+                        + "   SELECT      " 
+                        + "  d.sAddOnIDx AS sIDxxxxxx "
+                        + " , e.sAddTypNm AS sDescxxxx "
+                        + " , 0 AS sTypexxxx "
+                        + " , c.cRecdStat AS cRecdStat " 
+                        + " FROM Validity_Period_Master c " 
+                        + " INNER JOIN Vehicle_AddOn_Master d ON d.sValidIDx = c.sValidIDx "
+                                                            + " AND d.sVrntIDxx = " + SQLUtil.toSQL(Detail(0).getVariantId())
+                                                            + " AND " + SQLUtil.toSQL(xsDateShort(Master().getTransactionDate())) + " BETWEEN c.dFromDate AND c.dThruDate "
+                                                            + " AND c.sCompnyID = " + SQLUtil.toSQL(psCompanyId)
+                        + " LEFT JOIN Vehicle_AddOn_Type e ON e.sAddTypex = d.sAddTypex    "
+                    : "") 
+                    + ") AS x";
+        
     }
     
     
