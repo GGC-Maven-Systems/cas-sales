@@ -1283,6 +1283,8 @@ public class VehicleQuotation extends Transaction {
             poJSON = SearchFreebies(value, byCode, row, false);
         }
         
+        poJSON = setJSON("success", "success");
+        poJSON.put("row", row);
         return poJSON;
     }
     
@@ -1921,6 +1923,7 @@ public class VehicleQuotation extends Transaction {
             if(checkNotEmpty(Detail(0).BranchOthers().getBrandID())){
                 Detail(0).setBrandId(Detail(0).BranchOthers().getBrandID());
             }
+            Detail(0).setPaymentForm("0");//default value
         } catch (SQLException | GuanzonException ex) {
             Logger.getLogger(getClass().getName()).log(Level.SEVERE, MiscUtil.getException(ex), ex);
         }
