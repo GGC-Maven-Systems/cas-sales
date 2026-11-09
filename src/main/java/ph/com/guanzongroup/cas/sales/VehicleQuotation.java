@@ -2072,7 +2072,9 @@ public class VehicleQuotation extends Transaction {
         while (addon.hasNext()) {
             Model item = addon.next(); // Store the item before checking conditions
             String lsDetail = (String) item.getValue("sAddOnIDx");
-            if ((lsDetail == null || "".equals(lsDetail))){
+            int lnQty = (int) item.getValue("nQtyxxxxx");
+            if ((lsDetail == null || "".equals(lsDetail))
+                || lnQty <= 0){
                 if(item.getEditMode() == EditMode.ADDNEW){
                     addon.remove(); // Correctly remove the item
                 } 
@@ -2098,7 +2100,9 @@ public class VehicleQuotation extends Transaction {
         while (detail.hasNext()) {
             Model item = freebies.next(); // Store the item before checking conditions
             String lsDetail = (String) item.getValue("sFreebIDx");
-            if ((lsDetail == null || "".equals(lsDetail))){
+            int lnQty = (int) item.getValue("nQuantity");
+            if ((lsDetail == null || "".equals(lsDetail))
+                || lnQty <= 0){
                 if(item.getEditMode() == EditMode.ADDNEW){
                     freebies.remove(); // Correctly remove the item
                 } 
@@ -2118,7 +2122,9 @@ public class VehicleQuotation extends Transaction {
         while (inclusion.hasNext()) {
             Model item = inclusion.next(); // Store the item before checking conditions
             String lsDetail = (String) item.getValue("sInclIDxx");
-            if ((lsDetail == null || "".equals(lsDetail))){
+            int lnQty = (int) item.getValue("nQuantity");
+            if ((lsDetail == null || "".equals(lsDetail))
+                || lnQty <= 0){
                 if(item.getEditMode() == EditMode.ADDNEW){
                     inclusion.remove(); // Correctly remove the item
                 } 
