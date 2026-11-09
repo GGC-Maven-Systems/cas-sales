@@ -1189,7 +1189,7 @@ public class MCSales extends Transaction {
         return loJSON;
     }
 
-    private double getTotalDiscount() {
+    public double getTotalDiscount() {
         double lnDiscount = 0;
         double lnAddDisc = 0;
 
@@ -1207,7 +1207,7 @@ public class MCSales extends Transaction {
     // Discount amount the promo on this detail row already allows (0 if no promo).
     // Same matching as searchSalesDetailPromotion: brand first, model overrides it.
     private double getPromoDiscount(Model_Sales_Detail foDetail, double fnGross,
-                                    Map<String, MCPromoSales> foCache) throws SQLException, GuanzonException {
+            Map<String, MCPromoSales> foCache) throws SQLException, GuanzonException {
 
         String lsPromoID = foDetail.getPromoID();
         if (lsPromoID == null || lsPromoID.isEmpty()) {
@@ -3274,9 +3274,9 @@ public class MCSales extends Transaction {
                 poJSON = WebFile.DownloadFile(WebFile.getAccessToken(System.getProperty("sys.default.access.token")),
                         "0032" //Constant
                         ,
-                        "" //Empty
+                         "" //Empty
                         ,
-                        paAttachments.get(getTransactionAttachmentCount() - 1).getModel().getFileName(),
+                         paAttachments.get(getTransactionAttachmentCount() - 1).getModel().getFileName(),
                         SOURCE_CODE,
                         paAttachments.get(getTransactionAttachmentCount() - 1).getModel().getSourceNo(),
                         "");
@@ -3601,9 +3601,15 @@ public class MCSales extends Transaction {
         lnInsAdd = round2(lnInsAdd);
         lnRegIns = round2(lnRegIns);
 
+        // Weighted effective discount rate
+        double lnDiscountRate = 0.00;
+
+        if (lnTranTotal > 0) {
+            lnDiscountRate = (lnDiscount / lnTranTotal) * 100.00;
+        }
         Model_Sales_Master loMaster = getMaster();
         loMaster.setTransactionTotal(lnTranTotal);   // no discount
-        loMaster.setDiscount(lnDiscount);            // amount, from rate x line gross
+        loMaster.setDiscount(lnDiscountRate);          // amount, from rate x line gross
         loMaster.setAddDiscount(lnAddDisc);
         loMaster.setFreight(lnFreight);
         loMaster.setInsuranceAdd(lnInsAdd);
@@ -3696,7 +3702,7 @@ public class MCSales extends Transaction {
      * the buyer or the co-buyer.
      */
     private void fillSheetPerson(Map<String, Object> foParams, String fsPrefix, final Model_Client_Master foClient,
-                                 String fsOccupation, String fsMobile, String fsAddress) {
+            String fsOccupation, String fsMobile, String fsAddress) {
         String lsLast = reflect(foClient, "getLastName");
         String lsFirst = reflect(foClient, "getFirstName");
         String lsMiddle = reflect(foClient, "getMiddleName");
@@ -3750,10 +3756,10 @@ public class MCSales extends Transaction {
                 sv(() -> loMas.ClientEmployment().getPosition()),
                 sv(() -> loMas.ClientMobile().getMobileNo()),
                 sv(() -> loMas.ClientAddress().getAddress() + ","
-                        + loMas.ClientAddress().Barangay().getBarangayName() + ","
-                        + loMas.ClientAddress().Town().getDescription() + ","
-                        + loMas.ClientAddress().Town().Province().getDescription() + ","
-                        + loMas.ClientAddress().Town().getZipCode()));
+                + loMas.ClientAddress().Barangay().getBarangayName() + ","
+                + loMas.ClientAddress().Town().getDescription() + ","
+                + loMas.ClientAddress().Town().Province().getDescription() + ","
+                + loMas.ClientAddress().Town().getZipCode()));
 
         // ---- co-buyer ---- (unchanged)
         boolean lbHasCo = !reflect(loMas, "getCoClientID").isEmpty();
@@ -3762,13 +3768,13 @@ public class MCSales extends Transaction {
                     sv(() -> loMas.CoClientEmployment().getPosition()),
                     "",
                     sv(() -> loMas.CoClientAddress().getAddress() + ","
-                            + loMas.CoClientAddress().Barangay().getBarangayName() + ","
-                            + loMas.CoClientAddress().Town().getDescription() + ","
-                            + loMas.CoClientAddress().Town().Province().getDescription() + ","
-                            + loMas.CoClientAddress().Town().getZipCode()));
+                    + loMas.CoClientAddress().Barangay().getBarangayName() + ","
+                    + loMas.CoClientAddress().Town().getDescription() + ","
+                    + loMas.CoClientAddress().Town().Province().getDescription() + ","
+                    + loMas.CoClientAddress().Town().getZipCode()));
         } else {
             for (String lsKey : new String[]{"Last", "First", "Middle", "Suffix", "Gender", "BirthDate", "BirthPlace",
-                    "Citizenship", "Tin", "Father", "Mother", "Occupation", "Address", "Mobile", "Email", "LtoId", "LtoAddress"}) {
+                "Citizenship", "Tin", "Father", "Mother", "Occupation", "Address", "Mobile", "Email", "LtoId", "LtoAddress"}) {
                 loParams.put("pCoBuyer" + lsKey, "");
             }
         }
