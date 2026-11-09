@@ -2113,6 +2113,26 @@ public class VehicleQuotation extends Transaction {
             }
         }
         
+        //Vehicle Quotation Inclusion
+        Iterator<Model_Quotation_Inclusion> inclusion = paInclusion.iterator();
+        while (inclusion.hasNext()) {
+            Model item = inclusion.next(); // Store the item before checking conditions
+            String lsDetail = (String) item.getValue("sInclIDxx");
+            if ((lsDetail == null || "".equals(lsDetail))){
+                if(item.getEditMode() == EditMode.ADDNEW){
+                    inclusion.remove(); // Correctly remove the item
+                } 
+            }
+        }
+
+        for (int lnCtr = 0; lnCtr < getInclusionListCount(); lnCtr++) {
+            if(checkNotEmpty(InclusionList(lnCtr).getInclusionId())){
+                InclusionList(lnCtr).setTransactionNo(Master().getTransactionNo());
+                InclusionList(lnCtr).setModifiedBy(poGRider.Encrypt(poGRider.getUserID()));
+                InclusionList(lnCtr).setModifiedDate(poGRider.getServerDate());
+            }
+        }
+        
         //Vehicle Quotation Discount
         Iterator<Model_Quotation_Discount> discount = paDiscount.iterator();
         while (discount.hasNext()) {
@@ -2179,6 +2199,25 @@ public class VehicleQuotation extends Transaction {
                             FreebiesList(lnCtr).setQuotationFreebieId(FreebiesList(lnCtr).getNextCode());
                         }
                         poJSON = FreebiesList(lnCtr).saveRecord();
+                        if(!isJSONSuccess(poJSON)){
+                            return poJSON;
+                        }
+                    }
+                }
+            }
+             
+            //Save Inclusion
+             for (int lnCtr = 0; lnCtr <= getInclusionListCount() - 1; lnCtr++) {
+                if(checkNotEmpty(InclusionList(lnCtr).getInclusionId())){
+                    if(InclusionList(lnCtr).getEditMode() == EditMode.ADDNEW
+                        && !InclusionList(lnCtr).getRecordStatus()){
+                        continue;
+                    }
+                    if(InclusionList(lnCtr).getEditMode() == EditMode.ADDNEW || InclusionList(lnCtr).getEditMode() == EditMode.UPDATE){
+                        if(InclusionList(lnCtr).getEditMode() == EditMode.ADDNEW){
+                            InclusionList(lnCtr).setQuotationInclusionId(InclusionList(lnCtr).getNextCode());
+                        }
+                        poJSON = InclusionList(lnCtr).saveRecord();
                         if(!isJSONSuccess(poJSON)){
                             return poJSON;
                         }
