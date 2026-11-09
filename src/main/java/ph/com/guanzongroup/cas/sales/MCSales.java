@@ -2285,6 +2285,8 @@ public class MCSales extends Transaction {
 
         //allow negative quantity NEW BR 07-2026
         loBrowse.isWithQuantityStock(false);
+        //Limit Searchable Inventory Serial that has been encoded to avoid duplicate
+        loBrowse.isWithSales(true);
 
         loBrowse.setCustomColHeader("Serial 01»Serial 02»Model»Color/Varian»Description»ID");
         loBrowse.setCustomColName("sSerial01»sSerial02»xModelNme»xColorNme»b.sDescript»sSerialID");
