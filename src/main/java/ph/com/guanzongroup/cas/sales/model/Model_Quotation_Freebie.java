@@ -23,6 +23,8 @@ import java.util.Date;
 public class Model_Quotation_Freebie extends Model {
 
     Model_Freebie_Master poFreebie;
+    boolean pbIsFree = true;
+    
     @Override
     public void initialize() {
         try {
@@ -136,6 +138,14 @@ public class Model_Quotation_Freebie extends Model {
 
     public Date getModifiedDate() {
         return (Date) getValue("dModified");
+    }
+    
+    public void setIsFree(boolean fbFree){
+        pbIsFree = fbFree;
+    }
+    
+    public boolean getIsFree(){
+        return pbIsFree;
     }
 
     @Override

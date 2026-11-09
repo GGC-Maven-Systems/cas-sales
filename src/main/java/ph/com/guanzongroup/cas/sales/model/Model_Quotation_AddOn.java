@@ -26,6 +26,7 @@ public class Model_Quotation_AddOn extends Model {
     // reference objects
     Model_Vehicle_AddOn_Master poAddOnMaster;
     Model_Inventory poInventory;
+    private boolean pbisAddOn = true;
 
     @Override
     public void initialize() {
@@ -42,6 +43,7 @@ public class Model_Quotation_AddOn extends Model {
             poEntity.updateObject("nQtyxxxxx", 0);
             poEntity.updateObject("nTotAmntx", 0.00);
             poEntity.updateObject("nDiscAmnt", 0.00);
+            poEntity.updateObject("nDiscPctx", 0.00);
             poEntity.updateString("cRecdStat", RecordStatus.ACTIVE);
             poEntity.updateNull("sModified");
             poEntity.updateNull("dModified");

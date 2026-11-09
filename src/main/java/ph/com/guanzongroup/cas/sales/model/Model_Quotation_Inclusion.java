@@ -23,6 +23,8 @@ import java.util.Date;
 public class Model_Quotation_Inclusion extends Model {
 
     Model_Vehicle_Inclusion_Master poInclusion;
+    boolean pbIsFree = true;
+    
     @Override
     public void initialize() {
         try {
@@ -141,6 +143,14 @@ public class Model_Quotation_Inclusion extends Model {
     @Override
     public String getNextCode() {
         return MiscUtil.getNextCode(this.getTable(), ID, false, poGRider.getGConnection().getConnection(), poGRider.getBranchCode());
+    }
+    
+    public void setIsFree(boolean fbFree){
+        pbIsFree = fbFree;
+    }
+    
+    public boolean getIsFree(){
+        return pbIsFree;
     }
 
     public Model_Vehicle_Inclusion_Master Inclusion() throws SQLException, GuanzonException {

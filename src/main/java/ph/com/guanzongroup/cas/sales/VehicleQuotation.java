@@ -1363,6 +1363,7 @@ public class VehicleQuotation extends Transaction {
                         row = getFreebiesListCount()-1;
                     }
                     FreebiesList(row).setFreebieId(lsId);
+                    FreebiesList(row).setIsFree(includeAddOn);
                 break;
                 case 2: //inclusion
                     if(row > (getInclusionListCount()-1)){
@@ -1370,6 +1371,7 @@ public class VehicleQuotation extends Transaction {
                         row = getInclusionListCount()-1;
                     }
                     InclusionList(row).setInclusionId(lsId);
+                    InclusionList(row).setIsFree(includeAddOn);
                 break;
             }
         } else {
