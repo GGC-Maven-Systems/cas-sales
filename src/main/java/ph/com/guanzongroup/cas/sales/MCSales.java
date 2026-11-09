@@ -1633,14 +1633,13 @@ public class MCSales extends Transaction {
 //        if (getEditMode() != EditMode.ADDNEW) {
 //            return setJSON("error", "The source can only be selected on a new transaction.");
 //        }
-
-        String lsClientID = getMaster().getClientID();
-        if (lsClientID == null || lsClientID.isEmpty()) {
-            return setJSON("error", "Please select a Client first.");
-        }
-
+//
+//        String lsClientID = getMaster().getClientID();
+//        if (lsClientID == null || lsClientID.isEmpty()) {
+//            return setJSON("error", "Please select a Client first.");
+//        }
         String lsSQL = getSalesClientSource(poGRider.getIndustry());
-        lsSQL = lsSQL + " WHERE sClientID = " + SQLUtil.toSQL(lsClientID);
+        lsSQL = lsSQL + " WHERE 1=1 ";
         System.out.println("SQL Source: " + lsSQL);
 
         // columns: 0 Source, 1 Source No, 2 Date, 3 Name, 4 Client ID
@@ -1918,7 +1917,8 @@ public class MCSales extends Transaction {
             getMaster().setClientID(loSalesSource.getModel().getClientId());
             getMaster().setAddress(loSalesSource.getModel().getAddressId());
             getMaster().setMobileNo(loSalesSource.getModel().getContactId());
-            if (loSalesSource.Version().Master().getValidThruDate() != null && !loSalesSource.Version().Master().getValidThruDate().before(getMaster().getTransactionDate())) {
+            if (loSalesSource.Version().Master().getValidThruDate() != null
+                    && !loSalesSource.Version().Master().getValidThruDate().before(getMaster().getTransactionDate())) {
 
                 getMaster().setPaymentForm(loSalesSource.Version().Master().getPaymentForm());
                 getMaster().setTermCode(loSalesSource.Version().Master().getTermId());
@@ -1980,6 +1980,11 @@ public class MCSales extends Transaction {
                     getSalesGiveaways(lnRowSale).setSourceCode(loSalesSource.Version().getSourceCode());
 
                 }
+            } else {
+                
+                getMaster().setSourceCode("");
+                getMaster().setSourceNo("");
+                ShowMessageFX.Information("Selected Quoation's has expired. Unable to load Source", "", "");
             }
         } else {
             loValidateSource.put("result", "error");
@@ -2275,6 +2280,7 @@ public class MCSales extends Transaction {
             loBrowse.setIndustry(psIndustryCode);
         }
         loBrowse.setCategoryFilters(psCategorCD);
+        
         loBrowse.setBranch(poGRider.getBranchCode());
 
         //allow negative quantity NEW BR 07-2026
