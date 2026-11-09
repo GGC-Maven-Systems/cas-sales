@@ -163,6 +163,7 @@ public class MCSales_General implements GValidator {
         for (int lnCtr = 0; lnCtr < paDetail.size(); lnCtr++) {
             if (paDetail.get(lnCtr).getStockID() != null
                     && !paDetail.get(lnCtr).getStockID().isEmpty()) {
+                System.out.println("SERIAL : " + paDetail.get(lnCtr).getSerialID());
                 if (paDetail.get(lnCtr).getSerialID() == null
                         && paDetail.get(lnCtr).getSerialID().isEmpty()) {
 

@@ -93,6 +93,8 @@ public class MCSales extends Transaction {
     private List<Model> paSalesInsurance;
     private List<Model> paSalesRegistration;
     private List<Model> paQuotationNonItemized;
+    // true when an UPDATE replaced the saved rows (client / source changed): the old rows are deleted on save
+    private boolean pbReplaceRows = false;
     private MCPromoSales poPromo;
     private String psApprovalUser = "";
 
@@ -432,6 +434,7 @@ public class MCSales extends Transaction {
         paSalesGiveaways.clear();
         paSalesInsurance.clear();
         paSalesRegistration.clear();
+        pbReplaceRows = false;
         paQuotationNonItemized.clear();
         paDetail.clear();
         ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -560,6 +563,7 @@ public class MCSales extends Transaction {
         poMaster.newRecord();
 
         //clear Data
+        pbReplaceRows = false;
         paSalesGiveaways.clear();
         paSalesInsurance.clear();
         paSalesRegistration.clear();
@@ -858,6 +862,28 @@ public class MCSales extends Transaction {
                         poGRider.rollbackTrans();
                     }
                     return poJSON;
+                }
+                // The client / source was changed while updating: every row was rebuilt as a NEW row, so the
+                // saved ones must go first (same transaction, rolled back if anything below fails);
+                // otherwise the INSERTs hit the existing sTransNox + nEntryNox keys ("Duplicate entry").
+                if (pnEditMode == EditMode.UPDATE && pbReplaceRows) {
+                    String lsTransNo = String.valueOf(poMaster.getValue(1));
+                    String[] laTables = {"Sales_Giveaways", "Sales_Insurance", "Sales_Registration", "Sales_Detail"};
+                    for (String lsTable : laTables) {
+                        String lsDelete = "DELETE FROM " + lsTable
+                                + " WHERE sTransNox = " + SQLUtil.toSQL(lsTransNo);
+                        // a count of 0 is fine (the table may have had no rows); only a failed statement is an error
+                        if (poGRider.executeQuery(lsDelete, lsTable, poGRider.getBranchCode(), "", "") < 0) {
+                            if (!pbWthParent) {
+                                poGRider.rollbackTrans();
+                            }
+                            poJSON = new JSONObject();
+                            poJSON.put("result", "error");
+                            poJSON.put("message", "Unable to replace the saved " + lsTable + " rows.");
+                            return poJSON;
+                        }
+                    }
+                    pbReplaceRows = false;
                 }
                 //Giveaways Save
                 for (int lnCtr = 0; lnCtr <= paSalesGiveaways.size() - 1; lnCtr++) {
@@ -1181,7 +1207,7 @@ public class MCSales extends Transaction {
     // Discount amount the promo on this detail row already allows (0 if no promo).
     // Same matching as searchSalesDetailPromotion: brand first, model overrides it.
     private double getPromoDiscount(Model_Sales_Detail foDetail, double fnGross,
-            Map<String, MCPromoSales> foCache) throws SQLException, GuanzonException {
+                                    Map<String, MCPromoSales> foCache) throws SQLException, GuanzonException {
 
         String lsPromoID = foDetail.getPromoID();
         if (lsPromoID == null || lsPromoID.isEmpty()) {
@@ -1665,16 +1691,26 @@ public class MCSales extends Transaction {
                 loSelected.get("sTransNox").toString());
     }
 
-// Clears what the previous source filled in, then loads the chosen one.
-// searchClient() can call this too, so both use the same code.
-    private JSONObject loadSourceTransaction(String fsSource, String fsTransNo)
-            throws SQLException, GuanzonException, CloneNotSupportedException {
-
+    // Drops every in-memory row (unit, giveaway, insurance, registration) so a new client / source can refill them.
+// On an UPDATE those rows are already saved, so it also marks them to be deleted when the transaction is saved;
+// the refilled rows are NEW rows and would otherwise collide with the saved keys ("Duplicate entry").
+    private void resetRowsForReplacement() {
         paSalesGiveaways.clear();
         paSalesInsurance.clear();
         paSalesRegistration.clear();
         paQuotationNonItemized.clear();
         paDetail.clear();
+        if (getEditMode() == EditMode.UPDATE) {
+            pbReplaceRows = true;
+        }
+    }
+
+    // Clears what the previous source filled in, then loads the chosen one.
+// searchClient() can call this too, so both use the same code.
+    private JSONObject loadSourceTransaction(String fsSource, String fsTransNo)
+            throws SQLException, GuanzonException, CloneNotSupportedException {
+
+        resetRowsForReplacement();
 
         JSONObject loValidate;
         switch (fsSource) {
@@ -1736,11 +1772,7 @@ public class MCSales extends Transaction {
             }
             return addClient();
         }
-        paSalesGiveaways.clear();
-        paSalesInsurance.clear();
-        paSalesRegistration.clear();
-        paQuotationNonItemized.clear();
-        paDetail.clear();
+        String lsPrevClient = getMaster().getClientID();
 
         // ----- existing client -----
         String lsClientID = poJSON.get("sClientID").toString();
@@ -1754,6 +1786,16 @@ public class MCSales extends Transaction {
 
         if (loClient.isCancelled()) {
             return setJSON("error", "No record loaded.");
+        }
+
+        // The rows belong to the previous client's source, so a different client resets them. Picking the
+        // same client again on an UPDATE keeps the saved rows (unless a source is chosen below). Done only
+        // after the client dialog was confirmed, so cancelling it never wipes the saved rows.
+        boolean lbSameClient = getEditMode() == EditMode.UPDATE
+                && lsPrevClient != null
+                && lsPrevClient.equals(lsClientID);
+        if (!lbSameClient) {
+            resetRowsForReplacement();
         }
 
         // ----- possible source transaction -----
@@ -1774,6 +1816,7 @@ public class MCSales extends Transaction {
                         4);
 
                 if (loSourceTransaction != null && loSourceTransaction.get("sSource") != null) {
+                    resetRowsForReplacement();   // a source replaces every row (also for the same client on UPDATE)
                     JSONObject loValidate = new JSONObject();
                     switch (loSourceTransaction.get("sSource").toString()) {
                         case "Sales Reservation":
@@ -1813,6 +1856,7 @@ public class MCSales extends Transaction {
 
         String lsClientId = getMaster().getClientID();
         lsClientId = (lsClientId == null || lsClientId.isEmpty()) ? "" : lsClientId;
+        final String lsPrevClientId = lsClientId;
 
         //initialize Client GUI
         ClientGUI loClient = new ClientGUI();
@@ -1829,11 +1873,11 @@ public class MCSales extends Transaction {
 
         //load if button
         if (!loClient.isCancelled()) {
-            paSalesGiveaways.clear();
-            paSalesInsurance.clear();
-            paSalesRegistration.clear();
-            paQuotationNonItemized.clear();
-            paDetail.clear();
+            // a different client resets the rows; the same client edited on an UPDATE keeps the saved rows
+            String lsNewClientId = loClient.getClient().getModel().getClientId();
+            if (getEditMode() != EditMode.UPDATE || !lsPrevClientId.equals(lsNewClientId)) {
+                resetRowsForReplacement();
+            }
             lsClientId = loClient.getClient().getModel().getClientId();
 
             getMaster().setClientID(loClient.getClientId());
@@ -1981,7 +2025,7 @@ public class MCSales extends Transaction {
 
                 }
             } else {
-                
+
                 getMaster().setSourceCode("");
                 getMaster().setSourceNo("");
                 ShowMessageFX.Information("Selected Quoation's has expired. Unable to load Source", "", "");
@@ -2002,7 +2046,7 @@ public class MCSales extends Transaction {
         return loValidateSource;
     }
 
-//Searching of Master Co Client
+    //Searching of Master Co Client
     public JSONObject searchCoClient(String value, boolean byCode)
             throws SQLException, GuanzonException, CloneNotSupportedException, Exception {
         poJSON = new JSONObject();
@@ -2019,7 +2063,7 @@ public class MCSales extends Transaction {
         if (poJSON != null) {
             if ("success".equals((String) poJSON.get("result"))) {
                 loClient.setClientId((String) poJSON.get("clientId"));
-                //Load Client of Existing 
+                //Load Client of Existing
 
                 //load record
                 CommonUtils.showModal(loClient);
@@ -2280,7 +2324,7 @@ public class MCSales extends Transaction {
             loBrowse.setIndustry(psIndustryCode);
         }
         loBrowse.setCategoryFilters(psCategorCD);
-        
+
         loBrowse.setBranch(poGRider.getBranchCode());
 
         //allow negative quantity NEW BR 07-2026
@@ -3230,9 +3274,9 @@ public class MCSales extends Transaction {
                 poJSON = WebFile.DownloadFile(WebFile.getAccessToken(System.getProperty("sys.default.access.token")),
                         "0032" //Constant
                         ,
-                         "" //Empty
+                        "" //Empty
                         ,
-                         paAttachments.get(getTransactionAttachmentCount() - 1).getModel().getFileName(),
+                        paAttachments.get(getTransactionAttachmentCount() - 1).getModel().getFileName(),
                         SOURCE_CODE,
                         paAttachments.get(getTransactionAttachmentCount() - 1).getModel().getSourceNo(),
                         "");
@@ -3652,7 +3696,7 @@ public class MCSales extends Transaction {
      * the buyer or the co-buyer.
      */
     private void fillSheetPerson(Map<String, Object> foParams, String fsPrefix, final Model_Client_Master foClient,
-            String fsOccupation, String fsMobile, String fsAddress) {
+                                 String fsOccupation, String fsMobile, String fsAddress) {
         String lsLast = reflect(foClient, "getLastName");
         String lsFirst = reflect(foClient, "getFirstName");
         String lsMiddle = reflect(foClient, "getMiddleName");
@@ -3706,10 +3750,10 @@ public class MCSales extends Transaction {
                 sv(() -> loMas.ClientEmployment().getPosition()),
                 sv(() -> loMas.ClientMobile().getMobileNo()),
                 sv(() -> loMas.ClientAddress().getAddress() + ","
-                + loMas.ClientAddress().Barangay().getBarangayName() + ","
-                + loMas.ClientAddress().Town().getDescription() + ","
-                + loMas.ClientAddress().Town().Province().getDescription() + ","
-                + loMas.ClientAddress().Town().getZipCode()));
+                        + loMas.ClientAddress().Barangay().getBarangayName() + ","
+                        + loMas.ClientAddress().Town().getDescription() + ","
+                        + loMas.ClientAddress().Town().Province().getDescription() + ","
+                        + loMas.ClientAddress().Town().getZipCode()));
 
         // ---- co-buyer ---- (unchanged)
         boolean lbHasCo = !reflect(loMas, "getCoClientID").isEmpty();
@@ -3718,13 +3762,13 @@ public class MCSales extends Transaction {
                     sv(() -> loMas.CoClientEmployment().getPosition()),
                     "",
                     sv(() -> loMas.CoClientAddress().getAddress() + ","
-                    + loMas.CoClientAddress().Barangay().getBarangayName() + ","
-                    + loMas.CoClientAddress().Town().getDescription() + ","
-                    + loMas.CoClientAddress().Town().Province().getDescription() + ","
-                    + loMas.CoClientAddress().Town().getZipCode()));
+                            + loMas.CoClientAddress().Barangay().getBarangayName() + ","
+                            + loMas.CoClientAddress().Town().getDescription() + ","
+                            + loMas.CoClientAddress().Town().Province().getDescription() + ","
+                            + loMas.CoClientAddress().Town().getZipCode()));
         } else {
             for (String lsKey : new String[]{"Last", "First", "Middle", "Suffix", "Gender", "BirthDate", "BirthPlace",
-                "Citizenship", "Tin", "Father", "Mother", "Occupation", "Address", "Mobile", "Email", "LtoId", "LtoAddress"}) {
+                    "Citizenship", "Tin", "Father", "Mother", "Occupation", "Address", "Mobile", "Email", "LtoId", "LtoAddress"}) {
                 loParams.put("pCoBuyer" + lsKey, "");
             }
         }
