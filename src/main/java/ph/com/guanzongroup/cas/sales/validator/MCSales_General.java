@@ -165,7 +165,7 @@ public class MCSales_General implements GValidator {
                     && !paDetail.get(lnCtr).getStockID().isEmpty()) {
                 System.out.println("SERIAL : " + paDetail.get(lnCtr).getSerialID());
                 if (paDetail.get(lnCtr).getSerialID() == null
-                        && paDetail.get(lnCtr).getSerialID().isEmpty()) {
+                        || paDetail.get(lnCtr).getSerialID().isEmpty()) {
 
                     poJSON.put("result", "error");
                     poJSON.put("message", "Serial is not set. Row = " + (lnCtr + 1));
