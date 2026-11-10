@@ -5,29 +5,18 @@
  */
 package ph.com.guanzongroup.cas.sales.model;
 
-import java.sql.ResultSet;
 import org.guanzon.appdriver.agent.services.Model;
 import org.guanzon.appdriver.base.GuanzonException;
 import org.guanzon.appdriver.base.MiscUtil;
 import org.guanzon.appdriver.constant.EditMode;
-import org.guanzon.cas.client.model.Model_Client_Address;
-import org.guanzon.cas.client.model.Model_Client_Master;
-import org.guanzon.cas.client.model.Model_Client_Mobile;
-import org.guanzon.cas.client.services.ClientModels;
 import org.guanzon.cas.parameter.model.*;
 import org.guanzon.cas.parameter.services.ParamModels;
 import org.json.simple.JSONObject;
 import ph.com.guanzongroup.cas.sales.services.SalesModels;
-import ph.com.guanzongroup.cas.sales.status.VehicleQuotationStatus;
 
 import java.sql.SQLException;
 import java.util.Date;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import org.guanzon.appdriver.base.SQLUtil;
-import org.guanzon.appdriver.constant.Logical;
 import org.guanzon.appdriver.constant.RecordStatus;
-import org.guanzon.cas.client.model.Model_Client_Mail;
 
 /**
  *

@@ -1422,7 +1422,8 @@ public class VehicleQuotation extends Transaction {
                             return poJSON;
                         } else {
                             lsType = "add on";
-                            if(FreebiesList(lnCtr).getTotalAmount() <= 0.00){
+                            if(FreebiesList(lnCtr).getTotalAmount() <= 0.00
+                                && FreebiesList(lnCtr).getIsFree()){
                                 lsType = "freebie";
                             }
                             poJSON = setJSON("error", "Selected item <"+FreebiesList(lnCtr).Freebie().getDescription()+"> already exists in "+lsType+" table.");
@@ -1441,7 +1442,8 @@ public class VehicleQuotation extends Transaction {
                             return poJSON;
                         } else {
                             lsType = "add on";
-                            if(InclusionList(lnCtr).getTotalAmount() <= 0.00){
+                            if(InclusionList(lnCtr).getTotalAmount() <= 0.00
+                                    && InclusionList(lnCtr).getIsFree()){
                                 lsType = "freebie";
                             }
                             poJSON = setJSON("error", "Selected item <"+InclusionList(lnCtr).Inclusion().getDescription()+"> already exists in "+lsType+" table.");
