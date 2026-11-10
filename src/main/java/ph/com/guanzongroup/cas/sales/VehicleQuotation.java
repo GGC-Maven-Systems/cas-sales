@@ -1385,18 +1385,24 @@ public class VehicleQuotation extends Transaction {
                     ReloadAddOnList();
                     row = getAddOnListCount()-1;
                     AddOnList(row).setAddOnId(lsId);
+                    AddOnList(row).setQuantity(1);
+                    AddOnList(row).setRecordStatus(true);
                 break;
                 case 1: //freebie
                     ReloadFreebiesList();
                     row = getFreebiesListCount()-1;
                     FreebiesList(row).setFreebieId(lsId);
                     FreebiesList(row).setIsFree(includeAddOn);
+                    FreebiesList(row).setQuantity(1);
+                    FreebiesList(row).setRecordStatus(true);
                 break;
                 case 2: //inclusion
                     ReloadInclusionList();
                     row = getInclusionListCount()-1;
                     InclusionList(row).setInclusionId(lsId);
                     InclusionList(row).setIsFree(includeAddOn);
+                    InclusionList(row).setQuantity(1);
+                    InclusionList(row).setRecordStatus(true);
                 break;
             }
         } else {
@@ -1856,9 +1862,9 @@ public class VehicleQuotation extends Transaction {
             Double ldblLTOAmt = loDetail.getLTOAmount();
             ldblTotalAddOn = getOtherAddOnTotal();
             ldblTranTotal = ldblDPAmt + ldblRSVAmt + ldblTPLAmt + ldblCompAmt + ldblLTOAmt + ldblCHMOAmt + ldblTotalAddOn;
-            if("0".equals(Detail(0).getPaymentForm())){
+            //if("0".equals(Detail(0).getPaymentForm())){
                 ldblTranTotal = ldblTranTotal + ldblSRPAmt;
-            }
+            //}
             
             //Compute Discount Total
             ldblTotalDisc = getTotalDiscount();
@@ -2281,7 +2287,7 @@ public class VehicleQuotation extends Transaction {
         }
 
         for (int lnCtr = 0; lnCtr < getDiscountListCount(); lnCtr++) {
-            if(checkNotEmpty(DiscountList(lnCtr).getDiscountType())){
+            if(checkEmpty(DiscountList(lnCtr).getDiscountType())){
                 return setJSON("error", "Discount type at row "+(lnCtr+1)+" cannot be empty.");
             }
             DiscountList(lnCtr).setEntryNo(lnCtr+1);
