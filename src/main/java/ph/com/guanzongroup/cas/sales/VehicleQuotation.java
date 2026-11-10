@@ -168,7 +168,6 @@ public class VehicleQuotation extends Transaction {
         paInclusion = new ArrayList<>();
         paDiscount = new ArrayList<>();
         paMaster = new ArrayList<>();
-        pdblOtherAddOnTotal = 0.0000; 
         psApprover = "";
         setApproving("");
     }
@@ -1800,7 +1799,6 @@ public class VehicleQuotation extends Transaction {
         Double ldblTotalDisc = 0.0000;
         Double ldblDownpaymentPercentage = 0.0000;
         Double ldblQuotationDiscount = 0.0000;
-        pdblOtherAddOnTotal = 0.00;
         
         if(Detail(0).getSRPAmount() > 0.0000){
             ldblDownpaymentPercentage = (Detail(0).getDownPayment() / Detail(0).getSRPAmount()) * 100;
@@ -1849,39 +1847,14 @@ public class VehicleQuotation extends Transaction {
                         } else {
                             loDetail.setComprehensiveAmount(loAddOn.AddOnMaster().getAmount());
                         }
-                    } else {
-                        //compute other add on amount
-                        if(loAddOn.getRecordStatus()){
-                            ldblTotalAddOn = ldblTotalAddOn + loAddOn.getTotalAmount();
-                        }
                     }
                 }
             }
-            
-            //Compute Quotation Freebie
-            Model_Quotation_Freebie loFreebie;
-            for(int lnCtr = 0;lnCtr < getFreebiesListCount();lnCtr++){
-                loFreebie = FreebiesList(lnCtr);
-                if(loFreebie.getRecordStatus() && loFreebie.getAmount() > 0.00){
-                    loFreebie.setTotalAmount(loFreebie.getAmount() * loFreebie.getQuantity());
-                    ldblTotalAddOn = ldblTotalAddOn + loFreebie.getTotalAmount();
-                }
-            }
-            
-            //Compute Quotation Inclusion
-            Model_Quotation_Inclusion loInclusion;
-            for(int lnCtr = 0;lnCtr < getInclusionListCount();lnCtr++){
-                loInclusion = InclusionList(lnCtr);
-                if(loInclusion.getRecordStatus() && loInclusion.getAmount() > 0.00){
-                    loInclusion.setTotalAmount(loInclusion.getAmount() * loInclusion.getQuantity());
-                    ldblTotalAddOn = ldblTotalAddOn + loInclusion.getTotalAmount();
-                }
-            }
-            
+           
             Double ldblTPLAmt = loDetail.getTPLAmount();
             Double ldblCompAmt = loDetail.getComprehensiveAmount();
             Double ldblLTOAmt = loDetail.getLTOAmount();
-            pdblOtherAddOnTotal = ldblTotalAddOn;
+            ldblTotalAddOn = getOtherAddOnTotal();
             ldblTranTotal = ldblDPAmt + ldblRSVAmt + ldblTPLAmt + ldblCompAmt + ldblLTOAmt + ldblCHMOAmt + ldblTotalAddOn;
             if("0".equals(Detail(0).getPaymentForm())){
                 ldblTranTotal = ldblTranTotal + ldblSRPAmt;
@@ -1925,9 +1898,60 @@ public class VehicleQuotation extends Transaction {
         }
     }
     
-    private Double pdblOtherAddOnTotal = 0.0000;
     public Double getOtherAddOnTotal(){
-        return pdblOtherAddOnTotal;
+        Double ldblTotalAddOn = 0.00;
+        
+        try {
+            //Compute Add-On
+            String lsAddOnType = "";
+            Model_Quotation_AddOn loAddOn;
+            for(int lnCtr = 0;lnCtr < getAddOnListCount();lnCtr++){
+                loAddOn = AddOnList(lnCtr);
+                if(checkEmpty(loAddOn.getAddOnId())){
+                    continue;
+                }
+
+                lsAddOnType = loAddOn.AddOnMaster().AddOnType().getAddTypeName();
+                if(checkEmpty(lsAddOnType)){
+                    continue;
+                }
+                lsAddOnType = lsAddOnType.toUpperCase();
+                if(lsAddOnType.contains(VehicleQuotationStatus.AddOnType.TPL)
+                    || lsAddOnType.contains(VehicleQuotationStatus.AddOnType.LTO)
+                    || (lsAddOnType.contains(VehicleQuotationStatus.AddOnType.COMPREHENSIVE))){
+                    continue;
+                }
+                
+                //compute other add on amount
+                if(loAddOn.getRecordStatus()){
+                    ldblTotalAddOn = ldblTotalAddOn + loAddOn.getTotalAmount();
+                }
+            }
+
+            //Compute Quotation Freebie
+            Model_Quotation_Freebie loFreebie;
+            for(int lnCtr = 0;lnCtr < getFreebiesListCount();lnCtr++){
+                loFreebie = FreebiesList(lnCtr);
+                if(loFreebie.getRecordStatus() && loFreebie.getAmount() > 0.00){
+                    loFreebie.setTotalAmount(loFreebie.getAmount() * loFreebie.getQuantity());
+                    ldblTotalAddOn = ldblTotalAddOn + loFreebie.getTotalAmount();
+                }
+            }
+
+            //Compute Quotation Inclusion
+            Model_Quotation_Inclusion loInclusion;
+            for(int lnCtr = 0;lnCtr < getInclusionListCount();lnCtr++){
+                loInclusion = InclusionList(lnCtr);
+                if(loInclusion.getRecordStatus() && loInclusion.getAmount() > 0.00){
+                    loInclusion.setTotalAmount(loInclusion.getAmount() * loInclusion.getQuantity());
+                    ldblTotalAddOn = ldblTotalAddOn + loInclusion.getTotalAmount();
+                }
+            }
+        
+        } catch (SQLException | GuanzonException ex) {
+            Logger.getLogger(getClass().getName()).log(Level.SEVERE, MiscUtil.getException(ex), ex);
+        }
+        return ldblTotalAddOn;
     }
     
     public Double getTotalDiscount(){
@@ -2862,23 +2886,8 @@ public class VehicleQuotation extends Transaction {
 //        }
 //        parameters.put("nOtherAddOnsTotal",ldblOtherAddOnsTotal);
 
-        Double ldblTotalAccessories = 0.0000;
-        Double ldblTotalAddOns = 0.0000;
-        for(int lnCtr = 0;lnCtr < getAddOnListCount();lnCtr++){
-            ldblTotalAddOns = ldblTotalAddOns + AddOnList(lnCtr).getTotalAmount();
-//            if(checkNotEmpty(AddOnList(lnCtr).getStockId())){
-            if(checkNotEmpty(AddOnList(lnCtr).AddOnMaster().AddOnType().getAddTypeName())){
-                if(AddOnList(lnCtr).AddOnMaster().AddOnType().getAddTypeName().toUpperCase().contains(VehicleQuotationStatus.AddOnType.LTO)
-                        || AddOnList(lnCtr).AddOnMaster().AddOnType().getAddTypeName().toUpperCase().contains(VehicleQuotationStatus.AddOnType.TPL)
-                        || AddOnList(lnCtr).AddOnMaster().AddOnType().getAddTypeName().toUpperCase().contains(VehicleQuotationStatus.AddOnType.COMPREHENSIVE)
-                    ){
-                    continue;
-                }
-            }
-            ldblTotalAccessories = ldblTotalAccessories + AddOnList(lnCtr).getTotalAmount();
-//            }
-        }
-        
+        Double ldblTotalAccessories = getOtherAddOnTotal();
+        Double ldblTotalAddOns = ldblTotalAccessories + Detail(0).getLTOAmount() + Detail(0).getTPLAmount() + Detail(0).getComprehensiveAmount();
         Double ldblTotalDiscount = getTotalDiscount();
         
         parameters.put("nTotalDiscount",     ldblTotalDiscount);       // TODO
