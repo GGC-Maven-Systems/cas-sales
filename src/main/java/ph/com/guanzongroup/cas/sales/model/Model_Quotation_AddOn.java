@@ -40,7 +40,7 @@ public class Model_Quotation_AddOn extends Model {
 
             // assign default values
             poEntity.updateObject("nAmountxx", 0.00);
-            poEntity.updateObject("nQtyxxxxx", 0);
+            poEntity.updateObject("nQtyxxxxx", 1);
             poEntity.updateObject("nTotAmntx", 0.00);
             poEntity.updateObject("nDiscAmnt", 0.00);
             poEntity.updateObject("nDiscPctx", 0.00);

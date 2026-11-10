@@ -1732,7 +1732,7 @@ public class VehicleQuotation extends Transaction {
     public void ReloadDiscountList() throws CloneNotSupportedException, SQLException, GuanzonException{
         int lnCtr = getDiscountListCount() - 1;
         while (lnCtr >= 0) {
-            if (DiscountList(lnCtr).getDiscountAmount() <= 0.00){
+            if (DiscountList(lnCtr).getDiscountType() == null || "".equals(DiscountList(lnCtr).getDiscountType())) {
                 paDiscount.remove(lnCtr);
             } 
             lnCtr--;
@@ -1790,9 +1790,6 @@ public class VehicleQuotation extends Transaction {
         Double ldblSRPAmt = Detail(0).getSRPAmount();
         Double ldblDPAmt = Detail(0).getDownPayment();
         Double ldblRSVAmt = Detail(0).getReservationAmount();
-        Double ldblTPLAmt = Detail(0).getTPLAmount();
-        Double ldblCompAmt = Detail(0).getComprehensiveAmount();
-        Double ldblLTOAmt = Detail(0).getLTOAmount();
         Double ldblCHMOAmt = Detail(0).getCHMOAmount();
         Double ldblTotalAddOn = 0.0000;
         Double ldblTranTotal = 0.0000;
@@ -1800,70 +1797,86 @@ public class VehicleQuotation extends Transaction {
         Double ldblDownpaymentPercentage = 0.0000;
         Double ldblQuotationDiscount = 0.0000;
         pdblOtherAddOnTotal = 0.00;
+        
         if(Detail(0).getSRPAmount() > 0.0000){
             ldblDownpaymentPercentage = (Detail(0).getDownPayment() / Detail(0).getSRPAmount()) * 100;
             ldblDownpaymentPercentage = Double.parseDouble(format.format(ldblDownpaymentPercentage));
-       
+            String lsAddOnType = "";
+            Model_Quotation_AddOn loAddOn;
+            Model_Sales_Quotation_Vehicle loDetail = Detail(0);
+            
+            //Compute Add-On
             for(int lnCtr = 0;lnCtr < getAddOnListCount();lnCtr++){
-                if(checkNotEmpty(AddOnList(lnCtr).getAddOnId())){
-                    if(AddOnList(lnCtr).getRecordStatus()){
-                        if(AddOnList(lnCtr).getQuantity() <= 0.00){
-                            if(pnEditMode == EditMode.ADDNEW || pnEditMode == EditMode.UPDATE){
-                                AddOnList(lnCtr).setQuantity(1);
-                            }
-                        }
-                    }
+                loAddOn = AddOnList(lnCtr);
+                if(checkEmpty(loAddOn.getAddOnId())){
+                    continue;
                 }
-                //Set Amount
+                
+                lsAddOnType = loAddOn.AddOnMaster().AddOnType().getAddTypeName().toUpperCase();
+                if(checkEmpty(lsAddOnType)){
+                    continue;
+                }
+                
                 if(pnEditMode == EditMode.ADDNEW || pnEditMode == EditMode.UPDATE){
-                    if(AddOnList(lnCtr).AddOnMaster().getAmount() > AddOnList(lnCtr).getAmount()){
-                        AddOnList(lnCtr).setDiscountAmount(AddOnList(lnCtr).AddOnMaster().getAmount() - AddOnList(lnCtr).getAmount());
-                    }
-                    AddOnList(lnCtr).setTotalAmount(AddOnList(lnCtr).getAmount() * AddOnList(lnCtr).getQuantity());
-                }
-                if(checkNotEmpty(AddOnList(lnCtr).AddOnMaster().AddOnType().getAddTypeName())){
-                    if(AddOnList(lnCtr).AddOnMaster().AddOnType().getAddTypeName().toUpperCase().contains("LTO")
-                        || AddOnList(lnCtr).AddOnMaster().AddOnType().getAddTypeName().toUpperCase().contains("TPL")
-                        || AddOnList(lnCtr).AddOnMaster().AddOnType().getAddTypeName().toUpperCase().contains("Comprehensive")
-                    ){
-                        if(pnEditMode == EditMode.ADDNEW || pnEditMode == EditMode.UPDATE){
-                            if(AddOnList(lnCtr).AddOnMaster().AddOnType().getAddTypeName().toUpperCase().contains("TPL")){
-                                if(AddOnList(lnCtr).getQuantity() <= 0.00){
-                                    Detail(0).setTPLAmount(0.0000);
-                                } else {
-                                    if(Detail(0).getTPLAmount() <= 0.0000){
-                                        Detail(0).setTPLAmount(AddOnList(lnCtr).AddOnMaster().getAmount());
-                                    }
-                                }
-                            }
-
-                            if(AddOnList(lnCtr).AddOnMaster().AddOnType().getAddTypeName().toUpperCase().contains("LTO")){
-                                if(AddOnList(lnCtr).getQuantity() <= 0.00){
-                                    Detail(0).setLTOAmount(0.0000);
-                                } else {
-                                    if(Detail(0).getLTOAmount() <= 0.0000){
-                                        Detail(0).setLTOAmount(AddOnList(lnCtr).AddOnMaster().getAmount());
-                                    }
-                                }
-                            }
-
-                            if(AddOnList(lnCtr).AddOnMaster().AddOnType().getAddTypeName().toUpperCase().contains("Comprehensive")){
-                                if(AddOnList(lnCtr).getQuantity() <= 0.00){
-                                    Detail(0).setComprehensiveAmount(0.0000);
-                                } else {
-                                    if(Detail(0).getComprehensiveAmount() <= 0.0000){
-                                        Detail(0).setComprehensiveAmount(AddOnList(lnCtr).AddOnMaster().getAmount());
-                                    }
-                                }
-                            }
+                    loAddOn.setTotalAmount(0.00);
+                    
+                    if(loAddOn.getRecordStatus()){
+                        if(loAddOn.AddOnMaster().getAmount() > loAddOn.getAmount()){
+                            loAddOn.setDiscountAmount(loAddOn.AddOnMaster().getAmount() - loAddOn.getAmount());
                         }
-
-                        continue;
+                        loAddOn.setTotalAmount(loAddOn.getAmount() * loAddOn.getQuantity());
                     }
-
-                    ldblTotalAddOn = ldblTotalAddOn + AddOnList(lnCtr).getTotalAmount();
+                    
+                    if(lsAddOnType.contains("TPL")){
+                        if(loAddOn.getQuantity() <= 0 || loAddOn.getTotalAmount()<= 0.00){
+                            loDetail.setTPLAmount(0.00);
+                        } else {
+                            loDetail.setTPLAmount(loAddOn.AddOnMaster().getAmount());
+                        }
+                    } else if(lsAddOnType.contains("LTO")){
+                        if(loAddOn.getQuantity() <= 0 || loAddOn.getTotalAmount() <= 0.00){
+                            loDetail.setLTOAmount(0.00);
+                        } else {
+                            loDetail.setLTOAmount(loAddOn.AddOnMaster().getAmount());
+                        }
+                    } else if(lsAddOnType.contains("Comprehensive")){
+                        if(loAddOn.getQuantity() <= 0 || loAddOn.getTotalAmount() <= 0.00){
+                            loDetail.setComprehensiveAmount(0.00);
+                        } else {
+                            loDetail.setComprehensiveAmount(loAddOn.AddOnMaster().getAmount());
+                        }
+                    } else {
+                        //compute other add on amount
+                        if(loAddOn.getRecordStatus()){
+                            ldblTotalAddOn = ldblTotalAddOn + loAddOn.getTotalAmount();
+                        }
+                    }
                 }
             }
+            
+            //Compute Quotation Freebie
+            Model_Quotation_Freebie loFreebie;
+            for(int lnCtr = 0;lnCtr < getFreebiesListCount();lnCtr++){
+                loFreebie = FreebiesList(lnCtr);
+                if(loFreebie.getRecordStatus() && loFreebie.getAmount() > 0.00){
+                    loFreebie.setTotalAmount(loFreebie.getAmount() * loFreebie.getQuantity());
+                    ldblTotalAddOn = ldblTotalAddOn + loFreebie.getTotalAmount();
+                }
+            }
+            
+            //Compute Quotation Inclusion
+            Model_Quotation_Inclusion loInclusion;
+            for(int lnCtr = 0;lnCtr < getInclusionListCount();lnCtr++){
+                loInclusion = InclusionList(lnCtr);
+                if(loInclusion.getRecordStatus() && loInclusion.getAmount() > 0.00){
+                    loInclusion.setTotalAmount(loInclusion.getAmount() * loInclusion.getQuantity());
+                    ldblTotalAddOn = ldblTotalAddOn + loInclusion.getTotalAmount();
+                }
+            }
+            
+            Double ldblTPLAmt = loDetail.getTPLAmount();
+            Double ldblCompAmt = loDetail.getComprehensiveAmount();
+            Double ldblLTOAmt = loDetail.getLTOAmount();
             pdblOtherAddOnTotal = ldblTotalAddOn;
             ldblTranTotal = ldblDPAmt + ldblRSVAmt + ldblTPLAmt + ldblCompAmt + ldblLTOAmt + ldblCHMOAmt + ldblTotalAddOn;
             if("0".equals(Detail(0).getPaymentForm())){
@@ -1923,6 +1936,74 @@ public class VehicleQuotation extends Transaction {
         
         return ldblTotalDisc;
     }
+    
+    private JSONObject setAmount(Double fdblAmount, String fsType){
+        poJSON = new JSONObject();
+        try {
+            Model_Quotation_AddOn loAddOn;
+            String lsAddOnType = "";
+            for(int lnCtr = 0;lnCtr < getAddOnListCount();lnCtr++){
+                lsAddOnType = "";
+                loAddOn = AddOnList(lnCtr);
+                if(checkEmpty(loAddOn.getAddOnId())){
+                    continue;
+                }
+
+                lsAddOnType = loAddOn.AddOnMaster().AddOnType().getAddTypeName().toUpperCase();
+                if(checkEmpty(lsAddOnType)){
+                    continue;
+                }
+                if(lsAddOnType.contains(fsType) ){
+                    if(fdblAmount <= 0.00 ){
+                        if(loAddOn.getEditMode() == EditMode.ADDNEW){
+                            AddOnList().remove(loAddOn);
+                            break;
+                        } else {
+                            poJSON = loAddOn.setQuantity(0);
+                            poJSON = loAddOn.setRecordStatus(false);
+                        }
+                        fdblAmount = loAddOn.AddOnMaster().getAmount();
+                        poJSON = loAddOn.setDiscountAmount(loAddOn.AddOnMaster().getAmount());
+                    } 
+                    poJSON = loAddOn.setAmount(fdblAmount);
+                }
+            }
+        } catch (SQLException | GuanzonException ex) {
+            Logger.getLogger(getClass().getName()).log(Level.SEVERE, MiscUtil.getException(ex), ex);
+        }
+        return poJSON;
+    }
+    
+    public boolean isDisable(String fsType){
+        if(pnEditMode == EditMode.ADDNEW || pnEditMode == EditMode.UPDATE){
+        } else {
+            return true;
+        }
+        
+        try {
+            Model_Quotation_AddOn loAddOn;
+            String lsAddOnType = "";
+            for(int lnCtr = 0;lnCtr < getAddOnListCount();lnCtr++){
+                lsAddOnType = "";
+                loAddOn = AddOnList(lnCtr);
+                if(checkEmpty(loAddOn.getAddOnId())){
+                    continue;
+                }
+
+                lsAddOnType = loAddOn.AddOnMaster().AddOnType().getAddTypeName().toUpperCase();
+                if(checkEmpty(lsAddOnType)){
+                    continue;
+                }
+                if(lsAddOnType.contains(fsType) ){
+                    return true;
+                }
+            }
+        } catch (SQLException | GuanzonException ex) {
+            Logger.getLogger(getClass().getName()).log(Level.SEVERE, MiscUtil.getException(ex), ex);
+        }
+        return false;
+    }
+    
     
     @Override
     public JSONObject initFields() {
