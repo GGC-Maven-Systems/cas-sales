@@ -182,6 +182,14 @@ public class Model_Sales_Quotation_Vehicle extends Model {
         return (String) getValue("sReferNox");
     }
 
+    public JSONObject setReceivingMethod(String receivingMethod) {
+        return setValue("sRecvMeth", receivingMethod);
+    }
+
+    public String getReceivingMethod() {
+        return (String) getValue("sRecvMeth");
+    }
+
     public JSONObject setRemarks(String remarks) {
         return setValue("sRemarksx", remarks);
     }

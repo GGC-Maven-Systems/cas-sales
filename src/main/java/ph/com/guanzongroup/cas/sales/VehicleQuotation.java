@@ -316,7 +316,7 @@ public class VehicleQuotation extends Transaction {
     }
     
     @Override
-    protected JSONObject saveTransaction() throws CloneNotSupportedException, SQLException, GuanzonException {
+    protected JSONObject saveTransaction() throws SQLException, GuanzonException, CloneNotSupportedException {
         this.poJSON = new JSONObject();
         if (!this.pbInitTran) {
             this.poJSON.put("result", "error");
@@ -368,7 +368,17 @@ public class VehicleQuotation extends Transaction {
                                 if(((Model)this.paDetail.get(lnCtr)).getEditMode() == EditMode.ADDNEW){
                                     ((Model)this.paDetail.get(lnCtr)).setValue("sQotPayID", Detail(lnCtr).getNextCode());
                                 }
-                                this.poJSON = ((Model)this.paDetail.get(lnCtr)).saveRecord();
+                                try {
+                                    this.poJSON = ((Model)this.paDetail.get(lnCtr)).saveRecord();
+                                } catch (SQLException | GuanzonException ex) {
+                                    Logger.getLogger(VehicleQuotation.class.getName()).log(Level.SEVERE, MiscUtil.getException(ex), ex);
+                                    if (!this.pbWthParent) {
+                                        this.poGRider.rollbackTrans();
+                                    }
+                                    this.poJSON.put("result", "error");
+                                    this.poJSON.put("message", MiscUtil.getException(ex));
+                                    return this.poJSON;
+                                }
                                 if ("error".equals((String)this.poJSON.get("result"))) {
                                     if (!this.pbWthParent) {
                                         this.poGRider.rollbackTrans();
@@ -1373,25 +1383,19 @@ public class VehicleQuotation extends Transaction {
             row = (int) poJSON.get("row");
             switch(lnType){
                 case 0: //add on
-                    if(row > (getAddOnListCount()-1)){
-                        ReloadAddOnList();
-                        row = getAddOnListCount()-1;
-                    }
+                    ReloadAddOnList();
+                    row = getAddOnListCount()-1;
                     AddOnList(row).setAddOnId(lsId);
                 break;
                 case 1: //freebie
-                    if(row > (getFreebiesListCount()-1)){
-                        ReloadFreebiesList();
-                        row = getFreebiesListCount()-1;
-                    }
+                    ReloadFreebiesList();
+                    row = getFreebiesListCount()-1;
                     FreebiesList(row).setFreebieId(lsId);
                     FreebiesList(row).setIsFree(includeAddOn);
                 break;
                 case 2: //inclusion
-                    if(row > (getInclusionListCount()-1)){
-                        ReloadInclusionList();
-                        row = getInclusionListCount()-1;
-                    }
+                    ReloadInclusionList();
+                    row = getInclusionListCount()-1;
                     InclusionList(row).setInclusionId(lsId);
                     InclusionList(row).setIsFree(includeAddOn);
                 break;
@@ -2190,12 +2194,6 @@ public class VehicleQuotation extends Transaction {
 
         for (int lnCtr = 0; lnCtr < getAddOnListCount(); lnCtr++) {
             if(checkNotEmpty(AddOnList(lnCtr).getAddOnId())){
-                if(AddOnList(lnCtr).getRecordStatus() && AddOnList(lnCtr).getEditMode() == EditMode.ADDNEW){
-                    if(AddOnList(lnCtr).getAmount() == 0.0000 ){
-                        return setJSON("error", "Invalid amount at row "+(lnCtr+1)+".");
-                    }
-                }
-
                 AddOnList(lnCtr).setTransactionNo(Master().getTransactionNo());
                 AddOnList(lnCtr).setModifiedBy(poGRider.Encrypt(poGRider.getUserID()));
                 AddOnList(lnCtr).setModifiedDate(poGRider.getServerDate());

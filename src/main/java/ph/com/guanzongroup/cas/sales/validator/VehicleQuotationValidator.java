@@ -194,6 +194,12 @@ public class VehicleQuotationValidator implements GValidator{
             return poJSON;
         }
         
+        if (poDetail.getReceivingMethod() == null || "".equals(poDetail.getReceivingMethod())) {
+            poJSON.put("result", "error");
+            poJSON.put("message", "Receiving method is not set.");
+            return poJSON;
+        }
+        
         if (poDetail.getSRPAmount() <= 0.0000) {
             poJSON.put("result", "error");
             poJSON.put("message", "SRP amount is not set.");
