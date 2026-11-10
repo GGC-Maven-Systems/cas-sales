@@ -1812,11 +1812,11 @@ public class VehicleQuotation extends Transaction {
                     continue;
                 }
                 
-                lsAddOnType = loAddOn.AddOnMaster().AddOnType().getAddTypeName().toUpperCase();
+                lsAddOnType = loAddOn.AddOnMaster().AddOnType().getAddTypeName();
                 if(checkEmpty(lsAddOnType)){
                     continue;
                 }
-                
+                lsAddOnType.toUpperCase();
                 if(pnEditMode == EditMode.ADDNEW || pnEditMode == EditMode.UPDATE){
                     loAddOn.setTotalAmount(0.00);
                     
