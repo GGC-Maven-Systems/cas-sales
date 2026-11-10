@@ -1102,7 +1102,7 @@ public class VehicleQuotation extends Transaction {
             GuanzonException {
         poJSON = new JSONObject();
         
-        if(checkEmpty(Detail(row).getVariantId())){
+        if(checkEmpty(Detail(0).getVariantId())){
             return setJSON("error", "Vehicle cannot be empty.");
         }
         
