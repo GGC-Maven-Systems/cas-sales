@@ -1099,12 +1099,9 @@ public class VehicleQuotation extends Transaction {
         
         DiscountType object = new SalesControllers(poGRider, logwrapr).DiscountType();
         object.initialize();
+        object.setWithUI(pbWithUI);
         object.setRecordStatus(AddOnTypeStatus.ACTIVE);
-        if(pbWithUI){
-            poJSON = object.searchRecord(value, byCode);
-        } else {
-            poJSON = object.openRecord(value);
-        }
+        poJSON = object.searchRecord(value, byCode);
         if (isJSONSuccess(poJSON)) {
             DiscountList(row).setDiscountType(object.getModel().getDiscountType());
         }

@@ -13,13 +13,15 @@ import org.json.simple.JSONObject;
 
 import java.sql.SQLException;
 import java.util.Date;
+import org.guanzon.appdriver.base.GuanzonException;
+import ph.com.guanzongroup.cas.sales.services.SalesModels;
 
 /**
  *
  * @author Arsiela
  */
 public class Model_Quotation_Discount extends Model {
-
+    Model_Quotation_Discount_Type poDiscountType;
     @Override
     public void initialize() {
         try {
@@ -127,4 +129,32 @@ public class Model_Quotation_Discount extends Model {
     public String getNextCode() {
         return "";
     }
+    
+    public Model_Quotation_Discount_Type DiscountType() throws SQLException, GuanzonException {
+        if (poDiscountType == null) {
+            poDiscountType = new SalesModels(poGRider).QuotationDiscountType();
+        }
+
+        String id = (String) (getValue("sDiscType") == null ? "" : getValue("sDiscType"));
+
+        if (!"".equals(id)) {
+            if (poDiscountType.getEditMode() == EditMode.READY
+                    && poDiscountType.getDiscountType().equals(id)) {
+                return poDiscountType;
+            } else {
+                poJSON = poDiscountType.openRecord(id);
+
+                if ("success".equals(poJSON.get("result"))) {
+                    return poDiscountType;
+                } else {
+                    poDiscountType.initialize();
+                    return poDiscountType;
+                }
+            }
+        } else {
+            poDiscountType.initialize();
+            return poDiscountType;
+        }
+    }
+
 }
