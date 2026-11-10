@@ -14,4 +14,10 @@ public class VehicleQuotationStatus {
     public static final String APPROVED = "1";
     public static final String CANCELLED = "2";
     public static final String VOID = "3";
+    
+    public static class AddOnType  {
+        public static final  String LTO = "LTO"; 
+        public static final  String TPL = "TPL"; 
+        public static final  String COMPREHENSIVE = "COMPREHENSIVE";  
+    }
 }

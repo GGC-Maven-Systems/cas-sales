@@ -1816,7 +1816,7 @@ public class VehicleQuotation extends Transaction {
                 if(checkEmpty(lsAddOnType)){
                     continue;
                 }
-                lsAddOnType.toUpperCase();
+                lsAddOnType = lsAddOnType.toUpperCase();
                 if(pnEditMode == EditMode.ADDNEW || pnEditMode == EditMode.UPDATE){
                     loAddOn.setTotalAmount(0.00);
                     
@@ -1827,19 +1827,19 @@ public class VehicleQuotation extends Transaction {
                         loAddOn.setTotalAmount(loAddOn.getAmount() * loAddOn.getQuantity());
                     }
                     
-                    if(lsAddOnType.contains("TPL")){
+                    if(lsAddOnType.contains(VehicleQuotationStatus.AddOnType.TPL)){
                         if(loAddOn.getQuantity() <= 0 || loAddOn.getTotalAmount()<= 0.00){
                             loDetail.setTPLAmount(0.00);
                         } else {
                             loDetail.setTPLAmount(loAddOn.AddOnMaster().getAmount());
                         }
-                    } else if(lsAddOnType.contains("LTO")){
+                    } else if(lsAddOnType.contains(VehicleQuotationStatus.AddOnType.LTO)){
                         if(loAddOn.getQuantity() <= 0 || loAddOn.getTotalAmount() <= 0.00){
                             loDetail.setLTOAmount(0.00);
                         } else {
                             loDetail.setLTOAmount(loAddOn.AddOnMaster().getAmount());
                         }
-                    } else if(lsAddOnType.contains("Comprehensive")){
+                    } else if(lsAddOnType.contains(VehicleQuotationStatus.AddOnType.COMPREHENSIVE)){
                         if(loAddOn.getQuantity() <= 0 || loAddOn.getTotalAmount() <= 0.00){
                             loDetail.setComprehensiveAmount(0.00);
                         } else {
@@ -2870,9 +2870,9 @@ public class VehicleQuotation extends Transaction {
             ldblTotalAddOns = ldblTotalAddOns + AddOnList(lnCtr).getTotalAmount();
 //            if(checkNotEmpty(AddOnList(lnCtr).getStockId())){
             if(checkNotEmpty(AddOnList(lnCtr).AddOnMaster().AddOnType().getAddTypeName())){
-                if(AddOnList(lnCtr).AddOnMaster().AddOnType().getAddTypeName().toUpperCase().contains("LTO")
-                        || AddOnList(lnCtr).AddOnMaster().AddOnType().getAddTypeName().toUpperCase().contains("TPL")
-                        || AddOnList(lnCtr).AddOnMaster().AddOnType().getAddTypeName().toUpperCase().contains("Comprehensive")
+                if(AddOnList(lnCtr).AddOnMaster().AddOnType().getAddTypeName().toUpperCase().contains(VehicleQuotationStatus.AddOnType.LTO)
+                        || AddOnList(lnCtr).AddOnMaster().AddOnType().getAddTypeName().toUpperCase().contains(VehicleQuotationStatus.AddOnType.TPL)
+                        || AddOnList(lnCtr).AddOnMaster().AddOnType().getAddTypeName().toUpperCase().contains(VehicleQuotationStatus.AddOnType.COMPREHENSIVE)
                     ){
                     continue;
                 }
