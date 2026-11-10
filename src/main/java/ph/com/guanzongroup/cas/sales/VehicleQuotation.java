@@ -65,6 +65,7 @@ import org.guanzon.cas.client.model.Model_Client_Mobile;
 import org.guanzon.cas.client.services.ClientControllers;
 import org.guanzon.cas.client.services.ClientModels;
 import org.guanzon.cas.parameter.model.Model_Company;
+import ph.com.guanzongroup.cas.sales.status.AddOnTypeStatus;
 import ph.com.guanzongroup.cas.sales.status.FinancingRateStatus;
 import ph.com.guanzongroup.cas.sales.status.FreebieStatus;
 import ph.com.guanzongroup.cas.sales.status.SalesInquiryStatic;
@@ -1083,6 +1084,30 @@ public class VehicleQuotation extends Transaction {
             return poJSON;
         }
         
+        return poJSON;
+    }
+    
+    public JSONObject SearchDiscountType(String value, boolean byCode, int row)
+            throws ExceptionInInitializerError,
+            SQLException,
+            GuanzonException {
+        poJSON = new JSONObject();
+        
+        if(checkEmpty(Detail(row).getVariantId())){
+            return setJSON("error", "Vehicle cannot be empty.");
+        }
+        
+        DiscountType object = new SalesControllers(poGRider, logwrapr).DiscountType();
+        object.initialize();
+        object.setRecordStatus(AddOnTypeStatus.ACTIVE);
+        if(pbWithUI){
+            poJSON = object.searchRecord(value, byCode);
+        } else {
+            poJSON = object.openRecord(value);
+        }
+        if (isJSONSuccess(poJSON)) {
+            DiscountList(row).setDiscountType(object.getModel().getDiscountType());
+        }
         return poJSON;
     }
     
