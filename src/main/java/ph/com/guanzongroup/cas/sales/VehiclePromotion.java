@@ -1307,6 +1307,11 @@ public class VehiclePromotion extends Transaction {
         } else {
             lbExclude = isExcluded(row);
         }
+        
+        int lnParent = findParentRow(row);
+        if (lnParent < 0) {
+            lbExclude = true;
+        }
 
         PromotionApplicabilityList(row).setBrandId(fsBrandId);
         PromotionApplicabilityList(row).setModelId(fsModelId);
