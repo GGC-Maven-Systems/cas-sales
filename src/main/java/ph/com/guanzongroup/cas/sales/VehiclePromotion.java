@@ -161,7 +161,18 @@ public class VehiclePromotion extends Transaction {
      */
     public JSONObject NewTransaction()
             throws CloneNotSupportedException, SQLException, GuanzonException {
-        return newTransaction();
+        if(!poGRider.getDepartment().equals(System.getProperty("sys.dept.sales"))
+            || (poGRider.getUserLevel() <= UserRight.ENCODER)){ //BR: Authorized users from the Sales
+            poJSON.put("result", "error" );
+            poJSON.put("message", "User is not authorized to create the transaction." );
+            return poJSON;
+        }
+        
+        poJSON = newTransaction();
+        if(!isJSONSuccess(poJSON)){
+            return poJSON;
+        }
+        return poJSON;
     }
     
     /**
@@ -803,6 +814,14 @@ public class VehiclePromotion extends Transaction {
     public JSONObject loadTransactionList(String fsDescription, String fsStatus) {
         poJSON = new JSONObject();
         paTransactionList = new ArrayList<>();
+        
+        if(!poGRider.getDepartment().equals(System.getProperty("sys.dept.sales"))
+            || (poGRider.getUserLevel() <= UserRight.ENCODER)){ //BR: Authorized users from the Sales
+            poJSON.put("result", "error" );
+            poJSON.put("message", "User is not authorized to create the transaction." );
+            return poJSON;
+        }
+        
         try {
             setTransactionStatus(fsStatus);
             initSQL();
@@ -867,7 +886,14 @@ public class VehiclePromotion extends Transaction {
      */
     public JSONObject SearchTransaction(String fsValue, boolean fbByCode) throws CloneNotSupportedException, SQLException, GuanzonException, ScriptException{
         poJSON = new JSONObject();
-
+        
+        if(!poGRider.getDepartment().equals(System.getProperty("sys.dept.sales"))
+            || (poGRider.getUserLevel() <= UserRight.ENCODER)){ //BR: Authorized users from the Sales
+            poJSON.put("result", "error" );
+            poJSON.put("message", "User is not authorized to create the transaction." );
+            return poJSON;
+        }
+        
         initSQL();
         String lsSQL = MiscUtil.addCondition(SQL_BROWSE,
                 " a.sCompnyID = " + SQLUtil.toSQL(psCompanyId));
@@ -1343,6 +1369,8 @@ public class VehiclePromotion extends Transaction {
         int lnParent = findParentRow(row);
         if (lnParent >= 0) {
             PromotionApplicabilityList(row).setExcludeFlag(!isExcluded(lnParent));
+        } else {
+            PromotionApplicabilityList(row).setExcludeFlag(true);
         }
 
         poJSON = setJSON("success", "success");
