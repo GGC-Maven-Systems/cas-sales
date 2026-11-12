@@ -623,10 +623,10 @@ public class VehicleQuotation extends Transaction {
         
        
         //If current user is an ordinary user load only its inquiries
-//        if (poGRider.getUserLevel() <= UserRight.ENCODER) {
-//            lsSQL = MiscUtil.addCondition(lsSQL,
-//                    " b.sSalesman = " + SQLUtil.toSQL(getSysUser(poGRider.getUserID(), true)));
-//        }
+        if (poGRider.getUserLevel() <= UserRight.ENCODER) {
+            lsSQL = MiscUtil.addCondition(lsSQL,
+                    " d.sSalesman = " + SQLUtil.toSQL(getSysUser(poGRider.getUserID(), true)));
+        }
         
         lsSQL = lsSQL + " ORDER BY a.dTransact, c.sCompnyNm  ASC ";
         System.out.println("Executing SQL: " + lsSQL);
@@ -669,6 +669,11 @@ public class VehicleQuotation extends Transaction {
         initSQL();
         String lsSQL = MiscUtil.addCondition(SQL_BROWSE,
                 " b.sBranchCd = " + SQLUtil.toSQL(poGRider.getBranchCode()));
+        //If current user is an ordinary user load only its inquiries
+        if (poGRider.getUserLevel() <= UserRight.ENCODER) {
+            lsSQL = MiscUtil.addCondition(lsSQL,
+                    " d.sSalesman = " + SQLUtil.toSQL(getSysUser(poGRider.getUserID(), true)));
+        }
         
         lsSQL = lsSQL + " GROUP BY a.sTransNox ";
         System.out.println("Executing SQL: " + lsSQL);
@@ -704,6 +709,12 @@ public class VehicleQuotation extends Transaction {
                 + " AND c.sCompnyNm LIKE " + SQLUtil.toSQL("%" + fsClient + "%")
                 + " AND a.sTransNox LIKE " + SQLUtil.toSQL("%" + fsTransactionNo + "%")
             );
+        
+        //If current user is an ordinary user load only its inquiries
+        if (poGRider.getUserLevel() <= UserRight.ENCODER) {
+            lsSQL = MiscUtil.addCondition(lsSQL,
+                    " d.sSalesman = " + SQLUtil.toSQL(getSysUser(poGRider.getUserID(), true)));
+        }
         
         lsSQL = lsSQL + " GROUP BY a.sTransNox ";
         System.out.println("Executing SQL: " + lsSQL);
@@ -2084,37 +2095,43 @@ public class VehicleQuotation extends Transaction {
     }
     
     private boolean validateStandardDetails(){
+        boolean lbValidate = false;
         try {
-            boolean lbValidate = false;
-            //Check Standard Financing Rate for Duration and Rate Value
-            Model_Vehicle_Financing_Rates lObj = new SalesModels(poGRider).VehicleFinancingRates();
-            String lsSQL = MiscUtil.addCondition(MiscUtil.makeSelect(lObj),
-                                                    " cRecdStat = " + SQLUtil.toSQL(FinancingRateStatus.ACTIVE)
-                                                    + " AND nDuration = " + SQLUtil.toSQL(Detail(0).getDuration())
-                                                    + " AND nRateValx = " + SQLUtil.toSQL(Detail(0).getRateValue())
-                                                    + " AND " + SQLUtil.toSQL(xsDateShort(Master().getTransactionDate())) +  " BETWEEN dFromDate AND dThruDate " 
-                                                    );
-            System.out.println("Validate Standard Financing Rate SQL: " + lsSQL);
-            ResultSet loRS = poGRider.executeQuery(lsSQL);
-            if (MiscUtil.RecordCount(loRS) > 0) {
-                if(loRS.next()){
-                    lbValidate = false;
-                }
-            }
+            String lsSQL = "";
+            ResultSet loRS;
             
-            //Check Standard Downpayment rate
-            if(!lbValidate){
-                lsSQL = MiscUtil.addCondition(VehicleFinancing_SQL(), SQLUtil.toSQL(xsDateShort(Master().getTransactionDate())) + " BETWEEN a.dFromDate AND a.dThruDate "
-                                                        + " AND a.cRecdStat = " + SQLUtil.toSQL(ValidityPeriodStatus.APPROVED)
-                                                        + " AND a.sCompnyID = " + SQLUtil.toSQL(psCompanyId)
-                                                        + " AND b.sVrntIDxx = " + SQLUtil.toSQL(Detail(0).getVariantId())
-                                                        + " AND b.nDPRatexx = " + SQLUtil.toSQL(Detail(0).getDownPaymentPercent())
+            //Check Standard Financing Rate for Duration and Rate Value
+            if(!"0".equals(Detail(0).getPaymentForm())){
+                Model_Vehicle_Financing_Rates lObj = new SalesModels(poGRider).VehicleFinancingRates();
+                lsSQL = MiscUtil.addCondition(MiscUtil.makeSelect(lObj),
+                                                        " cRecdStat = " + SQLUtil.toSQL(FinancingRateStatus.ACTIVE)
+                                                        + " AND nDuration = " + SQLUtil.toSQL(Detail(0).getDuration())
+                                                        + " AND nRateValx = " + SQLUtil.toSQL(Detail(0).getRateValue())
+                                                        + " AND " + SQLUtil.toSQL(xsDateShort(Master().getTransactionDate())) +  " BETWEEN dFromDate AND dThruDate " 
                                                         );
-                System.out.println("Validate Standard Downpayment Rate SQL: " + lsSQL);
+                System.out.println("Validate Standard Financing Rate SQL: " + lsSQL);
                 loRS = poGRider.executeQuery(lsSQL);
                 if (MiscUtil.RecordCount(loRS) > 0) {
-                    if(loRS.next()){
-                        lbValidate = false;
+                } else {
+                    lbValidate = true;
+                }
+                
+                //Check Standard Downpayment rate
+                if(!lbValidate){
+                    lsSQL = MiscUtil.addCondition(VehicleFinancing_SQL(), SQLUtil.toSQL(xsDateShort(Master().getTransactionDate())) + " BETWEEN a.dFromDate AND a.dThruDate "
+                                                            + " AND a.cRecdStat = " + SQLUtil.toSQL(ValidityPeriodStatus.APPROVED)
+                                                            + " AND a.sCompnyID = " + SQLUtil.toSQL(psCompanyId)
+                                                            + " AND b.sVrntIDxx = " + SQLUtil.toSQL(Detail(0).getVariantId())
+                                                            );
+                    System.out.println("Validate Standard Downpayment Rate SQL: " + lsSQL);
+                    loRS = poGRider.executeQuery(lsSQL);
+                    if (MiscUtil.RecordCount(loRS) > 0) {
+                        if(loRS.next()){
+                            Double ldblRate = loRS.getDouble("nDPRatexx");
+                            if(!Objects.equals(ldblRate, Detail(0).getDownPaymentPercent())){
+                               lbValidate = true;
+                            }
+                        }
                     }
                 }
             }
@@ -2122,32 +2139,45 @@ public class VehicleQuotation extends Transaction {
             //Check Standard Add Ons
             if(!lbValidate){
                 for(int lnCtr = 0;lnCtr < getAddOnListCount();lnCtr++){
-                    lsSQL = MiscUtil.addCondition(VehicleAddOn_SQL(), SQLUtil.toSQL(xsDateShort(Master().getTransactionDate())) + " BETWEEN a.dFromDate AND a.dThruDate "
-                                                            + " AND a.cRecdStat = " + SQLUtil.toSQL(ValidityPeriodStatus.APPROVED)
-                                                            + " AND a.sCompnyID = " + SQLUtil.toSQL(psCompanyId)
-                                                            + " AND b.sVrntIDxx = " + SQLUtil.toSQL(Detail(0).getVariantId())
-                                                            + " AND b.sAddOnIDx = " + SQLUtil.toSQL(AddOnList(lnCtr).getAddOnId())
-                                                            + " AND b.nAmountxx = " + SQLUtil.toSQL(AddOnList(lnCtr).getAmount())
-                                                            );
-                    System.out.println("Validate Standard Vehicle Add Ons SQL: " + lsSQL);
-                    loRS = poGRider.executeQuery(lsSQL);
-                    if (MiscUtil.RecordCount(loRS) > 0) {
-                        if(loRS.next()){
-                            lbValidate = false;
+                    if(!lbValidate){
+                        if(checkEmpty(AddOnList(lnCtr).getAddOnId())){
+                            continue;
                         }
-                    } else {
-                        lbValidate = true;
-                        break;
+                        lsSQL = MiscUtil.addCondition(VehicleAddOn_SQL(), SQLUtil.toSQL(xsDateShort(Master().getTransactionDate())) + " BETWEEN a.dFromDate AND a.dThruDate "
+                                                                + " AND a.cRecdStat = " + SQLUtil.toSQL(ValidityPeriodStatus.APPROVED)
+                                                                + " AND a.sCompnyID = " + SQLUtil.toSQL(psCompanyId)
+                                                                + " AND b.sVrntIDxx = " + SQLUtil.toSQL(Detail(0).getVariantId())
+                                                                + " AND b.sAddOnIDx = " + SQLUtil.toSQL(AddOnList(lnCtr).getAddOnId())
+                                                                );
+                        System.out.println("Validate Standard Vehicle Add Ons SQL: " + lsSQL);
+                        loRS = poGRider.executeQuery(lsSQL);
+                        if (MiscUtil.RecordCount(loRS) > 0) {
+                            if(loRS.next()){
+                                Double ldblAmount = loRS.getDouble("nAmountxx");
+                                if(!Objects.equals(ldblAmount, AddOnList(lnCtr).getAmount())){
+                                   lbValidate = true;
+                                }
+                            }
+                        } else {
+                            lbValidate = true;
+                            break;
+                        }
                     }
                 }
             }
-            //Check Standard Freebies
+            
+            //validate if found discount
+            if(!lbValidate){
+                if(getDiscountListCount() > 0){
+                    lbValidate = true;
+                }
+            }
             
         } catch (SQLException ex) {
             Logger.getLogger(getClass().getName()).log(Level.SEVERE, MiscUtil.getException(ex), ex);
         } 
             
-        return true;
+        return lbValidate;
     }
     
     @Override
@@ -2245,6 +2275,11 @@ public class VehicleQuotation extends Transaction {
 
         for (int lnCtr = 0; lnCtr < getFreebiesListCount(); lnCtr++) {
             if(checkNotEmpty(FreebiesList(lnCtr).getFreebieId())){
+                if(!FreebiesList(lnCtr).getIsFree()){
+                    if(FreebiesList(lnCtr).getAmount() <= 0.00){
+                        return setJSON("error", "Invalid Add-On amount for "+(FreebiesList(lnCtr).Freebie().getDescription()));
+                    }
+                }
                 FreebiesList(lnCtr).setTransactionNo(Master().getTransactionNo());
                 FreebiesList(lnCtr).setModifiedBy(poGRider.Encrypt(poGRider.getUserID()));
                 FreebiesList(lnCtr).setModifiedDate(poGRider.getServerDate());
@@ -2267,6 +2302,12 @@ public class VehicleQuotation extends Transaction {
 
         for (int lnCtr = 0; lnCtr < getInclusionListCount(); lnCtr++) {
             if(checkNotEmpty(InclusionList(lnCtr).getInclusionId())){
+                if(!InclusionList(lnCtr).getIsFree()){
+                    if(InclusionList(lnCtr).getAmount() <= 0.00){
+                        return setJSON("error", "Invalid Add-On amount for "+(InclusionList(lnCtr).Inclusion().getDescription()));
+                    }
+                }
+                
                 InclusionList(lnCtr).setTransactionNo(Master().getTransactionNo());
                 InclusionList(lnCtr).setModifiedBy(poGRider.Encrypt(poGRider.getUserID()));
                 InclusionList(lnCtr).setModifiedDate(poGRider.getServerDate());
@@ -2277,8 +2318,9 @@ public class VehicleQuotation extends Transaction {
         Iterator<Model_Quotation_Discount> discount = paDiscount.iterator();
         while (discount.hasNext()) {
             Model item = discount.next(); // Store the item before checking conditions
+            String lsDetail = (String) item.getValue("sDiscType");
             Double ldblDetail = Double.valueOf(String.valueOf(item.getValue("nDiscAmnt")));
-            if (ldblDetail <= 0.00){
+            if (checkEmpty(lsDetail) || ldblDetail <= 0.00){
                 if(item.getEditMode() == EditMode.ADDNEW){
                     discount.remove(); // Correctly remove the item
                 } 
@@ -2441,7 +2483,8 @@ public class VehicleQuotation extends Transaction {
                 "  b.dModified " +
                 "FROM Sales_Quotation_Master a " +
                 "INNER JOIN Sales_Quotation_Vehicle b ON b.sTransNox = a.sTransNox " +
-                "LEFT JOIN Client_Master c ON c.sClientID = a.sClientID "; 
+                "LEFT JOIN Client_Master c ON c.sClientID = a.sClientID "+
+                "LEFT JOIN Sales_Inquiry_Master d ON d.sTransNox = b.sSourceNo "; 
         if(lsCondition != null && !"".equals(lsCondition)){
             SQL_BROWSE = MiscUtil.addCondition(SQL_BROWSE, lsCondition);
         }

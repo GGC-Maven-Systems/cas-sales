@@ -165,6 +165,11 @@ public class VehicleDescription extends Parameter {
             return poJSON;
         }
         
+        poJSON = loadAttachments();
+        if (!isJSONSuccess(poJSON)) {
+            return poJSON;
+        }
+        
         poJSON = setJSON("success","success");
         return poJSON;
     }
@@ -763,7 +768,7 @@ public class VehicleDescription extends Parameter {
             poJSON = new JSONObject();
             if(poModelVariantInsurance.getEditMode() == EditMode.ADDNEW || poModelVariantInsurance.getEditMode() == EditMode.UPDATE){
                 poModelVariantInsurance.setVariantId(poModel.getVariantId());
-                    poJSON = poModelVariantInsurance.saveRecord();
+                poJSON = poModelVariantInsurance.saveRecord();
                 
                 if (!isJSONSuccess(poJSON)) {
                     poJSON = setJSON("error", "Unable to save model variant parameter.\n"+(String) poJSON.get("message"));
