@@ -175,6 +175,12 @@ public class VehicleQuotation extends Transaction {
     public JSONObject NewTransaction()
             throws CloneNotSupportedException, SQLException, GuanzonException {
         poJSON = new JSONObject();
+        if(!poGRider.getDepartment().equals(System.getProperty("sys.dept.sales"))){ //BR: Authorized users from the Sales
+            poJSON.put("result", "error" );
+            poJSON.put("message", "User is not authorized to create the transaction." );
+            return poJSON;
+        }
+        
         ResetTransaction();
         poJSON = newTransaction();
         if(!isJSONSuccess(poJSON)){
@@ -2752,6 +2758,12 @@ public class VehicleQuotation extends Transaction {
     poJSON = new JSONObject();
     pbIsPrinted = false;
     
+    if(!poGRider.getDepartment().equals(System.getProperty("sys.dept.sales"))){ //BR: Authorized users from the Sales
+        poJSON.put("result", "error" );
+        poJSON.put("message", "User is not authorized to print the transaction." );
+        return poJSON;
+    }
+    
     try {
 
         String jrxmlPath =
@@ -2909,7 +2921,8 @@ public class VehicleQuotation extends Transaction {
         parameters.put("sPreparedBySignature", "");
         parameters.put("sPreparedBy", Detail(0).SalesInquiry().SalesPerson().getFullName().toUpperCase());
         parameters.put("sApprovedBySignature", "");
-        poJSON = getUpdateStatusBy(Master().getTransactionStatus());
+//        poJSON = getUpdateStatusBy(Master().getTransactionStatus());
+        poJSON = getSalesSupervisor();
         if(!isJSONSuccess(poJSON)){
             return poJSON;
         }
@@ -3497,6 +3510,45 @@ public class VehicleQuotation extends Transaction {
         row.put("nFourthYear", nFourthYear);
         row.put("nFifthYear", nFifthYear);
         rows.add(row);
+    }
+    
+    public JSONObject getSalesSupervisor() throws SQLException, GuanzonException {
+        
+        String lsUpdateBy = "";
+        String lsSQL =  " SELECT " 
+                        + " a.sEmployID "
+                        + " , b.sCompnyNm"
+                        + " , c.sDeptName"
+                        + " , d.sPositnNm"
+                        + " , e.sBranchNm"
+                        + " FROM Employee_Master001 a"
+                        + " LEFT JOIN Client_Master b ON b.sClientID = a.sEmployID"
+                        + " LEFT JOIN Department c ON c.sDeptIDxx = a.sDeptIDxx"
+                        + " LEFT JOIN POSITION d ON d.sPositnID = a.sPositnID"
+                        + " LEFT JOIN Branch e ON e.sBranchCd = a.sBranchCd"
+                        + " WHERE a.sDeptIDxx = "+ SQLUtil.toSQL(System.getProperty("sys.dept.sales"))
+                        + " AND a.sBranchCd = " + SQLUtil.toSQL(Detail(0).getBranchCode()
+                        + " AND d.sPositnNm LIKE '%Sales%Supervisor%'");
+        System.out.println("Execute SQL getSalesSupervisor : " + lsSQL);
+        ResultSet loRS = poGRider.executeQuery(lsSQL);
+        try {
+          if (MiscUtil.RecordCount(loRS) > 0L) {
+            if (loRS.next()) {
+                if(loRS.getString("sEmployID") != null && !"".equals(loRS.getString("sEmployID"))){
+                    lsUpdateBy = getSysUser(loRS.getString("sEmployID"),false);
+                }
+            } 
+          }
+          MiscUtil.close(loRS);
+        } catch (SQLException e) {
+          poJSON.put("result", "error");
+          poJSON.put("message", e.getMessage());
+          return poJSON;
+        } 
+        
+        poJSON.put("result", "success");
+        poJSON.put("sUpdateByx", lsUpdateBy);
+        return poJSON;
     }
     
     public JSONObject getUpdateStatusBy(String fsStatus) throws SQLException, GuanzonException {

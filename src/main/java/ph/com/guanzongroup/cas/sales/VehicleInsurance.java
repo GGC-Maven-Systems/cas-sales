@@ -1029,7 +1029,9 @@ public class VehicleInsurance extends Transaction {
         for(int lnRow = 0; lnRow < getDetailCount(); lnRow++){
             if(fsVariantId.equals(Detail(lnRow).getVariantId())){
                 Detail(lnRow).setRecordStatus(isActive);
-                break;
+                if(!isActive){
+                    Detail(lnRow).setAmount(0.00);
+                }
             }
         }
         
@@ -1291,6 +1293,7 @@ public class VehicleInsurance extends Transaction {
             return poJSON;
         }
         
+        ArrayList<String> laUniqueVariantID = new ArrayList<>();
         Iterator<Model> detail = Detail().iterator();
         int lnDetailRow = 1;
         while (detail.hasNext()) {
@@ -1305,6 +1308,14 @@ public class VehicleInsurance extends Transaction {
                 } 
             } else {
                 lnDetailRow++;
+                
+                if(laUniqueVariantID.isEmpty()){
+                    laUniqueVariantID.add(lsDetail);
+                } else {
+                    if(!laUniqueVariantID.contains(lsDetail)){
+                        laUniqueVariantID.add(lsDetail);
+                    }
+                }
             }
         }
 
@@ -1312,9 +1323,45 @@ public class VehicleInsurance extends Transaction {
             poJSON = setJSON("error", "No record detail to be save.");
             return poJSON;
         }
+        
+        for(String lsVariant : laUniqueVariantID){
+            int lnYearCnt = 0;
+            String lsDescription = "";
+            for (int lnCtr = 0; lnCtr <= getDetailCount() - 1; lnCtr++) {
+                if(lsVariant.equals(Detail(lnCtr).getVariantId())
+                    && Detail(lnCtr).getAmount() > 0.00){
+                    if(lsDescription.isEmpty()){
+                        lsDescription = Detail(lnCtr).ModelVariant().Model().Brand().getDescription() + " " + Detail(lnCtr).ModelVariant().Model().getDescription() + " " + Detail(lnCtr).ModelVariant().getDescription()  + " " + Detail(lnCtr).ModelVariant().Color().getDescription();
+                    }
+                    lnYearCnt++;
+                }
+            }
+            
+            if(lnYearCnt > 0 && lnYearCnt < 5){
+                return setJSON("error", "Invalid amount for vehicle description <"+lsDescription.toUpperCase()+">.");
+            }
+            
+            if(lnYearCnt == 0){
+                detail = Detail().iterator();
+                while (detail.hasNext()) {
+                    Model item = detail.next(); // Store the item before checking conditions
+                    String lsDetail = (String) item.getValue("sVrntIDxx");
+                    if ((lsDetail == null || "".equals(lsDetail))){
+                    } else {
+                        if(lsVariant.equals(lsDetail)){
+                            if(item.getEditMode() == EditMode.ADDNEW){
+                                detail.remove(); // Correctly remove the item
+                            } else {
+                                item.setValue("cRecdStat", "0");
+                            } 
+                        }
+                    }
+                }
+            }
+        }
 
         for (int lnCtr = 0; lnCtr <= getDetailCount() - 1; lnCtr++) {
-            if(Detail(lnCtr).getAmount()== 0.0000){
+            if(Detail(lnCtr).getAmount()== 0.0000 && Detail(lnCtr).getRecordStatus()){
                 String lsDescription = Detail(lnCtr).ModelVariant().Model().Brand().getDescription() + " " + Detail(lnCtr).ModelVariant().Model().getDescription() + " " + Detail(lnCtr).ModelVariant().getDescription()  + " " + Detail(lnCtr).ModelVariant().Color().getDescription();
                 return setJSON("error", "Invalid amount for vehicle description <"+lsDescription.toUpperCase()+">.");
             }
