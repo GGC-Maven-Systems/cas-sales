@@ -65,6 +65,7 @@ import net.sf.jasperreports.swing.JRViewerToolbar;
 import net.sf.jasperreports.view.JasperViewer;
 import org.guanzon.appdriver.agent.ShowDialogFX;
 import org.guanzon.appdriver.agent.ShowMessageFX;
+import org.guanzon.appdriver.constant.RecordStatus;
 import org.guanzon.cas.parameter.model.Model_Branch;
 import org.guanzon.cas.parameter.model.Model_Model_Variant;
 import org.guanzon.cas.parameter.services.ParamModels;
@@ -848,6 +849,7 @@ public class VehicleAddOns extends Transaction {
                     + " AND b.sVrntIDxx = " + SQLUtil.toSQL(fsVariantId)
                     + " AND b.sAddTypex = " + SQLUtil.toSQL(fsTypeId)
                     + " AND a.sCompnyID = " + SQLUtil.toSQL(psCompanyId)
+                    + " AND b.cRecdStat = " + SQLUtil.toSQL(RecordStatus.ACTIVE)
             );
             if(pbWithUI){
                 lsSQL = lsSQL + " AND " + SQLUtil.toSQL(formatDate(fsAsOfDate))+ " BETWEEN a.dFromDate AND a.dThruDate " ;
@@ -883,6 +885,7 @@ public class VehicleAddOns extends Transaction {
                     + " AND b.sAddTypex = " + SQLUtil.toSQL(fsTypeId)
                     + " AND b.sVrntIDxx = " + SQLUtil.toSQL(fsVariantId)
                     + " AND a.sCompnyID = " + SQLUtil.toSQL(psCompanyId)
+                    + " AND b.cRecdStat = " + SQLUtil.toSQL(RecordStatus.ACTIVE)
             );
             if(pbWithUI){
                 lsSQL = lsSQL + " AND " + SQLUtil.toSQL(formatDate(fsAsOfDate))+ " BETWEEN a.dFromDate AND a.dThruDate " ;

@@ -1060,7 +1060,10 @@ public class VehicleQuotation extends Transaction {
         poJSON = new JSONObject();
         
         String lsSQL = VehicleFinancing_SQL();
-        lsSQL = MiscUtil.addCondition(lsSQL, SQLUtil.toSQL(xsDateShort(Master().getTransactionDate())) + " BETWEEN a.dFromDate AND a.dThruDate "
+        lsSQL = MiscUtil.addCondition(lsSQL, "(( " + SQLUtil.toSQL(xsDateShort(Master().getTransactionDate())) + " BETWEEN a.dFromDate AND a.dThruDate )"
+                                                + " OR (a.dFromDate <= " + SQLUtil.toSQL(xsDateShort(Master().getTransactionDate()))
+                                                + " AND a.dThruDate IS NULL " 
+                                                + ")) "
                                                 + " AND a.cRecdStat = " + SQLUtil.toSQL(ValidityPeriodStatus.APPROVED)
                                                 + " AND a.sCompnyID = " + SQLUtil.toSQL(psCompanyId)
                                                 );
@@ -2102,36 +2105,62 @@ public class VehicleQuotation extends Transaction {
             
             //Check Standard Financing Rate for Duration and Rate Value
             if(!"0".equals(Detail(0).getPaymentForm())){
-                Model_Vehicle_Financing_Rates lObj = new SalesModels(poGRider).VehicleFinancingRates();
-                lsSQL = MiscUtil.addCondition(MiscUtil.makeSelect(lObj),
+                Model_Financing_Rate_Master loRate = new SalesModels(poGRider).FinancingRateMaster();
+                lsSQL = MiscUtil.addCondition(MiscUtil.makeSelect(loRate),
                                                         " cRecdStat = " + SQLUtil.toSQL(FinancingRateStatus.ACTIVE)
                                                         + " AND nDuration = " + SQLUtil.toSQL(Detail(0).getDuration())
                                                         + " AND nRateValx = " + SQLUtil.toSQL(Detail(0).getRateValue())
-                                                        + " AND " + SQLUtil.toSQL(xsDateShort(Master().getTransactionDate())) +  " BETWEEN dFromDate AND dThruDate " 
+                                                        + " AND sRateIDxx = " + SQLUtil.toSQL(Detail(0).getQuotationRate())
                                                         );
-                System.out.println("Validate Standard Financing Rate SQL: " + lsSQL);
+                System.out.println("Validate Financing Rate SQL: " + lsSQL);
                 loRS = poGRider.executeQuery(lsSQL);
                 if (MiscUtil.RecordCount(loRS) > 0) {
                 } else {
                     lbValidate = true;
                 }
                 
+                if(!lbValidate){   
+                    Model_Vehicle_Financing_Rates lObj = new SalesModels(poGRider).VehicleFinancingRates();
+                    lsSQL = MiscUtil.addCondition(MiscUtil.makeSelect(lObj),
+                                                            " cRecdStat = " + SQLUtil.toSQL(FinancingRateStatus.ACTIVE)
+                                                            + " AND nDuration = " + SQLUtil.toSQL(Detail(0).getDuration())
+                                                            + " AND nRateValx = " + SQLUtil.toSQL(Detail(0).getRateValue())
+                                                            + " AND (( " + SQLUtil.toSQL(xsDateShort(Master().getTransactionDate())) + " BETWEEN dFromDate AND dThruDate )"
+                                                            + " OR (dFromDate <= " + SQLUtil.toSQL(xsDateShort(Master().getTransactionDate()))
+                                                            + " AND dThruDate IS NULL " 
+                                                            + ")) "
+    //                                                        + " AND " + SQLUtil.toSQL(xsDateShort(Master().getTransactionDate())) +  " BETWEEN dFromDate AND dThruDate " 
+                                                            );
+                    System.out.println("Validate Standard Financing Rate SQL: " + lsSQL);
+                    loRS = poGRider.executeQuery(lsSQL);
+                    if (MiscUtil.RecordCount(loRS) > 0) {
+                    } else {
+                        lbValidate = true;
+                    }
+                }
+                
                 //Check Standard Downpayment rate
                 if(!lbValidate){
-                    lsSQL = MiscUtil.addCondition(VehicleFinancing_SQL(), SQLUtil.toSQL(xsDateShort(Master().getTransactionDate())) + " BETWEEN a.dFromDate AND a.dThruDate "
+                    lsSQL = MiscUtil.addCondition(VehicleFinancing_SQL(), "(( " + SQLUtil.toSQL(xsDateShort(Master().getTransactionDate())) + " BETWEEN a.dFromDate AND a.dThruDate )"
+                                                            + " OR (a.dFromDate <= " + SQLUtil.toSQL(xsDateShort(Master().getTransactionDate()))
+                                                            + " AND a.dThruDate IS NULL " 
+                                                            + ")) "
                                                             + " AND a.cRecdStat = " + SQLUtil.toSQL(ValidityPeriodStatus.APPROVED)
                                                             + " AND a.sCompnyID = " + SQLUtil.toSQL(psCompanyId)
                                                             + " AND b.sVrntIDxx = " + SQLUtil.toSQL(Detail(0).getVariantId())
+                                                            + " AND b.nDPRatexx =  " + SQLUtil.toSQL(Detail(0).getDownPaymentPercent())
                                                             );
                     System.out.println("Validate Standard Downpayment Rate SQL: " + lsSQL);
                     loRS = poGRider.executeQuery(lsSQL);
                     if (MiscUtil.RecordCount(loRS) > 0) {
-                        if(loRS.next()){
-                            Double ldblRate = loRS.getDouble("nDPRatexx");
-                            if(!Objects.equals(ldblRate, Detail(0).getDownPaymentPercent())){
-                               lbValidate = true;
-                            }
-                        }
+                    } else {
+                        lbValidate = true;
+                    }
+                }
+            
+                if(!lbValidate){
+                    if(Detail(0).getPromptPaymentDiscount() > 0.00){
+                        lbValidate = true;
                     }
                 }
             }
@@ -2871,7 +2900,7 @@ public class VehicleQuotation extends Transaction {
         parameters.put("sAddress", getFullAddress());
         parameters.put("sCustomerContact", Master().ClientMobile().getMobileNo());
         parameters.put("sEmail", Master().ClientEmail().getMailAddress());
-        parameters.put("sReceivingMethod", "");
+        parameters.put("sReceivingMethod", Detail(0).getReceivingMethod());
         parameters.put("sLHBankRate", Detail(0).getRateValue());
         parameters.put("sRemarks", Detail(0).getRemarks());
         parameters.put("dDeliverySchedule", Detail(0).getExpectedDate());
