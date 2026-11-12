@@ -2278,7 +2278,7 @@ public class VehicleQuotation extends Transaction {
         Iterator<Model_Quotation_Discount> discount = paDiscount.iterator();
         while (discount.hasNext()) {
             Model item = discount.next(); // Store the item before checking conditions
-            Double ldblDetail = (Double) item.getValue("nDiscAmnt");
+            Double ldblDetail = Double.valueOf(String.valueOf(item.getValue("nDiscAmnt")));
             if (ldblDetail <= 0.00){
                 if(item.getEditMode() == EditMode.ADDNEW){
                     discount.remove(); // Correctly remove the item
