@@ -2168,7 +2168,7 @@ public class VehicleQuotation extends Transaction {
             
             //validate if found discount
             if(!lbValidate){
-                if(getDiscountListCount() > 0){
+                if(getTotalDiscount() > 0.00){
                     lbValidate = true;
                 }
             }
