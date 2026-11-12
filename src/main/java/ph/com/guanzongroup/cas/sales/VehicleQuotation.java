@@ -1167,8 +1167,7 @@ public class VehicleQuotation extends Transaction {
         
         String sql = "SELECT sQotAddID FROM Quotation_AddOn " 
                                                 + " WHERE sTransNox = " + SQLUtil.toSQL(Master().getTransactionNo()) 
-                                                + " AND nAmountxx > 0.0000 "
-                                                + " ORDER BY sQotAddID";
+                                                + " ORDER BY sQotAddID ASC";
         ResultSet rs = this.poGRider.executeQuery(sql);
         while(rs.next()) {
             Model_Quotation_AddOn loDetail = new SalesModels(poGRider).QuotationAddOn();
@@ -1195,7 +1194,7 @@ public class VehicleQuotation extends Transaction {
         
         String sql = "SELECT sQotFreID FROM Quotation_Freebie " 
                                                 + " WHERE sTransNox = " + SQLUtil.toSQL(Master().getTransactionNo()) 
-                                                + " ORDER BY sQotFreID";
+                                                + " ORDER BY sQotFreID ASC";
         ResultSet rs = this.poGRider.executeQuery(sql);
         while(rs.next()) {
             Model_Quotation_Freebie loDetail = new SalesModels(poGRider).QuotationFreebie();
