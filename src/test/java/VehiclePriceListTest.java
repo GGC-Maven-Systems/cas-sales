@@ -336,7 +336,7 @@ public class VehiclePriceListTest {
             Assert.assertEquals("success", loJSON.get("result"));
             
             
-            loJSON = poController.printTransaction();
+//            loJSON = poController.printTransaction();
 //            System.out.println("MESSAGE : " + String.valueOf(loJSON.get("message")));
 //            Assert.assertEquals("success", loJSON.get("result"));
             

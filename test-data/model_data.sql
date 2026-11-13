@@ -1,74 +1,151 @@
-/*
+/*
+
 SQLyog Ultimate v8.55 
-MySQL - 5.7.44-log : Database - gcasys_dbf
-*********************************************************************
-*/
-
-/*!40101 SET NAMES utf8 */;
-
-/*!40101 SET SQL_MODE=''*/;
-
-/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
-/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
-/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
-/*Data for the table `model` */
-INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00524001','HDPE','HDPE',0,'','W005001','09',NULL,'','1','M0W1240073',NULL,'2025-09-26 14:50:47');
-INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00524002','HD750XC + SG750x110400','HD750XC + SG750x110400',0,'','M0W1042','09',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
-INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00524003','LTH60SE 003441','LTH60SE 003441',0,'','M0W1042','09',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
-INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00524004','LSE 505 5PC','LSE 505 5PC',0,'','M0W1042','09',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
-INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00524005','EK9633-12L','HD-13641',0,'','M0W1004','09',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
-INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00524006','CP-F514.000.04','CP-F514.000.04',0,'','M0W1084','09',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
-INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00524007','LED U1 A45 E27 5W','LED U1 A45 E27 5W',0,'','M0W1046','09',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
-INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00524008','BW 150P','BW 150P',0,'','W005004','09',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
-INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00524009','XK-250 25w','XK-250 25w',0,'','M0W1016','09',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
-INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00524010','Royu 12WFSW','Royu 12WFSW',0,'','M0W1027','09',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
-INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00524011','NOOMI-5-U-392C','NOOMI-5-U-392C',0,'','W005007','09',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
-INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00524012','WEG-6803','WEG-6803',0,'','GMO1026','09',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
-INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00524013','XPRO 500','XPRO 500',0,'','M0W1016','09',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
-INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00524014','WF-627','WF-627',0,'','M0W1017','09',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
-INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00524015','CF 18 096660','CF 18 096660',0,'','M0W1004','09',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
-INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00524016','C51567661030 E','C51567661030 E',0,'','GK01001','09',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
-INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00524017','003722','003722',0,'','M0W1042','09',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
-INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00524018','NATL. WEG 10919-5','NATL. WEG 10919-5',0,'','GMO1026','09',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
-INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00524019','LTGG400','LTGG400',0,'','M0W1042','09',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
-INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00524020','SF-6001','SF-6001',0,'','M0W1090','09',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
-INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00524021','20-GA 5000 102349','20-GA 5000 102349',0,'','M0W1042','09',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
-INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00524022','LTX2000X2000W','LTX2000X2000W',0,'','M0W1042','09',NULL,'','1','M0W1230048',NULL,'2025-09-26 14:50:47');
-INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00524023','TLCK 101-SS','TLCK 101-SS',0,'','W005015','09',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
-INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00524024','XGS-2beco','XGS-2beco',0,'','M0W1016','09',NULL,'','1','M0W1230048',NULL,'2025-09-26 14:50:47');
-INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00524025','EMC-170 Black','EMC-170 Black',0,'','M0W1086','09',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
-INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00524026','AWG #18/2','AWG #18/2',0,'','GK01105','09',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
-INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00524027','SE 150/60 107564 60MM','SE 150/60 107564 60MM',0,'','M0W1042','09',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
-INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00524028','SE 150/50 107563 50MM','SE 150/50 107563 50MM',0,'','M0W1042','09',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
-INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00524029','DS2208-SR7U2100SGW','DS2208-SR7U2100SGW',0,'','W005017','09',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
-INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00525001','LBLA600702C','LBLA600702C',0,'','M0W1056','09',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
-INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00525002','ATS HGK-180RH-B','ATS HGK-180RH-B',0,'','GMO1146','09',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
-INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00525003','CDL2212DL','CDL2212DL',0,'','M0W1074','09',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
-INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00525004','LBLA600702N','LBLA600702N',0,'','M0W1056','09',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
-INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00525005','LBLA600702W','LBLA600702W',0,'','M0W1056','09',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
-INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00525006','FS-202','FS-202',0,'','M0W1017','09',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
-INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00525007','P45 F27 093887','P45 F27 093887',0,'','M0W1046','09',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
-INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00525008','081753','KSS VP50-11 BK',0,'','W005018','09',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
-INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00525009','EDL 212606','EDL 212606',0,'','GMO1028','09',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
-INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00525010','YL806B/Y125/60/133/10','YL806B/Y125/60/133/10',0,'','M0W1049','09',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
-INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00525011','WFM-001CIGA','WFM-001CIGA',0,'','GMO1051','09',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
-INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00525012','NUC8i3BEHS','NUC8i3BEHS',0,'','GK01050','09',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
-INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00525013','NS-607612','NS-607612',0,'','M0W1017','09',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
-INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00525014','MF-5000v','MF-5000v',0,'','M0W1016','09',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
-INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00525015','','THHN/THWN',0,'','','09',NULL,'','1','M001240055',NULL,'2025-09-26 14:50:47');
-INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00525016','32STG5500','32STG5500',0,'','W005043','09',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
-INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00525017','53904/131100001159','Xiaomi TV A Pro 32\"\"',0,'','W005044','09',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
-INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00525018','MF-4300GO','MF-4300GO',0,'','M0W1016','09',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
-INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00525019','','MF-5000GO',0,'','','09',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
-INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00525020','MF-5000GO','MF-5000GO',0,'','M0W1016','09',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
-INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00525021','69-002000','69-002000',0,'','M0W1042','09',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
-INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00525022','SS26 Neon Strip','SS26 Neon Strip',0,'','M0W1056','09',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
-INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00525023','RHE-18155','RHE-18155',0,'','W005072','09',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
-INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00525024','RHE-18153','RHE-18153',0,'','W005073','09',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
-INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00525025','XK-250','XK-250',0,'','M0W1016','09',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
+MySQL - 5.7.44-log : Database - gcasys_dbf
+
+*********************************************************************
+
+*/
+
+
+
+/*!40101 SET NAMES utf8 */;
+
+
+
+/*!40101 SET SQL_MODE=''*/;
+
+
+
+/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
+
+/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
+
+/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
+
+/*Data for the table `model` */
+
+INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00524001','HDPE','HDPE',0,'','W005001','09',NULL,'','1','M0W1240073',NULL,'2025-09-26 14:50:47');
+
+INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00524002','HD750XC + SG750x110400','HD750XC + SG750x110400',0,'','M0W1042','09',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
+
+INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00524003','LTH60SE 003441','LTH60SE 003441',0,'','M0W1042','09',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
+
+INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00524004','LSE 505 5PC','LSE 505 5PC',0,'','M0W1042','09',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
+
+INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00524005','EK9633-12L','HD-13641',0,'','M0W1004','09',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
+
+INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00524006','CP-F514.000.04','CP-F514.000.04',0,'','M0W1084','09',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
+
+INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00524007','LED U1 A45 E27 5W','LED U1 A45 E27 5W',0,'','M0W1046','09',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
+
+INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00524008','BW 150P','BW 150P',0,'','W005004','09',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
+
+INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00524009','XK-250 25w','XK-250 25w',0,'','M0W1016','09',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
+
+INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00524010','Royu 12WFSW','Royu 12WFSW',0,'','M0W1027','09',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
+
+INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00524011','NOOMI-5-U-392C','NOOMI-5-U-392C',0,'','W005007','09',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
+
+INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00524012','WEG-6803','WEG-6803',0,'','GMO1026','09',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
+
+INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00524013','XPRO 500','XPRO 500',0,'','M0W1016','09',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
+
+INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00524014','WF-627','WF-627',0,'','M0W1017','09',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
+
+INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00524015','CF 18 096660','CF 18 096660',0,'','M0W1004','09',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
+
+INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00524016','C51567661030 E','C51567661030 E',0,'','GK01001','09',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
+
+INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00524017','003722','003722',0,'','M0W1042','09',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
+
+INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00524018','NATL. WEG 10919-5','NATL. WEG 10919-5',0,'','GMO1026','09',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
+
+INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00524019','LTGG400','LTGG400',0,'','M0W1042','09',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
+
+INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00524020','SF-6001','SF-6001',0,'','M0W1090','09',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
+
+INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00524021','20-GA 5000 102349','20-GA 5000 102349',0,'','M0W1042','09',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
+
+INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00524022','LTX2000X2000W','LTX2000X2000W',0,'','M0W1042','09',NULL,'','1','M0W1230048',NULL,'2025-09-26 14:50:47');
+
+INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00524023','TLCK 101-SS','TLCK 101-SS',0,'','W005015','09',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
+
+INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00524024','XGS-2beco','XGS-2beco',0,'','M0W1016','09',NULL,'','1','M0W1230048',NULL,'2025-09-26 14:50:47');
+
+INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00524025','EMC-170 Black','EMC-170 Black',0,'','M0W1086','09',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
+
+INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00524026','AWG #18/2','AWG #18/2',0,'','GK01105','09',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
+
+INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00524027','SE 150/60 107564 60MM','SE 150/60 107564 60MM',0,'','M0W1042','09',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
+
+INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00524028','SE 150/50 107563 50MM','SE 150/50 107563 50MM',0,'','M0W1042','09',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
+
+INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00524029','DS2208-SR7U2100SGW','DS2208-SR7U2100SGW',0,'','W005017','09',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
+
+INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00525001','LBLA600702C','LBLA600702C',0,'','M0W1056','09',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
+
+INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00525002','ATS HGK-180RH-B','ATS HGK-180RH-B',0,'','GMO1146','09',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
+
+INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00525003','CDL2212DL','CDL2212DL',0,'','M0W1074','09',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
+
+INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00525004','LBLA600702N','LBLA600702N',0,'','M0W1056','09',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
+
+INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00525005','LBLA600702W','LBLA600702W',0,'','M0W1056','09',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
+
+INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00525006','FS-202','FS-202',0,'','M0W1017','09',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
+
+INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00525007','P45 F27 093887','P45 F27 093887',0,'','M0W1046','09',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
+
+INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00525008','081753','KSS VP50-11 BK',0,'','W005018','09',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
+
+INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00525009','EDL 212606','EDL 212606',0,'','GMO1028','09',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
+
+INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00525010','YL806B/Y125/60/133/10','YL806B/Y125/60/133/10',0,'','M0W1049','09',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
+
+INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00525011','WFM-001CIGA','WFM-001CIGA',0,'','GMO1051','09',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
+
+INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00525012','NUC8i3BEHS','NUC8i3BEHS',0,'','GK01050','09',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
+
+INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00525013','NS-607612','NS-607612',0,'','M0W1017','09',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
+
+INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00525014','MF-5000v','MF-5000v',0,'','M0W1016','09',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
+
+INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00525015','','THHN/THWN',0,'','','09',NULL,'','1','M001240055',NULL,'2025-09-26 14:50:47');
+
+INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00525016','32STG5500','32STG5500',0,'','W005043','09',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
+
+INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00525017','53904/131100001159','Xiaomi TV A Pro 32\"\"',0,'','W005044','09',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
+
+INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00525018','MF-4300GO','MF-4300GO',0,'','M0W1016','09',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
+
+INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00525019','','MF-5000GO',0,'','','09',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
+
+INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00525020','MF-5000GO','MF-5000GO',0,'','M0W1016','09',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
+
+INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00525021','69-002000','69-002000',0,'','M0W1042','09',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
+
+INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00525022','SS26 Neon Strip','SS26 Neon Strip',0,'','M0W1056','09',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
+
+INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00525023','RHE-18155','RHE-18155',0,'','W005072','09',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
+
+INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00525024','RHE-18153','RHE-18153',0,'','W005073','09',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
+
+INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('W00525025','XK-250','XK-250',0,'','M0W1016','09',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
+
 INSERT  INTO `model`(`sModelIDx`,`sModelCde`,`sDescript`,`nMfgYearx`,`sMainModl`,`sBrandIDx`,`sIndstCdx`,`cEndOfLfe`,`sPayLoadx`,`cRecdStat`,`sModified`,`dModified`,`dTimeStmp`) VALUES ('GCO126010','XK-250','XK-250',0,'','M001001','01',NULL,'','1','M0W1230045',NULL,'2025-09-26 14:50:47');
 
-
-/*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
-/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
-/*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
+
+INSERT INTO `model` (`sModelIDx`, `sModelCde`, `sDescript`, `nMfgYearx`, `sMainModl`, `sBrandIDx`, `sIndstCdx`, `cEndOfLfe`, `sPayLoadx`, `cRecdStat`, `sModified`, `dModified`, `dTimeStmp`) VALUES('W00525026','CR-V','CR-V','2026','','GK01012','03','1',NULL,'1',NULL,NULL,'2026-09-22 13:57:41');
+INSERT INTO `model` (`sModelIDx`, `sModelCde`, `sDescript`, `nMfgYearx`, `sMainModl`, `sBrandIDx`, `sIndstCdx`, `cEndOfLfe`, `sPayLoadx`, `cRecdStat`, `sModified`, `dModified`, `dTimeStmp`) VALUES('W00525027','BR-V','BR-V','2026','','GK01012','03','1',NULL,'1',NULL,NULL,'2026-09-22 13:57:44');
+INSERT INTO `model` (`sModelIDx`, `sModelCde`, `sDescript`, `nMfgYearx`, `sMainModl`, `sBrandIDx`, `sIndstCdx`, `cEndOfLfe`, `sPayLoadx`, `cRecdStat`, `sModified`, `dModified`, `dTimeStmp`) VALUES('W00525028','BRIO','BRIO','2026','','GK01012','03','1',NULL,'1',NULL,NULL,'2026-09-22 13:58:19');
+INSERT INTO `model` (`sModelIDx`, `sModelCde`, `sDescript`, `nMfgYearx`, `sMainModl`, `sBrandIDx`, `sIndstCdx`, `cEndOfLfe`, `sPayLoadx`, `cRecdStat`, `sModified`, `dModified`, `dTimeStmp`) VALUES('W00525029','ALL NEW CITY','ALL NEW CITY','2026','','GK01012','03','1',NULL,'0','M001250014','2026-10-08 11:16:41','2026-10-08 11:16:41');
+INSERT INTO `model` (`sModelIDx`, `sModelCde`, `sDescript`, `nMfgYearx`, `sMainModl`, `sBrandIDx`, `sIndstCdx`, `cEndOfLfe`, `sPayLoadx`, `cRecdStat`, `sModified`, `dModified`, `dTimeStmp`) VALUES('W00525030','CITY HATCHBACK','CITY HATCHBACK','2026','','GK01012','03','1',NULL,'1','M001250014','2026-10-08 11:17:44','2026-10-08 11:17:44');
+
+
+/*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
+
+/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
+
+/*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
+

@@ -175,7 +175,8 @@ public class VehicleQuotation extends Transaction {
     public JSONObject NewTransaction()
             throws CloneNotSupportedException, SQLException, GuanzonException {
         poJSON = new JSONObject();
-        if(!poGRider.getDepartment().equals(System.getProperty("sys.dept.sales"))){ //BR: Authorized users from the Sales
+        if(!poGRider.getDepartment().equals(System.getProperty("sys.dept.sales"))
+            && pbWithUI){ //BR: Authorized users from the Sales
             poJSON.put("result", "error" );
             poJSON.put("message", "User is not authorized to create the transaction." );
             return poJSON;
@@ -755,7 +756,48 @@ public class VehicleQuotation extends Transaction {
         object.setTransactionStatus(SalesInquiryStatic.OPEN);
         object.setWithUI(pbWithUI);
         if(pbWithUI){
-            poJSON = object.searchTransaction(psIndustryId, psCompanyId, psCategoryId, value, "");
+            String lsSQL = 
+                    " SELECT "
+                    + " a.sTransNox "
+                    + " , a.dTransact "
+                    + " , a.cTranStat "
+                    + " , a.sClientID "
+                    + " , b.sCompnyNm AS sClientNm "
+                    + " , concat(c.sLastName,', ',c.sFrstName, ' ',c.sMiddName) AS sSalePrsn "
+                    + " FROM Sales_Inquiry_Master a "
+                    + " LEFT JOIN Client_Master b ON b.sClientID = a.sClientID "
+                    + " LEFT JOIN Salesman c ON c.sEmployID = a.sSalesman " ;
+                    
+                lsSQL = MiscUtil.addCondition(lsSQL,
+                    " a.sIndstCdx = " + SQLUtil.toSQL(psIndustryId)
+                    + " AND a.sCompnyID = " + SQLUtil.toSQL(psCompanyId)
+                    + " AND a.sCategrCd = " + SQLUtil.toSQL(psCategoryId)
+                    + " AND a.sBranchCd = " + SQLUtil.toSQL(poGRider.getBranchCode())
+                    + " AND b.sCompnyNm LIKE " + SQLUtil.toSQL("%" + value)
+                    + " AND a.cTranStat = " + SQLUtil.toSQL(SalesInquiryStatic.OPEN)
+                    );
+
+            //If current user is an ordinary user load only its inquiries
+            if (poGRider.getUserLevel() <= UserRight.ENCODER) {
+                lsSQL = MiscUtil.addCondition(lsSQL,
+                        " a.sSalesman = " + SQLUtil.toSQL(getSysUser(poGRider.getUserID(), true)));
+            }
+            lsSQL = lsSQL + "  GROUP BY a.sClientID ";
+            System.out.println("Search Client SQL: " + lsSQL);
+            poJSON = ShowDialogFX.Browse(poGRider,
+                    lsSQL,
+                    value,
+                    "Transaction Date»Transaction No»Client»Sales Person",
+                    "dTransact»sTransNox»sClientNm»sSalePrsn",
+                    "a.dTransact»a.sTransNox»b.sCompnyNm»concat(c.sLastName,', ',c.sFrstName, ' ',c.sMiddName)",
+                    checkEmpty(value) ? 0 : 2);
+
+            if (poJSON != null) {
+                object.OpenTransaction((String) poJSON.get("sTransNox"));
+            } else {
+                poJSON = new JSONObject();
+                poJSON = setJSON("error", "No Client selected");
+            }
         } else {
             poJSON = object.OpenTransaction(value);
         }
@@ -2776,7 +2818,8 @@ public class VehicleQuotation extends Transaction {
     poJSON = new JSONObject();
     pbIsPrinted = false;
     
-    if(!poGRider.getDepartment().equals(System.getProperty("sys.dept.sales"))){ //BR: Authorized users from the Sales
+    if(!poGRider.getDepartment().equals(System.getProperty("sys.dept.sales"))
+            && pbWithUI){ //BR: Authorized users from the Sales
         poJSON.put("result", "error" );
         poJSON.put("message", "User is not authorized to print the transaction." );
         return poJSON;

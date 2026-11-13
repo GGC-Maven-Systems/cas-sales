@@ -70,6 +70,7 @@ public class VehiclePromotionTest {
         System.setProperty("sys.default.path.config", path);
         System.setProperty("sys.default.path.metadata", path + "/config/metadata/new/");
         System.setProperty("sys.default.path.temp", tempPath);
+        System.setProperty("sys.dept.sales","026");
 
         if (!loadProperties()) {
             System.err.println("Unable to load config.");
@@ -97,6 +98,7 @@ public class VehiclePromotionTest {
         System.clearProperty("sys.general.industry");
         System.clearProperty("sys.dept.finance");
         System.clearProperty("sys.dept.procurement");
+        System.clearProperty("sys.dept.sales");
         System.clearProperty("user.selected.industry");
         System.clearProperty("user.selected.category");
         System.clearProperty("user.selected.company");
@@ -153,6 +155,7 @@ public class VehiclePromotionTest {
         schemaScripts.add("promotion_freebie_schema");
         schemaScripts.add("promotion_inclusion_schema");
         schemaScripts.add("promotion_master_schema");
+        schemaScripts.add("transaction_attachment_schema");
         
         dataScripts.add("client_master_data");
         dataScripts.add("industry_data");

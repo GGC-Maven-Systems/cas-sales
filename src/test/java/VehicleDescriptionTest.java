@@ -140,6 +140,7 @@ public class VehicleDescriptionTest {
         schemaScripts.add("model_variant_schema");
         schemaScripts.add("model_variant_insurance_schema");
         schemaScripts.add("inventory_schema");
+        schemaScripts.add("transaction_attachment_schema");
         
         dataScripts.add("client_master_data");
         dataScripts.add("parameter_status_history_data");
@@ -150,6 +151,7 @@ public class VehicleDescriptionTest {
         dataScripts.add("model_variant_data");
         dataScripts.add("model_variant_insurance_data");
         dataScripts.add("inventory_data");
+        dataScripts.add("transaction_attachment_data");
 
         for (String schema : schemaScripts) {
             try (FileReader schemaReader = new FileReader("test-data/" + schema + ".sql")) {
