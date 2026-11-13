@@ -1139,6 +1139,10 @@ public class VehicleQuotation extends Transaction {
     
     public JSONObject AutoPopulateVehicleAddOn(String fsVariantId) throws SQLException, GuanzonException, CloneNotSupportedException{
         poJSON = new JSONObject();
+        Detail(0).setPromptPaymentDiscount(0.00);
+        Detail(0).setQuotationRate("");
+        paDiscount = new ArrayList<>();
+        paAddOn = new ArrayList<>();
         String lsSQL = VehicleAddOn_SQL();
         lsSQL = MiscUtil.addCondition(lsSQL, SQLUtil.toSQL(xsDateShort(Master().getTransactionDate())) + " BETWEEN a.dFromDate AND a.dThruDate "
                                     + " AND b.sVrntIDxx = " + SQLUtil.toSQL(fsVariantId)
@@ -1154,23 +1158,25 @@ public class VehicleQuotation extends Transaction {
                 String lsAddOnName = loRS.getString("sAddTypNm");
                 Double ldblAmount = loRS.getDouble("nAmountxx");
                 int lnRow = getAddOnListCount() - 1;
-                
-                if(lsAddOnName.contains("LTO")) {
-                    Detail(0).setLTOAmount(ldblAmount);
-                } else if(lsAddOnName.contains("TPL")){
-                    Detail(0).setTPLAmount(ldblAmount);
-                }else if(lsAddOnName.contains("Comprehensive")){
-                    Detail(0).setComprehensiveAmount(ldblAmount);
-                }
-                
-                //Add to Add On Detail
-                poJSON = checkExistingAddOn(lsAddOnId, lsAddOnName, lnRow);
-                if(isJSONSuccess(poJSON)){
-                    lnRow = (int) poJSON.get("row");
-                    AddOnList(lnRow).setAddOnId(lsAddOnId);
-                    AddOnList(lnRow).setAmount(ldblAmount);
-                    AddOnList(lnRow).setQuantity(1);
-                    ReloadAddOnList();
+                if(checkNotEmpty(lsAddOnName)){
+                    lsAddOnName = lsAddOnName.toUpperCase();
+                    if(lsAddOnName.contains(VehicleQuotationStatus.AddOnType.LTO)) {
+                        Detail(0).setLTOAmount(ldblAmount);
+                    } else if(lsAddOnName.contains(VehicleQuotationStatus.AddOnType.TPL)){
+                        Detail(0).setTPLAmount(ldblAmount);
+                    }else if(lsAddOnName.contains(VehicleQuotationStatus.AddOnType.COMPREHENSIVE)){
+                        Detail(0).setComprehensiveAmount(ldblAmount);
+                    }
+
+                    //Add to Add On Detail
+                    poJSON = checkExistingAddOn(lsAddOnId, lsAddOnName, lnRow);
+                    if(isJSONSuccess(poJSON)){
+                        lnRow = (int) poJSON.get("row");
+                        AddOnList(lnRow).setAddOnId(lsAddOnId);
+                        AddOnList(lnRow).setAmount(ldblAmount);
+                        AddOnList(lnRow).setQuantity(1);
+                        ReloadAddOnList();
+                    }
                 }
             }
         }
@@ -1824,13 +1830,13 @@ public class VehicleQuotation extends Transaction {
         Double ldblTotalDisc = 0.0000;
         Double ldblDownpaymentPercentage = 0.0000;
         Double ldblQuotationDiscount = 0.0000;
+        Model_Sales_Quotation_Vehicle loDetail = Detail(0);
         
         if(Detail(0).getSRPAmount() > 0.0000){
             ldblDownpaymentPercentage = (Detail(0).getDownPayment() / Detail(0).getSRPAmount()) * 100;
             ldblDownpaymentPercentage = Double.parseDouble(format.format(ldblDownpaymentPercentage));
             String lsAddOnType = "";
             Model_Quotation_AddOn loAddOn;
-            Model_Sales_Quotation_Vehicle loDetail = Detail(0);
             
             //Compute Add-On
             for(int lnCtr = 0;lnCtr < getAddOnListCount();lnCtr++){
@@ -1858,19 +1864,19 @@ public class VehicleQuotation extends Transaction {
                         if(loAddOn.getQuantity() <= 0 || loAddOn.getTotalAmount()<= 0.00){
                             loDetail.setTPLAmount(0.00);
                         } else {
-                            loDetail.setTPLAmount(loAddOn.AddOnMaster().getAmount());
+                            loDetail.setTPLAmount(loAddOn.getAmount());
                         }
                     } else if(lsAddOnType.contains(VehicleQuotationStatus.AddOnType.LTO)){
                         if(loAddOn.getQuantity() <= 0 || loAddOn.getTotalAmount() <= 0.00){
                             loDetail.setLTOAmount(0.00);
                         } else {
-                            loDetail.setLTOAmount(loAddOn.AddOnMaster().getAmount());
+                            loDetail.setLTOAmount(loAddOn.getAmount());
                         }
                     } else if(lsAddOnType.contains(VehicleQuotationStatus.AddOnType.COMPREHENSIVE)){
                         if(loAddOn.getQuantity() <= 0 || loAddOn.getTotalAmount() <= 0.00){
                             loDetail.setComprehensiveAmount(0.00);
                         } else {
-                            loDetail.setComprehensiveAmount(loAddOn.AddOnMaster().getAmount());
+                            loDetail.setComprehensiveAmount(loAddOn.getAmount());
                         }
                     }
                 }
@@ -1894,7 +1900,8 @@ public class VehicleQuotation extends Transaction {
              * SRP - Downpayment Amount = Balance
              * Balance x Interest Rate / Duration = Monthly Amortization Amount
              */
-            if(ldblSRPAmt > 0.0000 && ldblInterestRate > 0 && lnDuration > 0 && checkNotEmpty(Detail(0).getQuotationRate())){
+            if(ldblSRPAmt > 0.0000 && ldblInterestRate > 0 && lnDuration > 0 && checkNotEmpty(Detail(0).getQuotationRate())
+                && !"0".equals(loDetail.getPaymentForm())){
                 ldblDownpaymentAmount = ldblSRPAmt * (Detail(0).getDownPaymentPercent()/100);
                 ldblBalance = Detail(0).getSRPAmount() - ldblDownpaymentAmount;
                 ldblInterestRate = ((ldblInterestRate/100)+1);
@@ -1910,6 +1917,17 @@ public class VehicleQuotation extends Transaction {
                     Detail(0).setPromptPaymentDiscount(0.0000);
                 }
             }
+        } else {
+            paAddOn = new ArrayList<>();
+            paDiscount = new ArrayList<>();
+            loDetail.setAdditionalDiscountAmount(0.00);
+            loDetail.setTPLAmount(0.00);
+            loDetail.setLTOAmount(0.00);
+            loDetail.setComprehensiveAmount(0.00);
+            loDetail.setPromptPaymentDiscount(0.00);
+            loDetail.setQuotationRate("");
+            loDetail.setRateValue(0.00);
+            loDetail.setDuration(0);
         }
         if(pnEditMode == EditMode.ADDNEW || pnEditMode == EditMode.UPDATE){
             Detail(0).setDownPaymentPercent(ldblDownpaymentPercentage);
