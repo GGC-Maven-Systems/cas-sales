@@ -60,16 +60,9 @@ import org.guanzon.appdriver.constant.Logical;
 import org.guanzon.appdriver.constant.RecordStatus;
 import org.guanzon.appdriver.constant.UserRight;
 import org.guanzon.appdriver.iface.GValidator;
-import org.guanzon.cas.inv.model.Model_Inventory;
-import org.guanzon.cas.inv.services.InvModels;
-import org.guanzon.cas.parameter.Brand;
-import org.guanzon.cas.parameter.Color;
 import org.guanzon.cas.parameter.model.Model_Branch;
-import org.guanzon.cas.parameter.model.Model_Brand;
 import org.guanzon.cas.parameter.model.Model_Model_Variant;
-import org.guanzon.cas.parameter.services.ParamControllers;
 import org.guanzon.cas.parameter.services.ParamModels;
-import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.ParseException;
 import ph.com.guanzongroup.cas.sales.model.Model_Validity_Period_Master;
@@ -1021,6 +1014,27 @@ public class VehicleInsurance extends Transaction {
         poJSON.put("result", "success");
         poJSON.put("message", "success");
         return poJSON;
+    }
+    
+    public Double getSuggestedAmount(Double fdblSelPrice, int fnYear){
+        String lsDecimalFormat = "###0.00";
+        DecimalFormat format = new DecimalFormat(lsDecimalFormat);
+        Double ldblAmount = 0.00;
+        Double ldblSelPrice = fdblSelPrice;
+        int lnYear = 1;
+        Double ldblDepreciatedAmount = 0.00;
+        while(lnYear <= 5){
+            ldblDepreciatedAmount = (ldblSelPrice * 0.10);
+            ldblSelPrice = ldblSelPrice - ldblDepreciatedAmount;
+            ldblAmount = ldblDepreciatedAmount * 0.20;
+            ldblAmount = Double.parseDouble(format.format(Math.round(ldblAmount / 100.0) * 100));
+            if(fnYear == lnYear){
+                return ldblAmount;
+            }
+            lnYear++;
+        }
+        
+        return 0.00;
     }
     
     public JSONObject Activate(String fsVariantId, boolean isActive){
