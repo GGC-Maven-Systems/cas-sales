@@ -469,16 +469,20 @@ public class VehiclePriceList extends Transaction {
         
         //change status
         poGRider.beginTrans("UPDATE STATUS", "ApproveTransaction", SOURCE_CODE, Master().getValidityId());
-        
-        for(int lnCtr = 0;lnCtr < getDetailCount();lnCtr++){
-            if(Detail(lnCtr).getRecordStatus()){
-                poJSON = updateVariant(lsStatus, lnCtr);
-                if (!isJSONSuccess(poJSON)){
-                    return poJSON;
-                }
-                poJSON = updateInventory(lsStatus, lnCtr);
-                if (!isJSONSuccess(poJSON)){
-                    return poJSON;
+        Date ldServerDate = SQLUtil.toDate(xsDateShort(poGRider.getServerDate()), SQLUtil.FORMAT_SHORT_DATE);
+        if(!Master().getFromDate().after(ldServerDate)
+            && (Master().getThruDate() == null || Master().getThruDate().after(ldServerDate))
+            ){
+            for(int lnCtr = 0;lnCtr < getDetailCount();lnCtr++){
+                if(Detail(lnCtr).getRecordStatus()){
+                    poJSON = updateVariant(lsStatus, Detail(lnCtr).getVariantId(),Detail(lnCtr).getSRPAmount());
+                    if (!isJSONSuccess(poJSON)){
+                        return poJSON;
+                    }
+                    poJSON = updateInventory(lsStatus, Detail(lnCtr).getVariantId(),Detail(lnCtr).getSRPAmount());
+                    if (!isJSONSuccess(poJSON)){
+                        return poJSON;
+                    }
                 }
             }
         }
@@ -496,7 +500,113 @@ public class VehiclePriceList extends Transaction {
         return poJSON;
     }
     
-    private JSONObject updateInventory(String fsRecordStatus, int row)
+    private JSONObject updateOtherPriceList() throws SQLException, GuanzonException{
+        poJSON = new JSONObject();
+        //Check existing price list
+        initSQL();
+        String lsSQL = MiscUtil.addCondition(SQL_BROWSE," sCompnyID =  " + SQLUtil.toSQL(Master().getCompanyId())
+                       + " AND a.cRecdStat =  " + SQLUtil.toSQL(ValidityPeriodStatus.APPROVED)
+                    );
+        
+        String lsWhere = " AND (a.dThruDate IS NULL OR a.dThruDate = '' OR a.dThruDate >= " + SQLUtil.toSQL(xsDateShort(Master().getFromDate())) + ")";
+        if (Master().getThruDate() != null) {
+            lsWhere += " AND a.dFromDate <= " + SQLUtil.toSQL(xsDateShort(Master().getThruDate()));
+        }
+
+        lsSQL = lsSQL + lsWhere;
+        
+        System.out.println("updateAmount SQL: " + lsSQL);
+        ResultSet loRS = poGRider.executeQuery(lsSQL);
+        if (MiscUtil.RecordCount(loRS) > 0) {
+            String lsId = "";
+            Date ldValidThru;
+            while(loRS.next()) {
+                lsId = loRS.getString("sValidIDx");
+                ldValidThru = loRS.getDate("dThruDate");
+                if(ldValidThru == null){
+                    if(!checkEmpty(lsId)){
+                        Model_Validity_Period_Master loObj = new SalesModels(poGRider).ValidityPeriodMaster();
+                        loObj.initialize();
+                        poJSON = loObj.openRecord(lsId);
+                        if(!isJSONSuccess(poJSON)){
+                            return poJSON;
+                        }
+
+                        poJSON = loObj.updateRecord();
+                        if(!isJSONSuccess(poJSON)){
+                            return poJSON;
+                        }
+                        
+                        loObj.setThruDate(SQLUtil.toDate(xsDateShort(poGRider.getServerDate()), SQLUtil.FORMAT_SHORT_DATE));
+                        poJSON = loObj.saveRecord();
+                        if(!isJSONSuccess(poJSON)){
+                            return poJSON;
+                        }
+                    }
+                }
+            }   
+        }
+        MiscUtil.close(loRS);
+    
+        poJSON = new JSONObject();
+        poJSON = setJSON("success", "success");
+        return poJSON;
+    }
+    
+    public JSONObject updatePriceList_Utility() throws SQLException, GuanzonException, CloneNotSupportedException, ScriptException{
+        poJSON = new JSONObject();
+        //Check existing price list
+        initSQL();
+        String lsSQL = MiscUtil.addCondition(SQL_BROWSE," sCompnyID =  " + SQLUtil.toSQL(psCompanyId)
+                       + " AND a.cRecdStat =  " + SQLUtil.toSQL(ValidityPeriodStatus.APPROVED)
+                       + " AND (a.dThruDate IS NULL OR a.dThruDate = '' OR a.dThruDate >= " + SQLUtil.toSQL(xsDateShort(poGRider.getServerDate())) 
+                       + ")"
+                       + " AND a.dFromDate <= " + SQLUtil.toSQL(xsDateShort(poGRider.getServerDate()))
+                        );
+        lsSQL = lsSQL + "GROUP BY a.sValidIDx";
+        System.out.println("updatePriceList SQL: " + lsSQL);
+        ResultSet loRS = poGRider.executeQuery(lsSQL);
+        if (MiscUtil.RecordCount(loRS) > 0) {
+            String lsId = "";
+            while(loRS.next()) {
+                lsId = loRS.getString("sValidIDx");
+                if(!checkEmpty(lsId)){
+                    VehiclePriceList loObj = new SalesControllers(poGRider,null).VehiclePriceList();
+                    loObj.InitTransaction();
+                    poJSON = loObj.OpenTransaction(lsId);
+                    if(!isJSONSuccess(poJSON)){
+                        return poJSON;
+                    }
+                    
+                    Date ldServerDate = SQLUtil.toDate(xsDateShort(poGRider.getServerDate()), SQLUtil.FORMAT_SHORT_DATE);
+                    if(!loObj.Master().getFromDate().after(ldServerDate)
+                        && (loObj.Master().getThruDate() == null || loObj.Master().getThruDate().after(ldServerDate))
+                        ){
+                        for(int lnCtr = 0;lnCtr < loObj.getDetailCount();lnCtr++){
+                            if(loObj.Detail(lnCtr).getRecordStatus()){
+                                poJSON = updateVariant(ValidityPeriodStatus.APPROVED, loObj.Detail(lnCtr).getVariantId(),loObj.Detail(lnCtr).getSRPAmount());
+                                if (!isJSONSuccess(poJSON)){
+                                    return poJSON;
+                                }
+                                poJSON = updateInventory(ValidityPeriodStatus.APPROVED, loObj.Detail(lnCtr).getVariantId(),loObj.Detail(lnCtr).getSRPAmount());
+                                if (!isJSONSuccess(poJSON)){
+                                    return poJSON;
+                                }
+                            }
+                        }
+                    }
+                    
+                }
+            }   
+        }
+        MiscUtil.close(loRS);
+    
+        poJSON = new JSONObject();
+        poJSON = setJSON("success", "success");
+        return poJSON;
+    }
+    
+    private JSONObject updateInventory(String fsRecordStatus, String fsVariantId, Double fdblSRPAmt)
             throws ExceptionInInitializerError,
             SQLException,
             GuanzonException,
@@ -507,7 +617,7 @@ public class VehiclePriceList extends Transaction {
         loObj.initialize();
         
         //Find the inventory
-        String lsInvId = findInventory(loObj, row);
+        String lsInvId = findInventory(loObj, fsVariantId);
         if(!checkEmpty(lsInvId)){
             poJSON = loObj.openRecord(lsInvId);
             if(!isJSONSuccess(poJSON)){
@@ -520,28 +630,35 @@ public class VehiclePriceList extends Transaction {
             }
         }
         
-        if(loObj.getEditMode() == EditMode.UPDATE){ 
+        if(loObj.getEditMode() == EditMode.UPDATE && loObj.getSellingPrice().doubleValue() != fdblSRPAmt){ 
             if(ValidityPeriodStatus.APPROVED.equals(fsRecordStatus)){
-                loObj.setSellingPrice(Detail(row).getSRPAmount());
+                loObj.setSellingPrice(fdblSRPAmt);
             } else {
-//                loObj.setSellingPrice(0.00);
                 return poJSON; //Todo
             }
-            poJSON = loObj.saveRecord();
-            if(!isJSONSuccess(poJSON)){
-                return poJSON;
-            }
+            
+            poGRider.beginTrans("UPDATE STATUS", "UPDATE", SOURCE_CODE, lsInvId);
+                loObj.setSellingPrice(fdblSRPAmt);
+                loObj.setModifyingId(poGRider.Encrypt(poGRider.getUserID()));
+                loObj.setModifiedDate(poGRider.getServerDate());
+                poJSON = loObj.saveRecord();
+                if(!isJSONSuccess(poJSON)){
+                    poGRider.rollbackTrans();
+                    return poJSON;
+                }
+
+            poGRider.commitTrans();
         }
         
         return poJSON;
     }
     
-    public String findInventory(Model_Inventory loObj, int row) throws SQLException, GuanzonException, CloneNotSupportedException {
+    public String findInventory(Model_Inventory loObj, String fsVariantId) throws SQLException, GuanzonException, CloneNotSupportedException {
         poJSON = new JSONObject();
        
         String lsSQL = MiscUtil.makeSelect(loObj);
         lsSQL = MiscUtil.addCondition(lsSQL," sIndstCdx =  " + SQLUtil.toSQL(psIndustryId)
-                       + " AND sVrntIDxx =  " + SQLUtil.toSQL(Detail(row).getVariantId())
+                       + " AND sVrntIDxx =  " + SQLUtil.toSQL(fsVariantId)
                        + " AND sCategCd1 =  " + SQLUtil.toSQL(psCategoryId)
                     );
         
@@ -559,7 +676,7 @@ public class VehiclePriceList extends Transaction {
         return lsInvId;
     }
     
-    private JSONObject updateVariant(String fsRecordStatus, int row)
+    private JSONObject updateVariant(String fsRecordStatus, String fsVariantId, Double fdblSRPAmt)
             throws ExceptionInInitializerError,
             SQLException,
             GuanzonException,
@@ -568,7 +685,7 @@ public class VehiclePriceList extends Transaction {
        
         Model_Model_Variant loObj = new ParamModels(poGRider).ModelVariant();
         loObj.initialize();
-        poJSON = loObj.openRecord(Detail(row).getVariantId());
+        poJSON = loObj.openRecord(fsVariantId);
         if(!isJSONSuccess(poJSON)){
             return poJSON;
         }
@@ -578,19 +695,22 @@ public class VehiclePriceList extends Transaction {
             return poJSON;
         }
         
-        if(loObj.getEditMode() == EditMode.UPDATE){ 
+        if(loObj.getEditMode() == EditMode.UPDATE && loObj.getSellingPrice() != fdblSRPAmt.doubleValue()){ 
             if(ValidityPeriodStatus.APPROVED.equals(fsRecordStatus)){
-                loObj.setSellingPrice(Detail(row).getSRPAmount());
+                loObj.setSellingPrice(fdblSRPAmt);
             } else {
-//                loObj.setSellingPrice(0.00);
                 return poJSON; //Todo
             }
-            loObj.setModifyingId(poGRider.Encrypt(poGRider.getUserID()));
-            loObj.setModifiedDate(poGRider.getServerDate());
-            poJSON = loObj.saveRecord();
-            if(!isJSONSuccess(poJSON)){
-                return poJSON;
-            }
+            poGRider.beginTrans("UPDATE STATUS", "UPDATE", SOURCE_CODE, fsVariantId);
+                loObj.setSellingPrice(fdblSRPAmt);
+                loObj.setModifyingId(poGRider.Encrypt(poGRider.getUserID()));
+                loObj.setModifiedDate(poGRider.getServerDate());
+                poJSON = loObj.saveRecord();
+                if(!isJSONSuccess(poJSON)){
+                    poGRider.rollbackTrans();
+                    return poJSON;
+                }
+            poGRider.commitTrans();
         }
         
         return poJSON;
@@ -705,19 +825,19 @@ public class VehiclePriceList extends Transaction {
         
         //change status
         poGRider.beginTrans("UPDATE STATUS", "CancelTransaction", SOURCE_CODE, Master().getValidityId());
-        
-        for(int lnCtr = 0;lnCtr < getDetailCount();lnCtr++){
-            if(Detail(lnCtr).getRecordStatus()){
-                poJSON = updateVariant(lsStatus, lnCtr);
-                if (!isJSONSuccess(poJSON)){
-                    return poJSON;
-                }
-                poJSON = updateInventory(lsStatus, lnCtr);
-                if (!isJSONSuccess(poJSON)){
-                    return poJSON;
-                }
-            }
-        }
+        //TODO
+//        for(int lnCtr = 0;lnCtr < getDetailCount();lnCtr++){
+//            if(Detail(lnCtr).getRecordStatus()){
+//                poJSON = updateVariant(lsStatus, lnCtr);
+//                if (!isJSONSuccess(poJSON)){
+//                    return poJSON;
+//                }
+//                poJSON = updateInventory(lsStatus, lnCtr);
+//                if (!isJSONSuccess(poJSON)){
+//                    return poJSON;
+//                }
+//            }
+//        }
         
         //change status
         poJSON = statusChange(poMaster.getTable(), (String) poMaster.getValue("sValidIDx"), "", lsStatus, false, true);

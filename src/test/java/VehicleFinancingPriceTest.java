@@ -347,7 +347,7 @@ public class VehicleFinancingPriceTest {
             Assert.assertEquals("success", loJSON.get("result"));
             
             
-            loJSON = poController.printTransaction("--All--");
+//            loJSON = poController.printTransaction("--All--");
 //            System.out.println("MESSAGE : " + String.valueOf(loJSON.get("message")));
 //            Assert.assertEquals("success", loJSON.get("result"));
             
