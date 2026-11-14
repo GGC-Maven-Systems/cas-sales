@@ -3531,7 +3531,7 @@ public class VehicleQuotation extends Transaction {
                 }
                 
                 addQuotationFreebies(rows
-                        , AddOnList(lnCtr).AddOnMaster().getAddOnType()
+                        , AddOnList(lnCtr).AddOnMaster().AddOnType().getAddTypeName()
                         , AddOnList(lnCtr).getQuantity()
                 );
             }
