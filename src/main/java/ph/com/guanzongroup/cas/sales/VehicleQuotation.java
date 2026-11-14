@@ -2293,14 +2293,14 @@ public class VehicleQuotation extends Transaction {
             return poJSON;
         }
         
-        if(pbWithUI){
-            if(validateStandardDetails()){ //if true require approve upon saving
-                poJSON = callApproval();
-                if(!isJSONSuccess(poJSON)){
-                    return poJSON;
-                }
-            }
-        }
+//        if(pbWithUI){
+//            if(validateStandardDetails()){ //if true require approve upon saving
+//                poJSON = callApproval();
+//                if(!isJSONSuccess(poJSON)){
+//                    return poJSON;
+//                }
+//            }
+//        }
         
         Iterator<Model> detail = Detail().iterator();
         while (detail.hasNext()) {
