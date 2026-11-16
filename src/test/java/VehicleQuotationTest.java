@@ -329,6 +329,15 @@ public class VehicleQuotationTest {
             System.out.println("MESSAGE : " + String.valueOf(loJSON.get("message")));
             Assert.assertEquals("success", loJSON.get("result"));
             
+            loJSON = poController.remake(lsTransNo);
+            System.out.println("MESSAGE : " + String.valueOf(loJSON.get("message")));
+            Assert.assertEquals("success", loJSON.get("result"));
+            
+            lsTransNo = poController.Master().getTransactionNo();
+            loJSON = poController.OpenTransaction(lsTransNo);
+            System.out.println("MESSAGE : " + String.valueOf(loJSON.get("message")));
+            Assert.assertEquals("success", loJSON.get("result"));
+            
             loJSON = poController.VoidTransaction();
             System.out.println("MESSAGE : " + String.valueOf(loJSON.get("message")));
             Assert.assertEquals("success", loJSON.get("result"));

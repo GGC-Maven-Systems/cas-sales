@@ -1836,6 +1836,10 @@ public class VehicleQuotation extends Transaction {
     public JSONObject remake(String fsTransNo) throws CloneNotSupportedException, SQLException, GuanzonException, ScriptException, ScriptException, ParseException{
         poJSON = new JSONObject();
         
+        VehicleQuotation loRemake = new SalesControllers(poGRider, logwrapr).VehicleQuotation();
+        loRemake.InitTransaction();
+        loRemake.setWithUI(false);
+        
         VehicleQuotation loObj = new SalesControllers(poGRider, logwrapr).VehicleQuotation();
         loObj.InitTransaction();
         poJSON = loObj.OpenTransaction(fsTransNo);
@@ -1843,20 +1847,150 @@ public class VehicleQuotation extends Transaction {
             return poJSON;
         }
         
-        poJSON = NewTransaction();
+        poJSON = loRemake.NewTransaction();
         if(!isJSONSuccess(poJSON)){
             return poJSON;
         }
-        
-        for(int lnCtr = 0;lnCtr < loObj.getDetailCount(); lnCtr++){
-            if(loObj.Detail(lnCtr).getRecordStatus()){
-                Detail(getDetailCount()-1).setVariantId(loObj.Detail(lnCtr).getVariantId());
-                Detail(getDetailCount()-1).setSRPAmount(loObj.Detail(lnCtr).getSRPAmount());
-                //
+        //Populate Master
+        Model_Sales_Quotation_Master loMasterSource = loObj.Master();
+        for (int lnCol = 1; lnCol <= loMasterSource.getColumnCount(); lnCol++) {
+            String lsCol = loMasterSource.getColumn(lnCol);
+            switch (lsCol) {
+                case "sTransNox":
+                case "dTransact":
+                case "cTranStat":
+                case "sModified":
+                case "dModified":
+                    break;
+                default:
+                    loRemake.Master().setValue(lsCol, loMasterSource.getValue(lsCol));
             }
         }
+        loRemake.Master().setTransactionNo(loRemake.Master().getNextCode());
+       
+        //Populate Detail
+        loRemake.paDetail = new ArrayList<>();
+        for (int lnCtr = 0; lnCtr < loObj.getDetailCount(); lnCtr++) {
+            Model_Sales_Quotation_Vehicle loSource = loObj.Detail(lnCtr);
+            if (!loSource.getRecordStatus()) continue;
+
+            Model_Sales_Quotation_Vehicle loNew = new SalesModels(poGRider).SalesQuotationVehicle();
+            loNew.newRecord();
+            for (int lnCol = 1; lnCol <= loSource.getColumnCount(); lnCol++) {
+                String lsCol = loSource.getColumn(lnCol);
+                switch (lsCol) {
+                    case "sTransNox":
+                    case "sQotPayID":
+                    case "dExpected":
+                    case "dValdThru":
+                    case "nSRPAmntx":
+                    case "sModified":
+                    case "dModified":
+                        break;
+                    default:
+                        loNew.setValue(lsCol, loSource.getValue(lsCol));
+                }
+            }
+            Date ldServerDate = poGRider.getServerDate();
+            Calendar loFromDate = Calendar.getInstance();
+            Calendar loToDate = Calendar.getInstance();
+            loFromDate.setTime(ldServerDate);
+            loToDate.setTime(ldServerDate);
+
+            // Set to the last day of the current month
+            loFromDate.set(Calendar.DAY_OF_MONTH,loFromDate.getActualMinimum(Calendar.DAY_OF_MONTH));
+            loToDate.set(Calendar.DAY_OF_MONTH,loToDate.getActualMaximum(Calendar.DAY_OF_MONTH));
+            
+            loNew.setTransactionNo(loRemake.Master().getTransactionNo());
+            loNew.setExpectedDate(SQLUtil.toDate(xsDateShort(poGRider.getServerDate()),SQLUtil.FORMAT_SHORT_DATE));
+            loNew.setValidThruDate(SQLUtil.toDate(xsDateShort(loToDate.getTime()),SQLUtil.FORMAT_SHORT_DATE));
+            loNew.setSRPAmount(loNew.ModelVariant().getSellingPrice()); //Set the latest SRP Amount
+            loRemake.paDetail.add(loNew);
+        }
         
-        return setJSON("success", "success");
+        ReloadAddOnList();
+        for (int lnCtr = 0; lnCtr < loObj.getAddOnListCount(); lnCtr++) {
+            Model_Quotation_AddOn loSource = loObj.AddOnList(lnCtr);
+            if (!loSource.getRecordStatus()) continue;
+
+            Model_Quotation_AddOn loNew = new SalesModels(poGRider).QuotationAddOn();
+            loNew.newRecord();
+            for (int lnCol = 1; lnCol <= loSource.getColumnCount(); lnCol++) {
+                String lsCol = loSource.getColumn(lnCol);
+                switch (lsCol) {
+                    case "sTransNox":
+                    case "sQotAddID":
+                    case "sModified":
+                    case "dModified":
+                        break;
+                    default:
+                        loNew.setValue(lsCol, loSource.getValue(lsCol));
+                }
+            }
+
+            loNew.setTransactionNo(loRemake.Master().getTransactionNo());
+            loRemake.AddOnList().add(loNew);
+        }
+        
+        ReloadFreebiesList();
+        for (int lnCtr = 0; lnCtr < loObj.getFreebiesListCount(); lnCtr++) {
+            Model_Quotation_Freebie loSource = loObj.FreebiesList(lnCtr);
+            if (!loSource.getRecordStatus()) continue;
+
+            Model_Quotation_Freebie loNew = new SalesModels(poGRider).QuotationFreebie();
+            loNew.newRecord();
+            for (int lnCol = 1; lnCol <= loSource.getColumnCount(); lnCol++) {
+                String lsCol = loSource.getColumn(lnCol);
+                switch (lsCol) {
+                    case "sTransNox":
+                    case "sQotFreID":
+                    case "sModified":
+                    case "dModified":
+                        break;
+                    default:
+                        loNew.setValue(lsCol, loSource.getValue(lsCol));
+                }
+            }
+
+            loNew.setTransactionNo(loRemake.Master().getTransactionNo());
+            loRemake.FreebiesList().add(loNew);
+        }
+        
+        ReloadInclusionList();
+        for (int lnCtr = 0; lnCtr < loObj.getInclusionListCount(); lnCtr++) {
+            Model_Quotation_Inclusion loSource = loObj.InclusionList(lnCtr);
+            if (!loSource.getRecordStatus()) continue;
+
+            Model_Quotation_Inclusion loNew = new SalesModels(poGRider).QuotationInclusion();
+            loNew.newRecord();
+            for (int lnCol = 1; lnCol <= loSource.getColumnCount(); lnCol++) {
+                String lsCol = loSource.getColumn(lnCol);
+                switch (lsCol) {
+                    case "sTransNox":
+                    case "sQotIncID":
+                    case "sModified":
+                    case "dModified":
+                        break;
+                    default:
+                        loNew.setValue(lsCol, loSource.getValue(lsCol));
+                }
+            }
+
+            loNew.setTransactionNo(loRemake.Master().getTransactionNo());
+            loRemake.InclusionList().add(loNew);
+        }
+        
+//        poJSON = loRemake.SaveTransaction();
+//        if(!isJSONSuccess(poJSON)){
+//            return poJSON;
+//        }
+//        
+//        poJSON = OpenTransaction(loRemake.Master().getTransactionNo());
+//        if(!isJSONSuccess(poJSON)){
+//            return poJSON;
+//        }
+        
+        return setJSON("success", "Transaction Successfully remake.");
     }
     
     public void computeFields() throws SQLException, GuanzonException{
