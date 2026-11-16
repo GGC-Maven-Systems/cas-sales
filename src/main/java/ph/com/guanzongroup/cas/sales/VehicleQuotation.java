@@ -3207,6 +3207,11 @@ public class VehicleQuotation extends Transaction {
             && pbWithUI){ //BR: Authorized users from the Sales
         poJSON.put("result", "error" );
         poJSON.put("message", "User is not authorized to print the transaction." );
+        ShowMessageFX.Warning(
+                   null,
+                   "Computerized Accounting System",
+                   "User is not authorized to print the transaction."
+           );
         return poJSON;
     }
     
@@ -3370,6 +3375,11 @@ public class VehicleQuotation extends Transaction {
 //        poJSON = getUpdateStatusBy(Master().getTransactionStatus());
         poJSON = getSalesSupervisor();
         if(!isJSONSuccess(poJSON)){
+            ShowMessageFX.Warning(
+                   null,
+                   "Computerized Accounting System",
+                   (String) poJSON.get("message")
+           );
             return poJSON;
         }
         parameters.put("sApprovedBy", ((String) poJSON.get("sUpdateByx")).toUpperCase() );
