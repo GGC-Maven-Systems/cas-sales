@@ -1624,7 +1624,8 @@ public class VehicleQuotation extends Transaction {
     
     public JSONObject AddAddOn() throws CloneNotSupportedException {
         if (getAddOnListCount() > 0) {
-            if ((AddOnList(getAddOnListCount() - 1).getAddOnId() == null || "".equals(AddOnList(getAddOnListCount() - 1).getAddOnId()))){
+            if ((AddOnList(getAddOnListCount() - 1).getAddOnId() == null || "".equals(AddOnList(getAddOnListCount() - 1).getAddOnId()))
+                || (AddOnList(getAddOnListCount() - 1).getAddOnDescription()== null || "".equals(AddOnList(getAddOnListCount() - 1).getAddOnDescription()))){
                 poJSON = new JSONObject();
                 poJSON = setJSON("error", "Last row has empty item.");
                 return poJSON;
@@ -1657,6 +1658,7 @@ public class VehicleQuotation extends Transaction {
         int lnCtr = getAddOnListCount() - 1;
         while (lnCtr >= 0) {
             if ((AddOnList(lnCtr).getAddOnId() == null || "".equals(AddOnList(lnCtr).getAddOnId()))
+                && (AddOnList(lnCtr).getAddOnDescription() == null || "".equals(AddOnList(lnCtr).getAddOnDescription()))
                 ) {
                 paAddOn.remove(lnCtr);
             } 
@@ -1666,6 +1668,8 @@ public class VehicleQuotation extends Transaction {
         if ((getAddOnListCount() - 1) >= 0) {
             if (
                 (AddOnList(getAddOnListCount() - 1).getAddOnId() != null && !"".equals(AddOnList(getAddOnListCount() - 1).getAddOnId()))
+                || 
+                (AddOnList(getAddOnListCount() - 1).getAddOnDescription() != null && !"".equals(AddOnList(getAddOnListCount() - 1).getAddOnDescription()))
                 ) {
                 AddAddOn();
             }

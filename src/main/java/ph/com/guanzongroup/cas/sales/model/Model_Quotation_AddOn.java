@@ -13,7 +13,6 @@ import org.guanzon.appdriver.base.MiscUtil;
 import org.guanzon.appdriver.constant.EditMode;
 import org.guanzon.appdriver.constant.RecordStatus;
 import org.guanzon.cas.inv.model.Model_Inventory;
-import org.guanzon.cas.inv.services.InvModels;
 import org.json.simple.JSONObject;
 import ph.com.guanzongroup.cas.sales.services.SalesModels;
 
@@ -84,6 +83,14 @@ public class Model_Quotation_AddOn extends Model {
 
     public String getAddOnId() {
         return (String) getValue("sAddOnIDx");
+    }
+
+    public JSONObject setAddOnDescription(String addOn) {
+        return setValue("sAddOnDsc", addOn);
+    }
+
+    public String getAddOnDescription() {
+        return (String) getValue("sAddOnDsc");
     }
 
     public JSONObject setAmount(Double amount) {
