@@ -1625,7 +1625,8 @@ public class VehicleQuotation extends Transaction {
     public JSONObject AddAddOn() throws CloneNotSupportedException {
         if (getAddOnListCount() > 0) {
             if ((AddOnList(getAddOnListCount() - 1).getAddOnId() == null || "".equals(AddOnList(getAddOnListCount() - 1).getAddOnId()))
-                || (AddOnList(getAddOnListCount() - 1).getAddOnDescription()== null || "".equals(AddOnList(getAddOnListCount() - 1).getAddOnDescription()))){
+//                || (AddOnList(getAddOnListCount() - 1).getAddOnDescription()== null || "".equals(AddOnList(getAddOnListCount() - 1).getAddOnDescription()))
+                ){
                 poJSON = new JSONObject();
                 poJSON = setJSON("error", "Last row has empty item.");
                 return poJSON;
@@ -1658,7 +1659,7 @@ public class VehicleQuotation extends Transaction {
         int lnCtr = getAddOnListCount() - 1;
         while (lnCtr >= 0) {
             if ((AddOnList(lnCtr).getAddOnId() == null || "".equals(AddOnList(lnCtr).getAddOnId()))
-                && (AddOnList(lnCtr).getAddOnDescription() == null || "".equals(AddOnList(lnCtr).getAddOnDescription()))
+//                && (AddOnList(lnCtr).getAddOnDescription() == null || "".equals(AddOnList(lnCtr).getAddOnDescription()))
                 ) {
                 paAddOn.remove(lnCtr);
             } 
@@ -1668,8 +1669,7 @@ public class VehicleQuotation extends Transaction {
         if ((getAddOnListCount() - 1) >= 0) {
             if (
                 (AddOnList(getAddOnListCount() - 1).getAddOnId() != null && !"".equals(AddOnList(getAddOnListCount() - 1).getAddOnId()))
-                || 
-                (AddOnList(getAddOnListCount() - 1).getAddOnDescription() != null && !"".equals(AddOnList(getAddOnListCount() - 1).getAddOnDescription()))
+//                || (AddOnList(getAddOnListCount() - 1).getAddOnDescription() != null && !"".equals(AddOnList(getAddOnListCount() - 1).getAddOnDescription()))
                 ) {
                 AddAddOn();
             }
@@ -2284,13 +2284,18 @@ public class VehicleQuotation extends Transaction {
             Model_Quotation_AddOn loAddOn;
             for(int lnCtr = 0;lnCtr < getAddOnListCount();lnCtr++){
                 loAddOn = AddOnList(lnCtr);
-                if(checkEmpty(loAddOn.getAddOnId())){
+                if(checkEmpty(loAddOn.getAddOnId())
+//                    || checkEmpty(loAddOn.getAddOnDescription())
+                    ){
                     continue;
                 }
 
                 lsAddOnType = loAddOn.AddOnMaster().AddOnType().getAddTypeName();
                 if(checkEmpty(lsAddOnType)){
-                    continue;
+//                    if(checkEmpty(loAddOn.getAddOnDescription())
+//                    ){
+                        continue;
+//                    }
                 }
                 lsAddOnType = lsAddOnType.toUpperCase();
                 if(lsAddOnType.contains(VehicleQuotationStatus.AddOnType.TPL)
