@@ -29,6 +29,8 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Date;
+import ph.com.guanzongroup.cas.sales.model.Model_Vehicle_Inclusion_Master;
+import ph.com.guanzongroup.cas.sales.status.InclusionStatus;
 
 /**
  *
@@ -321,6 +323,11 @@ public class Freebie extends Parameter {
         if(!isJSONSuccess(poJSON)){
             return poJSON;
         }
+            
+        poJSON = checkExistingInclusion();
+        if(!isJSONSuccess(poJSON)){
+            return poJSON;
+        }
 
         poModel.setModifiedBy(poGRider.Encrypt(poGRider.getUserID()));
         poModel.setModifiedDate(poGRider.getServerDate());
@@ -338,7 +345,7 @@ public class Freebie extends Parameter {
     private JSONObject checkExistingFreebie() throws SQLException, GuanzonException{
         poJSON = new JSONObject();
         String lsSQL = MiscUtil.addCondition(getSQ_Browse(), " a.sFreebIDx != " +  SQLUtil.toSQL(poModel.getFreebieId())
-                        + " AND a.sFreebDsc = " +  SQLUtil.toSQL(poModel.getDescription())
+                        + " AND UPPER(REPLACE(a.sFreebDsc, ' ', '')) = " + SQLUtil.toSQL(poModel.getDescription().replace(" ", "").toUpperCase())
                         + " AND a.cRecdStat != " +  SQLUtil.toSQL(FreebieStatus.VOID)
                         );
 
@@ -352,6 +359,33 @@ public class Freebie extends Parameter {
 
                 poJSON = setJSON("error", "Freebie already exists."
                         + "\nFreebie ID: " + loRS.getString("sFreebIDx"));
+                MiscUtil.close(loRS);
+                return poJSON;
+            }
+        }
+        MiscUtil.close(loRS);
+        
+        poJSON = setJSON("success", "success.");
+        poJSON.put("continue", true);
+        return poJSON;
+    }
+    
+    private JSONObject checkExistingInclusion() throws SQLException, GuanzonException{
+        poJSON = new JSONObject();
+        String lsSQL = MiscUtil.addCondition(MiscUtil.makeSelect(new SalesModels(poGRider).VehicleInclusionMaster()), " UPPER(REPLACE(sInclDesc, ' ', '')) = " + SQLUtil.toSQL(poModel.getDescription().replace(" ", "").toUpperCase())
+                        + " AND cRecdStat != " +  SQLUtil.toSQL(InclusionStatus.VOID)
+                        );
+
+        System.out.println("checkExistingInclusion SQL : " + lsSQL);
+        ResultSet loRS = poGRider.executeQuery(lsSQL);
+        if (MiscUtil.RecordCount(loRS) >= 0) {
+            if (loRS.next()) {
+                // Print the result set
+                System.out.println("sInclIDxx: " + loRS.getString("sInclIDxx"));
+                System.out.println("------------------------------------------------------------------------------");
+
+                poJSON = setJSON("error", "Freebie already exists in Inclusion."
+                        + "\nInclusion Id: " + loRS.getString("sInclIDxx"));
                 MiscUtil.close(loRS);
                 return poJSON;
             }

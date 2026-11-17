@@ -29,6 +29,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Date;
+import ph.com.guanzongroup.cas.sales.status.FreebieStatus;
 
 /**
  *
@@ -451,6 +452,11 @@ public class Inclusion extends Parameter {
         if(!isJSONSuccess(poJSON)){
             return poJSON;
         }
+            
+        poJSON = checkExistingFreebie();
+        if(!isJSONSuccess(poJSON)){
+            return poJSON;
+        }
 
         poModel.setModifiedBy(poGRider.Encrypt(poGRider.getUserID()));
         poModel.setModifiedDate(poGRider.getServerDate());
@@ -468,7 +474,7 @@ public class Inclusion extends Parameter {
     private JSONObject checkExistingInclusion() throws SQLException, GuanzonException{
         poJSON = new JSONObject();
         String lsSQL = MiscUtil.addCondition(getSQ_Browse(), " a.sInclIDxx != " +  SQLUtil.toSQL(poModel.getInclusionId())
-                        + " AND a.sInclDesc = " +  SQLUtil.toSQL(poModel.getDescription())
+                        + " AND UPPER(REPLACE(a.sInclDesc, ' ', '')) = " + SQLUtil.toSQL(poModel.getDescription().replace(" ", "").toUpperCase())
                         + " AND a.cRecdStat != " +  SQLUtil.toSQL(InclusionStatus.VOID)
                         );
 
@@ -482,6 +488,33 @@ public class Inclusion extends Parameter {
 
                 poJSON = setJSON("error", "Inclusion already exists."
                         + "\nInclusion Id: " + loRS.getString("sInclIDxx"));
+                MiscUtil.close(loRS);
+                return poJSON;
+            }
+        }
+        MiscUtil.close(loRS);
+        
+        poJSON = setJSON("success", "success.");
+        poJSON.put("continue", true);
+        return poJSON;
+    }
+    
+    private JSONObject checkExistingFreebie() throws SQLException, GuanzonException{
+        poJSON = new JSONObject();
+        String lsSQL = MiscUtil.addCondition(MiscUtil.makeSelect(new SalesModels(poGRider).FreebieMaster()), " UPPER(REPLACE(sFreebDsc, ' ', '')) = " + SQLUtil.toSQL(poModel.getDescription().replace(" ", "").toUpperCase())
+                        + " AND cRecdStat != " +  SQLUtil.toSQL(FreebieStatus.VOID)
+                        );
+
+        System.out.println("checkExistingFreebie SQL : " + lsSQL);
+        ResultSet loRS = poGRider.executeQuery(lsSQL);
+        if (MiscUtil.RecordCount(loRS) >= 0) {
+            if (loRS.next()) {
+                // Print the result set
+                System.out.println("sFreebIDx: " + loRS.getString("sFreebIDx"));
+                System.out.println("------------------------------------------------------------------------------");
+
+                poJSON = setJSON("error", "Inclusion already exists in Freebie."
+                        + "\nFreebie ID: " + loRS.getString("sFreebIDx"));
                 MiscUtil.close(loRS);
                 return poJSON;
             }
