@@ -110,20 +110,20 @@ public class ValidityMasterValidator implements GValidator{
             poJSON.put("message", "Invalid From date.");
             return poJSON;
         }
-        if (loToDate == null) {
-            poJSON.put("result", "error");
-            poJSON.put("message", "Invalid Due date.");
-            return poJSON;
-        }
-
-        if ("1900-01-01".equals(xsDateShort(loToDate))) {
-            poJSON.put("result", "error");
-            poJSON.put("message", "Invalid To date.");
-            return poJSON;
-        }
+//        if (loToDate == null) {
+//            poJSON.put("result", "error");
+//            poJSON.put("message", "Invalid Due date.");
+//            return poJSON;
+//        }
+//
+//        if ("1900-01-01".equals(xsDateShort(loToDate))) {
+//            poJSON.put("result", "error");
+//            poJSON.put("message", "Invalid To date.");
+//            return poJSON;
+//        }
         
-//        if (loToDate != null) {
-//            if (!"1900-01-01".equals(xsDateShort(loToDate))) {
+        if (loToDate != null) {
+            if (!"1900-01-01".equals(xsDateShort(loToDate))) {
                 LocalDate lldFromDate = strToDate(xsDateShort(loFromDate));
                 LocalDate lldToDate = strToDate(xsDateShort(loToDate));
                 if (lldToDate.isBefore(lldFromDate)) {
@@ -131,8 +131,8 @@ public class ValidityMasterValidator implements GValidator{
                     poJSON.put("message", "To date cannot be before the from date.");
                     return poJSON;
                 }
-//            }
-//        }
+            }
+        }
         if (poMaster.getValidityDescription() == null || "".equals(poMaster.getValidityDescription())) {
             poJSON.put("result", "error");
             poJSON.put("message", "Validity description is not set.");

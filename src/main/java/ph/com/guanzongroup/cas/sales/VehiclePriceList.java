@@ -605,7 +605,60 @@ public class VehiclePriceList extends Transaction {
         poJSON = setJSON("success", "success");
         return poJSON;
     }
-    
+//    
+//    private Double checkPreviousSellingPrice() throws SQLException, GuanzonException, CloneNotSupportedException, ScriptException{
+//        poJSON = new JSONObject();
+//        //Check existing price list
+//        initSQL();
+//        String lsSQL = MiscUtil.addCondition(SQL_BROWSE," sCompnyID =  " + SQLUtil.toSQL(psCompanyId)
+//                       + " AND a.cRecdStat =  " + SQLUtil.toSQL(ValidityPeriodStatus.APPROVED)
+//                       + " AND (a.dThruDate IS NULL OR a.dThruDate = '' OR a.dThruDate >= " + SQLUtil.toSQL(xsDateShort(poGRider.getServerDate())) 
+//                       + ")"
+//                       + " AND a.dFromDate <= " + SQLUtil.toSQL(xsDateShort(poGRider.getServerDate()))
+//                        );
+//        lsSQL = lsSQL + "GROUP BY a.sValidIDx";
+//        System.out.println("updatePriceList SQL: " + lsSQL);
+//        ResultSet loRS = poGRider.executeQuery(lsSQL);
+//        if (MiscUtil.RecordCount(loRS) > 0) {
+//            String lsId = "";
+//            while(loRS.next()) {
+//                lsId = loRS.getString("sValidIDx");
+//                if(!checkEmpty(lsId)){
+//                    VehiclePriceList loObj = new SalesControllers(poGRider,null).VehiclePriceList();
+//                    loObj.InitTransaction();
+//                    poJSON = loObj.OpenTransaction(lsId);
+//                    if(!isJSONSuccess(poJSON)){
+//                        return poJSON;
+//                    }
+//                    
+//                    Date ldServerDate = SQLUtil.toDate(xsDateShort(poGRider.getServerDate()), SQLUtil.FORMAT_SHORT_DATE);
+//                    if(!loObj.Master().getFromDate().after(ldServerDate)
+//                        && (loObj.Master().getThruDate() == null || loObj.Master().getThruDate().after(ldServerDate))
+//                        ){
+//                        for(int lnCtr = 0;lnCtr < loObj.getDetailCount();lnCtr++){
+//                            if(loObj.Detail(lnCtr).getRecordStatus()){
+//                                poJSON = updateVariant(ValidityPeriodStatus.APPROVED, loObj.Detail(lnCtr).getVariantId(),loObj.Detail(lnCtr).getSRPAmount());
+//                                if (!isJSONSuccess(poJSON)){
+//                                    return poJSON;
+//                                }
+//                                poJSON = updateInventory(ValidityPeriodStatus.APPROVED, loObj.Detail(lnCtr).getVariantId(),loObj.Detail(lnCtr).getSRPAmount());
+//                                if (!isJSONSuccess(poJSON)){
+//                                    return poJSON;
+//                                }
+//                            }
+//                        }
+//                    }
+//                    
+//                }
+//            }   
+//        }
+//        MiscUtil.close(loRS);
+//    
+//        poJSON = new JSONObject();
+//        poJSON = setJSON("success", "success");
+//        return poJSON;
+//    }
+//    
     private JSONObject updateInventory(String fsRecordStatus, String fsVariantId, Double fdblSRPAmt)
             throws ExceptionInInitializerError,
             SQLException,
@@ -825,19 +878,19 @@ public class VehiclePriceList extends Transaction {
         
         //change status
         poGRider.beginTrans("UPDATE STATUS", "CancelTransaction", SOURCE_CODE, Master().getValidityId());
-        //TODO
-//        for(int lnCtr = 0;lnCtr < getDetailCount();lnCtr++){
-//            if(Detail(lnCtr).getRecordStatus()){
-//                poJSON = updateVariant(lsStatus, lnCtr);
-//                if (!isJSONSuccess(poJSON)){
-//                    return poJSON;
-//                }
-//                poJSON = updateInventory(lsStatus, lnCtr);
-//                if (!isJSONSuccess(poJSON)){
-//                    return poJSON;
-//                }
-//            }
-//        }
+        //REVERT Selling price from previous value
+        for(int lnCtr = 0;lnCtr < getDetailCount();lnCtr++){
+            if(Detail(lnCtr).getRecordStatus()){
+                poJSON = updateVariant(lsStatus, Detail(lnCtr).getVariantId(),Detail(lnCtr).getSRPAmount());
+                if (!isJSONSuccess(poJSON)){
+                    return poJSON;
+                }
+                poJSON = updateInventory(lsStatus,Detail(lnCtr).getVariantId(),Detail(lnCtr).getSRPAmount());
+                if (!isJSONSuccess(poJSON)){
+                    return poJSON;
+                }
+            }
+        }
         
         //change status
         poJSON = statusChange(poMaster.getTable(), (String) poMaster.getValue("sValidIDx"), "", lsStatus, false, true);
@@ -1022,8 +1075,11 @@ public class VehiclePriceList extends Transaction {
         String lsSQL = MiscUtil.addCondition(SQL_BROWSE,
                 " a.sCompnyID = " + SQLUtil.toSQL(psCompanyId)
                 + " AND YEAR(a.dFromDate) = " + SQLUtil.toSQL(fsYear)
-                + " AND a.cRecdStat = " + SQLUtil.toSQL(fsStatus)
             );
+        
+        if(checkNotEmpty(fsStatus)){
+            lsSQL = lsSQL + " AND a.cRecdStat = " + SQLUtil.toSQL(fsStatus);
+        }
         
         lsSQL = lsSQL + " GROUP BY a.sValidIDx ";
         System.out.println("Executing SQL: " + lsSQL);
@@ -1510,10 +1566,10 @@ public class VehiclePriceList extends Transaction {
 
             // Set to the last day of the current month
             loFromDate.set(Calendar.DAY_OF_MONTH,loFromDate.getActualMinimum(Calendar.DAY_OF_MONTH));
-            loToDate.set(Calendar.DAY_OF_MONTH,loToDate.getActualMaximum(Calendar.DAY_OF_MONTH));
+//            loToDate.set(Calendar.DAY_OF_MONTH,loToDate.getActualMaximum(Calendar.DAY_OF_MONTH));
 
             Master().setFromDate(SQLUtil.toDate(xsDateShort(loFromDate.getTime()),SQLUtil.FORMAT_SHORT_DATE));
-            Master().setThruDate(SQLUtil.toDate(xsDateShort(loToDate.getTime()),SQLUtil.FORMAT_SHORT_DATE));
+//            Master().setThruDate(SQLUtil.toDate(xsDateShort(loToDate.getTime()),SQLUtil.FORMAT_SHORT_DATE));
             
         } catch (SQLException ex) {
             Logger.getLogger(VehiclePriceList.class.getName()).log(Level.SEVERE, null, ex);
