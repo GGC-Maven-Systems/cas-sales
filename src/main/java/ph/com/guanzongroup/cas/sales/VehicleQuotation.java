@@ -2234,8 +2234,7 @@ public class VehicleQuotation extends Transaction {
              * SRP - Downpayment Amount = Balance
              * Balance x Interest Rate / Duration = Monthly Amortization Amount
              */
-            if(ldblSRPAmt > 0.0000 && ldblInterestRate > 0 && lnDuration > 0 && checkNotEmpty(Detail(0).getQuotationRate())
-                && !"0".equals(loDetail.getPaymentForm())){
+            if(ldblSRPAmt > 0.0000 && ldblInterestRate > 0 && lnDuration > 0 && !"0".equals(loDetail.getPaymentForm())){
                 ldblDownpaymentAmount = ldblSRPAmt * (Detail(0).getDownPaymentPercent()/100);
                 ldblBalance = Detail(0).getSRPAmount() - ldblDownpaymentAmount;
                 ldblInterestRate = ((ldblInterestRate/100)+1);
@@ -2273,6 +2272,40 @@ public class VehicleQuotation extends Transaction {
             Detail(0).setDiscountAmount(ldblTotalDisc);
             Detail(0).setTotalAmount(ldblTranTotal - ldblTotalDisc);
         }
+    }
+    
+    public JSONObject validatePromptPaymentDiscount(Double fdblDiscount){
+        poJSON = new JSONObject();
+        if(fdblDiscount > Detail(0).getFinancingAmount()){
+            return setJSON("error", "Discount cannot be greater than fincance amount.");
+        }
+        if(fdblDiscount > Detail(0).getMonthlyAmount()){
+            return setJSON("error", "Discount cannot be greater than monthly amortization.");
+        }
+        if(fdblDiscount > Detail(0).getTransactionTotal()){
+            return setJSON("error", "Discount cannot be greater than transaction total.");
+        }
+        if(fdblDiscount > Detail(0).getTotalAmount()){
+            return setJSON("error", "Discount cannot be greater than total amount.");
+        }
+        poJSON = setJSON("success", "success");
+        return poJSON;
+    }
+    
+    public JSONObject validateDiscount(Double fdblDiscount){
+        poJSON = new JSONObject();
+        fdblDiscount = fdblDiscount + getTotalDiscount();
+        if(fdblDiscount > Detail(0).getSRPAmount()){
+            return setJSON("error", "Discount cannot be greater than SRP amount.");
+        }
+        if(fdblDiscount > Detail(0).getTransactionTotal()){
+            return setJSON("error", "Discount cannot be greater than transaction total.");
+        }
+        if(fdblDiscount > Detail(0).getTotalAmount()){
+            return setJSON("error", "Discount cannot be greater than total amount.");
+        }
+        poJSON = setJSON("success", "success");
+        return poJSON;
     }
     
     public Double getOtherAddOnTotal(){

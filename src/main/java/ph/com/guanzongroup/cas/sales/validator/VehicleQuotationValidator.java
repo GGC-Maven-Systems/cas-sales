@@ -5,7 +5,6 @@
  */
 package ph.com.guanzongroup.cas.sales.validator;
 
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
@@ -15,13 +14,10 @@ import java.util.Date;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.guanzon.appdriver.base.GRiderCAS;
-import org.guanzon.appdriver.base.MiscUtil;
-import org.guanzon.appdriver.base.SQLUtil;
 import org.guanzon.appdriver.iface.GValidator;
 import org.json.simple.JSONObject;
 import ph.com.guanzongroup.cas.sales.model.Model_Sales_Quotation_Master;
 import ph.com.guanzongroup.cas.sales.model.Model_Sales_Quotation_Vehicle;
-import ph.com.guanzongroup.cas.sales.model.Model_Validity_Period_Master;
 import ph.com.guanzongroup.cas.sales.status.ValidityPeriodStatus;
 
 /**
@@ -206,17 +202,41 @@ public class VehicleQuotationValidator implements GValidator{
             return poJSON;
         }
         
+        if (poDetail.getTransactionTotal() <= 0.0000) {
+            poJSON.put("result", "error");
+            poJSON.put("message", "Invalid transaction total.");
+            return poJSON;
+        }
+        
+        if (poDetail.getTotalAmount() <= 0.0000) {
+            poJSON.put("result", "error");
+            poJSON.put("message", "Invalid total amount.");
+            return poJSON;
+        }
+        
+        if (poDetail.getDiscountAmount() > poDetail.getTransactionTotal()) {
+            poJSON.put("result", "error");
+            poJSON.put("message", "Discount amount cannot be greater than the transaction total.");
+            return poJSON;
+        }
+        
         //Validate financing if not cash
         if (!"0".equals(poDetail.getPaymentForm())) { //Financing / PO
-            if (poDetail.getDownPayment() <= 0.0000) {
-                poJSON.put("result", "error");
-                poJSON.put("message", "Downpayment amount is not set.");
-                return poJSON;
-            }
+//            if (poDetail.getDownPayment() <= 0.0000) { //Do not require downpayment based on meeting 11-16-2026
+//                poJSON.put("result", "error");
+//                poJSON.put("message", "Downpayment amount is not set.");
+//                return poJSON;
+//            }
             
-            if (poDetail.getQuotationRate() == null || "".equals(poDetail.getQuotationRate())) {
+//            if (poDetail.getQuotationRate() == null || "".equals(poDetail.getQuotationRate())) { //Quotation Rate is optional 
+//                poJSON.put("result", "error");
+//                poJSON.put("message", "Bank is not set.");
+//                return poJSON;
+//            }
+            if (poDetail.getPromptPaymentDiscount() > poDetail.getFinancingAmount()
+                || poDetail.getPromptPaymentDiscount() > poDetail.getMonthlyAmount()) {
                 poJSON.put("result", "error");
-                poJSON.put("message", "Bank is not set.");
+                poJSON.put("message", "In.");
                 return poJSON;
             }
             if (poDetail.getFinancingAmount() <= 0.0000) {
