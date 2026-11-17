@@ -125,7 +125,7 @@ public class TransmissionType extends Parameter {
             GuanzonException,
             CloneNotSupportedException {
 
-        String lsStatus = RecordStatus.ACTIVE;
+        String lsStatus = TransmissionTypeStatus.ACTIVE;
 
         if (getEditMode() != EditMode.READY) {
             poJSON = setJSON("error",  "No transaction was loaded.");
@@ -178,7 +178,7 @@ public class TransmissionType extends Parameter {
             CloneNotSupportedException {
         poJSON = new JSONObject();
 
-        String lsStatus = RecordStatus.INACTIVE;
+        String lsStatus = TransmissionTypeStatus.INACTIVE;
 
         if (getEditMode() != EditMode.READY) {
             poJSON = setJSON("error",  "No transaction was loaded.");

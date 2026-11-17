@@ -605,60 +605,61 @@ public class VehiclePriceList extends Transaction {
         poJSON = setJSON("success", "success");
         return poJSON;
     }
-//    
-//    private Double checkPreviousSellingPrice() throws SQLException, GuanzonException, CloneNotSupportedException, ScriptException{
-//        poJSON = new JSONObject();
+    
+//    private Double checkPreviousSellingPrice(String fsVariantId) throws SQLException, GuanzonException, CloneNotSupportedException, ScriptException{
+//        Double ldblSRP = 0.00;
 //        //Check existing price list
 //        initSQL();
 //        String lsSQL = MiscUtil.addCondition(SQL_BROWSE," sCompnyID =  " + SQLUtil.toSQL(psCompanyId)
 //                       + " AND a.cRecdStat =  " + SQLUtil.toSQL(ValidityPeriodStatus.APPROVED)
-//                       + " AND (a.dThruDate IS NULL OR a.dThruDate = '' OR a.dThruDate >= " + SQLUtil.toSQL(xsDateShort(poGRider.getServerDate())) 
-//                       + ")"
-//                       + " AND a.dFromDate <= " + SQLUtil.toSQL(xsDateShort(poGRider.getServerDate()))
+//                       + " AND a.sVrntIDxx = " + SQLUtil.toSQL(fsVariantId)
+//                       + " AND a.dFromDate < " + SQLUtil.toSQL(xsDateShort(Master().getFromDate()))
+//                       + " AND ( a.dThruDate IS NULL OR a.dThruDate < " + SQLUtil.toSQL(xsDateShort(Master().getFromDate()))
+//                       + " ) "
 //                        );
-//        lsSQL = lsSQL + "GROUP BY a.sValidIDx";
+//        if(Master().getThruDate() != null){
+//            lsSQL = lsSQL + " AND (a.dThruDate IS NULL OR a.dThruDate < " + SQLUtil.toSQL(xsDateShort(Master().getThruDate())) + ")";
+//        }
+//        
+//        lsSQL = lsSQL + "GROUP BY a.sValidIDx ORDER BY a.sValidIDx, a.dFromDate, a.dThruDate DESC LIMIT 1";
 //        System.out.println("updatePriceList SQL: " + lsSQL);
 //        ResultSet loRS = poGRider.executeQuery(lsSQL);
 //        if (MiscUtil.RecordCount(loRS) > 0) {
 //            String lsId = "";
-//            while(loRS.next()) {
-//                lsId = loRS.getString("sValidIDx");
-//                if(!checkEmpty(lsId)){
-//                    VehiclePriceList loObj = new SalesControllers(poGRider,null).VehiclePriceList();
-//                    loObj.InitTransaction();
-//                    poJSON = loObj.OpenTransaction(lsId);
-//                    if(!isJSONSuccess(poJSON)){
-//                        return poJSON;
-//                    }
-//                    
-//                    Date ldServerDate = SQLUtil.toDate(xsDateShort(poGRider.getServerDate()), SQLUtil.FORMAT_SHORT_DATE);
-//                    if(!loObj.Master().getFromDate().after(ldServerDate)
-//                        && (loObj.Master().getThruDate() == null || loObj.Master().getThruDate().after(ldServerDate))
-//                        ){
-//                        for(int lnCtr = 0;lnCtr < loObj.getDetailCount();lnCtr++){
-//                            if(loObj.Detail(lnCtr).getRecordStatus()){
-//                                poJSON = updateVariant(ValidityPeriodStatus.APPROVED, loObj.Detail(lnCtr).getVariantId(),loObj.Detail(lnCtr).getSRPAmount());
-//                                if (!isJSONSuccess(poJSON)){
-//                                    return poJSON;
-//                                }
-//                                poJSON = updateInventory(ValidityPeriodStatus.APPROVED, loObj.Detail(lnCtr).getVariantId(),loObj.Detail(lnCtr).getSRPAmount());
-//                                if (!isJSONSuccess(poJSON)){
-//                                    return poJSON;
-//                                }
-//                            }
-//                        }
-//                    }
-//                    
-//                }
+//            if(loRS.next()) {
+//                ldblSRP = loRS.getDouble("nSRPAmntx"); 
 //            }   
 //        }
 //        MiscUtil.close(loRS);
 //    
-//        poJSON = new JSONObject();
-//        poJSON = setJSON("success", "success");
-//        return poJSON;
+//        return ldblSRP;
 //    }
-//    
+    
+    private Double checkPreviousSellingPrice(String fsVariantId) throws SQLException, GuanzonException, CloneNotSupportedException, ScriptException {
+        Double ldblSRP = 0.00;
+        initSQL();
+
+        String lsSQL = MiscUtil.addCondition(SQL_BROWSE,
+                  " a.sCompnyID = " + SQLUtil.toSQL(psCompanyId)
+                + " AND a.cRecdStat = " + SQLUtil.toSQL(ValidityPeriodStatus.APPROVED)
+                + " AND a.sValidIDx != " + SQLUtil.toSQL(Master().getValidityId())
+                + " AND b.sVrntIDxx = " + SQLUtil.toSQL(fsVariantId)
+                + " AND a.dFromDate < " + SQLUtil.toSQL(xsDateShort(Master().getFromDate())));
+
+        lsSQL += " ORDER BY a.dFromDate DESC, a.dModified DESC LIMIT 1";
+        System.out.println("checkPreviousSellingPrice SQL: " + lsSQL);
+
+        ResultSet loRS = poGRider.executeQuery(lsSQL);
+        try {
+            if (loRS.next()) {
+                ldblSRP = loRS.getDouble("nSRPAmntx");
+            }
+        } finally {
+            MiscUtil.close(loRS);
+        }
+        return ldblSRP;
+    }
+    
     private JSONObject updateInventory(String fsRecordStatus, String fsVariantId, Double fdblSRPAmt)
             throws ExceptionInInitializerError,
             SQLException,
@@ -879,13 +880,15 @@ public class VehiclePriceList extends Transaction {
         //change status
         poGRider.beginTrans("UPDATE STATUS", "CancelTransaction", SOURCE_CODE, Master().getValidityId());
         //REVERT Selling price from previous value
+        Double ldblSRPAmt = 0.00;
         for(int lnCtr = 0;lnCtr < getDetailCount();lnCtr++){
             if(Detail(lnCtr).getRecordStatus()){
-                poJSON = updateVariant(lsStatus, Detail(lnCtr).getVariantId(),Detail(lnCtr).getSRPAmount());
+                ldblSRPAmt = checkPreviousSellingPrice(Detail(lnCtr).getVariantId()); //Check previous sellling price
+                poJSON = updateVariant(lsStatus, Detail(lnCtr).getVariantId(),ldblSRPAmt);
                 if (!isJSONSuccess(poJSON)){
                     return poJSON;
                 }
-                poJSON = updateInventory(lsStatus,Detail(lnCtr).getVariantId(),Detail(lnCtr).getSRPAmount());
+                poJSON = updateInventory(lsStatus,Detail(lnCtr).getVariantId(),ldblSRPAmt);
                 if (!isJSONSuccess(poJSON)){
                     return poJSON;
                 }
@@ -1595,28 +1598,64 @@ public class VehiclePriceList extends Transaction {
         poJSON = loValidator.validate();
         return poJSON;
     }
+//    
+//    private JSONObject checkExistingVehiclePriceList(){
+//        try {
+//            initSQL();
+//            String lsSQL = MiscUtil.addCondition(SQL_BROWSE,
+//                                                    " a.cRecdStat != " + SQLUtil.toSQL(ValidityPeriodStatus.VOID)
+//                                                    + " AND a.cRecdStat != " + SQLUtil.toSQL(ValidityPeriodStatus.CANCELLED)
+//                                                    + " AND a.sValidIDx != " + SQLUtil.toSQL(Master().getValidityId())
+//                                                    + " AND a.sCompnyID = " + SQLUtil.toSQL(Master().getCompanyId())
+//                                                    );
+//          lsSQL = lsSQL 
+//                    + " AND ((a.dFromDate between "+ SQLUtil.toSQL(xsDateShort(Master().getFromDate()))+" AND "+  SQLUtil.toSQL(xsDateShort(Master().getThruDate())) +") OR a.dFromDate <= "+ SQLUtil.toSQL(xsDateShort(Master().getFromDate()))+")"
+//                    + " AND ((a.dThruDate between "+ SQLUtil.toSQL(xsDateShort(Master().getFromDate()))+" AND "+  SQLUtil.toSQL(xsDateShort(Master().getThruDate())) +") OR a.dThruDate IS NULL OR a.dThruDate >= "+ SQLUtil.toSQL(xsDateShort(Master().getFromDate()))+")";
+//      
+//            System.out.println("checkExistingVehiclePriceList SQL: " + lsSQL);
+//            ResultSet loRS = poGRider.executeQuery(lsSQL);
+//            if (MiscUtil.RecordCount(loRS) > 0) {
+//                if(loRS.next()){    
+//                    poJSON.put("result", "error");
+//                    poJSON.put("message", "A Vehicle Price Update already exists for the selected validity period.");
+//                    return poJSON;
+//                }
+//            }
+//        } catch (SQLException ex) {
+//            Logger.getLogger(getClass().getName()).log(Level.SEVERE, MiscUtil.getException(ex), ex);
+//            poJSON.put("result", "error");
+//            poJSON.put("message", MiscUtil.getException(ex));
+//            return poJSON;
+//        }
+//            
+//        poJSON.put("result", "success");
+//        poJSON.put("message", "success");
+//        return poJSON;
+//    }
     
     private JSONObject checkExistingVehiclePriceList(){
         try {
             initSQL();
-            String lsSQL = MiscUtil.addCondition(SQL_BROWSE,
-                                                    " a.cRecdStat != " + SQLUtil.toSQL(ValidityPeriodStatus.VOID)
-                                                    + " AND a.cRecdStat != " + SQLUtil.toSQL(ValidityPeriodStatus.CANCELLED)
-                                                    + " AND a.sValidIDx != " + SQLUtil.toSQL(Master().getValidityId())
-                                                    + " AND a.sCompnyID = " + SQLUtil.toSQL(Master().getCompanyId())
-                                                    );
-          lsSQL = lsSQL 
-                    + " AND ((a.dFromDate between "+ SQLUtil.toSQL(xsDateShort(Master().getFromDate()))+" AND "+  SQLUtil.toSQL(xsDateShort(Master().getThruDate())) +") OR a.dFromDate <= "+ SQLUtil.toSQL(xsDateShort(Master().getFromDate()))+")"
-                    + " AND ((a.dThruDate between "+ SQLUtil.toSQL(xsDateShort(Master().getFromDate()))+" AND "+  SQLUtil.toSQL(xsDateShort(Master().getThruDate())) +") OR a.dThruDate IS NULL OR a.dThruDate >= "+ SQLUtil.toSQL(xsDateShort(Master().getFromDate()))+")";
-      
+            String lsFrom = SQLUtil.toSQL(xsDateShort(Master().getFromDate()));
+
+            String lsCondition = " a.cRecdStat != " + SQLUtil.toSQL(ValidityPeriodStatus.VOID)
+                    + " AND a.cRecdStat != " + SQLUtil.toSQL(ValidityPeriodStatus.CANCELLED)
+                    + " AND a.sValidIDx != " + SQLUtil.toSQL(Master().getValidityId())
+                    + " AND a.sCompnyID = " + SQLUtil.toSQL(Master().getCompanyId())
+                    + " AND (a.dThruDate IS NULL OR a.dThruDate >= " + lsFrom + ")";
+
+            if (Master().getThruDate() != null) {
+                lsCondition += " AND a.dFromDate <= " + SQLUtil.toSQL(xsDateShort(Master().getThruDate()));
+            }
+
+            String lsSQL = MiscUtil.addCondition(SQL_BROWSE, lsCondition);
             System.out.println("checkExistingVehiclePriceList SQL: " + lsSQL);
+
             ResultSet loRS = poGRider.executeQuery(lsSQL);
-            if (MiscUtil.RecordCount(loRS) > 0) {
-                if(loRS.next()){    
-                    poJSON.put("result", "error");
-                    poJSON.put("message", "A Vehicle Price Update already exists for the selected validity period.");
-                    return poJSON;
-                }
+            if (loRS.next()) {
+                poJSON.put("result", "error");
+                poJSON.put("message", "A Vehicle Price Update already exists for the selected validity period.");
+                return poJSON;
             }
         } catch (SQLException ex) {
             Logger.getLogger(getClass().getName()).log(Level.SEVERE, MiscUtil.getException(ex), ex);
@@ -1624,7 +1663,7 @@ public class VehiclePriceList extends Transaction {
             poJSON.put("message", MiscUtil.getException(ex));
             return poJSON;
         }
-            
+
         poJSON.put("result", "success");
         poJSON.put("message", "success");
         return poJSON;
