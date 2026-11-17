@@ -195,8 +195,7 @@ public class VehiclePromotion extends Transaction {
             return poJSON;
         }
         
-        ReloadAddOn();
-        String lsSQL = "SELECT sPrmAddID FROM " + PromotionAddOnList(0).getTable() + " WHERE sPromCode = " + SQLUtil.toSQL(PromotionMaster().getPromotionCode()) + " ORDER BY sPrmAddID";
+        String lsSQL = "SELECT sPrmAddID FROM Promotion_AddOn WHERE sPromCode = " + SQLUtil.toSQL(PromotionMaster().getPromotionCode()) + " ORDER BY sPrmAddID";
         System.out.println("Add On : " + lsSQL);
         ResultSet rs = poGRider.executeQuery(lsSQL);
         String lsId = "";
@@ -210,8 +209,7 @@ public class VehiclePromotion extends Transaction {
             }
         }
         
-        ReloadFreebie();
-        lsSQL = "SELECT sPrmFreID FROM " + PromotionFreebieList(0).getTable() + " WHERE sPromCode = " + SQLUtil.toSQL(PromotionMaster().getPromotionCode()) + " ORDER BY sPrmFreID";
+        lsSQL = "SELECT sPrmFreID FROM Promotion_Freebie WHERE sPromCode = " + SQLUtil.toSQL(PromotionMaster().getPromotionCode()) + " ORDER BY sPrmFreID";
         System.out.println("Freebie : " + lsSQL);
         rs = poGRider.executeQuery(lsSQL);
         lsId = "";
@@ -225,8 +223,7 @@ public class VehiclePromotion extends Transaction {
             }
         }
         
-        ReloadInclusion();
-        lsSQL = "SELECT sPrmIncID FROM " + PromotionInclusionList(0).getTable() + " WHERE sPromCode = " + SQLUtil.toSQL(PromotionMaster().getPromotionCode()) + " ORDER BY sPrmIncID";
+        lsSQL = "SELECT sPrmIncID FROM Promotion_Inclusion WHERE sPromCode = " + SQLUtil.toSQL(PromotionMaster().getPromotionCode()) + " ORDER BY sPrmIncID";
         System.out.println("Inclusion : " + lsSQL);
         rs = poGRider.executeQuery(lsSQL);
         lsId = "";
@@ -240,8 +237,7 @@ public class VehiclePromotion extends Transaction {
             }
         }
         
-        ReloadApplicability();
-        lsSQL = "SELECT sPrmAppID FROM " + PromotionApplicabilityList(0).getTable() + " WHERE sPromCode = " + SQLUtil.toSQL(PromotionMaster().getPromotionCode()) + " ORDER BY sPrmAppID";
+        lsSQL = "SELECT sPrmAppID FROM Promotion_Applicability WHERE sPromCode = " + SQLUtil.toSQL(PromotionMaster().getPromotionCode()) + " ORDER BY sPrmAppID";
         System.out.println("Applicability : " + lsSQL);
         rs = poGRider.executeQuery(lsSQL);
         lsId = "";
@@ -2684,7 +2680,7 @@ public class VehiclePromotion extends Transaction {
             }
         }
         
-        if(lnAddOnRow == 0 && lnFreebieRow == 0 && lnInclusionRow == 0){
+        if(lnAddOnRow == 0 && lnFreebieRow == 0 && lnInclusionRow == 0 && Detail(0).getDiscountAmount() <= 0.00){
             poJSON = setJSON("error", "No promotion detail to be save.");
             return poJSON;
         }
