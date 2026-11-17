@@ -683,7 +683,7 @@ public class VehicleDescription extends Parameter {
                     + ", b.nAuthCapx "
                     + " FROM Model_Variant a  "
                     + " LEFT JOIN Model_Variant_Insurance b ON b.sVrntIDxx = a.sVrntIDxx";
-            lsSQL = MiscUtil.addCondition(lsSQL,"REPLACE(a.sDescript, ' ', '') = " + SQLUtil.toSQL(poModel.getDescription().replace(" ", ""))
+            lsSQL = MiscUtil.addCondition(lsSQL,"UPPER(REPLACE(a.sDescript, ' ', '')) = " + SQLUtil.toSQL(poModel.getDescription().replace(" ", "").toUpperCase())
                     + " AND a.sVrntIDxx !=  " + SQLUtil.toSQL(poModel.getVariantId())
                     + " AND a.sModelIDx =  " + SQLUtil.toSQL(poModel.getModelId())
                     + " AND a.sColorIDx =  " + SQLUtil.toSQL(poModel.getColorId())
