@@ -1,5 +1,6 @@
 package ph.com.guanzongroup.cas.sales;
 
+import org.guanzon.cas.parameter.TransmissionType;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileReader;
@@ -50,6 +51,8 @@ import org.guanzon.cas.parameter.services.ParamModels;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
+import ph.com.guanzongroup.cas.sales.services.SalesControllers;
+import org.guanzon.cas.parameter.status.TransmissionTypeStatus;
 
 public class VehicleDescription extends Parameter {
     Model_Model_Variant poModel;
@@ -545,6 +548,26 @@ public class VehicleDescription extends Parameter {
         poJSON = object.searchRecord(value, byCode);
         if ("success".equals((String) poJSON.get("result"))) {
             poModel.setColorId(object.getModel().getColorId());
+        }
+        return poJSON;
+    }
+    
+    public JSONObject SearchTransmission(String value, boolean byCode)
+            throws ExceptionInInitializerError,
+            SQLException,
+            GuanzonException {
+        poJSON = new JSONObject();
+        
+        if(checkEmpty(psBrandId)){
+            return setJSON("error", "Brand cannot be empty.");
+        }
+        
+        TransmissionType object = new ParamControllers(poGRider, logwrapr).TransmissionType();
+        object.setRecordStatus(TransmissionTypeStatus.ACTIVE);
+        object.setWithUI(pbWithUI);
+        poJSON = object.searchRecord(value, byCode);
+        if ("success".equals((String) poJSON.get("result"))) {
+            poModelVariantInsurance.setTransmission(object.getModel().getTransmissionCode());
         }
         return poJSON;
     }
