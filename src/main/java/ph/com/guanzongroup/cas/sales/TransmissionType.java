@@ -338,7 +338,7 @@ public class TransmissionType extends Parameter {
         poJSON = new JSONObject();
         String lsSQL = MiscUtil.addCondition(getSQ_Browse(),
                 " a.sTransmss != " + SQLUtil.toSQL(poModel.getTransmissionCode())
-                        + " AND a.sTrnsmDsc = " + SQLUtil.toSQL(poModel.getTransmissionDescription())
+                        + " AND REPLACE(a.sTrnsmDsc, ' ', '') = " + SQLUtil.toSQL(poModel.getTransmissionDescription().replace(" ", ""))
                         + " AND a.cRecdStat != " + SQLUtil.toSQL(TransmissionTypeStatus.VOID)
                         );
 
