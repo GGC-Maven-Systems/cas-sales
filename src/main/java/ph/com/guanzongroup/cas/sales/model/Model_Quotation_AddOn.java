@@ -85,14 +85,6 @@ public class Model_Quotation_AddOn extends Model {
         return (String) getValue("sAddOnIDx");
     }
 
-    public JSONObject setAddOnDescription(String addOn) {
-        return setValue("sAddOnDsc", addOn);
-    }
-
-    public String getAddOnDescription() {
-        return (String) getValue("sAddOnDsc");
-    }
-
     public JSONObject setAmount(Double amount) {
         return setValue("nAmountxx", amount);
     }
