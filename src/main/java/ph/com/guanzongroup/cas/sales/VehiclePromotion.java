@@ -2493,7 +2493,7 @@ public class VehiclePromotion extends Transaction {
                                                     + " AND a.cRecdStat != " + SQLUtil.toSQL(ValidityPeriodStatus.CANCELLED)
                                                     + " AND a.sValidIDx != " + SQLUtil.toSQL(Master().getValidityId())
                                                     + " AND a.sCompnyID = " + SQLUtil.toSQL(Master().getCompanyId())
-                                                    + " AND a.sValidDsc = " + SQLUtil.toSQL(Master().getValidityDescription())
+                                                    + " AND UPPER(REPLACE(a.sValidDsc)) = " + SQLUtil.toSQL(Master().getValidityDescription().replace(" ", "").toUpperCase())
                                                     + " AND b.cPaymForm = " + SQLUtil.toSQL(PromotionMaster().getPaymentForm())
                                                     );
           lsSQL = lsSQL 
@@ -2591,6 +2591,19 @@ public class VehiclePromotion extends Transaction {
             
         poJSON = isEntryOkay(Master().getRecordStatus());
         if (!isJSONSuccess(poJSON)) {
+            return poJSON;
+        }
+        
+        Date loToDate = Master().getThruDate();
+        if (loToDate == null) {
+            poJSON.put("result", "error");
+            poJSON.put("message", "Invalid Valid thru date.");
+            return poJSON;
+        }
+
+        if ("1900-01-01".equals(xsDateShort(loToDate))) {
+            poJSON.put("result", "error");
+            poJSON.put("message", "Invalid Valid thru date.");
             return poJSON;
         }
         

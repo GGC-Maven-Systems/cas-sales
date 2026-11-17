@@ -1242,6 +1242,19 @@ public class VehicleFinancingPrice extends Transaction {
             return poJSON;
         }
         
+        Date loToDate = Master().getThruDate();
+        if (loToDate == null) {
+            poJSON.put("result", "error");
+            poJSON.put("message", "Invalid Valid thru date.");
+            return poJSON;
+        }
+
+        if ("1900-01-01".equals(xsDateShort(loToDate))) {
+            poJSON.put("result", "error");
+            poJSON.put("message", "Invalid Valid thru date.");
+            return poJSON;
+        }
+        
         poJSON = checkExistingVehicleFinancing();
         if (!isJSONSuccess(poJSON)) {
             return poJSON;
