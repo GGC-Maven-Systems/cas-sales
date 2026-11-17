@@ -41,6 +41,7 @@ import org.guanzon.cas.inv.services.InvModels;
 import org.guanzon.cas.parameter.Brand;
 import org.guanzon.cas.parameter.Color;
 import org.guanzon.cas.parameter.Model;
+import org.guanzon.cas.parameter.model.Model_Branch_Others;
 import org.guanzon.cas.parameter.model.Model_Brand;
 import org.guanzon.cas.parameter.model.Model_Model_Variant;
 import org.guanzon.cas.parameter.model.Model_Model_Variant_Insurance;
@@ -131,8 +132,22 @@ public class VehicleDescription extends Parameter {
             return poJSON;
         }
         
+        setBrandIdId(getBranchBrandId());
+        
         poJSON = setJSON("success","success");
         return poJSON;
+    }
+    
+    private String getBranchBrandId() throws SQLException, GuanzonException{
+        Model_Branch_Others loObj = new ParamModels(poGRider).BranchOthers();
+        if (!"".equals(poGRider.getBranchCode())) {
+            poJSON = loObj.openRecord(poGRider.getBranchCode());
+            if (isJSONSuccess(poJSON)) {
+                return loObj.getBrandID();
+            }
+        }
+        
+        return "";
     }
     
     public JSONObject OpenRecord(String fsVariantId) throws SQLException, GuanzonException{
@@ -645,7 +660,7 @@ public class VehicleDescription extends Parameter {
                     + ", b.nAuthCapx "
                     + " FROM Model_Variant a  "
                     + " LEFT JOIN Model_Variant_Insurance b ON b.sVrntIDxx = a.sVrntIDxx";
-            lsSQL = MiscUtil.addCondition(lsSQL," a.sDescript =  " + SQLUtil.toSQL(poModel.getDescription())
+            lsSQL = MiscUtil.addCondition(lsSQL,"REPLACE(a.sDescript, ' ', '') = " + SQLUtil.toSQL(poModel.getDescription().replace(" ", ""))
                     + " AND a.sVrntIDxx !=  " + SQLUtil.toSQL(poModel.getVariantId())
                     + " AND a.sModelIDx =  " + SQLUtil.toSQL(poModel.getModelId())
                     + " AND a.sColorIDx =  " + SQLUtil.toSQL(poModel.getColorId())

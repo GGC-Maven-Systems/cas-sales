@@ -2829,101 +2829,101 @@ public class VehicleQuotation extends Transaction {
         return isEntryOkay(VehicleQuotationStatus.OPEN);
     }
 
-    public JSONObject updateQuotationValidity_Utility() throws SQLException, GuanzonException, CloneNotSupportedException, ScriptException{
-        poJSON = new JSONObject();
-        Date ldServerDate = poGRider.getServerDate();
-        Calendar loPrevDate = Calendar.getInstance();
-        loPrevDate.setTime(ldServerDate);
-        loPrevDate.add(Calendar.DATE, -1);
-        Date ldYesterday = loPrevDate.getTime();
-        //Check existing not expired quotation
-        initSQL();
-        String lsSQL = MiscUtil.addCondition(SQL_BROWSE," a.sIndstCdx =  " + SQLUtil.toSQL(psIndustryId)
-//                       + " AND a.sCategrCd =  " + SQLUtil.toSQL(psCategoryId)
-                       + " AND b.sBranchCd = " + SQLUtil.toSQL(poGRider.getBranchCode())
-                       + " AND a.cTranStat !=  " + SQLUtil.toSQL(VehicleQuotationStatus.VOID)
-                       + " AND a.cTranStat !=  " + SQLUtil.toSQL(VehicleQuotationStatus.CANCELLED)
-                       + " AND (b.dValdThru IS NULL OR b.dValdThru = '' OR b.dValdThru >=  " + SQLUtil.toSQL(xsDateShort(poGRider.getServerDate()))
-                       + " ) "
-                    );
-        System.out.println("updateQuotationValidity_Utility SQL: " + lsSQL);
-        ResultSet loRS = poGRider.executeQuery(lsSQL);
-        if (MiscUtil.RecordCount(loRS) > 0) {
-            while(loRS.next()) {
-                String lsTransNo = loRS.getString("sTransNox");
-                String lsInvId = loRS.getString("sVrntIDxx");
-                Double ldblSRPAmt = loRS.getDouble("nSRPAmntx");
-                Double ldblPriceListAmt = 0.00;
-                boolean lbSRPMatch = false;
-                //Check existing price list
-                lsSQL =  "SELECT  " +
-                        "a.sValidIDx,  " +
-                        "a.sCompnyID,  " +
-                        "a.dFromDate,  " +
-                        "a.dThruDate,  " +
-                        "a.sValidDsc,  " +
-                        "a.cRecdStat,  " +
-                        "b.sVrntIDxx,  " +
-                        "b.nPriceYrx,  " +
-                        "b.nSRPAmntx   " +
-                        "FROM Validity_Period_Master a  " +
-                        "INNER JOIN Vehicle_Price_Master b ON b.sValidIDx = a.sValidIDx";
-                lsSQL = MiscUtil.addCondition(lsSQL," sCompnyID =  " + SQLUtil.toSQL(psCompanyId)
-                       + " AND a.cRecdStat =  " + SQLUtil.toSQL(ValidityPeriodStatus.APPROVED)
-                       + " AND (a.dThruDate IS NULL OR a.dThruDate = '' OR a.dThruDate >= " + SQLUtil.toSQL(xsDateShort(poGRider.getServerDate())) 
-                       + ")"
-                       + " AND a.dFromDate <= " + SQLUtil.toSQL(xsDateShort(poGRider.getServerDate()))
-                       + " AND b.sVrntIDxx = " + SQLUtil.toSQL(lsInvId)
-                        );
-                lsSQL = lsSQL + "GROUP BY a.sValidIDx";
-                System.out.println("getPriceList SQL: " + lsSQL);
-                ResultSet loRSPriceList = poGRider.executeQuery(lsSQL);
-                if (MiscUtil.RecordCount(loRSPriceList) > 0) { 
-                    while(loRSPriceList.next()) {
-                        ldblPriceListAmt = loRSPriceList.getDouble("nSRPAmntx");
-                        if(!lbSRPMatch){
-                            lbSRPMatch = Objects.equals(ldblSRPAmt, ldblPriceListAmt);
-                        }
-                    }
-                } else {
-                    lbSRPMatch = true;
-                }
-                
-                if(!lbSRPMatch){
-                    if(checkEmpty(lsTransNo)){
-                        continue;
-                    }
-                    Model_Sales_Quotation_Vehicle loObj = new SalesModels(poGRider).SalesQuotationVehicle();
-                    loObj.initialize();
-                    poJSON = loObj.openRecord(lsTransNo);
-                    if(!isJSONSuccess(poJSON)){
-                        return poJSON;
-                    }
-
-                    poJSON = loObj.updateRecord();
-                    if(!isJSONSuccess(poJSON)){
-                        return poJSON;
-                    }
-                    if(loObj.getEditMode() == EditMode.UPDATE){
-                        poGRider.beginTrans("UPDATE STATUS", "UPDATE", SOURCE_CODE, lsTransNo);
-                            loObj.setValidThruDate(SQLUtil.toDate(xsDateShort(ldYesterday), SQLUtil.FORMAT_SHORT_DATE));
-                            loObj.setModifiedBy(poGRider.Encrypt(poGRider.getUserID()));
-                            loObj.setModifiedDate(poGRider.getServerDate());
-                            poJSON = loObj.saveRecord();
-                            if(!isJSONSuccess(poJSON)){
-                                return poJSON;
-                            }
-                        poGRider.commitTrans();
-                    }
-                }
-            }
-        }
-        MiscUtil.close(loRS);
-        
-        poJSON = new JSONObject();
-        poJSON = setJSON("success", "success");
-        return poJSON;
-    }
+//    public JSONObject updateQuotationValidity_Utility() throws SQLException, GuanzonException, CloneNotSupportedException, ScriptException{
+//        poJSON = new JSONObject();
+//        Date ldServerDate = poGRider.getServerDate();
+//        Calendar loPrevDate = Calendar.getInstance();
+//        loPrevDate.setTime(ldServerDate);
+//        loPrevDate.add(Calendar.DATE, -1);
+//        Date ldYesterday = loPrevDate.getTime();
+//        //Check existing not expired quotation
+//        initSQL();
+//        String lsSQL = MiscUtil.addCondition(SQL_BROWSE," a.sIndstCdx =  " + SQLUtil.toSQL(psIndustryId)
+////                       + " AND a.sCategrCd =  " + SQLUtil.toSQL(psCategoryId)
+//                       + " AND b.sBranchCd = " + SQLUtil.toSQL(poGRider.getBranchCode())
+//                       + " AND a.cTranStat !=  " + SQLUtil.toSQL(VehicleQuotationStatus.VOID)
+//                       + " AND a.cTranStat !=  " + SQLUtil.toSQL(VehicleQuotationStatus.CANCELLED)
+//                       + " AND (b.dValdThru IS NULL OR b.dValdThru = '' OR b.dValdThru >=  " + SQLUtil.toSQL(xsDateShort(poGRider.getServerDate()))
+//                       + " ) "
+//                    );
+//        System.out.println("updateQuotationValidity_Utility SQL: " + lsSQL);
+//        ResultSet loRS = poGRider.executeQuery(lsSQL);
+//        if (MiscUtil.RecordCount(loRS) > 0) {
+//            while(loRS.next()) {
+//                String lsTransNo = loRS.getString("sTransNox");
+//                String lsInvId = loRS.getString("sVrntIDxx");
+//                Double ldblSRPAmt = loRS.getDouble("nSRPAmntx");
+//                Double ldblPriceListAmt = 0.00;
+//                boolean lbSRPMatch = false;
+//                //Check existing price list
+//                lsSQL =  "SELECT  " +
+//                        "a.sValidIDx,  " +
+//                        "a.sCompnyID,  " +
+//                        "a.dFromDate,  " +
+//                        "a.dThruDate,  " +
+//                        "a.sValidDsc,  " +
+//                        "a.cRecdStat,  " +
+//                        "b.sVrntIDxx,  " +
+//                        "b.nPriceYrx,  " +
+//                        "b.nSRPAmntx   " +
+//                        "FROM Validity_Period_Master a  " +
+//                        "INNER JOIN Vehicle_Price_Master b ON b.sValidIDx = a.sValidIDx";
+//                lsSQL = MiscUtil.addCondition(lsSQL," sCompnyID =  " + SQLUtil.toSQL(psCompanyId)
+//                       + " AND a.cRecdStat =  " + SQLUtil.toSQL(ValidityPeriodStatus.APPROVED)
+//                       + " AND (a.dThruDate IS NULL OR a.dThruDate = '' OR a.dThruDate >= " + SQLUtil.toSQL(xsDateShort(poGRider.getServerDate())) 
+//                       + ")"
+//                       + " AND a.dFromDate <= " + SQLUtil.toSQL(xsDateShort(poGRider.getServerDate()))
+//                       + " AND b.sVrntIDxx = " + SQLUtil.toSQL(lsInvId)
+//                        );
+//                lsSQL = lsSQL + "GROUP BY a.sValidIDx";
+//                System.out.println("getPriceList SQL: " + lsSQL);
+//                ResultSet loRSPriceList = poGRider.executeQuery(lsSQL);
+//                if (MiscUtil.RecordCount(loRSPriceList) > 0) { 
+//                    while(loRSPriceList.next()) {
+//                        ldblPriceListAmt = loRSPriceList.getDouble("nSRPAmntx");
+//                        if(!lbSRPMatch){
+//                            lbSRPMatch = Objects.equals(ldblSRPAmt, ldblPriceListAmt);
+//                        }
+//                    }
+//                } else {
+//                    lbSRPMatch = true;
+//                }
+//                
+//                if(!lbSRPMatch){
+//                    if(checkEmpty(lsTransNo)){
+//                        continue;
+//                    }
+//                    Model_Sales_Quotation_Vehicle loObj = new SalesModels(poGRider).SalesQuotationVehicle();
+//                    loObj.initialize();
+//                    poJSON = loObj.openRecord(lsTransNo);
+//                    if(!isJSONSuccess(poJSON)){
+//                        return poJSON;
+//                    }
+//
+//                    poJSON = loObj.updateRecord();
+//                    if(!isJSONSuccess(poJSON)){
+//                        return poJSON;
+//                    }
+//                    if(loObj.getEditMode() == EditMode.UPDATE){
+//                        poGRider.beginTrans("UPDATE STATUS", "UPDATE", SOURCE_CODE, lsTransNo);
+//                            loObj.setValidThruDate(SQLUtil.toDate(xsDateShort(ldYesterday), SQLUtil.FORMAT_SHORT_DATE));
+//                            loObj.setModifiedBy(poGRider.Encrypt(poGRider.getUserID()));
+//                            loObj.setModifiedDate(poGRider.getServerDate());
+//                            poJSON = loObj.saveRecord();
+//                            if(!isJSONSuccess(poJSON)){
+//                                return poJSON;
+//                            }
+//                        poGRider.commitTrans();
+//                    }
+//                }
+//            }
+//        }
+//        MiscUtil.close(loRS);
+//        
+//        poJSON = new JSONObject();
+//        poJSON = setJSON("success", "success");
+//        return poJSON;
+//    }
     
     
     @Override
@@ -3494,7 +3494,7 @@ public class VehicleQuotation extends Transaction {
                 parameters.put("nPOUnitPrice",Detail(0).getSRPAmount());
                 parameters.put("nPOPromoDiscount",0.00);
                 parameters.put("nPOGuanzonGoodwillDiscount",0.00);
-                parameters.put("nPOReferralSales",0.00);
+                parameters.put("nPOReferralSales",Detail(0).getComprehensiveAmount());
                 parameters.put("nPOTPL",Detail(0).getTPLAmount());
                 parameters.put("nPOLTO",Detail(0).getLTOAmount());
                 parameters.put("nPOTotal",Detail(0).getTotalAmount());
