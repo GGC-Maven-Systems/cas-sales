@@ -86,6 +86,7 @@ public class VehicleQuotation extends Transaction {
     public List<Model_Quotation_AddOn> paAddOn;
     public List<Model_Quotation_Freebie> paFreebies;
     public List<Model_Quotation_Inclusion> paInclusion;
+    public List<Model_Quotation_Special_Request> paSpecialRequest;
     public List<Model_Quotation_Discount> paDiscount;
     List<TransactionAttachment> paAttachments;
     public List<Model> paMaster;
@@ -99,6 +100,7 @@ public class VehicleQuotation extends Transaction {
         paAddOn = new ArrayList<>();
         paFreebies = new ArrayList<>();
         paInclusion = new ArrayList<>();
+        paSpecialRequest = new ArrayList<>();
         paDiscount = new ArrayList<>();
         paMaster = new ArrayList<>();
         paAttachments = new ArrayList<>();
@@ -166,6 +168,7 @@ public class VehicleQuotation extends Transaction {
         paAddOn = new ArrayList<>();
         paFreebies = new ArrayList<>();
         paInclusion = new ArrayList<>();
+        paSpecialRequest = new ArrayList<>();
         paDiscount = new ArrayList<>();
         paMaster = new ArrayList<>();
         psApprover = "";
@@ -1317,6 +1320,33 @@ public class VehicleQuotation extends Transaction {
         return poJSON;
     }
     
+    private JSONObject loadQuotationSpecialRequest() throws SQLException, GuanzonException, CloneNotSupportedException{
+        poJSON = new JSONObject();
+        paSpecialRequest.clear();
+        ReloadSpecialRequestList();
+        
+        String sql = "SELECT nEntryNox FROM Quotation_Special_Request " 
+                                                + " WHERE sTransNox = " + SQLUtil.toSQL(Master().getTransactionNo()) 
+                                                + " ORDER BY nEntryNox ASC";
+        ResultSet rs = this.poGRider.executeQuery(sql);
+        while(rs.next()) {
+            Model_Quotation_Special_Request loDetail = new SalesModels(poGRider).QuotationSpecialRequest();
+            loDetail.initialize();
+            poJSON = loDetail.openRecord( Master().getTransactionNo(),rs.getString("nEntryNox"));
+            if (!"success".equals((String)this.poJSON.get("result"))) {
+                poJSON.put("message", "Unable to open quotation special request record.");
+                return poJSON;
+            }
+
+            paSpecialRequest.add(loDetail);
+            ReloadSpecialRequestList();
+        }
+        
+        poJSON.put("result", "success");
+        poJSON.put("message", "success");
+        return poJSON;
+    }
+    
     private JSONObject loadQuotationDiscount() throws SQLException, GuanzonException, CloneNotSupportedException{
         poJSON = new JSONObject();
         paDiscount.clear();
@@ -1786,6 +1816,59 @@ public class VehicleQuotation extends Transaction {
         }
     }
    
+    public JSONObject AddSpecialRequest() throws CloneNotSupportedException {
+        if (getSpecialRequestListCount() > 0) {
+            if ((SpecialRequestList(getSpecialRequestListCount() - 1).getRequestDescription() == null || "".equals(SpecialRequestList(getSpecialRequestListCount() - 1).getRequestDescription()))){
+                poJSON = new JSONObject();
+                poJSON = setJSON("error", "Last row has empty item.");
+                return poJSON;
+            }
+        }
+        
+        Model_Quotation_Special_Request loModel = new SalesModels(poGRider).QuotationSpecialRequest();
+        loModel.newRecord();
+        paSpecialRequest.add(loModel);
+        poJSON.put("result", "success");
+        return poJSON;
+    }
+    
+    public Model_Quotation_Special_Request SpecialRequestList(int row) {
+        return (Model_Quotation_Special_Request) paSpecialRequest.get(row);
+    }
+
+    public int getSpecialRequestListCount() {
+        if(paSpecialRequest == null){
+            return 0;
+        }
+        return paSpecialRequest.size();
+    }
+    
+    public List<Model_Quotation_Special_Request> SpecialRequestList() {
+        return paSpecialRequest;
+    }
+    
+    public void ReloadSpecialRequestList() throws CloneNotSupportedException, SQLException, GuanzonException{
+        int lnCtr = getSpecialRequestListCount() - 1;
+        while (lnCtr >= 0) {
+            if (SpecialRequestList(lnCtr).getRequestDescription() == null || "".equals(SpecialRequestList(lnCtr).getRequestDescription())) {
+                paSpecialRequest.remove(lnCtr);
+            } 
+            lnCtr--;
+        }
+
+        if ((getSpecialRequestListCount() - 1) >= 0) {
+            if (
+                (SpecialRequestList(getSpecialRequestListCount() - 1).getRequestDescription() != null && !"".equals(SpecialRequestList(getSpecialRequestListCount() - 1).getRequestDescription()))
+                ){
+                AddSpecialRequest();
+            }
+        }
+
+        if ((getSpecialRequestListCount() - 1) < 0) {
+            AddSpecialRequest();
+        }
+    }
+    
     public JSONObject AddDiscount() throws CloneNotSupportedException {
         if (getDiscountListCount() > 0) {
             if (DiscountList(getDiscountListCount() - 1).getDiscountAmount() <= 0.00){
@@ -2739,6 +2822,29 @@ public class VehicleQuotation extends Transaction {
             }
         }
         
+        //Vehicle Quotation Special Request
+        Iterator<Model_Quotation_Special_Request> specialrequest = paSpecialRequest.iterator();
+        while (specialrequest.hasNext()) {
+            Model item = specialrequest.next(); // Store the item before checking conditions
+            String lsDetail = (String) item.getValue("sReqstDsc");
+            int lnQty = (int) item.getValue("nQuantity");
+            if ((lsDetail == null || "".equals(lsDetail))
+                || lnQty <= 0){
+                if(item.getEditMode() == EditMode.ADDNEW){
+                    specialrequest.remove(); // Correctly remove the item
+                } 
+            }
+        }
+
+        for (int lnCtr = 0; lnCtr < getSpecialRequestListCount(); lnCtr++) {
+            if(checkNotEmpty(SpecialRequestList(lnCtr).getRequestDescription())){
+                SpecialRequestList(lnCtr).setTransactionNo(Master().getTransactionNo());
+                SpecialRequestList(lnCtr).setEntryNo(lnCtr+1);
+                SpecialRequestList(lnCtr).setModifiedBy(poGRider.Encrypt(poGRider.getUserID()));
+                SpecialRequestList(lnCtr).setModifiedDate(poGRider.getServerDate());
+            }
+        }
+        
         //Vehicle Quotation Discount
         Iterator<Model_Quotation_Discount> discount = paDiscount.iterator();
         while (discount.hasNext()) {
@@ -2825,6 +2931,25 @@ public class VehicleQuotation extends Transaction {
                             InclusionList(lnCtr).setQuotationInclusionId(InclusionList(lnCtr).getNextCode());
                         }
                         poJSON = InclusionList(lnCtr).saveRecord();
+                        if(!isJSONSuccess(poJSON)){
+                            return poJSON;
+                        }
+                    }
+                }
+            }
+             
+            //Save Special Request
+             for (int lnCtr = 0; lnCtr <= getSpecialRequestListCount() - 1; lnCtr++) {
+                if(checkNotEmpty(SpecialRequestList(lnCtr).getRequestDescription())){
+                    if(SpecialRequestList(lnCtr).getEditMode() == EditMode.ADDNEW
+                        && !SpecialRequestList(lnCtr).getRecordStatus()){
+                        continue;
+                    }
+                    if(SpecialRequestList(lnCtr).getEditMode() == EditMode.ADDNEW || SpecialRequestList(lnCtr).getEditMode() == EditMode.UPDATE){
+                        if(SpecialRequestList(lnCtr).getEditMode() == EditMode.ADDNEW){
+                            SpecialRequestList(lnCtr).setEntryNo(lnCtr+1);
+                        }
+                        poJSON = SpecialRequestList(lnCtr).saveRecord();
                         if(!isJSONSuccess(poJSON)){
                             return poJSON;
                         }
