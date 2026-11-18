@@ -39,10 +39,9 @@ public class Model_Quotation_AddOn extends Model {
 
             // assign default values
             poEntity.updateObject("nAmountxx", 0.00);
-            poEntity.updateObject("nQtyxxxxx", 1);
+            poEntity.updateObject("nQuantity", 1);
             poEntity.updateObject("nTotAmntx", 0.00);
             poEntity.updateObject("nDiscAmnt", 0.00);
-            poEntity.updateObject("nDiscPctx", 0.00);
             poEntity.updateString("cRecdStat", RecordStatus.ACTIVE);
             poEntity.updateNull("sModified");
             poEntity.updateNull("dModified");
@@ -97,14 +96,14 @@ public class Model_Quotation_AddOn extends Model {
     }
 
     public JSONObject setQuantity(int quantity) {
-        return setValue("nQtyxxxxx", quantity);
+        return setValue("nQuantity", quantity);
     }
 
     public int getQuantity() {
-        if (getValue("nQtyxxxxx") == null || "".equals(getValue("nQtyxxxxx"))) {
+        if (getValue("nQuantity") == null || "".equals(getValue("nQuantity"))) {
             return 1;
         }
-        return (int) getValue("nQtyxxxxx");
+        return (int) getValue("nQuantity");
     }
 
     public JSONObject setTotalAmount(Double totalAmount) {
