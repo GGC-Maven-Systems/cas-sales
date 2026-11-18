@@ -33,6 +33,7 @@ public class Model_Sales_Quotation_Vehicle extends Model {
     Model_Brand poBrand;
     Model_Model poModel;
     Model_Financing_Rate_Master poFinancingRate;
+    Model_Banks poBank;
 
     private String psBrand, psModel;
 
@@ -213,12 +214,20 @@ public class Model_Sales_Quotation_Vehicle extends Model {
         return Double.valueOf(getValue("nPrmPayDx").toString());
     }
 
-    public JSONObject setQuotationRate(String quotationRate) {
+    public JSONObject setStandardRateId(String quotationRate) {
         return setValue("sStdRteID", quotationRate);
     }
 
-    public String getQuotationRate() {
+    public String getStandardRateId() {
         return (String) getValue("sStdRteID");
+    }
+
+    public JSONObject setBankId(String bankId) {
+        return setValue("sBankIDxx", bankId);
+    }
+
+    public String getBankId() {
+        return (String) getValue("sBankIDxx");
     }
 
     public JSONObject setSRPAmount(Double srpAmount) {
@@ -690,30 +699,57 @@ public class Model_Sales_Quotation_Vehicle extends Model {
         }
     }
     
-    public Model_Financing_Rate_Master FinancingRate() throws SQLException, GuanzonException {
-        if (poFinancingRate == null) {
-            poFinancingRate = new SalesModels(poGRider).FinancingRateMaster();
+//    public Model_Financing_Rate_Master FinancingRate() throws SQLException, GuanzonException {
+//        if (poFinancingRate == null) {
+//            poFinancingRate = new SalesModels(poGRider).FinancingRateMaster();
+//        }
+//
+//        String id = (String) (getValue("sStdRteID") == null ? "" : getValue("sStdRteID"));
+//
+//        if (!"".equals(id)) {
+//            if (poFinancingRate.getEditMode() == EditMode.READY
+//                    && poFinancingRate.getRateId().equals(id)) {
+//                return poFinancingRate;
+//            } else {
+//                poJSON = poFinancingRate.openRecord(id);
+//
+//                if ("success".equals(poJSON.get("result"))) {
+//                    return poFinancingRate;
+//                } else {
+//                    poFinancingRate.initialize();
+//                    return poFinancingRate;
+//                }
+//            }
+//        } else {
+//            poFinancingRate.initialize();
+//            return poFinancingRate;
+//        }
+//    }
+    
+    public Model_Banks Banks() throws SQLException, GuanzonException {
+        if (poBank == null) {
+            poBank = new ParamModels(poGRider).Banks();
         }
 
-        String id = (String) (getValue("sStdRteID") == null ? "" : getValue("sStdRteID"));
+        String id = (String) (getValue("sBankIDxx") == null ? "" : getValue("sBankIDxx"));
 
         if (!"".equals(id)) {
-            if (poFinancingRate.getEditMode() == EditMode.READY
-                    && poFinancingRate.getRateId().equals(id)) {
-                return poFinancingRate;
+            if (poBank.getEditMode() == EditMode.READY
+                    && poBank.getBankID().equals(id)) {
+                return poBank;
             } else {
-                poJSON = poFinancingRate.openRecord(id);
+                poJSON = poBank.openRecord(id);
 
                 if ("success".equals(poJSON.get("result"))) {
-                    return poFinancingRate;
+                    return poBank;
                 } else {
-                    poFinancingRate.initialize();
-                    return poFinancingRate;
+                    poBank.initialize();
+                    return poBank;
                 }
             }
         } else {
-            poFinancingRate.initialize();
-            return poFinancingRate;
+            poBank.initialize();
+            return poBank;
         }
     }
     

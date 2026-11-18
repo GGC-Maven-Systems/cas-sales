@@ -285,7 +285,7 @@ public class VehicleQuotationTest {
                 poController.Detail(lnCtr).setRateValue(10.00);
                 poController.Detail(lnCtr).setMonthlyAmount(10.00);
                 poController.Detail(lnCtr).setTotalAmount(10.00);
-                poController.Detail(lnCtr).setQuotationRate(psTransNo);
+                poController.Detail(lnCtr).setStandardRateId(psTransNo);
             }
             
             loadDetails();
@@ -384,7 +384,7 @@ public class VehicleQuotationTest {
                 poController.Detail(lnCtr).setRateValue(10.00);
                 poController.Detail(lnCtr).setMonthlyAmount(10.00);
                 poController.Detail(lnCtr).setTotalAmount(10.00);
-                poController.Detail(lnCtr).setQuotationRate(psTransNo);
+                poController.Detail(lnCtr).setStandardRateId(psTransNo);
             }
             
             loadDetails();

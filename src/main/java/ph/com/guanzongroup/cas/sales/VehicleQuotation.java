@@ -74,6 +74,7 @@ import org.guanzon.cas.client.model.Model_Client_Mail;
 import org.guanzon.cas.client.model.Model_Client_Mobile;
 import org.guanzon.cas.client.services.ClientControllers;
 import org.guanzon.cas.client.services.ClientModels;
+import org.guanzon.cas.parameter.Banks;
 import org.guanzon.cas.parameter.model.Model_Company;
 import org.json.simple.parser.JSONParser;
 import ph.com.guanzongroup.cas.sales.status.AddOnTypeStatus;
@@ -209,6 +210,7 @@ public class VehicleQuotation extends Transaction {
         ReloadDetail();
         ReloadAddOnList();
         ReloadFreebiesList();
+        ReloadSpecialRequestList();
         
         poJSON.put("result", "success");
         return poJSON;
@@ -968,7 +970,7 @@ public class VehicleQuotation extends Transaction {
             return setJSON("error", "Mode of payment must be Financing or PO.");
         }
         
-        FinancingRates object = new SalesControllers(poGRider, logwrapr).FinancingRates();
+        Banks object = new ParamControllers(poGRider, logwrapr).Banks();
         object.initialize();
         object.setRecordStatus(RecordStatus.ACTIVE);
         object.setWithUI(pbWithUI);
@@ -978,10 +980,39 @@ public class VehicleQuotation extends Transaction {
             poJSON = object.openRecord(value);
         }
         if (isJSONSuccess(poJSON)) {
-            Detail(row).setQuotationRate(object.getModel().getRateId());
-            Detail(row).setDuration(object.getModel().getDuration());
-            Detail(row).setRateValue(object.getModel().getRate());
+            Detail(row).setStandardRateId(object.getModel().getBankID());
         }
+        
+//        StandardFinancingRates object = new SalesControllers(poGRider, logwrapr).StandardFinancingRates();
+//        object.initialize();
+//        object.setRecordStatus(FinancingRateStatus.ACTIVE);
+//        object.setWithUI(pbWithUI);
+//        if(pbWithUI){
+//            poJSON = object.searchRecord(value, byCode);
+//        } else {
+//            poJSON = object.openRecord(value);
+//        }
+//        if (isJSONSuccess(poJSON)) {
+//            Detail(row).setQuotationRate(object.getModel().getStandardRateId());
+//            Detail(row).setDuration(object.getModel().getDuration());
+//            Detail(row).setRateValue(object.getModel().getRate());
+//        }
+        
+//        
+//        FinancingRates object = new SalesControllers(poGRider, logwrapr).FinancingRates();
+//        object.initialize();
+//        object.setRecordStatus(RecordStatus.ACTIVE);
+//        object.setWithUI(pbWithUI);
+//        if(pbWithUI){
+//            poJSON = object.searchRecord(value, byCode);
+//        } else {
+//            poJSON = object.openRecord(value);
+//        }
+//        if (isJSONSuccess(poJSON)) {
+//            Detail(row).setQuotationRate(object.getModel().getRateId());
+//            Detail(row).setDuration(object.getModel().getDuration());
+//            Detail(row).setRateValue(object.getModel().getRate());
+//        }
         return poJSON;
     }
     
@@ -1209,7 +1240,8 @@ public class VehicleQuotation extends Transaction {
     public JSONObject AutoPopulateVehicleAddOn(String fsVariantId) throws SQLException, GuanzonException, CloneNotSupportedException{
         poJSON = new JSONObject();
         Detail(0).setPromptPaymentDiscount(0.00);
-        Detail(0).setQuotationRate("");
+        Detail(0).setStandardRateId("");
+        Detail(0).setBankId("");
         paDiscount = new ArrayList<>();
         paAddOn = new ArrayList<>();
         String lsSQL = VehicleAddOn_SQL();
@@ -2139,7 +2171,6 @@ public class VehicleQuotation extends Transaction {
                 String lsCol = loSource.getColumn(lnCol);
                 switch (lsCol) {
                     case "sTransNox":
-                    case "sQotPayID":
                     case "dExpected":
                     case "dValdThru":
                     case "nSRPAmntx":
@@ -2354,9 +2385,11 @@ public class VehicleQuotation extends Transaction {
                 break;
                 default: //Cash
                     if(pnEditMode == EditMode.ADDNEW || pnEditMode == EditMode.UPDATE){
-                        Detail(0).setDuration(0);
-                        Detail(0).setRateValue(0.00);
-                        Detail(0).setPromptPaymentDiscount(0.0000);
+                        loDetail.setDuration(0);
+                        loDetail.setRateValue(0.00);
+                        loDetail.setPromptPaymentDiscount(0.0000);
+                        loDetail.setStandardRateId("");
+                        loDetail.setBankId("");
                     }
                 break;
             }
@@ -2369,7 +2402,8 @@ public class VehicleQuotation extends Transaction {
             loDetail.setLTOAmount(0.00);
             loDetail.setComprehensiveAmount(0.00);
             loDetail.setPromptPaymentDiscount(0.00);
-            loDetail.setQuotationRate("");
+            loDetail.setStandardRateId("");
+            loDetail.setBankId("");
             loDetail.setRateValue(0.00);
             loDetail.setDuration(0);
         }
@@ -2612,39 +2646,44 @@ public class VehicleQuotation extends Transaction {
             
             //Check Standard Financing Rate for Duration and Rate Value
             if(!"0".equals(Detail(0).getPaymentForm())){
-                Model_Financing_Rate_Master loRate = new SalesModels(poGRider).FinancingRateMaster();
-                lsSQL = MiscUtil.addCondition(MiscUtil.makeSelect(loRate),
-                                                        " cRecdStat = " + SQLUtil.toSQL(FinancingRateStatus.ACTIVE)
-                                                        + " AND nDuration = " + SQLUtil.toSQL(Detail(0).getDuration())
-                                                        + " AND nRateValx = " + SQLUtil.toSQL(Detail(0).getRateValue())
-                                                        + " AND sRateIDxx = " + SQLUtil.toSQL(Detail(0).getQuotationRate())
-                                                        );
-                System.out.println("Validate Financing Rate SQL: " + lsSQL);
-                loRS = poGRider.executeQuery(lsSQL);
-                if (MiscUtil.RecordCount(loRS) > 0) {
-                } else {
-                    lbValidate = true;
-                }
+//                if(checkNotEmpty(Detail(0).getBankId())){ //if bank is not empty
+//                    Model_Financing_Rate_Master loRate = new SalesModels(poGRider).FinancingRateMaster();
+//                    lsSQL = MiscUtil.addCondition(MiscUtil.makeSelect(loRate),
+//                                                            " cRecdStat = " + SQLUtil.toSQL(FinancingRateStatus.ACTIVE)
+//                                                            + " AND nDuration = " + SQLUtil.toSQL(Detail(0).getDuration())
+//                                                            + " AND nRateValx = " + SQLUtil.toSQL(Detail(0).getRateValue())
+//                                                            + " AND sRateIDxx = " + SQLUtil.toSQL(Detail(0).getQuotationRate())
+//                                                            );
+//                    System.out.println("Validate Financing Rate SQL: " + lsSQL);
+//                    loRS = poGRider.executeQuery(lsSQL);
+//                    if (MiscUtil.RecordCount(loRS) > 0) {
+//                    } else {
+//                        lbValidate = true;
+//                    }
+//                }
                 
-                if(!lbValidate){   
-                    Model_Vehicle_Financing_Rates lObj = new SalesModels(poGRider).VehicleFinancingRates();
-                    lsSQL = MiscUtil.addCondition(MiscUtil.makeSelect(lObj),
-                                                            " cRecdStat = " + SQLUtil.toSQL(FinancingRateStatus.ACTIVE)
-                                                            + " AND nDuration = " + SQLUtil.toSQL(Detail(0).getDuration())
-                                                            + " AND nRateValx = " + SQLUtil.toSQL(Detail(0).getRateValue())
-                                                            + " AND (( " + SQLUtil.toSQL(xsDateShort(Master().getTransactionDate())) + " BETWEEN dFromDate AND dThruDate )"
-                                                            + " OR (dFromDate <= " + SQLUtil.toSQL(xsDateShort(Master().getTransactionDate()))
-                                                            + " AND dThruDate IS NULL " 
-                                                            + ")) "
-    //                                                        + " AND " + SQLUtil.toSQL(xsDateShort(Master().getTransactionDate())) +  " BETWEEN dFromDate AND dThruDate " 
-                                                            );
-                    System.out.println("Validate Standard Financing Rate SQL: " + lsSQL);
-                    loRS = poGRider.executeQuery(lsSQL);
-                    if (MiscUtil.RecordCount(loRS) > 0) {
-                    } else {
-                        lbValidate = true;
-                    }
-                }
+//                if(!lbValidate){   
+//                    Model_Vehicle_Financing_Rates lObj = new SalesModels(poGRider).VehicleFinancingRates();
+//                    lsSQL = MiscUtil.addCondition(MiscUtil.makeSelect(lObj),
+//                                                            " cRecdStat = " + SQLUtil.toSQL(FinancingRateStatus.ACTIVE)
+//                                                            + " AND nDuration = " + SQLUtil.toSQL(Detail(0).getDuration())
+//                                                            + " AND nRateValx = " + SQLUtil.toSQL(Detail(0).getRateValue())
+//                                                            + " AND (( " + SQLUtil.toSQL(xsDateShort(Master().getTransactionDate())) + " BETWEEN dFromDate AND dThruDate )"
+//                                                            + " OR (dFromDate <= " + SQLUtil.toSQL(xsDateShort(Master().getTransactionDate()))
+//                                                            + " AND dThruDate IS NULL " 
+//                                                            + ")) "
+//    //                                                        + " AND " + SQLUtil.toSQL(xsDateShort(Master().getTransactionDate())) +  " BETWEEN dFromDate AND dThruDate " 
+//                                                            );
+//                    System.out.println("Validate Standard Financing Rate SQL: " + lsSQL);
+//                    loRS = poGRider.executeQuery(lsSQL);
+//                    if (MiscUtil.RecordCount(loRS) > 0) {
+//                    } else {
+//                        lbValidate = true;
+//                    }
+//                }
+                
+                //Validate when quotrate is empty
+                lbValidate = checkEmpty(Detail(0).getStandardRateId());
                 
                 //Check Standard Downpayment rate
                 if(!lbValidate){
@@ -2716,6 +2755,31 @@ public class VehicleQuotation extends Transaction {
         return lbValidate;
     }
     
+    private String getStandardRateId() throws SQLException{
+        String lsStdRateId = "";
+        Model_Vehicle_Financing_Rates lObj = new SalesModels(poGRider).VehicleFinancingRates();
+        String lsSQL = MiscUtil.addCondition(MiscUtil.makeSelect(lObj),
+                                                " cRecdStat = " + SQLUtil.toSQL(FinancingRateStatus.ACTIVE)
+                                                + " AND nDuration = " + SQLUtil.toSQL(Detail(0).getDuration())
+                                                + " AND nRateValx = " + SQLUtil.toSQL(Detail(0).getRateValue())
+                                                + " AND (( " + SQLUtil.toSQL(xsDateShort(Master().getTransactionDate())) + " BETWEEN dFromDate AND dThruDate )"
+                                                + " OR (dFromDate <= " + SQLUtil.toSQL(xsDateShort(Master().getTransactionDate()))
+                                                + " AND dThruDate IS NULL " 
+                                                + ")) "
+                                                );
+        System.out.println("Validate Standard Financing Rate SQL: " + lsSQL);
+        ResultSet loRS = poGRider.executeQuery(lsSQL);
+        if (MiscUtil.RecordCount(loRS) > 0) {
+            if(loRS.next()){
+                lsStdRateId = loRS.getString("sStdRteID");
+            }
+        } 
+        
+        MiscUtil.close(loRS);
+        
+        return lsStdRateId;
+    }
+    
     @Override
     public JSONObject willSave() throws SQLException, GuanzonException, CloneNotSupportedException {
         poJSON = new JSONObject();
@@ -2727,6 +2791,10 @@ public class VehicleQuotation extends Transaction {
         //Re-set the transaction no 
         if(getEditMode() == EditMode.ADDNEW){
             Master().setTransactionNo(Master().getNextCode());
+        }
+        String lsStdRateId = getStandardRateId();
+        if(checkNotEmpty(lsStdRateId)){
+            Detail(0).setStandardRateId(lsStdRateId);
         }
 
         poJSON = isEntryOkay(Master().getTransactionStatus());
