@@ -4047,6 +4047,10 @@ public class VehicleQuotation extends Transaction {
     
     private List<Map<String, Object>> buildQuotationLockInInsurance() {
         List<Map<String, Object>> rows = new ArrayList<>();
+        if(!Detail(0).isInsuranceLocked()){
+            return rows;
+        }
+        int lnLockInYear = Detail(0).getInsuranceYears();
         Double ldblFirstYear = 0.00;
         Double ldblSecondYear = 0.00;
         Double ldblThirdYear = 0.00;
@@ -4077,19 +4081,29 @@ public class VehicleQuotation extends Transaction {
                 while (loRS.next()) {
                     switch(loRS.getInt("nYearNoxx")){
                         case 1:
-                            ldblFirstYear = loRS.getDouble("nAmountxx");
+                            if(lnLockInYear >= ldblFirstYear){
+                                ldblFirstYear = loRS.getDouble("nAmountxx");
+                            }
                         break;
                         case 2:
-                            ldblSecondYear = loRS.getDouble("nAmountxx");
+                            if(lnLockInYear >= ldblSecondYear){
+                                ldblSecondYear = loRS.getDouble("nAmountxx");
+                            }
                         break;
                         case 3:
-                            ldblThirdYear = loRS.getDouble("nAmountxx");
+                            if(lnLockInYear >= ldblThirdYear){
+                                ldblThirdYear = loRS.getDouble("nAmountxx");
+                            }
                         break;
                         case 4:
-                            ldblFourthYear = loRS.getDouble("nAmountxx");
+                            if(lnLockInYear >= ldblFourthYear){
+                                ldblFourthYear = loRS.getDouble("nAmountxx");
+                            }
                         break;
                         case 5:
-                            ldblFifthYear = loRS.getDouble("nAmountxx");
+                            if(lnLockInYear >= ldblFifthYear){
+                                ldblFifthYear = loRS.getDouble("nAmountxx");
+                            }
                         break;
                     }
                 } 
