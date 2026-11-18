@@ -2493,7 +2493,7 @@ public class VehiclePromotion extends Transaction {
                                                     + " AND a.cRecdStat != " + SQLUtil.toSQL(ValidityPeriodStatus.CANCELLED)
                                                     + " AND a.sValidIDx != " + SQLUtil.toSQL(Master().getValidityId())
                                                     + " AND a.sCompnyID = " + SQLUtil.toSQL(Master().getCompanyId())
-                                                    + " AND UPPER(REPLACE(a.sValidDsc)) = " + SQLUtil.toSQL(Master().getValidityDescription().replace(" ", "").toUpperCase())
+                                                    + " AND UPPER(REPLACE(a.sValidDsc, ' ', '')) = " + SQLUtil.toSQL(Master().getValidityDescription().replace(" ", "").toUpperCase())
                                                     + " AND b.cPaymForm = " + SQLUtil.toSQL(PromotionMaster().getPaymentForm())
                                                     );
           lsSQL = lsSQL 

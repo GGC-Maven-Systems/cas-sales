@@ -134,11 +134,13 @@ public class FreebieTest {
         schemaScripts.add("parameter_status_history_schema");
         
         schemaScripts.add("freebie_master_schema");
+        schemaScripts.add("vehicle_inclusion_master_schema");
         
         dataScripts.add("client_master_data");
         dataScripts.add("parameter_status_history_data");
         
         dataScripts.add("freebie_master_data");
+        dataScripts.add("vehicle_inclusion_master_data");
 
         for (String schema : schemaScripts) {
             try (FileReader schemaReader = new FileReader("test-data/" + schema + ".sql")) {

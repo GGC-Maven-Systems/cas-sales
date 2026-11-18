@@ -134,6 +134,7 @@ public class InclusionTest {
         schemaScripts.add("parameter_status_history_schema");
         
         schemaScripts.add("vehicle_inclusion_master_schema");
+        schemaScripts.add("freebie_master_schema");
         schemaScripts.add("brand_schema");
         schemaScripts.add("model_schema");
         schemaScripts.add("color_schema");
@@ -144,6 +145,7 @@ public class InclusionTest {
         dataScripts.add("parameter_status_history_data");
         
         dataScripts.add("vehicle_inclusion_master_data");
+        dataScripts.add("freebie_master_data");
         dataScripts.add("brand_data");
         dataScripts.add("model_data");
         dataScripts.add("color_data");

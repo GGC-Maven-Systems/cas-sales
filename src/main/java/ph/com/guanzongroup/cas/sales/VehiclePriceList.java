@@ -475,11 +475,11 @@ public class VehiclePriceList extends Transaction {
             ){
             for(int lnCtr = 0;lnCtr < getDetailCount();lnCtr++){
                 if(Detail(lnCtr).getRecordStatus()){
-                    poJSON = updateVariant(lsStatus, Detail(lnCtr).getVariantId(),Detail(lnCtr).getSRPAmount());
+                    poJSON = updateVariant(lsStatus, Detail(lnCtr).getVariantId(),Detail(lnCtr).getSRPAmount(), true);
                     if (!isJSONSuccess(poJSON)){
                         return poJSON;
                     }
-                    poJSON = updateInventory(lsStatus, Detail(lnCtr).getVariantId(),Detail(lnCtr).getSRPAmount());
+                    poJSON = updateInventory(lsStatus, Detail(lnCtr).getVariantId(),Detail(lnCtr).getSRPAmount(), true);
                     if (!isJSONSuccess(poJSON)){
                         return poJSON;
                     }
@@ -584,11 +584,11 @@ public class VehiclePriceList extends Transaction {
                         ){
                         for(int lnCtr = 0;lnCtr < loObj.getDetailCount();lnCtr++){
                             if(loObj.Detail(lnCtr).getRecordStatus()){
-                                poJSON = updateVariant(ValidityPeriodStatus.APPROVED, loObj.Detail(lnCtr).getVariantId(),loObj.Detail(lnCtr).getSRPAmount());
+                                poJSON = updateVariant(ValidityPeriodStatus.APPROVED, loObj.Detail(lnCtr).getVariantId(),loObj.Detail(lnCtr).getSRPAmount(),false);
                                 if (!isJSONSuccess(poJSON)){
                                     return poJSON;
                                 }
-                                poJSON = updateInventory(ValidityPeriodStatus.APPROVED, loObj.Detail(lnCtr).getVariantId(),loObj.Detail(lnCtr).getSRPAmount());
+                                poJSON = updateInventory(ValidityPeriodStatus.APPROVED, loObj.Detail(lnCtr).getVariantId(),loObj.Detail(lnCtr).getSRPAmount(), false);
                                 if (!isJSONSuccess(poJSON)){
                                     return poJSON;
                                 }
@@ -660,7 +660,7 @@ public class VehiclePriceList extends Transaction {
         return ldblSRP;
     }
     
-    private JSONObject updateInventory(String fsRecordStatus, String fsVariantId, Double fdblSRPAmt)
+    private JSONObject updateInventory(String fsRecordStatus, String fsVariantId, Double fdblSRPAmt, boolean withParent)
             throws ExceptionInInitializerError,
             SQLException,
             GuanzonException,
@@ -691,7 +691,9 @@ public class VehiclePriceList extends Transaction {
                 return poJSON; //Todo
             }
             
-            poGRider.beginTrans("UPDATE STATUS", "UPDATE", SOURCE_CODE, lsInvId);
+            if(!withParent){
+                poGRider.beginTrans("UPDATE STATUS", "UPDATE", SOURCE_CODE, lsInvId);
+            }
                 loObj.setSellingPrice(fdblSRPAmt);
                 loObj.setModifyingId(poGRider.Encrypt(poGRider.getUserID()));
                 loObj.setModifiedDate(poGRider.getServerDate());
@@ -700,8 +702,9 @@ public class VehiclePriceList extends Transaction {
                     poGRider.rollbackTrans();
                     return poJSON;
                 }
-
-            poGRider.commitTrans();
+            if(!withParent){
+                poGRider.commitTrans();
+            }
         }
         
         return poJSON;
@@ -730,7 +733,7 @@ public class VehiclePriceList extends Transaction {
         return lsInvId;
     }
     
-    private JSONObject updateVariant(String fsRecordStatus, String fsVariantId, Double fdblSRPAmt)
+    private JSONObject updateVariant(String fsRecordStatus, String fsVariantId, Double fdblSRPAmt, boolean withParent)
             throws ExceptionInInitializerError,
             SQLException,
             GuanzonException,
@@ -755,7 +758,9 @@ public class VehiclePriceList extends Transaction {
             } else {
                 return poJSON; //Todo
             }
-            poGRider.beginTrans("UPDATE STATUS", "UPDATE", SOURCE_CODE, fsVariantId);
+            if(!withParent){
+                poGRider.beginTrans("UPDATE STATUS", "UPDATE", SOURCE_CODE, fsVariantId);
+            }
                 loObj.setSellingPrice(fdblSRPAmt);
                 loObj.setModifyingId(poGRider.Encrypt(poGRider.getUserID()));
                 loObj.setModifiedDate(poGRider.getServerDate());
@@ -764,7 +769,9 @@ public class VehiclePriceList extends Transaction {
                     poGRider.rollbackTrans();
                     return poJSON;
                 }
-            poGRider.commitTrans();
+            if(!withParent){
+                poGRider.commitTrans();
+            }
         }
         
         return poJSON;
@@ -884,11 +891,11 @@ public class VehiclePriceList extends Transaction {
         for(int lnCtr = 0;lnCtr < getDetailCount();lnCtr++){
             if(Detail(lnCtr).getRecordStatus()){
                 ldblSRPAmt = checkPreviousSellingPrice(Detail(lnCtr).getVariantId()); //Check previous sellling price
-                poJSON = updateVariant(lsStatus, Detail(lnCtr).getVariantId(),ldblSRPAmt);
+                poJSON = updateVariant(lsStatus, Detail(lnCtr).getVariantId(),ldblSRPAmt, true);
                 if (!isJSONSuccess(poJSON)){
                     return poJSON;
                 }
-                poJSON = updateInventory(lsStatus,Detail(lnCtr).getVariantId(),ldblSRPAmt);
+                poJSON = updateInventory(lsStatus,Detail(lnCtr).getVariantId(),ldblSRPAmt, true);
                 if (!isJSONSuccess(poJSON)){
                     return poJSON;
                 }

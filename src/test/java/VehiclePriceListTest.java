@@ -269,7 +269,9 @@ public class VehiclePriceListTest {
                     System.out.println("Validity ID : " + obj.get("sValidIDx") != null ? obj.get("sValidIDx").toString() : "");
                     System.out.println("Variant ID : " + obj.get("sVrntIDxx") != null ? obj.get("sVrntIDxx").toString() : "");
                     System.out.println("Effected From : " + obj.get("dFromDate") != null ? obj.get("dFromDate").toString() : "");
-                    System.out.println("Effective To : " + obj.get("dThruDate") != null ? obj.get("dThruDate").toString() : "");
+                    if(obj.get("dThruDate") != null){
+                        System.out.println("Effective To : " + obj.get("dThruDate").toString());
+                    }
                     System.out.println("SRP Amount : " + obj.get("nSRPAmntx") != null ? obj.get("nSRPAmntx").toString() : "");
                     System.out.println("Price Year : " + obj.get("nPriceYrx") != null ? obj.get("nPriceYrx").toString() : "");
                     System.out.println("Updated By : " + obj.get("sModified") != null ? obj.get("sModified").toString() : "");

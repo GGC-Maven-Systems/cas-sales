@@ -2852,7 +2852,7 @@ public class VehicleQuotation extends Transaction {
         while (addon.hasNext()) {
             Model item = addon.next(); // Store the item before checking conditions
             String lsDetail = (String) item.getValue("sAddOnIDx");
-            int lnQty = (int) item.getValue("nQtyxxxxx");
+            int lnQty = (int) item.getValue("nQuantity");
             if ((lsDetail == null || "".equals(lsDetail))
                 || lnQty <= 0){
                 if(item.getEditMode() == EditMode.ADDNEW){
