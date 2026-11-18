@@ -30,6 +30,7 @@ import org.guanzon.cas.parameter.model.Model_Term;
 import org.guanzon.cas.parameter.services.ParamControllers;
 import org.guanzon.cas.parameter.services.ParamModels;
 import org.json.simple.JSONObject;
+import ph.com.guanzongroup.cas.sales.mcpromo.model.Model_Sales_Promotion_GiveAway_Item;
 import ph.com.guanzongroup.cas.sales.model.Model_Sales_Quotation_Master;
 import ph.com.guanzongroup.cas.sales.model.Model_Sales_Quotation_Version_Detail;
 import ph.com.guanzongroup.cas.sales.model.Model_Sales_Quotation_Version_Giveaways;
@@ -1109,7 +1110,6 @@ public class SalesQoutation extends Parameter {
         loResult.put("result", "success");
         return loResult;
     }
-
     public JSONObject SearchMCItemPromo(String value, int MCItemRow, int byCode) throws SQLException, GuanzonException {
         if (MCItemRow < 0 || MCItemRow >= oSalesQoutationVersion.getDetailCount()) {
             return setError("Select an item row first.");
@@ -1120,7 +1120,7 @@ public class SalesQoutation extends Parameter {
                         + " AND b.sModelIDx = " + SQLUtil.toSQL(oSalesQoutationVersion.Detail(MCItemRow).Inventory().getModelId()));
         System.out.println("Executing SQL: " + lsSQL);
 
-        JSONObject  loBrowse = ShowDialogFX.Browse(poGRider,
+        JSONObject loBrowse = ShowDialogFX.Browse(poGRider,
                 lsSQL,
                 value,
                 "Promo ID»Description»Promo From»Promo To",
@@ -1131,14 +1131,103 @@ public class SalesQoutation extends Parameter {
         if (loBrowse == null || loBrowse.get("sPromIDxx") == null) {
             return setError("No record loaded.");
         }
-        System.out.println("Promo ID : " + loBrowse.get("sPromIDxx"));
-        System.out.println("Promo ID : " + loBrowse.get("nDiscRate"));
-        System.out.println("Promo ID : " + loBrowse.get("nDiscAmtx"));
-        System.out.println("Promo ID : " + loBrowse.get("nFreightx"));
-        oSalesQoutationVersion.Detail(MCItemRow).setPromoCode((String) loBrowse.get("sPromIDxx"));
-        oSalesQoutationVersion.Detail(MCItemRow).setDiscount(Double.parseDouble((String)loBrowse.get("nDiscRate")));
-        oSalesQoutationVersion.Detail(MCItemRow).setAdditionalDiscount(Double.parseDouble((String)loBrowse.get("nDiscAmtx")));
-        oSalesQoutationVersion.Detail(MCItemRow).setFreight(Double.parseDouble((String)loBrowse.get("nFreightx")));
+
+        String lsPromoId = loBrowse.get("sPromIDxx").toString();
+
+        // null-safe numeric values (blank or missing becomes 0)
+        Object loRate = loBrowse.get("nDiscRate");
+        Object loAmount = loBrowse.get("nDiscAmtx");
+        Object loFreight = loBrowse.get("nFreightx");
+        double lnDiscRate;
+        double lnDiscAmount;
+        double lnFreight;
+        try {
+            lnDiscRate = loRate == null || loRate.toString().trim().isEmpty()
+                    ? 0.00 : Double.parseDouble(loRate.toString().replace(",", "").trim());
+            lnDiscAmount = loAmount == null || loAmount.toString().trim().isEmpty()
+                    ? 0.00 : Double.parseDouble(loAmount.toString().replace(",", "").trim());
+            lnFreight = loFreight == null || loFreight.toString().trim().isEmpty()
+                    ? 0.00 : Double.parseDouble(loFreight.toString().replace(",", "").trim());
+        } catch (NumberFormatException e) {
+            return setError("Invalid promo discount or freight value.");
+        }
+
+        // read the old promo BEFORE the new one is set
+        String lsOldPromo = oSalesQoutationVersion.Detail(MCItemRow).getPromoCode();
+        boolean lbSamePromo = lsPromoId.equals(lsOldPromo);
+
+        // the item had a different promo: take that promo's giveaways out first
+        if (lsOldPromo != null && !lsOldPromo.isEmpty() && !lbSamePromo) {
+            poJSON = RemoveMCItemPromoGiveaways(lsOldPromo);
+            if ("error".equals((String) poJSON.get("result"))) {
+                return poJSON;
+            }
+        }
+
+        oSalesQoutationVersion.Detail(MCItemRow).setPromoCode(lsPromoId);
+        oSalesQoutationVersion.Detail(MCItemRow).setDiscount(lnDiscRate);
+        oSalesQoutationVersion.Detail(MCItemRow).setAdditionalDiscount(lnDiscAmount);
+        oSalesQoutationVersion.Detail(MCItemRow).setFreight(lnFreight);
+
+        // picking the same promo again must not add its quantities a second time
+        if (!lbSamePromo) {
+            Model_Sales_Promotion_GiveAway_Item loPromoGaway = new Model_Sales_Promotion_GiveAway_Item();
+            loPromoGaway.setApplicationDriver(poGRider);
+            loPromoGaway.setXML("Model_Sales_Promotion_GiveAway_Item");   // VERIFY: real metadata XML name
+            loPromoGaway.setTableName("Sales_Promotion_GiveAway_Item");   // VERIFY: real table name
+            loPromoGaway.initialize();
+
+            List<Integer> laEntries = new ArrayList<>();
+            String lsGawaySQL = "SELECT nEntryNox FROM " + loPromoGaway.getTable()
+                    + " WHERE sPromIDxx = " + SQLUtil.toSQL(lsPromoId)
+                    + " AND cActivexx = " + SQLUtil.toSQL(RecordStatus.ACTIVE)
+                    + " ORDER BY nEntryNox";
+            ResultSet loRS = poGRider.executeQuery(lsGawaySQL);
+            try {
+                while (loRS.next()) {
+                    laEntries.add(loRS.getInt("nEntryNox"));
+                }
+            } finally {
+                MiscUtil.close(loRS);
+            }
+
+            for (int lnEntry : laEntries) {
+                poJSON = loPromoGaway.openRecord(lsPromoId, String.valueOf(lnEntry));
+                if (!"success".equals((String) poJSON.get("result"))) {
+                    return setError("Unable to load promo giveaway item " + lnEntry + ".");
+                }
+
+                String lsStockId = loPromoGaway.getStockID();
+                if (lsStockId == null || lsStockId.trim().isEmpty()) continue;
+                int lnPromoQty = loPromoGaway.getQuantity();
+                if (lnPromoQty <= 0) continue;
+
+                // look for the stock id in the giveaway list
+                int lnGiveawayRow = -1;
+                for (int lnCtr = 0; lnCtr < oSalesQoutationVersionGiveaways.getGiveawayCount(); lnCtr++) {
+                    if (lsStockId.equals(oSalesQoutationVersionGiveaways.Giveaway(lnCtr).getStockId())) {
+                        lnGiveawayRow = lnCtr;
+                        break;
+                    }
+                }
+
+                if (lnGiveawayRow >= 0) {
+                    // already in the list: add the promo's quantity to it
+                    Integer lnCurrent = oSalesQoutationVersionGiveaways.Giveaway(lnGiveawayRow).getQuantity();
+                    oSalesQoutationVersionGiveaways.Giveaway(lnGiveawayRow)
+                            .setQuantity((lnCurrent == null ? 0 : lnCurrent) + lnPromoQty);
+                } else {
+                    // not in the list yet: add a row, then populate it
+                    poJSON = oSalesQoutationVersionGiveaways.addGiveaway();
+                    if (!"success".equals((String) poJSON.get("result"))) {
+                        return poJSON;
+                    }
+                    int lnRow = oSalesQoutationVersionGiveaways.getGiveawayCount() - 1;
+                    oSalesQoutationVersionGiveaways.Giveaway(lnRow).setStockId(lsStockId);
+                    oSalesQoutationVersionGiveaways.Giveaway(lnRow).setQuantity(lnPromoQty);
+                }
+            }
+        }
 
         JSONObject loResult = new JSONObject();
         loResult.put("PromoDesc", (String) loBrowse.get("sPromDesc"));
@@ -1146,7 +1235,55 @@ public class SalesQoutation extends Parameter {
         return loResult;
     }
 
+    /** Takes the promo's giveaway quantities out of the list; a row is deleted only when its quantity reaches 0. */
+    public JSONObject RemoveMCItemPromoGiveaways(String promoId) throws SQLException, GuanzonException {
+        if (promoId == null || promoId.isEmpty()) {
+            return setResult("success", "No promo.");
+        }
 
+        Model_Sales_Promotion_GiveAway_Item loPromoGaway = new Model_Sales_Promotion_GiveAway_Item();
+        loPromoGaway.setApplicationDriver(poGRider);
+        loPromoGaway.setXML("Model_Sales_Promotion_GiveAway_Item");   // VERIFY: same value as in SearchMCItemPromo
+        loPromoGaway.setTableName("Sales_Promotion_GiveAway_Item");   // VERIFY: same value as in SearchMCItemPromo
+        loPromoGaway.initialize();
+
+        // same filter as the search, so exactly what was added gets subtracted
+        List<String> laStockIds = new ArrayList<>();
+        List<Integer> laQuantities = new ArrayList<>();
+        String lsSQL = "SELECT sStockIDx, nQuantity FROM " + loPromoGaway.getTable()
+                + " WHERE sPromIDxx = " + SQLUtil.toSQL(promoId)
+                + " AND cActivexx = " + SQLUtil.toSQL(RecordStatus.ACTIVE);
+        ResultSet loRS = poGRider.executeQuery(lsSQL);
+        try {
+            while (loRS.next()) {
+                laStockIds.add(loRS.getString("sStockIDx"));
+                laQuantities.add(loRS.getInt("nQuantity"));
+            }
+        } finally {
+            MiscUtil.close(loRS);
+        }
+
+        for (int lnItem = 0; lnItem < laStockIds.size(); lnItem++) {
+            String lsStockId = laStockIds.get(lnItem);
+            if (lsStockId == null || lsStockId.trim().isEmpty()) continue;
+
+            for (int lnCtr = 0; lnCtr < oSalesQoutationVersionGiveaways.getGiveawayCount(); lnCtr++) {
+                if (!lsStockId.equals(oSalesQoutationVersionGiveaways.Giveaway(lnCtr).getStockId())) continue;
+
+                Integer lnCurrent = oSalesQoutationVersionGiveaways.Giveaway(lnCtr).getQuantity();
+                int lnNew = (lnCurrent == null ? 0 : lnCurrent) - laQuantities.get(lnItem);
+
+                if (lnNew > 0) {
+                    oSalesQoutationVersionGiveaways.Giveaway(lnCtr).setQuantity(lnNew);
+                } else {
+                    oSalesQoutationVersionGiveaways.removeGiveaway(lnCtr);
+                }
+                break;   // one row per stock id
+            }
+        }
+
+        return setResult("success", "Promo giveaways removed.");
+    }0
     public double computeMCItemDetail(
             double srp,
             int qty,
