@@ -276,7 +276,7 @@ public class VehicleQuotationTest {
                 }
                 System.out.println("Variant ID : " + poController.Detail(lnCtr).getVariantId());
                 System.out.println("SRP Amount : " + poController.Detail(lnCtr).getSRPAmount());
-                
+                poController.Detail(lnCtr).setSRPAmount(1000000.00);
                 poController.Detail(lnCtr).setPromptPaymentDiscount(100.00);
                 poController.Detail(lnCtr).setDownPayment(100.00);
                 poController.Detail(lnCtr).setDownPaymentPercent(10.00);
@@ -289,7 +289,7 @@ public class VehicleQuotationTest {
             }
             
             loadDetails();
-            
+            poController.computeFields();
             System.out.println("Detail Count :" + poController.getDetailCount());
             System.out.println("VALid Thru : " + poController.Detail(0).getValidThruDate());
             loJSON = poController.SaveTransaction();
@@ -299,9 +299,9 @@ public class VehicleQuotationTest {
             String lsTransNo = poController.Master().getTransactionNo();
             loJSON = poController.OpenTransaction(lsTransNo);
             System.out.println("MESSAGE : " + String.valueOf(loJSON.get("message")));
-            Assert.assertEquals("success", loJSON.get("result"));
+            Assert.assertEquals("succ"
+                    + "ess", loJSON.get("result"));
             System.out.println("Detail Count :" + poController.getDetailCount());
-            System.out.println("VALid Thru : " + poController.Detail(0).getValidThruDate());
             System.out.println("-----------LOAD DETAIL-----------");
             for(int lnCtr = 0; lnCtr < poController.getDetailCount(); lnCtr++){
                 if(poController.Detail(lnCtr).getVariantId() == null || "".equals(poController.Detail(lnCtr).getVariantId())){
@@ -320,6 +320,7 @@ public class VehicleQuotationTest {
             loJSON = poController.Detail(0).setRemarks("Test Vehicle Quotation");
             Assert.assertEquals("success", loJSON.get("result"));
             
+            poController.computeFields();
             loJSON = poController.SaveTransaction();
             System.out.println("MESSAGE : " + loJSON.get("message"));
             Assert.assertEquals("success", loJSON.get("result"));
@@ -333,6 +334,7 @@ public class VehicleQuotationTest {
             System.out.println("MESSAGE : " + String.valueOf(loJSON.get("message")));
             Assert.assertEquals("success", loJSON.get("result"));
             
+            poController.computeFields();
             loJSON = poController.SaveTransaction();
             System.out.println("MESSAGE : " + loJSON.get("message"));
             Assert.assertEquals("success", loJSON.get("result"));
@@ -373,6 +375,7 @@ public class VehicleQuotationTest {
                 System.out.println("Variant ID : " + poController.Detail(lnCtr).getVariantId());
                 System.out.println("SRP Amount : " + poController.Detail(lnCtr).getSRPAmount());
                 
+                poController.Detail(lnCtr).setSRPAmount(1000000.00);
                 poController.Detail(lnCtr).setPromptPaymentDiscount(100.00);
                 poController.Detail(lnCtr).setDownPayment(100.00);
                 poController.Detail(lnCtr).setDownPaymentPercent(10.00);
@@ -386,6 +389,7 @@ public class VehicleQuotationTest {
             
             loadDetails();
             
+            poController.computeFields();
             loJSON = poController.SaveTransaction();
             System.out.println("MESSAGE : " + loJSON.get("message"));
             Assert.assertEquals("success", loJSON.get("result"));
@@ -509,6 +513,17 @@ public class VehicleQuotationTest {
                 System.out.println("Freebie ID : " + poController.InclusionList(lnCtr).getInclusionId());
                 System.out.println("Freebie Name : " + poController.InclusionList(lnCtr).Inclusion().getDescription());
                 System.out.println("Freebie Amount : " + poController.InclusionList(lnCtr).getAmount());
+            }
+            for(int lnCtr = 0; lnCtr < poController.getSpecialRequestListCount(); lnCtr++){
+                if((poController.SpecialRequestList(lnCtr).getRequestDescription()== null || "".equals(poController.SpecialRequestList(lnCtr).getRequestDescription()))
+                    &&
+                    (poController.SpecialRequestList(lnCtr).getAmount() > 0.00)    
+                    ){
+                    continue;
+                }
+                System.out.println("SpecialRequestList ID : " + poController.SpecialRequestList(lnCtr).getEntryNo());
+                System.out.println("SpecialRequestList Name : " + poController.SpecialRequestList(lnCtr).getRequestDescription());
+                System.out.println("SpecialRequestList Amount : " + poController.SpecialRequestList(lnCtr).getAmount());
             }
             System.out.println("-------------------------------------------------------------------------------");
         
