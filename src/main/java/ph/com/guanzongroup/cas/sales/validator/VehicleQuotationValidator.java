@@ -19,6 +19,7 @@ import org.json.simple.JSONObject;
 import ph.com.guanzongroup.cas.sales.model.Model_Sales_Quotation_Master;
 import ph.com.guanzongroup.cas.sales.model.Model_Sales_Quotation_Vehicle;
 import ph.com.guanzongroup.cas.sales.status.ValidityPeriodStatus;
+import ph.com.guanzongroup.cas.sales.status.VehicleQuotationStatus;
 
 /**
  *
@@ -214,46 +215,69 @@ public class VehicleQuotationValidator implements GValidator{
             return poJSON;
         }
         
-
+        if (poDetail.isInsuranceLocked()) {
+            if (poDetail.getInsuranceYears() <= 0) {
+                poJSON.put("result", "error");
+                poJSON.put("message", "Invalid coverage year.");
+                return poJSON;
+            }
+        }
+        
         //Validate financing if not cash
-        if (!"0".equals(poDetail.getPaymentForm())) { //Financing / PO
-//            if (poDetail.getDownPayment() <= 0.0000) { //Do not require downpayment based on meeting 11-16-2026
-//                poJSON.put("result", "error");
-//                poJSON.put("message", "Downpayment amount is not set.");
-//                return poJSON;
-//            }
-            
-//            if (poDetail.getQuotationRate() == null || "".equals(poDetail.getQuotationRate())) { //Quotation Rate is optional 
-//                poJSON.put("result", "error");
-//                poJSON.put("message", "Bank is not set.");
-//                return poJSON;
-//            }
-            if (poDetail.getPromptPaymentDiscount() > poDetail.getFinancingAmount()
-                || poDetail.getPromptPaymentDiscount() > poDetail.getMonthlyAmount()) {
-                poJSON.put("result", "error");
-                poJSON.put("message", "In.");
-                return poJSON;
-            }
-            if (poDetail.getFinancingAmount() <= 0.0000) {
-                poJSON.put("result", "error");
-                poJSON.put("message", "Finance amount is not set.");
-                return poJSON;
-            }
-            if (poDetail.getMonthlyAmount() <= 0.0000) {
-                poJSON.put("result", "error");
-                poJSON.put("message", "Net monthly installment is not set.");
-                return poJSON;
-            }
-            if (poDetail.getGrossMonthlyInstallment() <= 0.0000) {
-                poJSON.put("result", "error");
-                poJSON.put("message", "Gross monthly installment is not set.");
-                return poJSON;
-            }
-            if (poDetail.getPromissoryNoteAmt() <= 0.0000) {
-                poJSON.put("result", "error");
-                poJSON.put("message", "Promissory note amount is not set.");
-                return poJSON;
-            }
+        switch(poDetail.getPaymentForm()){
+            case VehicleQuotationStatus.PaymentForm.FINANCING:
+                if (poDetail.getDuration() <= 0) {
+                    poJSON.put("result", "error");
+                    poJSON.put("message", "Duration is not set.");
+                    return poJSON;
+                }
+
+                if (poDetail.getRateValue() <= 0.00) {
+                    poJSON.put("result", "error");
+                    poJSON.put("message", "Rate is not set.");
+                    return poJSON;
+                }
+                
+                if (poDetail.getPromptPaymentDiscount() > poDetail.getFinancingAmount()
+                    || poDetail.getPromptPaymentDiscount() > poDetail.getMonthlyAmount()) {
+                    poJSON.put("result", "error");
+                    poJSON.put("message", "Invalid prompt payment discount.");
+                    return poJSON;
+                }
+                if (poDetail.getFinancingAmount() <= 0.0000) {
+                    poJSON.put("result", "error");
+                    poJSON.put("message", "Finance amount is not set.");
+                    return poJSON;
+                }
+                if (poDetail.getMonthlyAmount() <= 0.0000) {
+                    poJSON.put("result", "error");
+                    poJSON.put("message", "Net monthly installment is not set.");
+                    return poJSON;
+                }
+                if (poDetail.getGrossMonthlyInstallment() <= 0.0000) {
+                    poJSON.put("result", "error");
+                    poJSON.put("message", "Gross monthly installment is not set.");
+                    return poJSON;
+                }
+                if (poDetail.getPromissoryNoteAmt() <= 0.0000) {
+                    poJSON.put("result", "error");
+                    poJSON.put("message", "Promissory note amount is not set.");
+                    return poJSON;
+                }
+            break;
+            case VehicleQuotationStatus.PaymentForm.PO:
+                if (poDetail.getPromptPaymentDiscount() > poDetail.getFinancingAmount()) {
+                    poJSON.put("result", "error");
+                    poJSON.put("message", "Invalid prompt payment discount.");
+                    return poJSON;
+                }
+                if (poDetail.getFinancingAmount() <= 0.0000) {
+                    poJSON.put("result", "error");
+                    poJSON.put("message", "Finance amount is not set.");
+                    return poJSON;
+                }
+            break;
+        
         }
         
         poJSON.put("result", "success");
