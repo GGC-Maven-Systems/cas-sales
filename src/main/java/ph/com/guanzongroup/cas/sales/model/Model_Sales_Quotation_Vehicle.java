@@ -16,6 +16,7 @@ import ph.com.guanzongroup.cas.sales.services.SalesModels;
 
 import java.sql.SQLException;
 import java.util.Date;
+import org.guanzon.appdriver.constant.Logical;
 import org.guanzon.appdriver.constant.RecordStatus;
 
 /**
@@ -50,41 +51,40 @@ public class Model_Sales_Quotation_Vehicle extends Model {
             poEntity.updateNull("dExpected");
             poEntity.updateNull("dValdThru");
             poEntity.updateObject("nTranTotl", 0.00);
-            poEntity.updateObject("nDiscount", 0.00);
-            poEntity.updateObject("nAddDiscx", 0.00);
-            poEntity.updateObject("nFreightx", 0.00);
-            poEntity.updateObject("nVATSales", 0.00);
-            poEntity.updateObject("nVATAmtxx", 0.00);
-            poEntity.updateObject("nNonVATSl", 0.00);
             poEntity.updateObject("nTPLAmntx", 0.00);
             poEntity.updateObject("nCompInsx", 0.00);
             poEntity.updateObject("nLTOAmntx", 0.00);
             poEntity.updateObject("nDocStmpx", 0.00);
             poEntity.updateObject("nRsrvAmtx", 0.00);
             poEntity.updateObject("nPrmPayDx", 0.00);
+            poEntity.updateObject("nSRPAmntx", 0.00);
             poEntity.updateObject("nDownPayx", 0.00);
+            poEntity.updateObject("nDownPctx", 0.00);
+            poEntity.updateObject("nFinAmntx", 0.00);
+            poEntity.updateObject("nRateValx", 0.0000);
+            poEntity.updateObject("nMonthlyx", 0.00);
+            poEntity.updateObject("nGrsMnthI", 0.00);
+            poEntity.updateObject("nPromNote", 0.00);
+            poEntity.updateObject("nTotAmntx", 0.00);
+            poEntity.updateObject("nInsurYrx", 0);
+            poEntity.updateString("cInsLckIn", Logical.NO);
+            poEntity.updateString("cPayOptnx", Logical.NO);
             poEntity.updateString("cRecdStat", RecordStatus.ACTIVE);
+            poEntity.updateNull("sModified");
+            poEntity.updateNull("dModified");
             //end - assign default values
 
             poEntity.insertRow();
             poEntity.moveToCurrentRow();
             poEntity.absolute(1);
 
-            ID = "sQotPayID";
-            ID2 = "sTransNox";
+            ID = "sTransNox";
 
             pnEditMode = EditMode.UNKNOWN;
         } catch (SQLException e) {
             logwrapr.severe(e.getMessage());
             System.exit(1);
         }
-    }
-    public JSONObject setQuotationPaymentId(String quotationPaymentId) {
-        return setValue("sQotPayID", quotationPaymentId);
-    }
-
-    public String getQuotationPaymentId() {
-        return (String) getValue("sQotPayID");
     }
 
     public JSONObject setTransactionNo(String transactionNo) {
@@ -95,22 +95,6 @@ public class Model_Sales_Quotation_Vehicle extends Model {
         return (String) getValue("sTransNox");
     }
 
-    public JSONObject setIndustryId(String industryId) {
-        return setValue("sIndstCdx", industryId);
-    }
-
-    public String getIndustryId() {
-        return (String) getValue("sIndstCdx");
-    }
-
-    public JSONObject setCompanyId(String companyId) {
-        return setValue("sCompnyID", companyId);
-    }
-
-    public String getCompanyId() {
-        return (String) getValue("sCompnyID");
-    }
-
     public JSONObject setBranchCode(String branchCode) {
         return setValue("sBranchCd", branchCode);
     }
@@ -119,22 +103,6 @@ public class Model_Sales_Quotation_Vehicle extends Model {
         return (String) getValue("sBranchCd");
     }
 
-    public JSONObject setCategoryCode(String categoryCode) {
-        return setValue("sCategrCd", categoryCode);
-    }
-
-    public String getCategoryCode() {
-        return (String) getValue("sCategrCd");
-    }
-    
-    public JSONObject setTransactionDate(Date transactionDate) {
-        return setValue("dTransact", transactionDate);
-    }
-
-    public Date getTransactionDate() {
-        return (Date) getValue("dTransact");
-    }
-    
     public JSONObject setExpectedDate(Date expectedDate) {
         return setValue("dExpected", expectedDate);
     }
@@ -199,13 +167,13 @@ public class Model_Sales_Quotation_Vehicle extends Model {
         return (String) getValue("sRemarksx");
     }
 
-    public JSONObject setQuotePaymentId(String quotePaymentId) {
-        return setValue("sQotPayID", quotePaymentId);
-    }
-
-    public String getQuotePaymentId() {
-        return (String) getValue("sQotPayID");
-    }
+//    public JSONObject setQuotePaymentId(String quotePaymentId) {
+//        return setValue("sQotPayID", quotePaymentId);
+//    }
+//
+//    public String getQuotePaymentId() {
+//        return (String) getValue("sQotPayID");
+//    }
 
     public JSONObject setPaymentForm(String paymentForm) {
         return setValue("cPaymForm", paymentForm);
@@ -246,11 +214,11 @@ public class Model_Sales_Quotation_Vehicle extends Model {
     }
 
     public JSONObject setQuotationRate(String quotationRate) {
-        return setValue("sQuotRate", quotationRate);
+        return setValue("sStdRteID", quotationRate);
     }
 
     public String getQuotationRate() {
-        return (String) getValue("sQuotRate");
+        return (String) getValue("sStdRteID");
     }
 
     public JSONObject setSRPAmount(Double srpAmount) {
@@ -297,27 +265,27 @@ public class Model_Sales_Quotation_Vehicle extends Model {
         return Double.valueOf(getValue("nRsrvAmtx").toString());
     }
     
-    public JSONObject setDiscountAmount(Double discountAmount) {
-        return setValue("nDiscount", discountAmount);
-    }
-
-    public Double getDiscountAmount() {
-        if (getValue("nDiscount") == null || "".equals(getValue("nDiscount"))) {
-            return 0.00;
-        }
-        return Double.valueOf(getValue("nDiscount").toString());
-    }
-
-    public JSONObject setAdditionalDiscountAmount(Double additionalDiscount) {
-        return setValue("nAddDiscx", additionalDiscount);
-    }
-
-    public Double getAdditionalDiscountAmount() {
-        if (getValue("nAddDiscx") == null || "".equals(getValue("nAddDiscx"))) {
-            return 0.00;
-        }
-        return Double.valueOf(getValue("nAddDiscx").toString());
-    }
+//    public JSONObject setDiscountAmount(Double discountAmount) {
+//        return setValue("nDiscount", discountAmount);
+//    }
+//
+//    public Double getDiscountAmount() {
+//        if (getValue("nDiscount") == null || "".equals(getValue("nDiscount"))) {
+//            return 0.00;
+//        }
+//        return Double.valueOf(getValue("nDiscount").toString());
+//    }
+//
+//    public JSONObject setAdditionalDiscountAmount(Double additionalDiscount) {
+//        return setValue("nAddDiscx", additionalDiscount);
+//    }
+//
+//    public Double getAdditionalDiscountAmount() {
+//        if (getValue("nAddDiscx") == null || "".equals(getValue("nAddDiscx"))) {
+//            return 0.00;
+//        }
+//        return Double.valueOf(getValue("nAddDiscx").toString());
+//    }
 
 
     public JSONObject setFinancingAmount(Double financingAmount) {
@@ -441,6 +409,35 @@ public class Model_Sales_Quotation_Vehicle extends Model {
         return Double.valueOf(getValue("nPromNote").toString());
     }
 
+    public JSONObject setInsuranceLocked(boolean insuranceLocked) {
+        return setValue("cInsLckIn", insuranceLocked ? Logical.YES : Logical.NO);
+    }
+
+    public boolean isInsuranceLocked() {
+        Object loValue = getValue("cInsLckIn");
+        return loValue != null && Logical.YES.equals(String.valueOf(loValue));
+    }
+
+    public JSONObject setInsuranceYears(int insuranceYears) {
+        return setValue("nInsurYrx", insuranceYears);
+    }
+
+    public int getInsuranceYears() {
+        if (getValue("nInsurYrx") == null || "".equals(getValue("nInsurYrx"))) {
+            return 0;
+        }
+        return Integer.parseInt(getValue("nInsurYrx").toString());
+    }
+
+    public JSONObject setPaymentOption(boolean paymentOption) {
+        return setValue("cPayOptnx", paymentOption ? Logical.YES : Logical.NO);
+    }
+
+    public boolean isPaymentOption() {
+        Object loValue = getValue("cPayOptnx");
+        return loValue != null && Logical.YES.equals(String.valueOf(loValue));
+    }
+
     public JSONObject setSourceCode(String sourceCode) {
         return setValue("sSourceCd", sourceCode);
     }
@@ -457,20 +454,13 @@ public class Model_Sales_Quotation_Vehicle extends Model {
         return (String) getValue("sSourceNo");
     }
 
-    public JSONObject setGiveawayCode(String giveawayCode) {
-        return setValue("sGAWayCde", giveawayCode);
-    }
-
-    public String getGiveawayCode() {
-        return (String) getValue("sGAWayCde");
-    }
-
     public JSONObject setRecordStatus(boolean recordStatus) {
-        return setValue("cRecdStat", recordStatus ? "1" : "0");
+        return setValue("cRecdStat", recordStatus ? Logical.YES : Logical.NO);
     }
 
     public boolean getRecordStatus() {
-        return ((String) getValue("cRecdStat")).equals("1");
+        Object loValue = getValue("cRecdStat");
+        return loValue != null && Logical.YES.equals(String.valueOf(loValue));
     }
 
     public JSONObject setModifiedBy(String modifiedBy) {
@@ -491,7 +481,8 @@ public class Model_Sales_Quotation_Vehicle extends Model {
 
     @Override
     public String getNextCode() {
-        return MiscUtil.getNextCode(this.getTable(), ID, true, poGRider.getGConnection().getConnection(), poGRider.getBranchCode());
+        return "";
+//        return MiscUtil.getNextCode(this.getTable(), ID, true, poGRider.getGConnection().getConnection(), poGRider.getBranchCode());
     }
 
     public void setBrandId(String brand) {
@@ -704,8 +695,8 @@ public class Model_Sales_Quotation_Vehicle extends Model {
             poFinancingRate = new SalesModels(poGRider).FinancingRateMaster();
         }
 
-        String id = (String) (getValue("sQuotRate") == null ? "" : getValue("sQuotRate"));
-        
+        String id = (String) (getValue("sStdRteID") == null ? "" : getValue("sStdRteID"));
+
         if (!"".equals(id)) {
             if (poFinancingRate.getEditMode() == EditMode.READY
                     && poFinancingRate.getRateId().equals(id)) {
@@ -727,6 +718,4 @@ public class Model_Sales_Quotation_Vehicle extends Model {
     }
     
     //end - reference object models
-
 }
-

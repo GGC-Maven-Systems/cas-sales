@@ -241,13 +241,14 @@ public class VehicleQuotation extends Transaction {
         } else {
             this.paDetail.clear();
             
-            String sql = "SELECT sQotPayID FROM " + this.poDetail.getTable() + " WHERE sTransNox = " + SQLUtil.toSQL(transactionNo) + " ORDER BY sQotPayID";
+            String sql = "SELECT sTransNox FROM " + this.poDetail.getTable() + " WHERE sTransNox = " + SQLUtil.toSQL(transactionNo) + " ORDER BY sTransNox";
+            System.out.println("OPEN DETAIL : " + sql );
             ResultSet rs = this.poGRider.executeQuery(sql);
 
             while(rs.next()) {
                 Model loDetail = (Model)this.poDetail.clone();
                 loDetail.newRecord();
-                this.poJSON = loDetail.openRecord( rs.getString("sQotPayID"),transactionNo);
+                this.poJSON = loDetail.openRecord( transactionNo);
                 if (!"success".equals((String)this.poJSON.get("result"))) {
                     this.poJSON.put("message", "Unable to open transaction detail record.");
                     this.clear();
@@ -373,10 +374,10 @@ public class VehicleQuotation extends Transaction {
                         } else {
                             for(int lnCtr = 0; lnCtr <= this.paDetail.size() - 1; ++lnCtr) {
                                 ((Model)this.paDetail.get(lnCtr)).setValue("dModified", this.pdModified);
-                                Detail(lnCtr).setTransactionNo(Master().getTransactionNo());
-                                if(((Model)this.paDetail.get(lnCtr)).getEditMode() == EditMode.ADDNEW){
-                                    ((Model)this.paDetail.get(lnCtr)).setValue("sQotPayID", Detail(lnCtr).getNextCode());
-                                }
+//                                Detail(lnCtr).setTransactionNo(Master().getTransactionNo());
+//                                if(((Model)this.paDetail.get(lnCtr)).getEditMode() == EditMode.ADDNEW){
+//                                    ((Model)this.paDetail.get(lnCtr)).setValue("sQotPayID", Detail(lnCtr).getNextCode());
+//                                }
                                 try {
                                     this.poJSON = ((Model)this.paDetail.get(lnCtr)).saveRecord();
                                 } catch (SQLException | GuanzonException ex) {
@@ -2227,6 +2228,9 @@ public class VehicleQuotation extends Transaction {
     }
     
     public void computeFields() throws SQLException, GuanzonException{
+        if(getDetailCount() <= 0){
+            return;
+        }
         String lsDecimalFormat = "###0.00";
         DecimalFormat format = new DecimalFormat(lsDecimalFormat);
         
@@ -2336,7 +2340,7 @@ public class VehicleQuotation extends Transaction {
         } else {
             paAddOn = new ArrayList<>();
             paDiscount = new ArrayList<>();
-            loDetail.setAdditionalDiscountAmount(0.00);
+//            loDetail.setAdditionalDiscountAmount(0.00);
             loDetail.setTPLAmount(0.00);
             loDetail.setLTOAmount(0.00);
             loDetail.setComprehensiveAmount(0.00);
@@ -2352,7 +2356,7 @@ public class VehicleQuotation extends Transaction {
             Detail(0).setGrossMonthlyInstallment(ldblGrossMonthlyInstallment);
             Detail(0).setPromissoryNoteAmt(ldblPromissoryNoteAmt);
             Detail(0).setTransactionTotal(ldblTranTotal);
-            Detail(0).setDiscountAmount(ldblTotalDisc);
+//            Detail(0).setDiscountAmount(ldblTotalDisc);
             Detail(0).setTotalAmount(ldblTranTotal - ldblTotalDisc);
         }
     }
@@ -2706,6 +2710,12 @@ public class VehicleQuotation extends Transaction {
             return poJSON;
         }
         
+        if (getTotalDiscount() > Detail(0).getTransactionTotal()) {
+            poJSON.put("result", "error");
+            poJSON.put("message", "Discount amount cannot be greater than the transaction total.");
+            return poJSON;
+        }
+        
 //        if(pbWithUI){
 //            if(validateStandardDetails()){ //if true require approve upon saving
 //                poJSON = callApproval();
@@ -2736,10 +2746,10 @@ public class VehicleQuotation extends Transaction {
                 return setJSON("error", "Invalid SRP amount.");
             }
             
-            System.out.println("Record Status : " + Detail(lnCtr).getRecordStatus());
-            if(Detail(lnCtr).getEditMode() == EditMode.ADDNEW){
-                Detail(lnCtr).setQuotationPaymentId(Detail(lnCtr).getNextCode());
-            }
+//            System.out.println("Record Status : " + Detail(lnCtr).getRecordStatus());
+//            if(Detail(lnCtr).getEditMode() == EditMode.ADDNEW){
+//                Detail(lnCtr).setQuotationPaymentId(Detail(lnCtr).getNextCode());
+//            }
             Detail(lnCtr).setTransactionNo(Master().getTransactionNo());
             Detail(lnCtr).setModifiedBy(poGRider.Encrypt(poGRider.getUserID()));
             Detail(lnCtr).setModifiedDate(poGRider.getServerDate());

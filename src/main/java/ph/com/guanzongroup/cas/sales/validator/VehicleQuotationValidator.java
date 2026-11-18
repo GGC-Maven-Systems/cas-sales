@@ -214,12 +214,7 @@ public class VehicleQuotationValidator implements GValidator{
             return poJSON;
         }
         
-        if (poDetail.getDiscountAmount() > poDetail.getTransactionTotal()) {
-            poJSON.put("result", "error");
-            poJSON.put("message", "Discount amount cannot be greater than the transaction total.");
-            return poJSON;
-        }
-        
+
         //Validate financing if not cash
         if (!"0".equals(poDetail.getPaymentForm())) { //Financing / PO
 //            if (poDetail.getDownPayment() <= 0.0000) { //Do not require downpayment based on meeting 11-16-2026
