@@ -636,6 +636,43 @@ public class VehicleQuotation extends Transaction {
         return poJSON;
     }
     
+    public JSONObject validateSRPPrice(String fsVariantId){
+        poJSON = new JSONObject();
+        try {
+            Date ldServerDate = SQLUtil.toDate(xsDateShort(poGRider.getServerDate()), SQLUtil.FORMAT_SHORT_DATE);
+            //Check existing price list
+            String lsSQL = MiscUtil.addCondition(PriceList_SQL()," sCompnyID =  " + SQLUtil.toSQL(psCompanyId)
+                    + " AND a.cRecdStat =  " + SQLUtil.toSQL(ValidityPeriodStatus.APPROVED)
+                    + " AND (a.dThruDate IS NULL OR a.dThruDate >= " + SQLUtil.toSQL(xsDateShort(ldServerDate))
+                    + " ) "
+                            + " AND a.dFromDate <= " + SQLUtil.toSQL(xsDateShort(ldServerDate))
+                    + " AND b.sVrntIDxx = " + SQLUtil.toSQL(fsVariantId)
+            );
+            lsSQL = lsSQL + "GROUP BY a.sValidIDx";
+            System.out.println("updatePriceList SQL: " + lsSQL);
+            ResultSet loRS = poGRider.executeQuery(lsSQL);
+            if (MiscUtil.RecordCount(loRS) > 0) {
+                Double ldblSRPAmt = 0.00;
+                while(loRS.next()) {
+                    ldblSRPAmt = loRS.getDouble("nSRPAmntx");
+                    if(!Objects.equals(ldblSRPAmt, Detail(0).getSRPAmount())){
+                        return setJSON("error", "Vehicle Quotation SRP Amount is outdated.");
+                    }
+                }
+            } else {
+                return setJSON("error", "No approved vehicle price list."
+                        + "\nConfigure vehicle pricing before adding vehicle to quotation.");
+            }
+            MiscUtil.close(loRS);
+        } catch (SQLException ex) {
+            Logger.getLogger(VehicleQuotation.class.getName()).log(Level.SEVERE, null, ex);
+        }
+            
+        poJSON = new JSONObject();
+        poJSON = setJSON("success", "success");
+        return poJSON;
+    }
+    
     public JSONObject loadTransactionList(String fsClient, String fsTransactionNo) throws SQLException, GuanzonException {
         poJSON = new JSONObject();
         paMaster = new ArrayList<>();
@@ -1098,6 +1135,8 @@ public class VehicleQuotation extends Transaction {
             } else {
                 poJSON = object.openRecord(value);
             }
+            
+            poJSON = validateSRPPrice(object.getModel().getVariantId());
             if (isJSONSuccess(poJSON)) {
                 Detail(row).setVariantId(object.getModel().getVariantId()); 
                 Detail(row).setSRPAmount(object.getModel().getSellingPrice()); 
@@ -3304,6 +3343,35 @@ public class VehicleQuotation extends Transaction {
                     : "") 
                     + ") AS x";
         
+    }
+    
+    private String PriceList_SQL() {
+        return "SELECT " +
+                "  a.sValidIDx, " +
+                "  a.sCompnyID, " +
+                "  a.dFromDate, " +
+                "  a.dThruDate, " +
+                "  a.sValidDsc, " +
+                "  a.cRecdStat, " +
+                "  a.dModified, " +
+                "     CASE  " +
+                "         WHEN a.cRecdStat = '0'  " +
+                "         THEN 'OPEN'  " +
+                "         WHEN a.cRecdStat = '1'  " +
+                "         THEN 'APPROVED'  " +
+                "         WHEN a.cRecdStat = '2'  " +
+                "         THEN 'CANCELLED'  " +
+                "         WHEN a.cRecdStat = '3'  " +
+                "         THEN 'VOIDED'  " +
+                "         ELSE 'UNKNOWN' " +
+                "     END AS xRecdStat, " +
+                "  b.sVrntIDxx, " +
+                "  b.nPriceYrx, " +
+                "  b.nSRPAmntx, " +
+                "  b.sModified," +
+                "  b.dModified " +
+                "FROM Validity_Period_Master a " +
+                "INNER JOIN Vehicle_Price_Master b ON b.sValidIDx = a.sValidIDx";
     }
     
     private TransactionAttachment TransactionAttachment() throws SQLException, GuanzonException {
