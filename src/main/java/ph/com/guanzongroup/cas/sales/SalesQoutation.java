@@ -648,6 +648,7 @@ public class SalesQoutation extends Parameter {
                     return poJSON;
                 }
 
+
                 poJSON = oSalesQoutationVersion.OpenTransaction(lsNewVersionNo);
                 if (!"success".equals((String) poJSON.get("result"))) {
                     return poJSON;

@@ -93,15 +93,20 @@ public class Sales_Qoutation_Validator_MC implements GValidator {
 
         if (poMaster.getTransactionNo() == null || "".equals(poMaster.getTransactionNo())) {
             poJSON.put("result", "error");
-            poJSON.put("message", "Please specify transaction no.");
+            poJSON.put("message", "Transaction No. must not be empty.");
             return poJSON;
         }
-
         if (poMaster.getParentId() == null || "".equals(poMaster.getParentId())) {
             poJSON.put("result", "error");
             poJSON.put("message", "Parent quotation must not be empty.");
             return poJSON;
         }
+        if (poMaster.getTitleName() == null || "".equals(poMaster.getTitleName())) {
+            poJSON.put("result", "error");
+            poJSON.put("message", "Qoutation Title must not be empty.");
+            return poJSON;
+        }
+
 
         poJSON.put("result", "success");
         return poJSON;

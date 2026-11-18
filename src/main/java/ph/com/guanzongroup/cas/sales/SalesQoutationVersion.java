@@ -369,6 +369,20 @@ public class SalesQoutationVersion extends Transaction {
                     + ") has already passed. Update the expected date to continue.");
             return poJSON;
         }
+
+        if ((Master().getDeliveryType().equals(SalesQoutationStatic.DeliveryType.PICK_UP)
+                && (Master().getBranchCode() == null || Master().getBranchCode().trim().isEmpty()))
+                || (Master().getDeliveryType().equals(SalesQoutationStatic.DeliveryType.DELIVERY)
+                && (Master().getDeliverTo() == null || Master().getDeliverTo().trim().isEmpty()))) {
+
+            poJSON.put("result", "error");
+            poJSON.put("message", Master().getDeliveryType().equals(SalesQoutationStatic.DeliveryType.PICK_UP)
+                    ? "Branch code is required for Pick-Up delivery."
+                    : "Delivery address is required for Delivery type.");
+
+            return poJSON;
+        }
+
         // drop rows without an item
         Iterator<Model> detail = Detail().iterator();
         while (detail.hasNext()) {
@@ -436,21 +450,15 @@ public class SalesQoutationVersion extends Transaction {
     protected JSONObject isEntryOkay(String status) {
         poJSON = new JSONObject();
 
-        if (Master().getTransactionNo() == null || "".equals(Master().getTransactionNo())) {
-            return setJSON("error", "Transaction No. must not be empty.");
-        }
-        if (Master().getParentId() == null || "".equals(Master().getParentId())) {
-            return setJSON("error", "Parent quotation must not be empty.");
-        }
 
-//        Sales_Qoutation_Validator_MC loValidator = new Sales_Qoutation_Validator_MC();
-//        loValidator.setApplicationDriver(poGRider);
-//        loValidator.setTransactionStatus(status);
-//        loValidator.setMaster(Master());
-//        loValidator.setDetail(new ArrayList<Object>(paDetail));
-//        return loValidator.validate();
-        poJSON.put("result", "success");
-        return poJSON;
+
+        Sales_Qoutation_Validator_MC loValidator = new Sales_Qoutation_Validator_MC();
+        loValidator.setApplicationDriver(poGRider);
+        loValidator.setTransactionStatus(status);
+        loValidator.setMaster(Master());
+        loValidator.setDetail(new ArrayList<Object>(paDetail));
+        return loValidator.validate();
+//        poJSON.put("result", "success");
     }
 
     @Override
