@@ -20,4 +20,9 @@ public class VehicleQuotationStatus {
         public static final  String TPL = "TPL"; 
         public static final  String COMPREHENSIVE = "COMPREHENSIVE";  
     }
+    public static class PaymentForm  {
+        public static final  String FINANCING = "1"; 
+        public static final  String PO = "2"; 
+        public static final  String CASH = "0";  
+    }
 }

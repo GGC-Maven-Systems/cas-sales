@@ -2268,8 +2268,8 @@ public class VehicleQuotation extends Transaction {
         Double ldblQuotationDiscount = 0.0000;
         Model_Sales_Quotation_Vehicle loDetail = Detail(0);
         
-        if(Detail(0).getSRPAmount() > 0.0000){
-            ldblDownpaymentPercentage = (Detail(0).getDownPayment() / Detail(0).getSRPAmount()) * 100;
+        if(ldblSRPAmt > 0.0000){
+            ldblDownpaymentPercentage = (ldblDPAmt / ldblSRPAmt) * 100;
             ldblDownpaymentPercentage = Double.parseDouble(format.format(ldblDownpaymentPercentage));
             String lsAddOnType = "";
             Model_Quotation_AddOn loAddOn;
@@ -2336,22 +2336,31 @@ public class VehicleQuotation extends Transaction {
              * SRP - Downpayment Amount = Balance
              * Balance x Interest Rate / Duration = Monthly Amortization Amount
              */
-            if(ldblSRPAmt > 0.0000 && ldblInterestRate > 0 && lnDuration > 0 && !"0".equals(loDetail.getPaymentForm())){
-                ldblDownpaymentAmount = ldblSRPAmt * (Detail(0).getDownPaymentPercent()/100);
-                ldblBalance = Detail(0).getSRPAmount() - ldblDownpaymentAmount;
-                ldblInterestRate = ((ldblInterestRate/100)+1);
-                ldblMontlyAmortizationAmt = ((ldblBalance * ldblInterestRate) / lnDuration);//((ldblBalance * ldblInterestRate) / lnDuration)+2 = (double) NaN
-                ldblMontlyAmortizationAmt = Double.parseDouble(format.format(ldblMontlyAmortizationAmt));
-                ldblFinancingAmount = ldblSRPAmt-ldblDPAmt;
-                ldblGrossMonthlyInstallment = ldblMontlyAmortizationAmt-Detail(0).getPromptPaymentDiscount();
-                ldblPromissoryNoteAmt = Detail(0).getDuration() * ldblGrossMonthlyInstallment;
-            } else {
-                if(pnEditMode == EditMode.ADDNEW || pnEditMode == EditMode.UPDATE){
-                    Detail(0).setDuration(0);
-                    Detail(0).setRateValue(0.00);
-                    Detail(0).setPromptPaymentDiscount(0.0000);
-                }
+            switch(loDetail.getPaymentForm()){
+                case VehicleQuotationStatus.PaymentForm.FINANCING: //Financing 
+                    if(ldblInterestRate > 0 && lnDuration > 0){
+                        ldblDownpaymentAmount = ldblSRPAmt * (Detail(0).getDownPaymentPercent()/100);
+                        ldblBalance = ldblSRPAmt - ldblDownpaymentAmount;
+                        ldblInterestRate = ((ldblInterestRate/100)+1);
+                        ldblMontlyAmortizationAmt = ((ldblBalance * ldblInterestRate) / lnDuration);//((ldblBalance * ldblInterestRate) / lnDuration)+2 = (double) NaN
+                        ldblMontlyAmortizationAmt = Double.parseDouble(format.format(ldblMontlyAmortizationAmt));
+                        ldblFinancingAmount = ldblSRPAmt-ldblDPAmt;
+                        ldblGrossMonthlyInstallment = ldblMontlyAmortizationAmt-Detail(0).getPromptPaymentDiscount();
+                        ldblPromissoryNoteAmt = lnDuration * ldblGrossMonthlyInstallment;
+                    }
+                break;
+                case VehicleQuotationStatus.PaymentForm.PO: //PO 
+                        ldblFinancingAmount = ldblSRPAmt-(ldblDPAmt+ldblTotalDisc);
+                break;
+                default: //Cash
+                    if(pnEditMode == EditMode.ADDNEW || pnEditMode == EditMode.UPDATE){
+                        Detail(0).setDuration(0);
+                        Detail(0).setRateValue(0.00);
+                        Detail(0).setPromptPaymentDiscount(0.0000);
+                    }
+                break;
             }
+            
         } else {
             paAddOn = new ArrayList<>();
             paDiscount = new ArrayList<>();
@@ -3876,54 +3885,6 @@ public class VehicleQuotation extends Transaction {
         }
         parameters.put("sApprovedBy", ((String) poJSON.get("sUpdateByx")).toUpperCase() );
         
-
-//        parameters.put("sBrand", Detail(0).ModelVariant().Model().Brand().getDescription());
-//        parameters.put("sModel",Detail(0).ModelVariant().Model().getDescription());
-//        parameters.put("sModelVariant",Detail(0).ModelVariant().getDescription());
-//        parameters.put("sTransmission",Detail(0).ModelVariant().VariantInsurance().getTransmission());
-//        parameters.put("sColor",Detail(0).ModelVariant().Color().getDescription());
-//        parameters.put("sBankFirm",Detail(0).FinancingRate().Bank().getBankName());
-//        parameters.put("sTermsRate", Detail(0).getDuration() + " / " + Detail(0).getRateValue());
-//        String lsPaymentMode = "Cash";
-//         if("1".equals(Detail(0).getPaymentForm())){
-//            lsPaymentMode = "Financing";
-//        } else if("2".equals(Detail(0).getPaymentForm())){
-//            lsPaymentMode = "PO";
-//        } else {
-//            parameters.put("sBankFirm","");
-//            parameters.put("sTermsRate", "");
-//        }
-//                parameters.put("sFinancing",lsPaymentMode);
-//                parameters.put("nAmountFinanced",Detail(0).getFinancingAmount());
-//                parameters.put("nNetMonthlyInstallment",Detail(0).getMonthlyAmount());
-//                parameters.put("nPromptPaymentDiscount",Detail(0).getPromptPaymentDiscount());
-//                parameters.put("nGrossMonthlyInstallment",Detail(0).getGrossMonthlyInstallment());
-//                parameters.put("nPromissoryNoteAmount",Detail(0).getPromissoryNoteAmt());
-//                parameters.put("nPrice",Detail(0).getSRPAmount());
-//                parameters.put("nDownpayment",Detail(0).getDownPayment());
-//                parameters.put("nTPL",Detail(0).getTPLAmount());
-//                parameters.put("nComprehensive",Detail(0).getComprehensiveAmount());
-//                parameters.put("nLTO",Detail(0).getLTOAmount());
-//                parameters.put("nCHMODocStmp",Detail(0).getCHMOAmount());
-//                parameters.put("nTotalAmount",Detail(0).getTotalAmount());
-//        Double ldblOtherAddOnsTotal = 0.0000;
-//        for(int lnCtr = 0;lnCtr < getAddOnListCount();lnCtr++){
-//            if(AddOnList(lnCtr).getRecordStatus()){
-//                if(checkNotEmpty(AddOnList(lnCtr).AddOnMaster().AddOnType().getAddTypeName())){
-//                    if(AddOnList(lnCtr).AddOnMaster().AddOnType().getAddTypeName().contains("LTO")
-//                        || AddOnList(lnCtr).AddOnMaster().AddOnType().getAddTypeName().contains("TPL")
-//                        || AddOnList(lnCtr).AddOnMaster().AddOnType().getAddTypeName().contains("Comprehensive")
-//                    ){
-//                        continue;
-//                    }
-//
-//                    ldblOtherAddOnsTotal = ldblOtherAddOnsTotal + AddOnList(lnCtr).getTotalAmount();
-//                }
-//                
-//            }
-//        }
-//        parameters.put("nOtherAddOnsTotal",ldblOtherAddOnsTotal);
-
         Double ldblTotalAccessories = getOtherAddOnTotal();
         Double ldblTotalAddOns = ldblTotalAccessories + Detail(0).getLTOAmount() + Detail(0).getTPLAmount() + Detail(0).getComprehensiveAmount();
         Double ldblTotalDiscount = getTotalDiscount();
@@ -3962,7 +3923,7 @@ public class VehicleQuotation extends Transaction {
         parameters.put("bShowPurchaseOrder", false);
         
         switch(Detail(0).getPaymentForm()){
-            case "1": //Financing 
+            case VehicleQuotationStatus.PaymentForm.FINANCING: //Financing 
                 parameters.put("bShowInHouse",       true);
                 parameters.put("sMOP","Financing");
                 parameters.put("nIHUnitPrice",Detail(0).getSRPAmount());
@@ -3971,7 +3932,7 @@ public class VehicleQuotation extends Transaction {
                 parameters.put("nIHMonthly",Detail(0).getGrossMonthlyInstallment());
                 parameters.put("nIHBankRate",Detail(0).getRateValue());
             break;
-            case "2": //PO
+            case VehicleQuotationStatus.PaymentForm.PO: //PO
                 parameters.put("bShowPurchaseOrder", true);
                 parameters.put("sMOP","PO");
                 parameters.put("nPOUnitPrice",Detail(0).getSRPAmount());
