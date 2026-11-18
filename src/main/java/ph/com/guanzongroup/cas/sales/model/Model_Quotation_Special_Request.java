@@ -13,6 +13,7 @@ import org.json.simple.JSONObject;
 
 import java.sql.SQLException;
 import java.util.Date;
+import org.guanzon.appdriver.constant.Logical;
 
 /**
  *
@@ -35,7 +36,7 @@ public class Model_Quotation_Special_Request extends Model {
             poEntity.updateObject("nQuantity", 1);
             poEntity.updateObject("nAmountxx", 0.00);
             poEntity.updateObject("nTotAmntx", 0.00);
-            poEntity.updateString("cChargeTo", "1");
+            poEntity.updateString("cChargeTo", Logical.NO);
             poEntity.updateString("cRecdStat", RecordStatus.ACTIVE);
             poEntity.updateNull("sModified");
             poEntity.updateNull("dModified");
