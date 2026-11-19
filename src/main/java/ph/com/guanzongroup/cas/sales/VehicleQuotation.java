@@ -665,7 +665,9 @@ public class VehicleQuotation extends Transaction {
             }
             MiscUtil.close(loRS);
         } catch (SQLException ex) {
-            Logger.getLogger(VehicleQuotation.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(getClass().getName()).log(Level.SEVERE, MiscUtil.getException(ex), ex);
+            poJSON = setJSON("error", MiscUtil.getException(ex));
+            return poJSON;
         }
             
         poJSON = new JSONObject();
@@ -1125,76 +1127,27 @@ public class VehicleQuotation extends Transaction {
             return poJSON;
         }
         
-//        if("0".equals(Detail(row).getPaymentForm())){ //Cash
-            VehicleDescription object = new SalesControllers(poGRider, logwrapr).VehicleDescription();
-            object.initialize();
-            object.setRecordStatus(RecordStatus.ACTIVE);
-            object.setIndustryId(psIndustryId);
-            if(pbWithUI){
-                poJSON = object.searchRecordByModel(value, byCode, Detail(row).getModelId());
-            } else {
-                poJSON = object.openRecord(value);
+        VehicleDescription object = new SalesControllers(poGRider, logwrapr).VehicleDescription();
+        object.initialize();
+        object.setRecordStatus(RecordStatus.ACTIVE);
+        object.setIndustryId(psIndustryId);
+        if(pbWithUI){
+            poJSON = object.searchRecordByModel(value, byCode, Detail(row).getModelId());
+        } else {
+            poJSON = object.openRecord(value);
+        }
+        if(pbWithUI){
+            poJSON = validateSRPPrice(object.getModel().getVariantId());
+        }
+        if (isJSONSuccess(poJSON)) {
+            Detail(row).setVariantId(object.getModel().getVariantId()); 
+            Detail(row).setSRPAmount(object.getModel().getSellingPrice()); 
+
+            poJSON = AutoPopulateVehicleAddOn(object.getModel().getVariantId());
+            if(!isJSONSuccess(poJSON)){
+                return poJSON;
             }
-            if(pbWithUI){
-                poJSON = validateSRPPrice(object.getModel().getVariantId());
-            }
-            if (isJSONSuccess(poJSON)) {
-                Detail(row).setVariantId(object.getModel().getVariantId()); 
-                Detail(row).setSRPAmount(object.getModel().getSellingPrice()); 
-                
-                poJSON = AutoPopulateVehicleAddOn(object.getModel().getVariantId());
-                if(!isJSONSuccess(poJSON)){
-                    return poJSON;
-                }
-            }
-//        } else {
-//            String lsSQL = VehicleFinancing_SQL();
-//            lsSQL = MiscUtil.addCondition(lsSQL, SQLUtil.toSQL(xsDateShort(Master().getTransactionDate())) + " BETWEEN a.dFromDate AND a.dThruDate "
-//                                            + " AND e.sModelIDx = " + SQLUtil.toSQL(Detail(row).getModelId())
-//                                            + " AND a.cRecdStat = " + SQLUtil.toSQL(ValidityPeriodStatus.APPROVED)
-//                                            + " AND a.sCompnyID = " + SQLUtil.toSQL(psCompanyId)
-//                                        );
-//            System.out.println("Executing SQL: " + lsSQL);
-//            if(pbWithUI){
-//                poJSON = ShowDialogFX.Browse(poGRider,
-//                lsSQL,
-//                value,
-//                "Financing ID»Description»Downpayment Rate",
-//                "sVhclFIDx»xDescription»nDPRatexx",
-//                "a.sVhclFIDx»CONCAT(f.sDescript,' ', e.sDescript, ' ', c.sDescript, ' ', g.sDescript, ' ', c.nYearMdlx, ' ',d.sTransmss )»a.nDPRatexx",
-//                byCode ? 0 : 1);
-//            } else {
-//                poJSON = new JSONObject();
-//                poJSON.put("result", "success");
-//                poJSON.put("sVrntIDxx", value);
-//                poJSON.put("nDPRatexx", 15.00); //for testing only
-//                poJSON.put("nRsrvAmtx", 10000.00); //for testing only
-//                poJSON.put("nSelPrice", 10000.00); //for testing only
-//            }
-//            if (poJSON != null) {
-//                String lsVariantId = (String) poJSON.get("sVrntIDxx");
-//                Double ldblDPRate = Double.valueOf((String) poJSON.get("nDPRatexx"));
-//                Double ldblRSVAmt =  Double.valueOf((String) poJSON.get("nRsrvAmtx"));
-//                Double ldblSRPAmt =  Double.valueOf((String) poJSON.get("nSelPrice"));
-//                
-//                Detail(row).setVariantId(lsVariantId);
-//                Detail(row).setDownPaymentPercent(ldblDPRate);
-//                Detail(row).setDownPayment(ldblSRPAmt*(ldblDPRate/100));
-//                Detail(row).setReservationAmount(ldblRSVAmt);
-//                Detail(row).setSRPAmount(ldblSRPAmt); 
-//                
-//                poJSON = AutoPopulateVehicleAddOn(lsVariantId);
-//                if(!isJSONSuccess(poJSON)){
-//                    return poJSON;
-//                }
-//                
-//            } else {
-//                poJSON = new JSONObject();
-//                poJSON.put("result", "error");
-//                poJSON.put("message", "No record loaded.");
-//                return poJSON;
-//            }
-//        }
+        }
         return poJSON;
     }
     
