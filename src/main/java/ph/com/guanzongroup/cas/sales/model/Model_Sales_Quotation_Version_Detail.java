@@ -15,6 +15,8 @@ import org.guanzon.appdriver.constant.EditMode;
 import org.guanzon.cas.inv.model.Model_Inventory;
 import org.guanzon.cas.parameter.model.Model_Term;
 import org.json.simple.JSONObject;
+import ph.com.guanzongroup.cas.sales.mcpromo.model.Model_Sales_Promotion_GiveAway_Item;
+import ph.com.guanzongroup.cas.sales.mcpromo.model.Model_Sales_Promotion_Master;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -47,6 +49,7 @@ import java.util.Date;
 public class Model_Sales_Quotation_Version_Detail extends Model {
 
     private Model_Inventory poInventory;
+    private Model_Sales_Promotion_Master poPromo;
     @Override
     public void initialize() {
         try {
@@ -255,6 +258,56 @@ public class Model_Sales_Quotation_Version_Detail extends Model {
         } else {
             poInventory.initialize();
             return poInventory;
+        }
+    }
+
+    public Model_Sales_Promotion_Master Promo() throws SQLException, GuanzonException {
+
+        if (poPromo == null) {
+            poPromo = new Model_Sales_Promotion_Master();
+            poPromo.setApplicationDriver(poGRider);
+            poPromo.setXML("Model_Sales_Promotion_Master");
+            poPromo.setTableName("Sales_Promotion_Master");
+            poPromo.initialize();
+        }
+
+        String promoID = (String) (
+                getValue("sPromCode") == null
+                        ? ""
+                        : getValue("sPromCode")
+        );
+
+        if (!"".equals(promoID)) {
+
+            if (poPromo.getEditMode() == EditMode.READY
+                    && poPromo.getPromoID().equals(promoID)) {
+                return poPromo;
+            }
+
+            if (ReferenceCache.tryLoad(
+                    "Sales_Promotion_Master",
+                    promoID,
+                    poPromo)) {
+                return poPromo;
+            }
+
+            poJSON = poPromo.openRecord(promoID);
+
+            if ("success".equals((String) poJSON.get("result"))) {
+                ReferenceCache.store(
+                        "Sales_Promotion_Master",
+                        promoID,
+                        poPromo
+                );
+                return poPromo;
+            } else {
+                poPromo.initialize();
+                return poPromo;
+            }
+
+        } else {
+            poPromo.initialize();
+            return poPromo;
         }
     }
 }

@@ -1283,7 +1283,7 @@ public class SalesQoutation extends Parameter {
         }
 
         return setResult("success", "Promo giveaways removed.");
-    }0
+    }
     public double computeMCItemDetail(
             double srp,
             int qty,
