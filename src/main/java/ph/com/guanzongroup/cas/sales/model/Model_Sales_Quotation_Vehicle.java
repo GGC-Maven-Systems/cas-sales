@@ -437,14 +437,13 @@ public class Model_Sales_Quotation_Vehicle extends Model {
         }
         return Integer.parseInt(getValue("nInsurYrx").toString());
     }
-
-    public JSONObject setPaymentOption(boolean paymentOption) {
-        return setValue("cPayOptnx", paymentOption ? Logical.YES : Logical.NO);
+    
+    public JSONObject setPaymentOption(String paymentOption) {
+        return setValue("cPayOptnx", paymentOption);
     }
 
-    public boolean isPaymentOption() {
-        Object loValue = getValue("cPayOptnx");
-        return loValue != null && Logical.YES.equals(String.valueOf(loValue));
+    public String getPaymentOption() {
+        return (String) getValue("cPayOptnx");
     }
 
     public JSONObject setSourceCode(String sourceCode) {
