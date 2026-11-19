@@ -652,11 +652,13 @@ public class VehicleQuotation extends Transaction {
             System.out.println("updatePriceList SQL: " + lsSQL);
             ResultSet loRS = poGRider.executeQuery(lsSQL);
             if (MiscUtil.RecordCount(loRS) > 0) {
-                Double ldblSRPAmt = 0.00;
-                while(loRS.next()) {
-                    ldblSRPAmt = loRS.getDouble("nSRPAmntx");
-                    if(!Objects.equals(ldblSRPAmt, Detail(0).getSRPAmount())){
-                        return setJSON("error", "Vehicle Quotation SRP Amount is outdated.");
+                if(Detail(0).getSRPAmount() > 0.00){
+                    Double ldblSRPAmt = 0.00;
+                    while(loRS.next()) {
+                        ldblSRPAmt = loRS.getDouble("nSRPAmntx");
+                        if(!Objects.equals(ldblSRPAmt, Detail(0).getSRPAmount())){
+                            return setJSON("error", "Vehicle Quotation SRP Amount is outdated.");
+                        }
                     }
                 }
             } else {
