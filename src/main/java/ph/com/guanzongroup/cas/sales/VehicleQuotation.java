@@ -560,6 +560,71 @@ public class VehicleQuotation extends Transaction {
         return poJSON;
     }
     
+    public JSONObject ConfirmTransaction() throws ParseException, SQLException, GuanzonException, CloneNotSupportedException, ScriptException {
+        poJSON = new JSONObject();
+        String lsStatus = VehicleQuotationStatus.CONFIRMED;
+        
+        if (getEditMode() != EditMode.READY) {
+            poJSON = setJSON("error", "No transacton was loaded.");
+            return poJSON;
+        }
+        
+        Model_Sales_Quotation_Master loObject = new SalesModels(poGRider).SalesQuotationMaster();
+        poJSON = loObject.openRecord(Master().getTransactionNo());
+        if (!isJSONSuccess(poJSON)) {
+            poJSON = setJSON((String) poJSON.get("result"), "Unable to load transaction. " + (String) poJSON.get("message"));
+            return poJSON;
+        }
+        
+        if (lsStatus.equals(loObject.getTransactionStatus())) {
+            poJSON = setJSON("error", "Transaction was already confirmed.");
+            return poJSON;
+        }
+        
+        boolean lbHasAttachment = false;
+        for(int lnCtr = 0; lnCtr < getTransactionAttachmentCount();lnCtr++){
+            if(!lbHasAttachment){
+                lbHasAttachment = RecordStatus.ACTIVE.equals(TransactionAttachmentList(lnCtr).getModel().getRecordStatus());
+            }
+        }
+        
+        if (!lbHasAttachment) {
+            poJSON = setJSON("error", "Client confirmation attachment is required to confirm the quotation.");
+            return poJSON;
+        }
+
+        //validator
+        poJSON = isEntryOkay(lsStatus);
+        if (!isJSONSuccess(poJSON)) {
+            return poJSON;
+        }
+        
+        if(!pbWthParent){
+            psApprover = poGRider.getUserID();
+            if(validateStandardDetails()){ //require approval when result is true
+                poJSON = callApproval();
+                if (!isJSONSuccess(poJSON)) {
+                    return poJSON;
+                }
+            }
+        }
+        
+        //change status
+        poGRider.beginTrans("UPDATE STATUS", "ConfirmTransaction", SOURCE_CODE, Master().getTransactionNo());
+
+        //change status
+        poJSON = statusChange(poMaster.getTable(), (String) poMaster.getValue("sTransNox"), "", lsStatus, false, true);
+        if (!isJSONSuccess(poJSON)) {
+            return poJSON;
+        }
+        
+        poGRider.commitTrans();
+        
+        poJSON = new JSONObject();
+        poJSON = setJSON("success", "Transaction confirmed successfully.");
+        return poJSON;
+    }
+    
     public JSONObject VoidTransaction()
             throws ParseException,
             SQLException,
@@ -4099,6 +4164,9 @@ public class VehicleQuotation extends Transaction {
         Double ldblTotalAccessories = getOtherAddOnTotal();
         Double ldblTotalAddOns = ldblTotalAccessories + Detail(0).getLTOAmount() + Detail(0).getTPLAmount() + Detail(0).getComprehensiveAmount();
         Double ldblTotalDiscount = getTotalDiscount();
+        parameters.put("nCashDiscount", ldblTotalDiscount); 
+        parameters.put("nPOPromoDiscount", ldblTotalDiscount); 
+        parameters.put("nIHDiscount", ldblTotalDiscount);
         
         parameters.put("nTotalDiscount",     ldblTotalDiscount);       // TODO
         parameters.put("bShowTotalDiscount", ldblTotalDiscount > 0.00);   // TODO
@@ -4820,6 +4888,9 @@ public class VehicleQuotation extends Transaction {
                 case VehicleQuotationStatus.VOID:
                     crs.updateString("cRefrStat", "VOIDED");
                     break;
+                case VehicleQuotationStatus.CONFIRMED:
+                    crs.updateString("cRefrStat", "CLIENT CONFIRMED");
+                    break;
                 default:
                     char ch = crs.getString("cRefrStat").charAt(0);
                     String stat = String.valueOf((int) ch - 64);
@@ -4836,6 +4907,9 @@ public class VehicleQuotation extends Transaction {
                             break;
                         case VehicleQuotationStatus.VOID:
                             crs.updateString("cRefrStat", "VOIDED");
+                            break;
+                        case VehicleQuotationStatus.CONFIRMED:
+                            crs.updateString("cRefrStat", "CLIENT CONFIRMED");
                             break;
                     }
             }

@@ -14,6 +14,7 @@ public class VehicleQuotationStatus {
     public static final String APPROVED = "1";
     public static final String CANCELLED = "2";
     public static final String VOID = "3";
+    public static final String CONFIRMED = "4"; //Client Confirmation
     
     public static class AddOnType  {
         public static final  String LTO = "LTO"; 
