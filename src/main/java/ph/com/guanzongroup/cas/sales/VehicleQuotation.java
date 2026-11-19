@@ -1309,8 +1309,7 @@ public class VehicleQuotation extends Transaction {
     
     private JSONObject loadQuotationAddOn() throws SQLException, GuanzonException, CloneNotSupportedException{
         poJSON = new JSONObject();
-        paAddOn.clear();
-        ReloadAddOnList();
+        paAddOn = new ArrayList<>();
         
         String sql = "SELECT sQotAddID FROM Quotation_AddOn " 
                                                 + " WHERE sTransNox = " + SQLUtil.toSQL(Master().getTransactionNo()) 
@@ -1326,7 +1325,6 @@ public class VehicleQuotation extends Transaction {
             }
 
             paAddOn.add(loDetail);
-            ReloadAddOnList();
         }
         
         poJSON.put("result", "success");
@@ -1336,8 +1334,7 @@ public class VehicleQuotation extends Transaction {
     
     private JSONObject loadQuotationFreebies() throws SQLException, GuanzonException, CloneNotSupportedException{
         poJSON = new JSONObject();
-        paFreebies.clear();
-        ReloadFreebiesList();
+        paFreebies = new ArrayList<>();
         
         String sql = "SELECT sQotFreID FROM Quotation_Freebie " 
                                                 + " WHERE sTransNox = " + SQLUtil.toSQL(Master().getTransactionNo()) 
@@ -1353,7 +1350,6 @@ public class VehicleQuotation extends Transaction {
             }
 
             paFreebies.add(loDetail);
-            ReloadFreebiesList();
         }
         
         poJSON.put("result", "success");
@@ -1363,8 +1359,7 @@ public class VehicleQuotation extends Transaction {
     
     private JSONObject loadQuotationInclusion() throws SQLException, GuanzonException, CloneNotSupportedException{
         poJSON = new JSONObject();
-        paInclusion.clear();
-        ReloadInclusionList();
+        paInclusion = new ArrayList<>();
         
         String sql = "SELECT sQotIncID FROM Quotation_Inclusion " 
                                                 + " WHERE sTransNox = " + SQLUtil.toSQL(Master().getTransactionNo()) 
@@ -1380,7 +1375,6 @@ public class VehicleQuotation extends Transaction {
             }
 
             paInclusion.add(loDetail);
-            ReloadInclusionList();
         }
         
         poJSON.put("result", "success");
@@ -1390,8 +1384,7 @@ public class VehicleQuotation extends Transaction {
     
     private JSONObject loadQuotationSpecialRequest() throws SQLException, GuanzonException, CloneNotSupportedException{
         poJSON = new JSONObject();
-        paSpecialRequest.clear();
-        ReloadSpecialRequestList();
+        paSpecialRequest = new ArrayList<>();
         
         String sql = "SELECT nEntryNox FROM Quotation_Special_Request " 
                                                 + " WHERE sTransNox = " + SQLUtil.toSQL(Master().getTransactionNo()) 
@@ -1407,7 +1400,6 @@ public class VehicleQuotation extends Transaction {
             }
 
             paSpecialRequest.add(loDetail);
-            ReloadSpecialRequestList();
         }
         
         poJSON.put("result", "success");
@@ -1417,8 +1409,7 @@ public class VehicleQuotation extends Transaction {
     
     private JSONObject loadQuotationDiscount() throws SQLException, GuanzonException, CloneNotSupportedException{
         poJSON = new JSONObject();
-        paDiscount.clear();
-        ReloadDiscountList();
+        paDiscount = new ArrayList<>();
         
         String sql = "SELECT nEntryNox FROM Quotation_Discount " 
                                                 + " WHERE sTransNox = " + SQLUtil.toSQL(Master().getTransactionNo()) 
@@ -1434,7 +1425,6 @@ public class VehicleQuotation extends Transaction {
             }
 
             paDiscount.add(loDetail);
-            ReloadFreebiesList();
         }
         
         poJSON.put("result", "success");
@@ -1550,6 +1540,9 @@ public class VehicleQuotation extends Transaction {
             
             poJSON = checkExistingFreebies(lsId,lnType, row, !includeAddOn);
             if(!isJSONSuccess(poJSON)){
+                return poJSON;
+            }
+            if(row != (int) poJSON.get("row")){
                 return poJSON;
             }
             
@@ -2716,19 +2709,16 @@ public class VehicleQuotation extends Transaction {
             //Put initial model values here/
             Master().setIndustryId(psIndustryId);
             Master().setCategoryCode(psCategoryId);
-            Master().setTransactionDate(SQLUtil.toDate(xsDateShort(poGRider.getServerDate()), SQLUtil.FORMAT_SHORT_DATE));
-            Detail(0).setExpectedDate(SQLUtil.toDate(xsDateShort(poGRider.getServerDate()),SQLUtil.FORMAT_SHORT_DATE));
+            
             Date ldServerDate = poGRider.getServerDate();
-            Calendar loFromDate = Calendar.getInstance();
-            Calendar loToDate = Calendar.getInstance();
-            loFromDate.setTime(ldServerDate);
-            loToDate.setTime(ldServerDate);
+            Master().setTransactionDate(SQLUtil.toDate(xsDateShort(ldServerDate), SQLUtil.FORMAT_SHORT_DATE));
+            Detail(0).setExpectedDate(SQLUtil.toDate(xsDateShort(ldServerDate), SQLUtil.FORMAT_SHORT_DATE));
 
-            // Set to the last day of the current month
-            loFromDate.set(Calendar.DAY_OF_MONTH,loFromDate.getActualMinimum(Calendar.DAY_OF_MONTH));
-            loToDate.set(Calendar.DAY_OF_MONTH,loToDate.getActualMaximum(Calendar.DAY_OF_MONTH));
+            Calendar loThruDate = Calendar.getInstance();
+            loThruDate.setTime(ldServerDate);
+            loThruDate.add(Calendar.MONTH, 1);
 
-            Detail(0).setValidThruDate(SQLUtil.toDate(xsDateShort(loToDate.getTime()),SQLUtil.FORMAT_SHORT_DATE));
+            Detail(0).setValidThruDate(SQLUtil.toDate(xsDateShort(loThruDate.getTime()), SQLUtil.FORMAT_SHORT_DATE));
             Detail(0).setBranchCode(poGRider.getBranchCode());
             if(checkNotEmpty(Detail(0).BranchOthers().getBrandID())){
                 Detail(0).setBrandId(Detail(0).BranchOthers().getBrandID());
@@ -3055,6 +3045,13 @@ public class VehicleQuotation extends Transaction {
 
         for (int lnCtr = 0; lnCtr < getSpecialRequestListCount(); lnCtr++) {
             if(checkNotEmpty(SpecialRequestList(lnCtr).getRequestDescription())){
+                if(VehicleQuotationStatus.ChargeTo.CLIENT.equals(SpecialRequestList(lnCtr).getChargeTo())){
+                    if(SpecialRequestList(lnCtr).getAmount() <= 0.00){
+                        poJSON = setJSON("error", "Amount is not set for special request : " + SpecialRequestList(lnCtr).getRequestDescription() );
+                        return poJSON;
+                    }
+                }
+                
                 SpecialRequestList(lnCtr).setTransactionNo(Master().getTransactionNo());
                 SpecialRequestList(lnCtr).setEntryNo(lnCtr+1);
                 SpecialRequestList(lnCtr).setModifiedBy(poGRider.Encrypt(poGRider.getUserID()));
@@ -4072,7 +4069,7 @@ public class VehicleQuotation extends Transaction {
             lsToDate = SQLUtil.dateFormat(Detail(0).getValidThruDate(),SQLUtil.FORMAT_LONG_DATE);
         }
         parameters.put("validTo",lsToDate);
-        
+        parameters.put("nCoverageYear", Detail(0).getInsuranceYears());
         parameters.put("sTransactionNo",Master().getTransactionNo());
         parameters.put("sCustomerName",Master().Client().getCompanyName());
         parameters.put("sAddress", getFullAddress());
@@ -4406,6 +4403,23 @@ public class VehicleQuotation extends Transaction {
                 );
             }
             
+            for(int lnCtr = 0;lnCtr < getSpecialRequestListCount();lnCtr++){
+                if(checkEmpty(SpecialRequestList(lnCtr).getRequestDescription())
+                    || SpecialRequestList(lnCtr).getAmount()<= 0.00
+                    || !SpecialRequestList(lnCtr).getRecordStatus()
+                    ){
+                    continue;
+                }
+                String lsType = "Accessory";
+                String lsDescription = SpecialRequestList(lnCtr).getRequestDescription();
+                addAddOnList(rows
+                        , lsType
+                        , lsDescription
+                        , SpecialRequestList(lnCtr).getAmount()
+                        , SpecialRequestList(lnCtr).getQuantity()
+                        , SpecialRequestList(lnCtr).getTotalAmount()
+                );
+            }
             
         } catch (SQLException | GuanzonException ex) {
             Logger.getLogger(VehicleQuotation.class.getName()).log(Level.SEVERE, null, ex);
@@ -4517,6 +4531,21 @@ public class VehicleQuotation extends Transaction {
                         , InclusionList(lnCtr).getQuantity()
                 );
             }
+            
+            for(int lnCtr = 0;lnCtr < getSpecialRequestListCount();lnCtr++){
+                if(checkEmpty(SpecialRequestList(lnCtr).getRequestDescription())
+                    || SpecialRequestList(lnCtr).getAmount() > 0.00
+                    || !SpecialRequestList(lnCtr).getRecordStatus()
+                    ){
+                    continue;
+                }
+                
+                addQuotationFreebies(rows
+                        , SpecialRequestList(lnCtr).getRequestDescription()
+                        , SpecialRequestList(lnCtr).getQuantity()
+                );
+            }
+            
         } catch (SQLException | GuanzonException ex) {
             Logger.getLogger(VehicleQuotation.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -4571,27 +4600,27 @@ public class VehicleQuotation extends Transaction {
                 while (loRS.next()) {
                     switch(loRS.getInt("nYearNoxx")){
                         case 1:
-                            if(lnLockInYear >= ldblFirstYear){
+                            if(lnLockInYear >= 1){
                                 ldblFirstYear = loRS.getDouble("nAmountxx");
                             }
                         break;
                         case 2:
-                            if(lnLockInYear >= ldblSecondYear){
+                            if(lnLockInYear >= 2){
                                 ldblSecondYear = loRS.getDouble("nAmountxx");
                             }
                         break;
                         case 3:
-                            if(lnLockInYear >= ldblThirdYear){
+                            if(lnLockInYear >= 3){
                                 ldblThirdYear = loRS.getDouble("nAmountxx");
                             }
                         break;
                         case 4:
-                            if(lnLockInYear >= ldblFourthYear){
+                            if(lnLockInYear >= 4){
                                 ldblFourthYear = loRS.getDouble("nAmountxx");
                             }
                         break;
                         case 5:
-                            if(lnLockInYear >= ldblFifthYear){
+                            if(lnLockInYear >= 5){
                                 ldblFifthYear = loRS.getDouble("nAmountxx");
                             }
                         break;
@@ -4663,16 +4692,17 @@ public class VehicleQuotation extends Transaction {
                         + " LEFT JOIN Department c ON c.sDeptIDxx = a.sDeptIDxx"
                         + " LEFT JOIN POSITION d ON d.sPositnID = a.sPositnID"
                         + " LEFT JOIN Branch e ON e.sBranchCd = a.sBranchCd"
-                        + " WHERE a.sDeptIDxx = "+ SQLUtil.toSQL(System.getProperty("sys.dept.sales"))
-                        + " AND a.sBranchCd = " + SQLUtil.toSQL(Detail(0).getBranchCode()
-                        + " AND d.sPositnNm LIKE '%Sales%Supervisor%'");
+                        + " WHERE "
+                        + " a.sBranchCd = " + SQLUtil.toSQL(Detail(0).getBranchCode())
+                        + " AND a.sDeptIDxx = "+ SQLUtil.toSQL(System.getProperty("sys.dept.sales"))
+                        + " AND d.sPositnNm LIKE " + SQLUtil.toSQL("%Sales%Supervisor%");
         System.out.println("Execute SQL getSalesSupervisor : " + lsSQL);
         ResultSet loRS = poGRider.executeQuery(lsSQL);
         try {
           if (MiscUtil.RecordCount(loRS) > 0L) {
             if (loRS.next()) {
                 if(loRS.getString("sEmployID") != null && !"".equals(loRS.getString("sEmployID"))){
-                    lsUpdateBy = getSysUser(loRS.getString("sEmployID"),false);
+                    lsUpdateBy = loRS.getString("sCompnyNm");
                 }
             } 
           }
