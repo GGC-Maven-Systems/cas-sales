@@ -4165,7 +4165,7 @@ public class VehicleQuotation extends Transaction {
         Double ldblTotalAddOns = ldblTotalAccessories + Detail(0).getLTOAmount() + Detail(0).getTPLAmount() + Detail(0).getComprehensiveAmount();
         Double ldblTotalDiscount = getTotalDiscount();
         parameters.put("nCashDiscount", ldblTotalDiscount); 
-        parameters.put("nPOPromoDiscount", ldblTotalDiscount); 
+        parameters.put("nPODiscount", ldblTotalDiscount); 
         parameters.put("nIHDiscount", ldblTotalDiscount);
         
         parameters.put("nTotalDiscount",     ldblTotalDiscount);       // TODO
@@ -4215,9 +4215,9 @@ public class VehicleQuotation extends Transaction {
                 parameters.put("bShowPurchaseOrder", true);
                 parameters.put("sMOP","PO");
                 parameters.put("nPOUnitPrice",Detail(0).getSRPAmount());
-                parameters.put("nPOPromoDiscount",0.00);
-                parameters.put("nPOGuanzonGoodwillDiscount",0.00);
-                parameters.put("nPOReferralSales",Detail(0).getComprehensiveAmount());
+//                parameters.put("nPOPromoDiscount",0.00);
+//                parameters.put("nPOGuanzonGoodwillDiscount",0.00);
+//                parameters.put("nPOReferralSales",Detail(0).getComprehensiveAmount());
                 parameters.put("nPOTPL",Detail(0).getTPLAmount());
                 parameters.put("nPOLTO",Detail(0).getLTOAmount());
                 parameters.put("nPOTotal",Detail(0).getTotalAmount());
