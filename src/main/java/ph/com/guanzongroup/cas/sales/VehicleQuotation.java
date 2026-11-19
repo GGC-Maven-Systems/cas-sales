@@ -1135,8 +1135,9 @@ public class VehicleQuotation extends Transaction {
             } else {
                 poJSON = object.openRecord(value);
             }
-            
-            poJSON = validateSRPPrice(object.getModel().getVariantId());
+            if(pbWithUI){
+                poJSON = validateSRPPrice(object.getModel().getVariantId());
+            }
             if (isJSONSuccess(poJSON)) {
                 Detail(row).setVariantId(object.getModel().getVariantId()); 
                 Detail(row).setSRPAmount(object.getModel().getSellingPrice()); 
