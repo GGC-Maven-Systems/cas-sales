@@ -25,4 +25,12 @@ public class VehicleQuotationStatus {
         public static final  String PO = "2"; 
         public static final  String CASH = "0";  
     }
+    public static class ChargeTo  {
+        //0=Client, 1=Dealer, 2=Bank, 3=Plant, 4=Free
+        public static final  String CLIENT = "0"; 
+        public static final  String DEALER = "1"; 
+        public static final  String BANK = "2";  
+        public static final  String PLANT = "3"; 
+        public static final  String FREE = "4"; 
+    }
 }

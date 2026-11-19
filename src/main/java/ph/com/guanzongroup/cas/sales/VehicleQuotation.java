@@ -240,9 +240,22 @@ public class VehicleQuotation extends Transaction {
             return poJSON;
         }
         //load quotation discount
+        poJSON = loadQuotationSpecialRequest();
+        if(!isJSONSuccess(poJSON)){
+            return poJSON;
+        }
+        //load quotation discount
         poJSON = loadQuotationDiscount();
         if(!isJSONSuccess(poJSON)){
             return poJSON;
+        }
+        
+        //load quotation attachment
+        if(VehicleQuotationStatus.APPROVED.equals(Master().getTransactionStatus())){
+            poJSON = loadAttachments();
+            if (!isJSONSuccess(poJSON)) {
+                return poJSON;
+            }
         }
         
         return poJSON;
@@ -315,6 +328,14 @@ public class VehicleQuotation extends Transaction {
                 }
             }
         }
+        for(int lnCtr = 0;lnCtr < getSpecialRequestListCount();lnCtr++){
+            if(SpecialRequestList(lnCtr).getEditMode() == EditMode.READY){
+                poJSON = SpecialRequestList(lnCtr).updateRecord();
+                if(!isJSONSuccess(poJSON)){
+                    return poJSON;
+                }
+            }
+        }
         for(int lnCtr = 0;lnCtr < getDiscountListCount();lnCtr++){
             if(DiscountList(lnCtr).getEditMode() == EditMode.READY){
                 poJSON = DiscountList(lnCtr).updateRecord();
@@ -324,15 +345,18 @@ public class VehicleQuotation extends Transaction {
             }
         }
         
+        if(VehicleQuotationStatus.APPROVED.equals(Master().getTransactionStatus())){
+            poJSON = loadAttachments();
+            if (!isJSONSuccess(poJSON)) {
+                return poJSON;
+            }
+        }
+        
         ReloadAddOnList();
         ReloadFreebiesList();
         ReloadInclusionList();
+        ReloadSpecialRequestList();
         ReloadDiscountList();
-        
-//        poJSON = AutoPopulateVehicleAddOn(Detail(0).getVariantId());
-//        if(!isJSONSuccess(poJSON)){
-//            return poJSON;
-//        }
         
         poJSON.put("result", "success");
         return poJSON;
@@ -879,7 +903,6 @@ public class VehicleQuotation extends Transaction {
             Master().setContactId(lsMobileId);
             Detail(0).setSourceCode(object.getSourceCode());
             Detail(0).setSourceNo(object.Master().getTransactionNo());
-//            Detail(0).setPaymentForm(object.Master().getPurchaseType());
         }
         
         return poJSON;
@@ -1021,7 +1044,7 @@ public class VehicleQuotation extends Transaction {
             poJSON = object.openRecord(value);
         }
         if (isJSONSuccess(poJSON)) {
-            Detail(row).setStandardRateId(object.getModel().getBankID());
+            Detail(row).setBankId(object.getModel().getBankID());
         }
         
 //        StandardFinancingRates object = new SalesControllers(poGRider, logwrapr).StandardFinancingRates();
@@ -1138,8 +1161,10 @@ public class VehicleQuotation extends Transaction {
         } else {
             poJSON = object.openRecord(value);
         }
-        if(pbWithUI){
-            poJSON = validateSRPPrice(object.getModel().getVariantId());
+        
+        if(object.getModel().getSellingPrice() <= 0.00){
+            return setJSON("error", "No updated selling price."
+                                        + "\nConfigure pricelist before adding vehicle to quotation.");
         }
         if (isJSONSuccess(poJSON)) {
             Detail(row).setVariantId(object.getModel().getVariantId()); 
@@ -1492,6 +1517,7 @@ public class VehicleQuotation extends Transaction {
             }
         }
             
+        poJSON = setJSON("success", "success");
         poJSON.put("row", row);
         return poJSON;
     }
@@ -2376,7 +2402,10 @@ public class VehicleQuotation extends Transaction {
                     }
                 break;
                 case VehicleQuotationStatus.PaymentForm.PO: //PO 
-                        ldblFinancingAmount = ldblSRPAmt-(ldblDPAmt+ldblTotalDisc);
+                    ldblFinancingAmount = ldblSRPAmt-(ldblDPAmt+ldblTotalDisc);
+                    loDetail.setDuration(0);
+                    loDetail.setRateValue(0.00);
+                    loDetail.setPromptPaymentDiscount(0.0000);
                 break;
                 default: //Cash
                     if(pnEditMode == EditMode.ADDNEW || pnEditMode == EditMode.UPDATE){
@@ -2392,7 +2421,10 @@ public class VehicleQuotation extends Transaction {
         } else {
             paAddOn = new ArrayList<>();
             paDiscount = new ArrayList<>();
-//            loDetail.setAdditionalDiscountAmount(0.00);
+            loDetail.setDownPayment(0.00);
+            loDetail.setDownPaymentPercent(0.00);
+            loDetail.setReservationAmount(0.00);
+            loDetail.setCHMOAmount(0.00);
             loDetail.setTPLAmount(0.00);
             loDetail.setLTOAmount(0.00);
             loDetail.setComprehensiveAmount(0.00);
@@ -2488,7 +2520,9 @@ public class VehicleQuotation extends Transaction {
             for(int lnCtr = 0;lnCtr < getFreebiesListCount();lnCtr++){
                 loFreebie = FreebiesList(lnCtr);
                 if(loFreebie.getRecordStatus() && loFreebie.getAmount() > 0.00){
-                    loFreebie.setTotalAmount(loFreebie.getAmount() * loFreebie.getQuantity());
+                    if(pnEditMode == EditMode.ADDNEW || pnEditMode == EditMode.UPDATE){
+                        loFreebie.setTotalAmount(loFreebie.getAmount() * loFreebie.getQuantity());
+                    }
                     ldblTotalAddOn = ldblTotalAddOn + loFreebie.getTotalAmount();
                 }
             }
@@ -2498,8 +2532,26 @@ public class VehicleQuotation extends Transaction {
             for(int lnCtr = 0;lnCtr < getInclusionListCount();lnCtr++){
                 loInclusion = InclusionList(lnCtr);
                 if(loInclusion.getRecordStatus() && loInclusion.getAmount() > 0.00){
-                    loInclusion.setTotalAmount(loInclusion.getAmount() * loInclusion.getQuantity());
+                    if(pnEditMode == EditMode.ADDNEW || pnEditMode == EditMode.UPDATE){
+                        loInclusion.setTotalAmount(loInclusion.getAmount() * loInclusion.getQuantity());
+                    }
                     ldblTotalAddOn = ldblTotalAddOn + loInclusion.getTotalAmount();
+                }
+            }
+            
+            //Compute Special Request
+            for(int lnCtr =0;lnCtr < getSpecialRequestListCount();lnCtr++){
+                Model_Quotation_Special_Request loSReq = SpecialRequestList(lnCtr);
+                if(loSReq.getRecordStatus() && checkNotEmpty(loSReq.getRequestDescription())){
+                    if(pnEditMode == EditMode.ADDNEW || pnEditMode == EditMode.UPDATE){
+                        loSReq.setTotalAmount(loSReq.getQuantity() * loSReq.getAmount());
+                    }
+                    switch(loSReq.getChargeTo()){
+                        case VehicleQuotationStatus.ChargeTo.CLIENT:
+                        default:
+                            ldblTotalAddOn = ldblTotalAddOn + loSReq.getTotalAmount();
+                        break;
+                    }
                 }
             }
         
@@ -2507,6 +2559,37 @@ public class VehicleQuotation extends Transaction {
             Logger.getLogger(getClass().getName()).log(Level.SEVERE, MiscUtil.getException(ex), ex);
         }
         return ldblTotalAddOn;
+    }
+    
+    public JSONObject ValidateDuplicateSpecialRequest(String fsDescription, int row){
+        poJSON = new JSONObject();
+        if(checkNotEmpty(fsDescription)){
+            fsDescription = fsDescription.replace(" ", "").toUpperCase();
+            for(int lnCtr =0;lnCtr < getSpecialRequestListCount();lnCtr++){
+                Model_Quotation_Special_Request loSReq = SpecialRequestList(lnCtr);
+                if(checkEmpty(loSReq.getRequestDescription())){
+                    continue;
+                }
+                if(row == lnCtr){
+                    continue;
+                }
+                if(fsDescription.equals(loSReq.getRequestDescription().replace(" ", "").toUpperCase())){
+                    if(loSReq.getRecordStatus()){
+                        poJSON = setJSON("error", loSReq.getRequestDescription() + " already exist.");
+                        poJSON.put("row", lnCtr);
+                        return poJSON;
+                    } else {
+                        loSReq.setRecordStatus(true);
+                        poJSON = setJSON("success", "success");
+                        poJSON.put("row", lnCtr);
+                        return poJSON;
+                    }
+                }
+            }
+        }
+        poJSON = setJSON("success", "success");
+        poJSON.put("row", row);
+        return poJSON;
     }
     
     public Double getTotalDiscount(){
@@ -2581,12 +2664,49 @@ public class VehicleQuotation extends Transaction {
                     return true;
                 }
             }
+            
+            boolean lbHasStndrd = findStandardAddOn( fsType);
+            if(lbHasStndrd){
+                return true;
+            }
         } catch (SQLException | GuanzonException ex) {
             Logger.getLogger(getClass().getName()).log(Level.SEVERE, MiscUtil.getException(ex), ex);
         }
         return false;
     }
     
+    public boolean findStandardAddOn(String fsType){
+        try {
+            poJSON = new JSONObject();
+            String lsSQL = VehicleAddOn_SQL();
+            lsSQL = MiscUtil.addCondition(lsSQL, SQLUtil.toSQL(xsDateShort(Master().getTransactionDate())) + " BETWEEN a.dFromDate AND a.dThruDate "
+                    + " AND b.sVrntIDxx = " + SQLUtil.toSQL(Detail(0).getVariantId())
+                    + " AND a.cRecdStat = " + SQLUtil.toSQL(ValidityPeriodStatus.APPROVED)
+                    + " AND a.sCompnyID = " + SQLUtil.toSQL(psCompanyId)
+            );
+            System.out.println("AutoLoadVehicleAddOn SQL: " + lsSQL);
+            ResultSet loRS = poGRider.executeQuery(lsSQL);
+            ReloadAddOnList();
+            if (MiscUtil.RecordCount(loRS) > 0) {
+                while(loRS.next()){
+                    String lsAddOnId = loRS.getString("sAddOnIDx");
+                    String lsAddOnName = loRS.getString("sAddTypNm");
+                    Double ldblAmount = loRS.getDouble("nAmountxx");
+                    int lnRow = getAddOnListCount() - 1;
+                    if(checkNotEmpty(lsAddOnName)){
+                        lsAddOnName = lsAddOnName.toUpperCase();
+                        if(lsAddOnName.contains(fsType)) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        } catch (SQLException | CloneNotSupportedException | GuanzonException ex) {
+            Logger.getLogger(getClass().getName()).log(Level.SEVERE, MiscUtil.getException(ex), ex);
+        }
+    
+        return false;
+    }
     
     @Override
     public JSONObject initFields() {
@@ -3097,8 +3217,10 @@ public class VehicleQuotation extends Transaction {
             }
              
             //Save Special Request
-             for (int lnCtr = 0; lnCtr <= getSpecialRequestListCount() - 1; lnCtr++) {
+             for (int lnCtr = 0; lnCtr < getSpecialRequestListCount(); lnCtr++) {
                 if(checkNotEmpty(SpecialRequestList(lnCtr).getRequestDescription())){
+                    System.out.println("RECORD STATUS : " + SpecialRequestList(lnCtr).getRecordStatus());
+                    System.out.println("Request : " + SpecialRequestList(lnCtr).getRequestDescription());
                     if(SpecialRequestList(lnCtr).getEditMode() == EditMode.ADDNEW
                         && !SpecialRequestList(lnCtr).getRecordStatus()){
                         continue;

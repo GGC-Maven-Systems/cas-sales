@@ -191,6 +191,12 @@ public class VehicleQuotationValidator implements GValidator{
             return poJSON;
         }
         
+        if (poDetail.getPaymentOption() == null || "".equals(poDetail.getPaymentOption())) {
+            poJSON.put("result", "error");
+            poJSON.put("message", "Payment option is not set.");
+            return poJSON;
+        }
+        
         if (poDetail.getReceivingMethod() == null || "".equals(poDetail.getReceivingMethod())) {
             poJSON.put("result", "error");
             poJSON.put("message", "Receiving method is not set.");
