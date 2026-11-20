@@ -4164,9 +4164,6 @@ public class VehicleQuotation extends Transaction {
         Double ldblTotalAccessories = getOtherAddOnTotal();
         Double ldblTotalAddOns = ldblTotalAccessories + Detail(0).getLTOAmount() + Detail(0).getTPLAmount() + Detail(0).getComprehensiveAmount();
         Double ldblTotalDiscount = getTotalDiscount();
-        parameters.put("nCashDiscount", ldblTotalDiscount); 
-        parameters.put("nPODiscount", ldblTotalDiscount); 
-        parameters.put("nIHDiscount", ldblTotalDiscount);
         
         parameters.put("nTotalDiscount",     ldblTotalDiscount);       // TODO
         parameters.put("bShowTotalDiscount", ldblTotalDiscount > 0.00);   // TODO
@@ -4180,6 +4177,9 @@ public class VehicleQuotation extends Transaction {
         parameters.put("nTotalPackagePrice",Detail(0).getTotalAmount());
         
         //Initial value
+        parameters.put("nCashDiscount", 0.00); 
+        parameters.put("nPODiscount", 0.00); 
+        parameters.put("nIHDiscount", 0.00);
         parameters.put("nCashUnitPrice",0.00);
         parameters.put("nCashInsurance",0.00);
         parameters.put("nCashTPL",0.00);
@@ -4210,17 +4210,16 @@ public class VehicleQuotation extends Transaction {
                 parameters.put("nIHYears",Detail(0).getDuration() / 12);
                 parameters.put("nIHMonthly",Detail(0).getGrossMonthlyInstallment());
                 parameters.put("nIHBankRate",Detail(0).getRateValue());
+                parameters.put("nIHDiscount", ldblTotalDiscount);
             break;
             case VehicleQuotationStatus.PaymentForm.PO: //PO
                 parameters.put("bShowPurchaseOrder", true);
                 parameters.put("sMOP","PO");
                 parameters.put("nPOUnitPrice",Detail(0).getSRPAmount());
-//                parameters.put("nPOPromoDiscount",0.00);
-//                parameters.put("nPOGuanzonGoodwillDiscount",0.00);
-//                parameters.put("nPOReferralSales",Detail(0).getComprehensiveAmount());
                 parameters.put("nPOTPL",Detail(0).getTPLAmount());
                 parameters.put("nPOLTO",Detail(0).getLTOAmount());
                 parameters.put("nPOTotal",Detail(0).getTotalAmount());
+                parameters.put("nPODiscount", ldblTotalDiscount); 
             break;
             default: //Cash
                 parameters.put("bShowCash",          true);
@@ -4230,6 +4229,7 @@ public class VehicleQuotation extends Transaction {
                 parameters.put("nCashTPL",Detail(0).getTPLAmount());
                 parameters.put("nCashLTO",Detail(0).getLTOAmount());
                 parameters.put("nCashTotal",Detail(0).getTotalAmount());
+                parameters.put("nCashDiscount", ldblTotalDiscount); 
             break;
         
         }

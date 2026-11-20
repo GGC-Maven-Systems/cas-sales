@@ -165,6 +165,7 @@ public class VehicleQuotationTest {
         schemaScripts.add("quotation_discount_schema");
         schemaScripts.add("quotation_freebie_schema");
         schemaScripts.add("quotation_inclusion_schema");
+        schemaScripts.add("quotation_special_request_schema");
         
         dataScripts.add("client_master_data");
         dataScripts.add("client_address_data");
@@ -193,6 +194,7 @@ public class VehicleQuotationTest {
         dataScripts.add("quotation_discount_data");
         dataScripts.add("quotation_freebie_data");
         dataScripts.add("quotation_inclusion_data");
+        dataScripts.add("quotation_special_request_data");
 
         for (String schema : schemaScripts) {
             try (FileReader schemaReader = new FileReader("test-data/" + schema + ".sql")) {
@@ -312,6 +314,9 @@ public class VehicleQuotationTest {
             }
             
             loadDetails();
+            
+            loJSON = poController.validateSRPPrice(poController.Detail(0).getVariantId());
+            System.out.println("MESSAGE : " + String.valueOf(loJSON.get("message")));
             
             loJSON = poController.UpdateTransaction();
             System.out.println("MESSAGE : " + String.valueOf(loJSON.get("message")));
