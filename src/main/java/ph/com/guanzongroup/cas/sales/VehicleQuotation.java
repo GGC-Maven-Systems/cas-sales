@@ -2432,7 +2432,7 @@ public class VehicleQuotation extends Transaction {
             Double ldblCompAmt = loDetail.getComprehensiveAmount();
             Double ldblLTOAmt = loDetail.getLTOAmount();
             ldblTotalAddOn = getOtherAddOnTotal();
-            ldblTranTotal = ldblDPAmt + ldblRSVAmt + ldblTPLAmt + ldblCompAmt + ldblLTOAmt + ldblCHMOAmt + ldblTotalAddOn;
+            ldblTranTotal = ldblTPLAmt + ldblCompAmt + ldblLTOAmt + ldblCHMOAmt + ldblTotalAddOn; //ldblDPAmt + ldblRSVAmt +
             //if("0".equals(Detail(0).getPaymentForm())){
                 ldblTranTotal = ldblTranTotal + ldblSRPAmt;
             //}
@@ -2460,7 +2460,7 @@ public class VehicleQuotation extends Transaction {
                     }
                 break;
                 case VehicleQuotationStatus.PaymentForm.PO: //PO 
-                    ldblFinancingAmount = ldblSRPAmt-(ldblDPAmt+ldblTotalDisc);
+                    ldblFinancingAmount = ldblSRPAmt - ldblDPAmt; //(ldblDPAmt+ldblTotalDisc);
                     loDetail.setDuration(0);
                     loDetail.setRateValue(0.00);
                     loDetail.setPromptPaymentDiscount(0.0000);
@@ -4161,7 +4161,7 @@ public class VehicleQuotation extends Transaction {
         }
         parameters.put("sApprovedBy", ((String) poJSON.get("sUpdateByx")).toUpperCase() );
         
-        Double ldblTotalAccessories = getOtherAddOnTotal();
+        Double ldblTotalAccessories = getOtherAddOnTotal() + Detail(0).getCHMOAmount();
         Double ldblTotalAddOns = ldblTotalAccessories + Detail(0).getLTOAmount() + Detail(0).getTPLAmount() + Detail(0).getComprehensiveAmount();
         Double ldblTotalDiscount = getTotalDiscount();
         
@@ -4186,9 +4186,6 @@ public class VehicleQuotation extends Transaction {
         parameters.put("nCashLTO",0.00);
         parameters.put("nCashTotal",0.00);
         parameters.put("nPOUnitPrice",0.00);
-        parameters.put("nPOPromoDiscount",0.00);
-        parameters.put("nPOGuanzonGoodwillDiscount",0.00);
-        parameters.put("nPOReferralSales",0.00);
         parameters.put("nPOTPL",0.00);
         parameters.put("nPOLTO",0.00);
         parameters.put("nPOTotal",0.00);
@@ -4417,15 +4414,28 @@ public class VehicleQuotation extends Transaction {
         List<Map<String, Object>> rows = new ArrayList<>();
 
         try{
+            boolean lbHasLTO = false;
+            boolean lbHasTPL = false;
+            boolean lbHasComprehensive = false;
             for(int lnCtr = 0;lnCtr < getAddOnListCount();lnCtr++){
-                if(checkEmpty(AddOnList(lnCtr).getAddOnId())
-                    || AddOnList(lnCtr).getAmount() <= 0.00
-                    || !AddOnList(lnCtr).getRecordStatus()
-                    ){
+                if(checkEmpty(AddOnList(lnCtr).getAddOnId())){
                     continue;
                 }
+                
                 String lsType = "Add On";
                 String lsDescription = AddOnList(lnCtr).AddOnMaster().AddOnType().getAddTypeName();
+                
+                if(lsDescription.contains(VehicleQuotationStatus.AddOnType.LTO)){
+                    lbHasLTO = true;
+                } else if(lsDescription.contains(VehicleQuotationStatus.AddOnType.TPL)){
+                    lbHasTPL = true;
+                } else if(lsDescription.contains(VehicleQuotationStatus.AddOnType.COMPREHENSIVE)){
+                    lbHasComprehensive = true;
+                }
+                
+                if(AddOnList(lnCtr).getAmount() <= 0.00 || !AddOnList(lnCtr).getRecordStatus()){
+                    continue;
+                }
                 addAddOnList(rows
                         , lsType
                         , lsDescription
@@ -4487,6 +4497,54 @@ public class VehicleQuotation extends Transaction {
                         , SpecialRequestList(lnCtr).getQuantity()
                         , SpecialRequestList(lnCtr).getTotalAmount()
                 );
+            }
+            
+            if(Detail(0).getLTOAmount() > 0.00){
+                if(!lbHasLTO){
+                    addAddOnList(rows
+                               , "Add On"
+                               , VehicleQuotationStatus.AddOnType.LTO
+                               , Detail(0).getLTOAmount()
+                               , 1
+                               , Detail(0).getLTOAmount()
+                    );
+                }
+            }
+            
+            if(Detail(0).getTPLAmount() > 0.00){
+                if(!lbHasTPL){
+                    addAddOnList(rows
+                               , "Add On"
+                               , VehicleQuotationStatus.AddOnType.TPL
+                               , Detail(0).getTPLAmount()
+                               , 1
+                               , Detail(0).getTPLAmount()
+                    );
+                }
+            }
+            
+            if(Detail(0).getComprehensiveAmount()> 0.00){
+                if(!lbHasComprehensive){
+                    addAddOnList(rows
+                               , "Add On"
+                               , VehicleQuotationStatus.AddOnType.COMPREHENSIVE
+                               , Detail(0).getComprehensiveAmount()
+                               , 1
+                               , Detail(0).getComprehensiveAmount()
+                    );
+                }
+            }
+            
+            if(Detail(0).getCHMOAmount()> 0.00){
+                if(!lbHasComprehensive){
+                    addAddOnList(rows
+                               , "Add On"
+                               , "CHMO"
+                               , Detail(0).getCHMOAmount()
+                               , 1
+                               , Detail(0).getCHMOAmount()
+                    );
+                }
             }
             
         } catch (SQLException | GuanzonException ex) {

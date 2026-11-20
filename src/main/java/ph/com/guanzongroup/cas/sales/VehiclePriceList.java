@@ -685,11 +685,11 @@ public class VehiclePriceList extends Transaction {
         }
         
         if(loObj.getEditMode() == EditMode.UPDATE && loObj.getSellingPrice().doubleValue() != fdblSRPAmt){ 
-            if(ValidityPeriodStatus.APPROVED.equals(fsRecordStatus)){
-                loObj.setSellingPrice(fdblSRPAmt);
-            } else {
-                return poJSON; //Todo
-            }
+//            if(ValidityPeriodStatus.APPROVED.equals(fsRecordStatus)){
+//                loObj.setSellingPrice(fdblSRPAmt);
+//            } else {
+//                return poJSON; //Todo
+//            }
             
             if(!withParent){
                 poGRider.beginTrans("UPDATE STATUS", "UPDATE", SOURCE_CODE, lsInvId);
@@ -753,11 +753,11 @@ public class VehiclePriceList extends Transaction {
         }
         
         if(loObj.getEditMode() == EditMode.UPDATE && loObj.getSellingPrice() != fdblSRPAmt.doubleValue()){ 
-            if(ValidityPeriodStatus.APPROVED.equals(fsRecordStatus)){
-                loObj.setSellingPrice(fdblSRPAmt);
-            } else {
-                return poJSON; //Todo
-            }
+           // if(ValidityPeriodStatus.APPROVED.equals(fsRecordStatus)){
+//                loObj.setSellingPrice(fdblSRPAmt);
+           // } else {
+           //     return poJSON; //Todo
+           // }
             if(!withParent){
                 poGRider.beginTrans("UPDATE STATUS", "UPDATE", SOURCE_CODE, fsVariantId);
             }
