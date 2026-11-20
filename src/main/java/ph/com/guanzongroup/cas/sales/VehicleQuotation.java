@@ -4425,11 +4425,11 @@ public class VehicleQuotation extends Transaction {
                 String lsType = "Add On";
                 String lsDescription = AddOnList(lnCtr).AddOnMaster().AddOnType().getAddTypeName();
                 
-                if(lsDescription.contains(VehicleQuotationStatus.AddOnType.LTO)){
+                if(lsDescription.toUpperCase().contains(VehicleQuotationStatus.AddOnType.LTO)){
                     lbHasLTO = true;
-                } else if(lsDescription.contains(VehicleQuotationStatus.AddOnType.TPL)){
+                } else if(lsDescription.toUpperCase().contains(VehicleQuotationStatus.AddOnType.TPL)){
                     lbHasTPL = true;
-                } else if(lsDescription.contains(VehicleQuotationStatus.AddOnType.COMPREHENSIVE)){
+                } else if(lsDescription.toUpperCase().contains(VehicleQuotationStatus.AddOnType.COMPREHENSIVE)){
                     lbHasComprehensive = true;
                 }
                 
