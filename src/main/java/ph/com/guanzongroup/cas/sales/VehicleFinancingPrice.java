@@ -776,6 +776,10 @@ public class VehicleFinancingPrice extends Transaction {
             return poJSON;
         }
         
+        if(EditMode.ADDNEW == getEditMode()){
+            removeInvalidDPRate(laStandardDownpaymentRate);
+        }
+        
         String lsSQL = " SELECT   " 
                        + " c.sVrntIDxx " 
                        + " , a.sIndstCdx " 
@@ -842,6 +846,37 @@ public class VehicleFinancingPrice extends Transaction {
         poJSON.put("result", "success");
         poJSON.put("message", "success");
         return poJSON;
+    }
+    
+    public void removeInvalidDPRate(ArrayList<Double> laStandardDownpaymentRate) throws SQLException, GuanzonException, CloneNotSupportedException {
+        ReloadDetail();
+        double ldblDownpaymentRate = 0.00;
+        boolean lbExist = false;
+        int lnCtr = getDetailCount() - 1;
+        while (lnCtr >= 0) {
+            if ((Detail(lnCtr).getVariantId() == null || "".equals(Detail(lnCtr).getVariantId()))) {
+                deleteDetail(lnCtr);
+            } else {
+                lbExist = false;
+                ldblDownpaymentRate = 0.00;
+                for(int lnRow = 0; lnRow < laStandardDownpaymentRate.size();lnRow++){
+                    ldblDownpaymentRate = laStandardDownpaymentRate.get(lnRow);
+                    if(Detail(lnCtr).getDownPaymentRate() == ldblDownpaymentRate){
+                        lbExist = true;
+                        break;
+                    }
+                }
+
+                if(!lbExist){
+                    if(EditMode.ADDNEW == getEditMode()){
+                        deleteDetail(lnCtr);
+                    }
+                }
+            }
+
+            lnCtr--;
+        }
+    
     }
     
     public void sortDetail(){

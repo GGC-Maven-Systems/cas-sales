@@ -1243,63 +1243,63 @@ public class VehicleQuotation extends Transaction {
         return poJSON;
     }
     
-    public JSONObject SearchVehicleFinancing(String value, boolean byCode, int row)
-            throws ExceptionInInitializerError,
-            SQLException,
-            GuanzonException,
-            CloneNotSupportedException {
-        poJSON = new JSONObject();
-        
-        String lsSQL = VehicleFinancing_SQL();
-        lsSQL = MiscUtil.addCondition(lsSQL, "(( " + SQLUtil.toSQL(xsDateShort(Master().getTransactionDate())) + " BETWEEN a.dFromDate AND a.dThruDate )"
-                                                + " OR (a.dFromDate <= " + SQLUtil.toSQL(xsDateShort(Master().getTransactionDate()))
-                                                + " AND a.dThruDate IS NULL " 
-                                                + ")) "
-                                                + " AND a.cRecdStat = " + SQLUtil.toSQL(ValidityPeriodStatus.APPROVED)
-                                                + " AND a.sCompnyID = " + SQLUtil.toSQL(psCompanyId)
-                                                );
-        System.out.println("Executing SQL: " + lsSQL);
-        if(pbWithUI){
-            poJSON = ShowDialogFX.Browse(poGRider,
-            lsSQL,
-            value,
-            "Financing ID»Description»Downpayment Rate",
-            "sVhclFIDx»xDescription»nDPRatexx",
-            "b.sVhclFIDx»CONCAT(f.sDescript,' ', e.sDescript, ' ', c.sDescript, ' ', g.sDescript, ' ', c.nYearMdlx, ' ',d.sTransmss )»a.nDPRatexx",
-            byCode ? 0 : 1);
-        } else {
-            poJSON = new JSONObject();
-            poJSON.put("result", "success");
-            poJSON.put("sVrntIDxx", value);
-            poJSON.put("nDPRatexx", 15.00); //for testing only
-            poJSON.put("nRsrvAmtx", 10000.00); //for testing only
-            poJSON.put("nSelPrice", 10000.00); //for testing only
-        }
-        if (poJSON != null) {
-            String lsVariantId = (String) poJSON.get("sVrntIDxx");
-            Double ldblDPRate = Double.valueOf((String) poJSON.get("nDPRatexx"));
-            Double ldblRSVAmt =  Double.valueOf((String) poJSON.get("nRsrvAmtx"));
-            Double ldblSRPAmt =  Double.valueOf((String) poJSON.get("nSelPrice"));
-            Detail(row).setVariantId(lsVariantId);
-            Detail(row).setDownPaymentPercent(ldblDPRate);
-            Detail(row).setReservationAmount(ldblRSVAmt);
-            Detail(row).setDownPayment(ldblSRPAmt*(ldblDPRate/100));
-            Detail(row).setSRPAmount(ldblSRPAmt); 
-            
-            poJSON = AutoPopulateVehicleAddOn(lsVariantId);
-            if(!isJSONSuccess(poJSON)){
-                return poJSON;
-            }
-            
-        } else {
-            poJSON = new JSONObject();
-            poJSON.put("result", "error");
-            poJSON.put("message", "No record loaded.");
-            return poJSON;
-        }
-        
-        return poJSON;
-    }
+//    public JSONObject SearchVehicleFinancing(String value, boolean byCode, int row)
+//            throws ExceptionInInitializerError,
+//            SQLException,
+//            GuanzonException,
+//            CloneNotSupportedException {
+//        poJSON = new JSONObject();
+//        
+//        String lsSQL = VehicleFinancing_SQL();
+//        lsSQL = MiscUtil.addCondition(lsSQL, "(( " + SQLUtil.toSQL(xsDateShort(Master().getTransactionDate())) + " BETWEEN a.dFromDate AND a.dThruDate )"
+//                                                + " OR (a.dFromDate <= " + SQLUtil.toSQL(xsDateShort(Master().getTransactionDate()))
+//                                                + " AND a.dThruDate IS NULL " 
+//                                                + ")) "
+//                                                + " AND a.cRecdStat = " + SQLUtil.toSQL(ValidityPeriodStatus.APPROVED)
+//                                                + " AND a.sCompnyID = " + SQLUtil.toSQL(psCompanyId)
+//                                                );
+//        System.out.println("Executing SQL: " + lsSQL);
+//        if(pbWithUI){
+//            poJSON = ShowDialogFX.Browse(poGRider,
+//            lsSQL,
+//            value,
+//            "Financing ID»Description»Downpayment Rate",
+//            "sVhclFIDx»xDescription»nDPRatexx",
+//            "b.sVhclFIDx»CONCAT(f.sDescript,' ', e.sDescript, ' ', c.sDescript, ' ', g.sDescript, ' ', c.nYearMdlx, ' ',d.sTransmss )»a.nDPRatexx",
+//            byCode ? 0 : 1);
+//        } else {
+//            poJSON = new JSONObject();
+//            poJSON.put("result", "success");
+//            poJSON.put("sVrntIDxx", value);
+//            poJSON.put("nDPRatexx", 15.00); //for testing only
+//            poJSON.put("nRsrvAmtx", 10000.00); //for testing only
+//            poJSON.put("nSelPrice", 10000.00); //for testing only
+//        }
+//        if (poJSON != null) {
+//            String lsVariantId = (String) poJSON.get("sVrntIDxx");
+//            Double ldblDPRate = Double.valueOf((String) poJSON.get("nDPRatexx"));
+//            Double ldblRSVAmt =  Double.valueOf((String) poJSON.get("nRsrvAmtx"));
+//            Double ldblSRPAmt =  Double.valueOf((String) poJSON.get("nSelPrice"));
+//            Detail(row).setVariantId(lsVariantId);
+//            Detail(row).setDownPaymentPercent(ldblDPRate);
+//            Detail(row).setReservationAmount(ldblRSVAmt);
+//            Detail(row).setDownPayment(ldblSRPAmt*(ldblDPRate/100));
+//            Detail(row).setSRPAmount(ldblSRPAmt); 
+//            
+//            poJSON = AutoPopulateVehicleAddOn(lsVariantId);
+//            if(!isJSONSuccess(poJSON)){
+//                return poJSON;
+//            }
+//            
+//        } else {
+//            poJSON = new JSONObject();
+//            poJSON.put("result", "error");
+//            poJSON.put("message", "No record loaded.");
+//            return poJSON;
+//        }
+//        
+//        return poJSON;
+//    }
     
     public JSONObject SearchDiscountType(String value, boolean byCode, int row)
             throws ExceptionInInitializerError,

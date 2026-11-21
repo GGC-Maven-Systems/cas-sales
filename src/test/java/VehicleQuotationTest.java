@@ -166,6 +166,8 @@ public class VehicleQuotationTest {
         schemaScripts.add("quotation_freebie_schema");
         schemaScripts.add("quotation_inclusion_schema");
         schemaScripts.add("quotation_special_request_schema");
+        schemaScripts.add("freebie_master_schema");
+        schemaScripts.add("vehicle_inclusion_master_schema");
         
         dataScripts.add("client_master_data");
         dataScripts.add("client_address_data");
@@ -195,6 +197,8 @@ public class VehicleQuotationTest {
         dataScripts.add("quotation_freebie_data");
         dataScripts.add("quotation_inclusion_data");
         dataScripts.add("quotation_special_request_data");
+        dataScripts.add("freebie_master_data");
+        dataScripts.add("vehicle_inclusion_master_data");
 
         for (String schema : schemaScripts) {
             try (FileReader schemaReader = new FileReader("test-data/" + schema + ".sql")) {
@@ -367,7 +371,7 @@ public class VehicleQuotationTest {
             Assert.assertEquals("success", loJSON.get("result"));
             loJSON = poController.SearchModelVariant("00020", true, 0);
             Assert.assertEquals("success", loJSON.get("result"));
-            loJSON = poController.Detail(0).setPaymentForm("0");
+            loJSON = poController.Detail(0).setPaymentForm("1");
             Assert.assertEquals("success", loJSON.get("result"));
             loJSON = poController.Detail(0).setReceivingMethod("Pickup");
             Assert.assertEquals("success", loJSON.get("result"));
@@ -445,6 +449,60 @@ public class VehicleQuotationTest {
     
     private void loadDetails(){
         try {
+            int lnRow = 0;
+            System.out.println("ADD DETAILS");
+            poController.ReloadAddOnList();
+            lnRow = poController.getAddOnListCount()-1;
+            poController.AddOnList(lnRow).setAddOnId("GK0126000001");
+            poController.AddOnList(lnRow).setAmount(10000.00);
+            poController.AddOnList(lnRow).setQuantity(1);
+            poController.ReloadAddOnList();
+            lnRow = poController.getAddOnListCount()-1;
+            poController.AddOnList(lnRow).setAddOnId("GK0126000002");
+            poController.AddOnList(lnRow).setAmount(0.00);
+            poController.AddOnList(lnRow).setQuantity(1);
+            
+            //add freebie
+            poController.ReloadFreebiesList();
+            lnRow = poController.getFreebiesListCount()-1;
+            poController.FreebiesList(lnRow).setFreebieId("GK0126000001");
+            poController.FreebiesList(lnRow).setAmount(10000.00);
+            poController.FreebiesList(lnRow).setQuantity(1);
+            poController.ReloadFreebiesList();
+            lnRow = poController.getFreebiesListCount()-1;
+            poController.FreebiesList(lnRow).setFreebieId("GK0126000002");
+            poController.FreebiesList(lnRow).setAmount(0.00);
+            poController.FreebiesList(lnRow).setQuantity(1);
+            
+            //add inclusion
+            poController.ReloadInclusionList();
+            lnRow = poController.getInclusionListCount()-1;
+            poController.InclusionList(lnRow).setInclusionId("GK0126000001");
+            poController.InclusionList(lnRow).setAmount(10000.00);
+            poController.InclusionList(lnRow).setQuantity(1);
+            poController.ReloadInclusionList();
+            lnRow = poController.getInclusionListCount()-1;
+            poController.InclusionList(lnRow).setInclusionId("GK0126000002");
+            poController.InclusionList(lnRow).setAmount(0.00);
+            poController.InclusionList(lnRow).setQuantity(1);
+            
+            //add special request
+            poController.ReloadSpecialRequestList();
+            lnRow = poController.getSpecialRequestListCount()-1;
+            poController.SpecialRequestList(lnRow).setRequestDescription("unit test");
+            poController.SpecialRequestList(lnRow).setAmount(10000.00);
+            poController.SpecialRequestList(lnRow).setQuantity(1);
+            poController.SpecialRequestList(lnRow).setChargeTo("0");
+            poController.ReloadInclusionList();
+            lnRow = poController.getSpecialRequestListCount()-1;
+            poController.SpecialRequestList(lnRow).setRequestDescription("unit test 2");
+            poController.SpecialRequestList(lnRow).setAmount(0.00);
+            poController.SpecialRequestList(lnRow).setQuantity(1);
+            poController.SpecialRequestList(lnRow).setChargeTo("4");
+            
+            //compute fields
+            poController.computeFields();
+            
             System.out.println("-----------LOAD ADD ONS-----------");
             for(int lnCtr = 0; lnCtr < poController.getAddOnListCount(); lnCtr++){
                 if((poController.AddOnList(lnCtr).getAddOnId() == null || "".equals(poController.AddOnList(lnCtr).getAddOnId()))
@@ -480,6 +538,18 @@ public class VehicleQuotationTest {
                 System.out.println("AddOn ID : " + poController.InclusionList(lnCtr).getInclusionId());
                 System.out.println("AddOn Name : " + poController.InclusionList(lnCtr).Inclusion().getDescription());
                 System.out.println("AddOn Amount : " + poController.InclusionList(lnCtr).getAmount());
+            }
+            
+            for(int lnCtr = 0; lnCtr < poController.getSpecialRequestListCount(); lnCtr++){
+                if((poController.SpecialRequestList(lnCtr).getRequestDescription()== null || "".equals(poController.SpecialRequestList(lnCtr).getRequestDescription()))
+                    &&
+                    (poController.SpecialRequestList(lnCtr).getAmount() <= 0.00)    
+                    ){
+                    continue;
+                }
+                System.out.println("AddOn ID : " + poController.SpecialRequestList(lnCtr).getEntryNo());
+                System.out.println("AddOn Name : " + poController.SpecialRequestList(lnCtr).getRequestDescription());
+                System.out.println("AddOn Amount : " + poController.SpecialRequestList(lnCtr).getAmount());
             }
             System.out.println("-------------------------------------------------------------------------------");
 
@@ -535,6 +605,8 @@ public class VehicleQuotationTest {
         } catch (SQLException | GuanzonException  ex) {
             Logger.getLogger(getClass().getName()).log(Level.SEVERE, MiscUtil.getException(ex), ex);
             Assert.assertEquals(MiscUtil.getException(ex), MiscUtil.getException(ex));
+        } catch (CloneNotSupportedException ex) {
+            Logger.getLogger(VehicleQuotationTest.class.getName()).log(Level.SEVERE, null, ex);
         } 
     }
     
