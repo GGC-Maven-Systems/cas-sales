@@ -28,6 +28,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javafx.application.Platform;
@@ -776,9 +777,8 @@ public class VehicleFinancingPrice extends Transaction {
             return poJSON;
         }
         
-        if(EditMode.ADDNEW == getEditMode()){
-            removeInvalidDPRate(laStandardDownpaymentRate);
-        }
+        //Clean
+        removeInvalidDPRate(laStandardDownpaymentRate);
         
         String lsSQL = " SELECT   " 
                        + " c.sVrntIDxx " 
@@ -868,9 +868,17 @@ public class VehicleFinancingPrice extends Transaction {
                 }
 
                 if(!lbExist){
-                    if(EditMode.ADDNEW == getEditMode()){
+                    if(EditMode.ADDNEW == Detail(lnCtr).getEditMode()){
                         deleteDetail(lnCtr);
+                    } else {
+                        if(EditMode.UPDATE == Detail(lnCtr).getEditMode()){
+                            Detail(lnCtr).setRecordStatus(false);
+                        } 
                     }
+                } else {
+                    if(EditMode.UPDATE == Detail(lnCtr).getEditMode()){
+                        Detail(lnCtr).setRecordStatus(true);
+                    } 
                 }
             }
 
@@ -989,6 +997,31 @@ public class VehicleFinancingPrice extends Transaction {
         }
         
         return laStandardRate;
+    }
+    
+    public JSONObject validateActiveStatus(int fnRow){
+        boolean lbExist = false;
+        try {
+            ArrayList<Double> laStandardDownpaymentRate = loadStandardDownpaymentRates();
+            for(int lnRow = 0; lnRow < laStandardDownpaymentRate.size();lnRow++){
+                if(Objects.equals(Detail(fnRow).getDownPaymentRate(), laStandardDownpaymentRate.get(lnRow))){
+                    lbExist = true;
+                    break;
+                }
+            }
+        } catch (SQLException | GuanzonException ex) {
+            Logger.getLogger(getClass().getName()).log(Level.SEVERE, MiscUtil.getException(ex), ex);
+            poJSON = setJSON("error", MiscUtil.getException(ex));
+            return poJSON;
+        }
+        
+        if(!lbExist){
+            poJSON = setJSON("error", "Invalid downpayment rate.");
+            return poJSON;
+        }
+    
+        poJSON = setJSON("success", "success");
+        return poJSON;
     }
     
     /**
